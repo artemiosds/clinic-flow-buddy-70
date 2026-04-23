@@ -346,8 +346,9 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                 </div>
               )}
 
+              {!H("sexo") && (
               <div>
-                <Label>Sexo</Label>
+                <Label>{L("sexo", "Sexo")}</Label>
                 <Select value={cd.sexo || ""} onValueChange={(v) => setCustom("sexo", v)}>
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent>
@@ -356,6 +357,7 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                   </SelectContent>
                 </Select>
               </div>
+              )}
 
               {!H("cpf") && (
                 <div>
@@ -383,6 +385,7 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                 </div>
               )}
 
+              {!H("situacaoRua") && (
               <div className="flex items-center gap-3 p-2 rounded-md bg-muted/40 md:col-span-2">
                 <Switch
                   id="situacao-rua"
@@ -390,9 +393,10 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                   onCheckedChange={(v) => setCustom("situacaoRua", v)}
                 />
                 <Label htmlFor="situacao-rua" className="text-sm cursor-pointer">
-                  Pessoa em situação de rua?
+                  {L("situacaoRua", "Pessoa em situação de rua?")}
                 </Label>
               </div>
+              )}
             </div>
 
             {/* Menor de idade */}
