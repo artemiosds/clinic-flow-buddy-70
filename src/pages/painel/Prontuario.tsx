@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import FichaPacienteCabecalho from "@/components/FichaPacienteCabecalho";
 import { useProntuarioStructure } from "@/hooks/useProntuarioStructure";
+import { useProntuarioTiposConfig } from "@/hooks/useProntuarioTiposConfig";
+import DynamicProntuarioFields from "@/components/DynamicProntuarioFields";
 import { useProntuarioConfig } from "@/hooks/useProntuarioConfig";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/contexts/PermissionsContext";
