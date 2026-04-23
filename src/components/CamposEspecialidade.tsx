@@ -110,64 +110,48 @@ const CamposEspecialidade: React.FC<CamposEspecialidadeProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prof, version, getEspecialidadeByProfissao]);
 
-  if (!masterEsp) return null;
-
-  const icon = SPECIALTY_ICONS[prof] || '📋';
-  const title = `Avaliação — ${masterEsp.label}`;
-
-  const v = (key: string) => values[`esp_${key}`] || "";
-  const set = (key: string, val: string) => onChange(`esp_${key}`, val);
-
-  /* ─── Visibility logic ──────────────────────────────────────────────────── */
-
-  const condicaoSatisfeita = (cond?: CondicaoVisibilidade): boolean => {
-    if (!cond) return true;
-    const otherKey = aliasFor(cond.campo);
-    const raw = values[`esp_${otherKey}`] ?? '';
-    const val = String(raw).trim();
-    switch (cond.operador) {
-      case 'preenchido': return val.length > 0;
-      case 'igual': return val === (cond.valor ?? '');
-      case 'diferente': return val !== (cond.valor ?? '');
-      case 'maior': return parseFloat(val) > parseFloat(cond.valor ?? '0');
-      case 'menor': return parseFloat(val) < parseFloat(cond.valor ?? '0');
-      default: return true;
-    }
-  };
-
-  const isFieldVisible = (campo: CampoEspecialidade) => {
-    if (!campo.habilitado) return false;
-    const fieldKey = aliasFor(campo.key);
-
-    // Professional preference override
-    if (profConfig?.campos_especialidade) {
-      const cfg = profConfig.campos_especialidade[fieldKey];
-      if (cfg && cfg.visivel === false) return false;
-    }
-
-    // Tipo prontuario filter
-    const tipos = campo.tipos_prontuario && campo.tipos_prontuario.length > 0
-      ? campo.tipos_prontuario
-      : ['avaliacao', 'retorno'] as TipoProntuario[];
-    if (tipoProntuario && !tipos.includes(tipoProntuario)) return false;
-
-    // Conditional visibility
-    if (!condicaoSatisfeita(campo.condicao)) return false;
-
-    return true;
-  };
-
-  /* ─── Visible fields sorted by order ────────────────────────────────────── */
-
+  // Visible fields sorted by order — computed via useMemo (must be before early return)
   const visibleFields = useMemo(() => {
-    return [...masterEsp.campos]
-      .sort((a, b) => a.order - b.order)
-      .filter(isFieldVisible);
+    if (!masterEsp) return [];
+
+    const condicaoSatisfeita = (cond?: CondicaoVisibilidade): boolean => {
+      if (!cond) return true;
+      const otherKey = aliasFor(cond.campo);
+      const raw = values[`esp_${otherKey}`] ?? '';
+      const val = String(raw).trim();
+      switch (cond.operador) {
+        case 'preenchido': return val.length > 0;
+        case 'igual': return val === (cond.valor ?? '');
+        case 'diferente': return val !== (cond.valor ?? '');
+        case 'maior': return parseFloat(val) > parseFloat(cond.valor ?? '0');
+        case 'menor': return parseFloat(val) < parseFloat(cond.valor ?? '0');
+        default: return true;
+      }
+    };
+
+    const isFieldVisible = (campo: CampoEspecialidade) => {
+      if (!campo.habilitado) return false;
+      const fieldKey = aliasFor(campo.key);
+      if (profConfig?.campos_especialidade) {
+        const cfg = profConfig.campos_especialidade[fieldKey];
+        if (cfg && cfg.visivel === false) return false;
+      }
+      const tipos = campo.tipos_prontuario && campo.tipos_prontuario.length > 0
+        ? campo.tipos_prontuario
+        : ['avaliacao', 'retorno'] as TipoProntuario[];
+      if (tipoProntuario && !tipos.includes(tipoProntuario)) return false;
+      if (!condicaoSatisfeita(campo.condicao)) return false;
+      return true;
+    };
+
+    return [...masterEsp.campos].sort((a, b) => a.order - b.order).filter(isFieldVisible);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [masterEsp, tipoProntuario, profConfig, values, version]);
 
   // Professional custom fields
   const profCustomFields = profConfig?.campos_especialidade_custom || [];
+
+  if (!masterEsp) return null;
 
   if (visibleFields.length === 0 && profCustomFields.length === 0) return null;
 
