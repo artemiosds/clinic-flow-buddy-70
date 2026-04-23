@@ -1,0 +1,488 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 20% 98%;
+    --foreground: 215 25% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 215 25% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 25% 15%;
+
+    --primary: 199 89% 38%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 168 60% 42%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 210 20% 95%;
+    --muted-foreground: 215 15% 50%;
+
+    --accent: 199 89% 95%;
+    --accent-foreground: 199 89% 30%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 214 20% 90%;
+    --input: 214 20% 90%;
+    --ring: 199 89% 38%;
+
+    --radius: 0.75rem;
+
+    --success: 152 60% 42%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --info: 199 89% 48%;
+    --info-foreground: 0 0% 100%;
+
+    --sidebar-background: 215 25% 15%;
+    --sidebar-foreground: 210 20% 90%;
+    --sidebar-primary: 199 89% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 215 25% 22%;
+    --sidebar-accent-foreground: 210 20% 90%;
+    --sidebar-border: 215 25% 25%;
+    --sidebar-ring: 199 89% 48%;
+
+    --gradient-primary: linear-gradient(135deg, hsl(199, 89%, 38%), hsl(168, 60%, 42%));
+    --gradient-hero: linear-gradient(135deg, hsl(215, 25%, 15%), hsl(199, 89%, 30%));
+    --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.03);
+    --shadow-elevated: 0 20px 35px -8px rgba(0, 0, 0, 0.12), 0 5px 10px -4px rgba(0, 0, 0, 0.04);
+    --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.08);
+
+    --font-display: 'DM Sans', 'Plus Jakarta Sans', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --font-clinical: 'JetBrains Mono', monospace;
+
+    --clinical-primary: 215 40% 24%;
+    --clinical-accent: 174 51% 36%;
+    --clinical-success: 147 44% 33%;
+    --clinical-warning: 36 75% 43%;
+    --clinical-danger: 0 56% 46%;
+    --clinical-surface: 220 20% 97%;
+    --clinical-card: 0 0% 100%;
+    --clinical-border: 216 20% 90%;
+
+    --glass-bg: rgba(255, 255, 255, 0.72);
+    --glass-border: rgba(255, 255, 255, 0.35);
+    --glass-blur: 12px;
+  }
+
+  .dark {
+    --background: 222 47% 11%;
+    --foreground: 210 20% 90%;
+
+    --card: 220 40% 13%;
+    --card-foreground: 210 20% 90%;
+
+    --popover: 220 40% 13%;
+    --popover-foreground: 210 20% 90%;
+
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 168 60% 42%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 217 33% 20%;
+    --accent-foreground: 217 91% 70%;
+
+    --destructive: 0 62% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 217 33% 20%;
+    --input: 217 33% 20%;
+    --ring: 217 91% 60%;
+
+    --success: 160 60% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 55%;
+    --warning-foreground: 0 0% 10%;
+    --info: 199 89% 55%;
+    --info-foreground: 0 0% 100%;
+
+    --sidebar-background: 222 47% 8%;
+    --sidebar-foreground: 210 20% 85%;
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 222 47% 14%;
+    --sidebar-accent-foreground: 210 20% 85%;
+    --sidebar-border: 217 33% 17%;
+    --sidebar-ring: 217 91% 60%;
+
+    --gradient-primary: linear-gradient(135deg, hsl(217, 91%, 60%), hsl(168, 60%, 42%));
+    --gradient-hero: linear-gradient(135deg, hsl(222, 47%, 11%), hsl(217, 91%, 40%));
+    --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px -1px rgba(0, 0, 0, 0.2);
+    --shadow-elevated: 0 20px 35px -8px rgba(0, 0, 0, 0.5), 0 5px 10px -4px rgba(0, 0, 0, 0.25);
+    --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.3);
+
+    --clinical-primary: 215 40% 70%;
+    --clinical-accent: 174 51% 50%;
+    --clinical-success: 147 44% 50%;
+    --clinical-warning: 36 75% 55%;
+    --clinical-danger: 0 56% 55%;
+    --clinical-surface: 220 30% 14%;
+    --clinical-card: 220 40% 13%;
+    --clinical-border: 217 33% 20%;
+
+    --glass-bg: rgba(30, 41, 59, 0.75);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-blur: 12px;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-body);
+    -webkit-text-size-adjust: 100%;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+
+  /* Ensure no horizontal overflow on mobile */
+  #root {
+    overflow-x: hidden;
+    width: 100%;
+  }
+
+  /* Smooth scroll globally */
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer utilities {
+  .gradient-primary {
+    background: var(--gradient-primary);
+  }
+  .gradient-hero {
+    background: var(--gradient-hero);
+  }
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+  .shadow-elevated {
+    box-shadow: var(--shadow-elevated);
+  }
+  .shadow-glass {
+    box-shadow: var(--shadow-glass);
+  }
+}
+
+/* ─── GLASSMORPHISM UTILITIES ────────────────────────────────── */
+/* Blur ONLY for small overlays (modals, dropdowns, popovers, max 3 cards) */
+
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+}
+
+.glass-subtle {
+  background: var(--glass-bg);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Disable blur on mobile — huge perf win */
+@media (max-width: 768px) {
+  .glass,
+  .glass-subtle {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  :root {
+    --glass-bg: rgba(255, 255, 255, 0.96);
+  }
+  .dark {
+    --glass-bg: rgba(30, 41, 59, 0.96);
+  }
+}
+
+/* Fallback for browsers without backdrop-filter support */
+@supports not (backdrop-filter: blur(1px)) {
+  .glass,
+  .glass-subtle {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: rgba(255, 255, 255, 0.97);
+  }
+  .dark .glass,
+  .dark .glass-subtle {
+    background: rgba(30, 41, 59, 0.97);
+  }
+}
+
+/* ─── PREMIUM MICRO-INTERACTIONS ──────────────────────────────── */
+
+/* Card hover lift */
+.card-hover {
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+.card-hover:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-elevated);
+}
+
+/* Button press effect — enhanced */
+button:active:not(:disabled) {
+  transform: scale(0.97);
+  transition: transform 0.1s ease;
+}
+
+/* Input focus animated underline */
+.input-focus-line {
+  position: relative;
+}
+.input-focus-line::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: hsl(var(--primary));
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  border-radius: 1px;
+}
+.input-focus-line:focus-within::after {
+  transform: scaleX(1);
+}
+
+/* Input focus glow — enhanced */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[role="combobox"]:focus-visible {
+  box-shadow: 0 0 0 3px hsl(var(--ring) / 0.12);
+  transition: box-shadow 0.25s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.25s ease;
+  border-color: hsl(var(--ring));
+}
+
+/* ─── LIST ITEM HOVER ──────────────────────────────────────── */
+
+.list-item-hover {
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+              background-color 0.2s ease;
+}
+.list-item-hover:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+/* ─── SHIMMER SKELETON — ENHANCED ──────────────────────────── */
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted)) 0%,
+    hsl(var(--muted-foreground) / 0.06) 40%,
+    hsl(var(--muted)) 80%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--radius);
+}
+
+/* ─── SIDEBAR ACTIVE INDICATOR ─────────────────────────────── */
+
+.sidebar-active-glow {
+  position: relative;
+}
+.sidebar-active-glow::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 60%;
+  background: hsl(var(--sidebar-primary));
+  border-radius: 0 4px 4px 0;
+  box-shadow: 0 0 8px hsl(var(--sidebar-primary) / 0.5);
+}
+
+/* ─── CUSTOM SCROLLBAR ─────────────────────────────────────── */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.15);
+  border-radius: 999px;
+  transition: background 0.2s ease;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.3);
+}
+
+/* ─── TOUCH DEVICE OPTIMIZATIONS ───────────────────────────── */
+
+@media (hover: none) and (pointer: coarse) {
+  .card-hover:hover {
+    transform: none;
+    box-shadow: var(--shadow-card);
+  }
+  .list-item-hover:hover {
+    transform: none;
+    box-shadow: none;
+  }
+  /* Ensure minimum touch targets */
+  button, a, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* ─── REDUCE MOTION FOR ACCESSIBILITY & PERF ──────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ─── PRINT STYLES ─────────────────────────────────────────── */
+
+@media print {
+  nav, aside, header, footer,
+  button, .no-print,
+  [data-radix-scroll-area-viewport],
+  [data-sonner-toaster],
+  .sidebar, .mobile-overlay,
+  .toaster {
+    display: none !important;
+  }
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    font-size: 11px !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  table {
+    page-break-inside: auto;
+  }
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+  thead {
+    display: table-header-group;
+  }
+  .doc-sign-footer,
+  .e-signature-box,
+  .carimbo-digital,
+  .signature {
+    page-break-inside: avoid;
+  }
+}
+
+@keyframes pulse-manchester {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* TipTap Editor Styles */
+.tiptap {
+  outline: none;
+}
+.tiptap p {
+  margin: 0.25em 0;
+}
+.tiptap h1, .tiptap h2, .tiptap h3 {
+  font-weight: 700;
+  margin: 0.5em 0 0.25em;
+}
+.tiptap h1 { font-size: 1.5em; }
+.tiptap h2 { font-size: 1.25em; }
+.tiptap h3 { font-size: 1.1em; }
+.tiptap ul, .tiptap ol {
+  padding-left: 1.5em;
+  margin: 0.25em 0;
+}
+.tiptap ul { list-style: disc; }
+.tiptap ol { list-style: decimal; }
+.tiptap table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.5em 0;
+}
+.tiptap td, .tiptap th {
+  border: 1px solid hsl(var(--border));
+  padding: 4px 8px;
+  min-width: 60px;
+}
+.tiptap th {
+  background: hsl(var(--muted));
+  font-weight: 600;
+}
+.tiptap mark {
+  background: #fef08a;
+  border-radius: 2px;
+  padding: 0 2px;
+}
+.tiptap hr {
+  border: none;
+  border-top: 1px solid hsl(var(--border));
+  margin: 0.75em 0;
+}
+.tiptap .is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: hsl(var(--muted-foreground));
+  pointer-events: none;
+  height: 0;
+}
+.variable-tag {
+  background: #dbeafe;
+  padding: 1px 4px;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: #1e40af;
+}

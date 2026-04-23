@@ -1,0 +1,539 @@
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Loader2, FileText, ChevronDown, ChevronUp, Activity, AlertTriangle, RefreshCw, Eye, FileSignature, History, MoreVertical, Printer, Download, Link2, FileDown } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { Separator } from "@/components/ui/separator";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
+import HistoricoCompletoModal from "@/components/HistoricoCompletoModal";
+import GerarDocumentoModal from "@/components/GerarDocumentoModal";
+import { buildInstitutionalCSS } from "@/lib/printLayout";
+
+interface ProntuarioItem {
+  id: string;
+  data_atendimento: string;
+  hora_atendimento: string;
+  profissional_nome: string;
+  profissional_id: string;
+  queixa_principal: string;
+  evolucao: string;
+  conduta: string;
+  indicacao_retorno: string;
+  procedimentos_texto: string;
+  outro_procedimento: string;
+  unidade_id: string;
+  episodio_id: string | null;
+}
+
+interface EpisodioItem {
+  id: string;
+  titulo: string;
+  tipo: string;
+  status: string;
+  data_inicio: string;
+  data_fim: string | null;
+  profissional_nome: string;
+  descricao: string;
+}
+
+interface Props {
+  pacienteId: string;
+  pacienteNome: string;
+  currentProfissionalId?: string;
+  unidades: { id: string; nome: string }[];
+}
+
+// Helpers
+function safeData<T>(result: { data: T | null; error: any }, context: string): T {
+  if (result.error) {
+    console.error(`[Historico] Erro em ${context}:`, result.error);
+    return [] as unknown as T;
+  }
+  return result.data ?? ([] as unknown as T);
+}
+
+function formatDateBR(isoDate: string): string {
+  return new Date(`${isoDate}T12:00:00`).toLocaleDateString("pt-BR");
+}
+
+export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, currentProfissionalId, unidades }) => {
+  const [prontuarios, setProntuarios] = useState<ProntuarioItem[]>([]);
+  const [episodios, setEpisodios] = useState<EpisodioItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [viewerItem, setViewerItem] = useState<ProntuarioItem | null>(null);
+  const [historicoOpen, setHistoricoOpen] = useState(false);
+  const [docModalOpen, setDocModalOpen] = useState(false);
+  const cancelledRef = useRef(false);
+
+  const loadData = useCallback(async () => {
+    if (!pacienteId) {
+      setProntuarios([]);
+      setEpisodios([]);
+      setLoading(false);
+      return;
+    }
+
+    cancelledRef.current = false;
+    setLoading(true);
+    setError(null);
+
+    try {
+      const [{ data: pData, error: pError }, { data: eData, error: eError }] = await Promise.all([
+        supabase
+          .from("prontuarios")
+          .select(
+            "id,data_atendimento,hora_atendimento,profissional_nome,profissional_id,queixa_principal,evolucao,conduta,indicacao_retorno,procedimentos_texto,outro_procedimento,unidade_id,episodio_id",
+          )
+          .eq("paciente_id", pacienteId)
+          .order("data_atendimento", { ascending: false }),
+        supabase
+          .from("episodios_clinicos")
+          .select("*")
+          .eq("paciente_id", pacienteId)
+          .order("data_inicio", { ascending: false }),
+      ]);
+
+      if (cancelledRef.current) return;
+
+      if (pError) throw pError;
+      if (eError) throw eError;
+
+      setProntuarios(pData || []);
+      setEpisodios(eData || []);
+    } catch (err) {
+      console.error("[Historico] Erro inesperado:", err);
+      if (!cancelledRef.current) {
+        setError("Erro ao carregar histórico. Tente novamente.");
+      }
+    } finally {
+      if (!cancelledRef.current) {
+        setLoading(false);
+      }
+    }
+  }, [pacienteId]);
+
+  useEffect(() => {
+    loadData();
+    return () => {
+      cancelledRef.current = true;
+    };
+  }, [loadData]);
+
+  // Mapa de unidades (O(1) lookup)
+  const unidadeMap = useMemo(() => new Map(unidades.map((u) => [u.id, u.nome])), [unidades]);
+
+  const episodioMap = useMemo(() => new Map(episodios.map((e) => [e.id, e])), [episodios]);
+
+  const timeline = useMemo(() => {
+    return prontuarios.map((p) => ({
+      ...p,
+      unidadeNome: unidadeMap.get(p.unidade_id) || "",
+      episodioTitulo: episodioMap.get(p.episodio_id || "")?.titulo || "",
+    }));
+  }, [prontuarios, unidadeMap, episodioMap]);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-10 gap-2">
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+        <p className="text-xs text-muted-foreground">Carregando histórico...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-10 gap-3">
+        <AlertTriangle className="w-8 h-8 text-destructive/60" />
+        <p className="text-sm text-destructive text-center">{error}</p>
+        <Button variant="outline" size="sm" onClick={() => loadData()} className="gap-2">
+          <RefreshCw className="w-3.5 h-3.5" />
+          Tentar novamente
+        </Button>
+      </div>
+    );
+  }
+
+  const activeEpisodios = episodios.filter((e) => e.status === "ativo");
+
+  const buildProntuarioHTML = (item: ProntuarioItem & { unidadeNome?: string }) => {
+    const css = buildInstitutionalCSS();
+    const row = (label: string, val?: string) =>
+      val ? `<div class="section"><h3>${label}</h3><p>${String(val).replace(/\n/g, "<br/>")}</p></div>` : "";
+    return `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Prontuário ${pacienteNome}</title>${css}</head>
+      <body>
+        <h1 style="margin:0 0 4px">Prontuário Clínico</h1>
+        <div class="doc-meta">
+          <strong>Paciente:</strong> ${pacienteNome} &nbsp;|&nbsp;
+          <strong>Data:</strong> ${formatDateBR(item.data_atendimento)} ${item.hora_atendimento || ""} &nbsp;|&nbsp;
+          <strong>Profissional:</strong> ${item.profissional_nome || "-"}
+          ${item.unidadeNome ? `&nbsp;|&nbsp; <strong>Unidade:</strong> ${item.unidadeNome}` : ""}
+        </div>
+        ${row("Queixa principal", item.queixa_principal)}
+        ${row("Evolução / SOAP", item.evolucao)}
+        ${row("Conduta", item.conduta)}
+        ${row("Procedimentos", item.procedimentos_texto)}
+        ${row("Outro procedimento", item.outro_procedimento)}
+        ${row("Indicação de retorno", item.indicacao_retorno)}
+        <div style="margin-top:48px; border-top:1px solid #333; padding-top:8px; text-align:center;">
+          ${item.profissional_nome || ""}
+        </div>
+      </body></html>`;
+  };
+
+  const handlePrint = (item: ProntuarioItem & { unidadeNome?: string }) => {
+    const win = window.open("", "_blank", "width=900,height=700");
+    if (!win) {
+      toast.error("Permita pop-ups para imprimir");
+      return;
+    }
+    win.document.write(buildProntuarioHTML(item));
+    win.document.close();
+    setTimeout(() => {
+      win.focus();
+      win.print();
+    }, 300);
+  };
+
+  const handleDownloadPDF = (item: ProntuarioItem & { unidadeNome?: string }) => {
+    // Browser print → "Save as PDF" — uses same institutional layout
+    handlePrint(item);
+    toast.info("Use 'Salvar como PDF' na janela de impressão");
+  };
+
+  const handleExportJSON = (item: ProntuarioItem) => {
+    const blob = new Blob([JSON.stringify(item, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `prontuario_${pacienteNome.replace(/\s+/g, "_")}_${item.data_atendimento}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("JSON exportado");
+  };
+
+  const handleCopyLink = async (item: ProntuarioItem) => {
+    const url = `${window.location.origin}/painel/prontuario?pacienteId=${pacienteId}&prontuarioId=${item.id}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Link copiado");
+    } catch {
+      toast.error("Não foi possível copiar o link");
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Toolbar */}
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+          <FileText className="w-4 h-4 text-primary" /> Histórico Clínico
+        </h3>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" onClick={() => setHistoricoOpen(true)} className="h-8">
+            <History className="w-3.5 h-3.5 mr-1" /> Histórico completo
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => setDocModalOpen(true)} className="h-8">
+            <FileSignature className="w-3.5 h-3.5 mr-1" /> Gerar documento
+          </Button>
+        </div>
+      </div>
+
+      {/* Tratamentos ativos */}
+      {activeEpisodios.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <Activity className="w-4 h-4 text-primary" /> Tratamentos Ativos
+          </h3>
+          {activeEpisodios.map((ep) => {
+            const sessoes = prontuarios.filter((p) => p.episodio_id === ep.id).length;
+            return (
+              <Card key={ep.id} className="border-primary/20 bg-primary/5">
+                <CardContent className="p-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-sm text-foreground">{ep.titulo}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {ep.profissional_nome} • Início:{" "}
+                        {new Date(ep.data_inicio + "T12:00:00").toLocaleDateString("pt-BR")}
+                      </p>
+                    </div>
+                    <Badge variant="outline" className="text-xs">
+                      {sessoes} sessão(ões)
+                    </Badge>
+                  </div>
+                  {ep.descricao && <p className="text-xs text-muted-foreground mt-1">{ep.descricao}</p>}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Timeline */}
+      <div className="space-y-2">
+        <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+          <FileText className="w-4 h-4 text-muted-foreground" /> Linha do Tempo ({timeline.length} registro(s))
+        </h3>
+        {timeline.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-6 gap-2">
+            <FileText className="w-8 h-8 text-muted-foreground/40" />
+            <p className="text-sm text-muted-foreground text-center">Nenhum atendimento registrado.</p>
+          </div>
+        ) : (
+          <ScrollArea className="max-h-[400px]">
+            <div className="relative pl-6 space-y-3">
+              <div className="absolute left-2 top-2 bottom-2 w-px bg-border" aria-hidden="true" />
+              {timeline.map((item) => {
+                const isOwn = item.profissional_id === currentProfissionalId;
+                const expanded = expandedId === item.id;
+                return (
+                  <div key={item.id} className="relative">
+                    <div className="absolute -left-4 top-2 w-3 h-3 rounded-full bg-primary border-2 border-background" />
+                    <Card className="border-0 shadow-sm hover:shadow-md transition-shadow">
+                      <CardContent className="p-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <time className="text-xs font-bold text-primary" dateTime={item.data_atendimento}>
+                                {formatDateBR(item.data_atendimento)}
+                              </time>
+                              {item.hora_atendimento && (
+                                <span className="text-xs text-muted-foreground">{item.hora_atendimento}</span>
+                              )}
+                              {item.episodioTitulo && (
+                                <Badge variant="outline" className="text-[10px]">
+                                  {item.episodioTitulo}
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-sm text-foreground mt-0.5">
+                              {item.profissional_nome}
+                              {isOwn && <span className="text-xs text-primary ml-1">(você)</span>}
+                            </p>
+                            {item.unidadeNome && <p className="text-xs text-muted-foreground">{item.unidadeNome}</p>}
+                            {item.procedimentos_texto && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                <strong>Procedimentos:</strong> {item.procedimentos_texto}
+                              </p>
+                            )}
+                            {item.queixa_principal && !expanded && (
+                              <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                                QP: {item.queixa_principal}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 w-7 p-0"
+                              onClick={() => setViewerItem(item)}
+                              aria-label="Visualizar prontuário"
+                              title="Visualizar"
+                            >
+                              <Eye className="w-3.5 h-3.5 text-primary" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 w-7 p-0"
+                              onClick={() => setHistoricoOpen(true)}
+                              aria-label="Histórico do paciente"
+                              title="Histórico do paciente"
+                            >
+                              <History className="w-3.5 h-3.5 text-primary" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 w-7 p-0"
+                              onClick={() => handleDownloadPDF(item)}
+                              aria-label="Baixar PDF"
+                              title="Baixar PDF"
+                            >
+                              <FileDown className="w-3.5 h-3.5 text-primary" />
+                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 w-7 p-0"
+                                  aria-label="Mais ações"
+                                  title="Mais ações"
+                                >
+                                  <MoreVertical className="w-3.5 h-3.5" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuItem onClick={() => handlePrint(item)}>
+                                  <Printer className="w-3.5 h-3.5 mr-2" /> Imprimir
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleExportJSON(item)}>
+                                  <Download className="w-3.5 h-3.5 mr-2" /> Exportar JSON
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleCopyLink(item)}>
+                                  <Link2 className="w-3.5 h-3.5 mr-2" /> Copiar link
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => { setViewerItem(item); setTimeout(() => setDocModalOpen(true), 100); }}>
+                                  <FileSignature className="w-3.5 h-3.5 mr-2" /> Gerar documento
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                            {item.queixa_principal && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 w-7 p-0"
+                                onClick={() => setExpandedId(expanded ? null : item.id)}
+                                aria-label={expanded ? "Recolher" : "Expandir"}
+                                aria-expanded={expanded}
+                              >
+                                {expanded ? (
+                                  <ChevronUp className="w-3.5 h-3.5" />
+                                ) : (
+                                  <ChevronDown className="w-3.5 h-3.5" />
+                                )}
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                        {expanded && (
+                          <div className="mt-2 space-y-1 text-xs border-t pt-2">
+                            {item.queixa_principal && (
+                              <p>
+                                <strong>Queixa:</strong> {item.queixa_principal}
+                              </p>
+                            )}
+                            {item.evolucao && (
+                              <p>
+                                <strong>Evolução:</strong> {item.evolucao}
+                              </p>
+                            )}
+                            {item.conduta && (
+                              <p>
+                                <strong>Conduta:</strong> {item.conduta}
+                              </p>
+                            )}
+                            {item.outro_procedimento && (
+                              <p>
+                                <strong>Outro procedimento:</strong> {item.outro_procedimento}
+                              </p>
+                            )}
+                            {item.indicacao_retorno && (
+                              <p>
+                                <strong>Retorno:</strong> {item.indicacao_retorno}
+                              </p>
+                            )}
+                            {!isOwn && (
+                              <p className="text-warning italic mt-1">
+                                Prontuário de outro profissional (somente leitura)
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </div>
+                );
+              })}
+            </div>
+          </ScrollArea>
+        )}
+      </div>
+
+      {/* Drawer de visualização rápida */}
+      <Sheet open={!!viewerItem} onOpenChange={(o) => !o && setViewerItem(null)}>
+        <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
+          {viewerItem && (
+            <>
+              <SheetHeader>
+                <SheetTitle className="flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-primary" />
+                  Prontuário — {formatDateBR(viewerItem.data_atendimento)}
+                  {viewerItem.hora_atendimento && (
+                    <span className="text-sm text-muted-foreground font-normal">{viewerItem.hora_atendimento}</span>
+                  )}
+                </SheetTitle>
+                <SheetDescription>
+                  {viewerItem.profissional_nome}
+                  {viewerItem.profissional_id === currentProfissionalId && (
+                    <span className="text-primary ml-1">(você)</span>
+                  )}
+                </SheetDescription>
+              </SheetHeader>
+              <Separator className="my-4" />
+              <div className="space-y-4 text-sm">
+                {viewerItem.queixa_principal && (
+                  <Section label="Queixa principal" value={viewerItem.queixa_principal} />
+                )}
+                {viewerItem.evolucao && <Section label="Evolução / SOAP" value={viewerItem.evolucao} />}
+                {viewerItem.conduta && <Section label="Conduta" value={viewerItem.conduta} />}
+                {viewerItem.procedimentos_texto && (
+                  <Section label="Procedimentos" value={viewerItem.procedimentos_texto} />
+                )}
+                {viewerItem.outro_procedimento && (
+                  <Section label="Outro procedimento" value={viewerItem.outro_procedimento} />
+                )}
+                {viewerItem.indicacao_retorno && (
+                  <Section label="Indicação de retorno" value={viewerItem.indicacao_retorno} />
+                )}
+              </div>
+              <Separator className="my-4" />
+              <div className="flex flex-wrap justify-end gap-2">
+                <Button variant="outline" size="sm" onClick={() => setViewerItem(null)}>
+                  Fechar
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => handlePrint(viewerItem)}>
+                  <Printer className="w-3.5 h-3.5 mr-1" /> Imprimir
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => handleDownloadPDF(viewerItem)}>
+                  <FileDown className="w-3.5 h-3.5 mr-1" /> Baixar PDF
+                </Button>
+                <Button size="sm" onClick={() => { setViewerItem(null); setDocModalOpen(true); }}>
+                  <FileSignature className="w-3.5 h-3.5 mr-1" /> Gerar documento
+                </Button>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
+
+      <HistoricoCompletoModal
+        open={historicoOpen}
+        onOpenChange={setHistoricoOpen}
+        pacienteId={pacienteId}
+        pacienteNome={pacienteNome}
+        unidades={unidades}
+        currentProfissionalId={currentProfissionalId}
+      />
+
+      <GerarDocumentoModal
+        open={docModalOpen}
+        onOpenChange={setDocModalOpen}
+        paciente={{ id: pacienteId, nome: pacienteNome, cpf: '', cns: '', data_nascimento: '', cid: '', especialidade_destino: '' }}
+      />
+    </div>
+  );
+};
+
+const Section: React.FC<{ label: string; value: string }> = ({ label, value }) => (
+  <div>
+    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">{label}</p>
+    <p className="text-foreground whitespace-pre-wrap leading-relaxed">{value}</p>
+  </div>
+);
