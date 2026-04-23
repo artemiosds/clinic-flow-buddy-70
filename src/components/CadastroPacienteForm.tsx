@@ -430,8 +430,9 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
           {/* ═══ ABA 2 — ENDEREÇO ═══ */}
           <TabsContent value="endereco" className="space-y-4 mt-2">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {!H("cep") && (
               <div>
-                <Label>CEP</Label>
+                <Label>{L("cep", "CEP")}</Label>
                 <div className="relative">
                   <Input
                     value={cd.cep || ""}
