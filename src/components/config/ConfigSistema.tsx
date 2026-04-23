@@ -1,20 +1,20 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useConfiguracao } from '@/hooks/useConfiguracao';
-import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Download, Building2, Bell, Palette, Shield } from 'lucide-react';
+import { Loader2, Search, RotateCcw, FileDown, FileUp, CheckCircle2, AlertCircle } from 'lucide-react';
 import { ConfigSyncIndicator } from '@/components/ConfigSyncIndicator';
 import { toast } from 'sonner';
+import { InstituicaoSection } from './sistema/InstituicaoSection';
+import { NotificacoesSection } from './sistema/NotificacoesSection';
+import { BackupSection } from './sistema/BackupSection';
+import { AparenciaSection } from './sistema/AparenciaSection';
+import { LgpdSection } from './sistema/LgpdSection';
 
 const CONFIG_KEY = 'config_sistema';
 
-interface SistemaConfig {
+export interface SistemaConfig {
   instituicao: { nome: string; cer: string; cnpj: string; endereco: string; telefone: string; email: string; logoUrl: string };
   notificacoes: {
     notificarChegada: boolean; alertarFimCiclo: boolean; alertarPtsVencer: boolean;
@@ -23,6 +23,7 @@ interface SistemaConfig {
   };
   aparencia: { tema: string; corPrimaria: string; fonte: string; tamanhoFonte: string };
   conformidade: { lgpdTexto: string; exibirAvisoLgpd: boolean; retencaoDados: number; anonimizarApos: number };
+  backup: { autoBackup: boolean; agendamento: 'diario' | 'semanal' | 'mensal'; ultimoBackup: string | null };
 }
 
 const DEFAULT: SistemaConfig = {
@@ -41,17 +42,38 @@ const DEFAULT: SistemaConfig = {
     lgpdTexto: 'Este sistema coleta e processa dados pessoais de saúde em conformidade com a Lei Geral de Proteção de Dados (LGPD). Os dados são utilizados exclusivamente para fins de atendimento clínico e são armazenados de forma segura.',
     exibirAvisoLgpd: true, retencaoDados: 20, anonimizarApos: 25,
   },
+  backup: { autoBackup: false, agendamento: 'semanal', ultimoBackup: null },
 };
+
+const SECTIONS = [
+  { id: 'instituicao', label: 'Instituição', kw: ['nome', 'cnpj', 'logo', 'endereco', 'telefone', 'email', 'cer'] },
+  { id: 'notificacoes', label: 'Notificações', kw: ['notificacao', 'canal', 'whatsapp', 'email', 'chegada', 'triagem', 'pts', 'ciclo', 'resumo'] },
+  { id: 'backup', label: 'Backup', kw: ['backup', 'exportar', 'json', 'csv', 'pdf', 'restaurar', 'dados'] },
+  { id: 'aparencia', label: 'Aparência', kw: ['tema', 'cor', 'fonte', 'aparencia', 'claro', 'escuro'] },
+  { id: 'lgpd', label: 'LGPD', kw: ['lgpd', 'privacidade', 'retencao', 'anonimizar', 'conformidade', 'termo'] },
+];
 
 const ConfigSistema: React.FC = () => {
   const { atualizarConfiguracao, syncPendingDrafts } = useConfiguracao();
   const [config, setConfig] = useState<SistemaConfig>(DEFAULT);
+  const [savedConfig, setSavedConfig] = useState<SistemaConfig>(DEFAULT);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const autoSaveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  /* ---------- carregar ---------- */
   const loadConfig = useCallback(async () => {
     const { data } = await supabase.from('system_config').select('configuracoes').eq('id', 'default').maybeSingle();
     const cfg = data?.configuracoes as any;
-    if (cfg?.[CONFIG_KEY]) setConfig({ ...DEFAULT, ...cfg[CONFIG_KEY] });
+    if (cfg?.[CONFIG_KEY]) {
+      const merged = {
+        ...DEFAULT,
+        ...cfg[CONFIG_KEY],
+        backup: { ...DEFAULT.backup, ...(cfg[CONFIG_KEY].backup || {}) },
+      };
+      setConfig(merged);
+      setSavedConfig(merged);
+    }
     setLoading(false);
   }, []);
 
@@ -60,169 +82,150 @@ const ConfigSistema: React.FC = () => {
     syncPendingDrafts();
   }, [loadConfig, syncPendingDrafts]);
 
-  const save = async (updated: SistemaConfig) => {
-    setConfig(updated); // optimistic
-    await atualizarConfiguracao(CONFIG_KEY, updated, { auditAcao: 'ALTERAR_CONFIG_SISTEMA' });
-  };
+  /* ---------- detectar mudanças ---------- */
+  const isDirty = useMemo(
+    () => JSON.stringify(config) !== JSON.stringify(savedConfig),
+    [config, savedConfig],
+  );
 
-  const exportAllData = async () => {
-    toast.info('Exportação iniciada...');
-    const tables = ['pacientes', 'agendamentos', 'prontuarios', 'funcionarios'] as const;
-    const results: Record<string, any[]> = {};
-    const queries = tables.map(t => supabase.from(t).select('*'));
-    const responses = await Promise.all(queries);
-    tables.forEach((t, i) => { results[t] = (responses[i].data as any[]) || []; });
-    const blob = new Blob([JSON.stringify(results, null, 2)], { type: 'application/json' });
+  /* ---------- save ---------- */
+  const persist = useCallback(async (cfg: SistemaConfig) => {
+    await atualizarConfiguracao(CONFIG_KEY, cfg, { auditAcao: 'ALTERAR_CONFIG_SISTEMA', silent: true });
+    setSavedConfig(cfg);
+  }, [atualizarConfiguracao]);
+
+  /* ---------- update with debounced auto-save ---------- */
+  const update = useCallback((partial: Partial<SistemaConfig>) => {
+    setConfig(prev => {
+      const next = { ...prev, ...partial };
+      // Debounced auto-save (2s)
+      if (autoSaveRef.current) clearTimeout(autoSaveRef.current);
+      autoSaveRef.current = setTimeout(() => { void persist(next); }, 2000);
+      return next;
+    });
+  }, [persist]);
+
+  const saveNow = useCallback(async () => {
+    if (autoSaveRef.current) clearTimeout(autoSaveRef.current);
+    await persist(config);
+    toast.success('Todas as alterações foram salvas');
+  }, [config, persist]);
+
+  const discard = useCallback(() => {
+    if (autoSaveRef.current) clearTimeout(autoSaveRef.current);
+    setConfig(savedConfig);
+    toast.info('Alterações descartadas');
+  }, [savedConfig]);
+
+  const restoreDefaults = useCallback(() => {
+    if (!confirm('Restaurar todas as configurações para os padrões? Esta ação não pode ser desfeita até salvar.')) return;
+    setConfig(DEFAULT);
+    toast.warning('Padrões carregados — clique em "Salvar tudo" para confirmar');
+  }, []);
+
+  const exportConfig = useCallback(() => {
+    const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = `backup_${new Date().toISOString().slice(0, 10)}.json`;
+    a.href = url; a.download = `config_sistema_${new Date().toISOString().slice(0, 10)}.json`;
     a.click(); URL.revokeObjectURL(url);
-    toast.success('Dados exportados com sucesso');
-  };
+    toast.success('Configurações exportadas');
+  }, [config]);
 
-  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
+  const importConfig = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const parsed = JSON.parse(String(ev.target?.result));
+        setConfig({ ...DEFAULT, ...parsed, backup: { ...DEFAULT.backup, ...(parsed.backup || {}) } });
+        toast.success('Configurações importadas — revise e salve');
+      } catch {
+        toast.error('Arquivo JSON inválido');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  }, []);
+
+  /* ---------- search filter ---------- */
+  const visibleSections = useMemo(() => {
+    if (!search.trim()) return SECTIONS.map(s => s.id);
+    const q = search.toLowerCase().trim();
+    return SECTIONS.filter(s => s.label.toLowerCase().includes(q) || s.kw.some(k => k.includes(q))).map(s => s.id);
+  }, [search]);
+
+  if (loading) {
+    return <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Sync indicator */}
-      <div className="flex justify-end">
-        <ConfigSyncIndicator />
+    <div className="space-y-5 pb-24">
+      {/* Top toolbar */}
+      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Buscar configuração..."
+            className="pl-9 h-9"
+          />
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <ConfigSyncIndicator />
+          <Button variant="outline" size="sm" onClick={restoreDefaults}>
+            <RotateCcw className="w-3.5 h-3.5 mr-1" /> Padrões
+          </Button>
+          <Button variant="outline" size="sm" onClick={exportConfig}>
+            <FileDown className="w-3.5 h-3.5 mr-1" /> Exportar
+          </Button>
+          <label>
+            <input type="file" accept="application/json" onChange={importConfig} className="hidden" />
+            <Button asChild variant="outline" size="sm" className="cursor-pointer">
+              <span><FileUp className="w-3.5 h-3.5 mr-1" /> Importar</span>
+            </Button>
+          </label>
+        </div>
       </div>
 
-      {/* 9.1 Informações da instituição */}
-      <Card className="shadow-card border-0">
-        <CardContent className="p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <Building2 className="w-5 h-5 text-primary" />
-            <h3 className="font-semibold font-display text-foreground">Informações da Instituição</h3>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="sm:col-span-2"><Label>Nome da Instituição</Label><Input value={config.instituicao.nome} onChange={e => setConfig(p => ({ ...p, instituicao: { ...p.instituicao, nome: e.target.value } }))} onBlur={() => save(config)} /></div>
-            <div className="sm:col-span-2"><Label>Nome do CER</Label><Input value={config.instituicao.cer} onChange={e => setConfig(p => ({ ...p, instituicao: { ...p.instituicao, cer: e.target.value } }))} onBlur={() => save(config)} /></div>
-            <div><Label>CNPJ</Label><Input value={config.instituicao.cnpj} onChange={e => setConfig(p => ({ ...p, instituicao: { ...p.instituicao, cnpj: e.target.value } }))} onBlur={() => save(config)} /></div>
-            <div><Label>Telefone</Label><Input value={config.instituicao.telefone} onChange={e => setConfig(p => ({ ...p, instituicao: { ...p.instituicao, telefone: e.target.value } }))} onBlur={() => save(config)} /></div>
-            <div className="sm:col-span-2"><Label>Endereço</Label><Input value={config.instituicao.endereco} onChange={e => setConfig(p => ({ ...p, instituicao: { ...p.instituicao, endereco: e.target.value } }))} onBlur={() => save(config)} /></div>
-            <div><Label>E-mail institucional</Label><Input value={config.instituicao.email} onChange={e => setConfig(p => ({ ...p, instituicao: { ...p.instituicao, email: e.target.value } }))} onBlur={() => save(config)} /></div>
-            <div><Label>Logo URL</Label><Input value={config.instituicao.logoUrl} onChange={e => setConfig(p => ({ ...p, instituicao: { ...p.instituicao, logoUrl: e.target.value } }))} onBlur={() => save(config)} placeholder="URL PNG/JPG" /></div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Sections */}
+      {visibleSections.includes('instituicao') && (
+        <InstituicaoSection value={config.instituicao} onChange={v => update({ instituicao: v })} />
+      )}
+      {visibleSections.includes('notificacoes') && (
+        <NotificacoesSection value={config.notificacoes} onChange={v => update({ notificacoes: v })} />
+      )}
+      {visibleSections.includes('backup') && (
+        <BackupSection value={config.backup} onChange={v => update({ backup: v })} />
+      )}
+      {visibleSections.includes('aparencia') && (
+        <AparenciaSection value={config.aparencia} onChange={v => update({ aparencia: v })} />
+      )}
+      {visibleSections.includes('lgpd') && (
+        <LgpdSection value={config.conformidade} onChange={v => update({ conformidade: v })} />
+      )}
 
-      {/* 9.2 Notificações */}
-      <Card className="shadow-card border-0">
-        <CardContent className="p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <Bell className="w-5 h-5 text-primary" />
-            <h3 className="font-semibold font-display text-foreground">Notificações do Sistema</h3>
-          </div>
-          <div className="space-y-2">
-            {[
-              { key: 'notificarChegada', label: 'Notificar profissional quando paciente chegar' },
-              { key: 'alertarFimCiclo', label: 'Alertar quando sessão próxima do fim do ciclo' },
-              { key: 'alertarPtsVencer', label: 'Alertar quando PTS vencer' },
-              { key: 'notificarTriagemPendente', label: 'Notificar triagem pendente antes do atendimento' },
-              { key: 'resumoDiario', label: 'Resumo diário de atendimentos por e-mail' },
-              { key: 'relatorioSemanal', label: 'Relatório semanal automático' },
-            ].map(item => (
-              <div key={item.key} className="flex items-center justify-between p-2 bg-muted/30 rounded">
-                <span className="text-sm">{item.label}</span>
-                <Switch checked={(config.notificacoes as any)[item.key]} onCheckedChange={v => save({ ...config, notificacoes: { ...config.notificacoes, [item.key]: v } })} />
-              </div>
-            ))}
-          </div>
-          <div className="mt-3">
-            <Label className="text-xs">Canal</Label>
-            <Select value={config.notificacoes.canal} onValueChange={v => save({ ...config, notificacoes: { ...config.notificacoes, canal: v } })}>
-              <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="sistema">Notificação no sistema</SelectItem>
-                <SelectItem value="email">E-mail</SelectItem>
-                <SelectItem value="ambos">Ambos</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+      {visibleSections.length === 0 && (
+        <div className="text-center py-12 text-muted-foreground text-sm">
+          Nenhuma seção encontrada para "<strong>{search}</strong>"
+        </div>
+      )}
 
-      {/* 9.3 Backup */}
-      <Card className="shadow-card border-0">
-        <CardContent className="p-5">
-          <h3 className="font-semibold font-display text-foreground mb-4">Backup e Dados</h3>
-          <Button variant="outline" className="w-full" onClick={exportAllData}>
-            <Download className="w-4 h-4 mr-2" /> Exportar Todos os Dados (JSON)
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* 9.4 Aparência */}
-      <Card className="shadow-card border-0">
-        <CardContent className="p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <Palette className="w-5 h-5 text-primary" />
-            <h3 className="font-semibold font-display text-foreground">Aparência</h3>
+      {/* Sticky save bar */}
+      {isDirty && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-4">
+          <div className="flex items-center gap-3 px-4 py-3 rounded-xl border bg-card shadow-2xl">
+            <AlertCircle className="w-4 h-4 text-amber-500" />
+            <span className="text-sm text-foreground">Você tem alterações não salvas</span>
+            <Button variant="ghost" size="sm" onClick={discard}>Descartar</Button>
+            <Button size="sm" onClick={saveNow}>
+              <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Salvar tudo
+            </Button>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <Label className="text-xs">Tema</Label>
-              <Select value={config.aparencia.tema} onValueChange={v => save({ ...config, aparencia: { ...config.aparencia, tema: v } })}>
-                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="claro">Claro</SelectItem>
-                  <SelectItem value="escuro">Escuro</SelectItem>
-                  <SelectItem value="sistema">Sistema</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="text-xs">Cor primária institucional</Label>
-              <div className="flex gap-2">
-                <Input type="color" value={config.aparencia.corPrimaria} onChange={e => save({ ...config, aparencia: { ...config.aparencia, corPrimaria: e.target.value } })} className="w-12 h-9 p-0.5" />
-                <Input value={config.aparencia.corPrimaria} onChange={e => setConfig(p => ({ ...p, aparencia: { ...p.aparencia, corPrimaria: e.target.value } }))} onBlur={() => save(config)} className="h-9 flex-1" />
-              </div>
-            </div>
-            <div>
-              <Label className="text-xs">Tamanho da fonte</Label>
-              <Select value={config.aparencia.tamanhoFonte} onValueChange={v => save({ ...config, aparencia: { ...config.aparencia, tamanhoFonte: v } })}>
-                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pequeno">Pequeno</SelectItem>
-                  <SelectItem value="medio">Médio</SelectItem>
-                  <SelectItem value="grande">Grande</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* 9.5 Conformidade LGPD */}
-      <Card className="shadow-card border-0">
-        <CardContent className="p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <Shield className="w-5 h-5 text-primary" />
-            <h3 className="font-semibold font-display text-foreground">Termos e Conformidade (LGPD)</h3>
-          </div>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between p-2 bg-muted/30 rounded">
-              <span className="text-sm">Exibir aviso de LGPD no primeiro acesso</span>
-              <Switch checked={config.conformidade.exibirAvisoLgpd} onCheckedChange={v => save({ ...config, conformidade: { ...config.conformidade, exibirAvisoLgpd: v } })} />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div><Label className="text-xs">Retenção de dados (anos)</Label>
-                <Input type="number" min={1} value={config.conformidade.retencaoDados} onChange={e => setConfig(p => ({ ...p, conformidade: { ...p.conformidade, retencaoDados: parseInt(e.target.value) || 20 } }))} onBlur={() => save(config)} className="h-9" />
-                <p className="text-[10px] text-muted-foreground">Padrão: 20 anos (CFM)</p>
-              </div>
-              <div><Label className="text-xs">Anonimizar após inatividade (anos)</Label>
-                <Input type="number" min={1} value={config.conformidade.anonimizarApos} onChange={e => setConfig(p => ({ ...p, conformidade: { ...p.conformidade, anonimizarApos: parseInt(e.target.value) || 25 } }))} onBlur={() => save(config)} className="h-9" />
-              </div>
-            </div>
-            <div>
-              <Label>Texto da Política de Privacidade</Label>
-              <Textarea value={config.conformidade.lgpdTexto} onChange={e => setConfig(p => ({ ...p, conformidade: { ...p.conformidade, lgpdTexto: e.target.value } }))} onBlur={() => save(config)} className="min-h-[150px]" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+        </div>
+      )}
     </div>
   );
 };
