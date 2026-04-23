@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { DataProvider } from "@/contexts/DataContext";
 import { PermissionsProvider, usePermissions, ModuleName } from "@/contexts/PermissionsContext";
+import { EspecialidadesProvider } from "@/contexts/EspecialidadesContext";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import React, { Suspense } from "react";
 
@@ -174,6 +175,7 @@ const App = () => (
           <AuthProvider>
             <PermissionsProvider>
             <DataProvider>
+            <EspecialidadesProvider>
               <Suspense fallback={<PageLoader />}>
                 <Routes>
                   <Route path="/" element={<Home />} />
@@ -224,6 +226,7 @@ const App = () => (
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>
+            </EspecialidadesProvider>
             </DataProvider>
           </PermissionsProvider>
         </AuthProvider>
