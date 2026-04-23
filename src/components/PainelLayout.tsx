@@ -79,8 +79,16 @@ const PainelLayout: React.FC = () => {
   const isMaster = user?.role?.toLowerCase().trim() === 'master';
 
   // Resolve display name for the current user's unit
+  // Global admin: if there's only one unit, show its name; otherwise show generic label
+  // Other users: show their assigned unit name
   const unitDisplayName = useMemo(() => {
-    if (isGlobalAdmin) return 'SMS Oriximiná';
+    if (isGlobalAdmin) {
+      const ativas = unidades.filter(u => u.ativo !== false);
+      if (ativas.length === 1) {
+        return ativas[0].nomeExibicao || ativas[0].nome;
+      }
+      return 'SMS Oriximiná';
+    }
     const userUnit = unidades.find(u => u.id === user?.unidadeId);
     return userUnit?.nomeExibicao || userUnit?.nome || 'Sistema';
   }, [isGlobalAdmin, unidades, user?.unidadeId]);
