@@ -529,8 +529,9 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                 </div>
               )}
 
+              {!H("uf") && (
               <div>
-                <Label>UF</Label>
+                <Label>{L("uf", "UF")}</Label>
                 <Select value={cd.uf || ""} onValueChange={(v) => setCustom("uf", v)}>
                   <SelectTrigger><SelectValue placeholder="UF" /></SelectTrigger>
                   <SelectContent>
@@ -538,6 +539,7 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                   </SelectContent>
                 </Select>
               </div>
+              )}
 
               {/* Mantém endereco legacy (oculto, sincroniza para retrocompat) */}
               {!H("endereco") && (
