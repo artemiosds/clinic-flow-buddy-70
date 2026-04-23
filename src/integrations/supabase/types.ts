@@ -1772,6 +1772,96 @@ export type Database = {
           },
         ]
       }
+      prontuario_resultados_exames: {
+        Row: {
+          agendamento_id: string | null
+          anexo_nome_arquivo: string | null
+          anexo_storage_path: string | null
+          atualizado_em: string
+          criado_em: string
+          criado_por: string | null
+          criado_por_nome: string | null
+          data_coleta: string | null
+          data_resultado: string | null
+          data_solicitacao: string | null
+          id: string
+          interpretacao: string | null
+          laboratorio: string | null
+          laudo: string | null
+          medico_solicitante: string | null
+          medico_solicitante_id: string | null
+          nome_exame: string
+          observacoes_medicas: string | null
+          paciente_id: string
+          prontuario_id: string | null
+          status: string
+          tipo_atendimento_vinculado: string | null
+          tipo_exame: string | null
+          unidade_id: string | null
+          unidade_medida: string | null
+          valor_encontrado: string | null
+          valor_referencia: string | null
+        }
+        Insert: {
+          agendamento_id?: string | null
+          anexo_nome_arquivo?: string | null
+          anexo_storage_path?: string | null
+          atualizado_em?: string
+          criado_em?: string
+          criado_por?: string | null
+          criado_por_nome?: string | null
+          data_coleta?: string | null
+          data_resultado?: string | null
+          data_solicitacao?: string | null
+          id?: string
+          interpretacao?: string | null
+          laboratorio?: string | null
+          laudo?: string | null
+          medico_solicitante?: string | null
+          medico_solicitante_id?: string | null
+          nome_exame: string
+          observacoes_medicas?: string | null
+          paciente_id: string
+          prontuario_id?: string | null
+          status?: string
+          tipo_atendimento_vinculado?: string | null
+          tipo_exame?: string | null
+          unidade_id?: string | null
+          unidade_medida?: string | null
+          valor_encontrado?: string | null
+          valor_referencia?: string | null
+        }
+        Update: {
+          agendamento_id?: string | null
+          anexo_nome_arquivo?: string | null
+          anexo_storage_path?: string | null
+          atualizado_em?: string
+          criado_em?: string
+          criado_por?: string | null
+          criado_por_nome?: string | null
+          data_coleta?: string | null
+          data_resultado?: string | null
+          data_solicitacao?: string | null
+          id?: string
+          interpretacao?: string | null
+          laboratorio?: string | null
+          laudo?: string | null
+          medico_solicitante?: string | null
+          medico_solicitante_id?: string | null
+          nome_exame?: string
+          observacoes_medicas?: string | null
+          paciente_id?: string
+          prontuario_id?: string | null
+          status?: string
+          tipo_atendimento_vinculado?: string | null
+          tipo_exame?: string | null
+          unidade_id?: string | null
+          unidade_medida?: string | null
+          valor_encontrado?: string | null
+          valor_referencia?: string | null
+        }
+        Relationships: []
+      }
       prontuarios: {
         Row: {
           agendamento_id: string | null
