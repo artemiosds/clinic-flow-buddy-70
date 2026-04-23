@@ -446,6 +446,7 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                   )}
                 </div>
               </div>
+              )}
 
               <div>
                 <Label>
