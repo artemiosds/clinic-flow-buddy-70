@@ -102,12 +102,12 @@ const DEFAULT_CONFIG: ProntuarioConfig = {
 };
 
 const FIELD_TYPES = [
-  { value: 'texto', label: 'Texto Curto' },
-  { value: 'textarea', label: 'Texto Longo (Textarea)' },
-  { value: 'numero', label: 'Número' },
-  { value: 'select', label: 'Seleção (Dropdown)' },
-  { value: 'checkbox', label: 'Checkbox (Múltipla escolha)' },
-  { value: 'data', label: 'Data' },
+  { value: 'texto', label: 'Texto Curto', icon: '✏️', desc: 'Campo de texto simples, uma linha' },
+  { value: 'textarea', label: 'Texto Longo', icon: '📝', desc: 'Área de texto com múltiplas linhas' },
+  { value: 'numero', label: 'Número', icon: '🔢', desc: 'Aceita apenas valores numéricos' },
+  { value: 'select', label: 'Seleção', icon: '📋', desc: 'Dropdown com opções pré-definidas' },
+  { value: 'checkbox', label: 'Múltipla Escolha', icon: '☑️', desc: 'Várias opções podem ser marcadas' },
+  { value: 'data', label: 'Data', icon: '📅', desc: 'Seletor de data (calendário)' },
 ];
 
 const TIPOS_COM_OPCOES = ['select', 'checkbox'];
