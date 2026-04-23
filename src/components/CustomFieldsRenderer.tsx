@@ -3,6 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CustomFieldDef } from '@/hooks/useCustomFields';
 
@@ -61,7 +62,38 @@ const CustomFieldsRenderer: React.FC<CustomFieldsRendererProps> = ({ fields, val
                 </div>
               );
 
-            case 'checkbox':
+            case 'checkbox': {
+              // Multi-option checkbox (array of selected values)
+              if (field.opcoes && field.opcoes.length > 0) {
+                const selected: string[] = Array.isArray(val) ? val : [];
+                return (
+                  <div key={field.id} className="md:col-span-2">
+                    <Label className="text-sm mb-2 block">
+                      {field.rotulo}
+                      {field.obrigatorio && <span className="text-destructive ml-1">*</span>}
+                    </Label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {field.opcoes.map(opt => (
+                        <div key={opt} className="flex items-center gap-2">
+                          <Checkbox
+                            id={`cf-${field.id}-${opt}`}
+                            checked={selected.includes(opt)}
+                            onCheckedChange={c => {
+                              if (c) onChange(field.nome, [...selected, opt]);
+                              else onChange(field.nome, selected.filter(v => v !== opt));
+                            }}
+                            disabled={disabled}
+                          />
+                          <Label htmlFor={`cf-${field.id}-${opt}`} className="text-sm cursor-pointer font-normal">
+                            {opt}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              }
+              // Simple boolean checkbox (legacy)
               return (
                 <div key={field.id} className="flex items-center gap-2">
                   <Checkbox
@@ -73,6 +105,32 @@ const CustomFieldsRenderer: React.FC<CustomFieldsRendererProps> = ({ fields, val
                   <Label htmlFor={`cf-${field.id}`} className="text-sm cursor-pointer">
                     {field.rotulo}
                   </Label>
+                </div>
+              );
+            }
+
+            case 'radio':
+              return (
+                <div key={field.id} className="md:col-span-2">
+                  <Label className="text-sm mb-2 block">
+                    {field.rotulo}
+                    {field.obrigatorio && <span className="text-destructive ml-1">*</span>}
+                  </Label>
+                  <RadioGroup
+                    value={val || ''}
+                    onValueChange={v => onChange(field.nome, v)}
+                    disabled={disabled}
+                    className="flex flex-wrap gap-3"
+                  >
+                    {(field.opcoes || []).map(opt => (
+                      <div key={opt} className="flex items-center gap-2">
+                        <RadioGroupItem value={opt} id={`cf-${field.id}-${opt}`} />
+                        <Label htmlFor={`cf-${field.id}-${opt}`} className="text-sm cursor-pointer font-normal">
+                          {opt}
+                        </Label>
+                      </div>
+                    ))}
+                  </RadioGroup>
                 </div>
               );
 
@@ -88,7 +146,7 @@ const CustomFieldsRenderer: React.FC<CustomFieldsRendererProps> = ({ fields, val
                       <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {field.opcoes.map(opt => (
+                      {(field.opcoes || []).map(opt => (
                         <SelectItem key={opt} value={opt}>{opt}</SelectItem>
                       ))}
                     </SelectContent>
