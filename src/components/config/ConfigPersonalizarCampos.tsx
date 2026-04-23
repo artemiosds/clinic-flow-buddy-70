@@ -284,7 +284,7 @@ const ConfigPersonalizarCampos: React.FC = () => {
   // ---------- Custom field CRUD ----------
   const openAddModal = () => {
     setEditingField(null);
-    setFieldForm({ rotulo: '', tipo: 'text', obrigatorio: false, opcoes: '', valorPadrao: '', mostrarListagem: false });
+    setFieldForm({ rotulo: '', tipo: 'text', obrigatorio: false, opcoes: [], novaOpcao: '', valorPadrao: '', mostrarListagem: false });
     setModalOpen(true);
   };
 
@@ -294,7 +294,8 @@ const ConfigPersonalizarCampos: React.FC = () => {
       rotulo: field.rotulo,
       tipo: field.tipo,
       obrigatorio: field.obrigatorio,
-      opcoes: field.opcoes.join(', '),
+      opcoes: [...field.opcoes],
+      novaOpcao: '',
       valorPadrao: field.valorPadrao,
       mostrarListagem: field.mostrarListagem,
     });
@@ -318,7 +319,7 @@ const ConfigPersonalizarCampos: React.FC = () => {
       nome,
       rotulo: fieldForm.rotulo.trim(),
       tipo: fieldForm.tipo,
-      opcoes: fieldForm.tipo === 'select' ? fieldForm.opcoes.split(',').map((o) => o.trim()).filter(Boolean) : [],
+      opcoes: ['select', 'checkbox', 'radio'].includes(fieldForm.tipo) ? fieldForm.opcoes.filter(Boolean) : [],
       obrigatorio: fieldForm.obrigatorio,
       ativo: editingField?.ativo ?? true,
       ordem: editingField?.ordem ?? (screenConfig.fields.length + 1) * 10,
