@@ -41,13 +41,14 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { cn } from '@/lib/utils';
 
-const FIELD_TYPE_LABELS: Record<CustomFieldType, { label: string; icon: React.ElementType }> = {
-  text: { label: 'Texto', icon: Type },
-  number: { label: 'Número', icon: Hash },
-  date: { label: 'Data', icon: Calendar },
-  checkbox: { label: 'Checkbox', icon: CheckSquare },
-  select: { label: 'Seleção', icon: List },
-  textarea: { label: 'Texto Longo', icon: AlignLeft },
+const FIELD_TYPE_LABELS: Record<CustomFieldType, { label: string; icon: React.ElementType; desc: string }> = {
+  text: { label: 'Texto', icon: Type, desc: 'Campo de texto curto' },
+  number: { label: 'Número', icon: Hash, desc: 'Valor numérico' },
+  date: { label: 'Data', icon: Calendar, desc: 'Seletor de data' },
+  checkbox: { label: 'Múltipla escolha', icon: CheckSquare, desc: 'Várias opções selecionáveis' },
+  radio: { label: 'Escolha única', icon: List, desc: 'Apenas uma opção por vez' },
+  select: { label: 'Seleção (dropdown)', icon: List, desc: 'Lista suspensa de opções' },
+  textarea: { label: 'Texto Longo', icon: AlignLeft, desc: 'Campo de texto extenso' },
 };
 
 const generateId = () => `cf_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
