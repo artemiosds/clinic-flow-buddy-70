@@ -85,7 +85,8 @@ const SortableItem: React.FC<SortableItemProps> = ({
     opacity: isDragging ? 0.6 : 1,
   };
 
-  const TypeIcon = row.kind === 'custom' ? (FIELD_TYPE_LABELS[row.field.tipo]?.icon || Type) : Lock;
+  const typeInfo = row.kind === 'custom' ? FIELD_TYPE_LABELS[row.field.tipo] : undefined;
+  const TypeIcon = typeInfo?.icon || (row.kind === 'native' ? Lock : Type);
 
   return (
     <div
