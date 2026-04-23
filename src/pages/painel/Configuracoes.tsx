@@ -5,7 +5,7 @@ import VincularSigtapProcedimentos from '@/components/VincularSigtapProcedimento
 import SigtapSyncPanel from '@/components/SigtapSyncPanel';
 import ConfiguracaoTriagem from '@/components/ConfiguracaoTriagem';
 import { useAuth } from '@/contexts/AuthContext';
-import { useGoogleCalendar } from '@/hooks/useGoogleCalendar';
+
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -1044,31 +1044,6 @@ const Configuracoes: React.FC = () => {
               </CardContent>
             </Card>
 
-            <Card className="shadow-card border-0">
-              <CardContent className="p-5">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center"><Calendar className="w-5 h-5 text-primary" /></div>
-                  <div className="flex-1"><h3 className="font-semibold font-display text-foreground">Google Agenda</h3><p className="text-sm text-muted-foreground">Sincronizar agendamentos</p></div>
-                  {gcal.connected || googleCalendar.conectado ? <span className="flex items-center gap-1 text-xs bg-success/10 text-success px-2 py-1 rounded-full font-medium"><CheckCircle2 className="w-3 h-3" /> Conectado</span> : <span className="flex items-center gap-1 text-xs bg-muted text-muted-foreground px-2 py-1 rounded-full font-medium"><XCircle className="w-3 h-3" /> Desconectado</span>}
-                </div>
-                <div className="space-y-4">
-                  {gcal.connected || googleCalendar.conectado ? (
-                    <div className="flex gap-2">
-                      <Button variant="outline" className="flex-1" onClick={handleConnectGoogle} disabled={gcal.loading}>{gcal.loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}Reconectar</Button>
-                      <Button variant="destructive" className="flex-1" onClick={handleDisconnectGoogle} disabled={gcal.loading}>Desconectar</Button>
-                    </div>
-                  ) : (
-                    <Button variant="outline" className="w-full" onClick={handleConnectGoogle} disabled={gcal.loading}>{gcal.loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}Conectar Google Agenda</Button>
-                  )}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <div className="flex items-center justify-between p-2 rounded-lg bg-muted/50"><span className="text-sm text-muted-foreground">Criar evento</span><Switch checked={googleCalendar.criarEvento} onCheckedChange={v => updateGoogle({ criarEvento: v })} /></div>
-                    <div className="flex items-center justify-between p-2 rounded-lg bg-muted/50"><span className="text-sm text-muted-foreground">Atualizar ao remarcar</span><Switch checked={googleCalendar.atualizarRemarcar} onCheckedChange={v => updateGoogle({ atualizarRemarcar: v })} /></div>
-                    <div className="flex items-center justify-between p-2 rounded-lg bg-muted/50"><span className="text-sm text-muted-foreground">Remover ao cancelar</span><Switch checked={googleCalendar.removerCancelar} onCheckedChange={v => updateGoogle({ removerCancelar: v })} /></div>
-                    <div className="flex items-center justify-between p-2 rounded-lg bg-muted/50"><span className="text-sm text-muted-foreground">Comprovante e-mail</span><Switch checked={googleCalendar.enviarEmail} onCheckedChange={v => updateGoogle({ enviarEmail: v })} /></div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
 
             <Card className="shadow-card border-0">
               <CardContent className="p-5">
