@@ -102,12 +102,12 @@ const DEFAULT_CONFIG: ProntuarioConfig = {
 };
 
 const FIELD_TYPES = [
-  { value: 'texto', label: 'Texto Curto' },
-  { value: 'textarea', label: 'Texto Longo (Textarea)' },
-  { value: 'numero', label: 'Número' },
-  { value: 'select', label: 'Seleção (Dropdown)' },
-  { value: 'checkbox', label: 'Checkbox (Múltipla escolha)' },
-  { value: 'data', label: 'Data' },
+  { value: 'texto', label: 'Texto Curto', icon: '✏️', desc: 'Campo de texto simples, uma linha' },
+  { value: 'textarea', label: 'Texto Longo', icon: '📝', desc: 'Área de texto com múltiplas linhas' },
+  { value: 'numero', label: 'Número', icon: '🔢', desc: 'Aceita apenas valores numéricos' },
+  { value: 'select', label: 'Seleção', icon: '📋', desc: 'Dropdown com opções pré-definidas' },
+  { value: 'checkbox', label: 'Múltipla Escolha', icon: '☑️', desc: 'Várias opções podem ser marcadas' },
+  { value: 'data', label: 'Data', icon: '📅', desc: 'Seletor de data (calendário)' },
 ];
 
 const TIPOS_COM_OPCOES = ['select', 'checkbox'];
@@ -119,7 +119,7 @@ const ConfigProntuario: React.FC = () => {
   const [tipoSelecionado, setTipoSelecionado] = useState('primeira_consulta');
   const [addFieldDialog, setAddFieldDialog] = useState(false);
   const [addAlertDialog, setAddAlertDialog] = useState(false);
-  const [newField, setNewField] = useState({ label: '', tipo: 'textarea', obrigatorio: false, opcoes: '', tiposProntuario: ['primeira_consulta'] as string[] });
+  const [newField, setNewField] = useState({ label: '', tipo: 'textarea', obrigatorio: false, opcoes: [] as string[], novaOpcao: '', tiposProntuario: ['primeira_consulta'] as string[] });
   const [newAlert, setNewAlert] = useState({ campo: '', operador: '>=', valor: '', mensagem: '' });
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [builderOpen, setBuilderOpen] = useState<{ key: string; label: string } | null>(null);
@@ -281,6 +281,14 @@ const ConfigProntuario: React.FC = () => {
 
   const addCampo = () => {
     if (!newField.label.trim()) return;
+    if (TIPOS_COM_OPCOES.includes(newField.tipo) && newField.opcoes.length === 0) {
+      toast.error('Adicione ao menos uma opção de resposta');
+      return;
+    }
+    if (newField.tiposProntuario.length === 0) {
+      toast.error('Selecione ao menos um tipo de prontuário');
+      return;
+    }
     const campo: CampoConfig = {
       id: `custom_${Date.now()}`,
       key: `custom_${Date.now()}`,
@@ -291,12 +299,12 @@ const ConfigProntuario: React.FC = () => {
       isBuiltin: false,
       order: camposFiltrados.length + 1,
       tiposProntuario: newField.tiposProntuario,
-      opcoes: newField.tipo === 'select' ? newField.opcoes.split(',').map(o => o.trim()).filter(Boolean) : undefined,
+      opcoes: TIPOS_COM_OPCOES.includes(newField.tipo) ? newField.opcoes : undefined,
     };
     const updated = { ...config, campos: [...config.campos, campo] };
     saveConfig(updated);
     setAddFieldDialog(false);
-    setNewField({ label: '', tipo: 'textarea', obrigatorio: false, opcoes: '', tiposProntuario: ['primeira_consulta'] });
+    setNewField({ label: '', tipo: 'textarea', obrigatorio: false, opcoes: [], novaOpcao: '', tiposProntuario: ['primeira_consulta'] });
   };
 
   const deleteCampo = (id: string) => {
@@ -559,39 +567,186 @@ const ConfigProntuario: React.FC = () => {
       </Card>
 
       <Dialog open={addFieldDialog} onOpenChange={setAddFieldDialog}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Adicionar Campo Personalizado</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <div><Label>Nome do campo</Label><Input value={newField.label} onChange={e => setNewField(p => ({ ...p, label: e.target.value }))} /></div>
-            <div><Label>Tipo</Label>
-              <Select value={newField.tipo} onValueChange={v => setNewField(p => ({ ...p, tipo: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{FIELD_TYPES.map(ft => <SelectItem key={ft.value} value={ft.value}>{ft.label}</SelectItem>)}</SelectContent>
-              </Select>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Plus className="w-4 h-4 text-primary" />
+              </div>
+              Novo Campo Personalizado
+            </DialogTitle>
+            <p className="text-xs text-muted-foreground mt-1">
+              Configure o campo e defina em quais tipos de prontuário ele será exibido.
+            </p>
+          </DialogHeader>
+
+          <div className="space-y-5 py-2">
+            {/* Nome do campo */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Nome do Campo</Label>
+              <Input
+                value={newField.label}
+                onChange={e => setNewField(p => ({ ...p, label: e.target.value }))}
+                placeholder="Ex: Queixa Principal, Observações Clínicas..."
+                className="h-11 text-sm"
+                autoFocus
+              />
             </div>
-            {newField.tipo === 'select' && (
-              <div><Label>Opções (separadas por vírgula)</Label><Input value={newField.opcoes} onChange={e => setNewField(p => ({ ...p, opcoes: e.target.value }))} placeholder="Opção 1, Opção 2, Opção 3" /></div>
-            )}
-            <div className="flex items-center gap-2"><Switch checked={newField.obrigatorio} onCheckedChange={v => setNewField(p => ({ ...p, obrigatorio: v }))} /><Label>Obrigatório</Label></div>
-            <div>
-              <Label>Aparece nos tipos:</Label>
-              <div className="flex flex-wrap gap-2 mt-1">
-                {TIPOS_PRONTUARIO.map(t => (
-                  <Button key={t.key} size="sm" variant={newField.tiposProntuario.includes(t.key) ? 'default' : 'outline'} className="text-xs"
-                    onClick={() => setNewField(p => ({
-                      ...p,
-                      tiposProntuario: p.tiposProntuario.includes(t.key)
-                        ? p.tiposProntuario.filter(x => x !== t.key)
-                        : [...p.tiposProntuario, t.key]
-                    }))}
-                  >{t.label}</Button>
+
+            {/* Tipo do campo — grid visual */}
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Tipo do Campo</Label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {FIELD_TYPES.map(ft => (
+                  <button
+                    key={ft.value}
+                    type="button"
+                    onClick={() => setNewField(p => ({ ...p, tipo: ft.value, opcoes: TIPOS_COM_OPCOES.includes(ft.value) ? p.opcoes : [] }))}
+                    className={`relative flex flex-col items-start gap-1 p-3 rounded-xl border-2 transition-all text-left ${
+                      newField.tipo === ft.value
+                        ? 'border-primary bg-primary/5 shadow-sm'
+                        : 'border-border hover:border-primary/40 hover:bg-muted/30'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">{ft.icon}</span>
+                      <span className="text-sm font-semibold text-foreground">{ft.label}</span>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground leading-tight">{ft.desc}</span>
+                    {newField.tipo === ft.value && (
+                      <div className="absolute top-2 right-2 w-4 h-4 rounded-full bg-primary flex items-center justify-center">
+                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5L4 7L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      </div>
+                    )}
+                  </button>
                 ))}
               </div>
             </div>
+
+            {/* Opções de resposta para select/checkbox */}
+            {TIPOS_COM_OPCOES.includes(newField.tipo) && (
+              <div className="space-y-2 rounded-xl border border-border p-4 bg-muted/20">
+                <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Opções de Resposta
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={newField.novaOpcao}
+                    onChange={e => setNewField(p => ({ ...p, novaOpcao: e.target.value }))}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const v = newField.novaOpcao.trim();
+                        if (!v) return;
+                        if (newField.opcoes.includes(v)) { toast.error('Opção já existe'); return; }
+                        setNewField(p => ({ ...p, opcoes: [...p.opcoes, v], novaOpcao: '' }));
+                      }
+                    }}
+                    placeholder="Digite e pressione Enter"
+                    className="flex-1 h-9"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="h-9 px-3"
+                    disabled={!newField.novaOpcao.trim()}
+                    onClick={() => {
+                      const v = newField.novaOpcao.trim();
+                      if (!v) return;
+                      if (newField.opcoes.includes(v)) { toast.error('Opção já existe'); return; }
+                      setNewField(p => ({ ...p, opcoes: [...p.opcoes, v], novaOpcao: '' }));
+                    }}
+                  >
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+                {newField.opcoes.length === 0 ? (
+                  <p className="text-[11px] text-muted-foreground italic py-3 text-center border border-dashed border-border/60 rounded-lg">
+                    Nenhuma opção adicionada. Digite acima e pressione Enter.
+                  </p>
+                ) : (
+                  <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                    {newField.opcoes.map((op, idx) => (
+                      <div key={idx} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-background border border-border/50">
+                        <span className="text-[10px] text-muted-foreground font-mono w-5">{idx + 1}.</span>
+                        <span className="flex-1 text-sm font-medium">{op}</span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 text-destructive/60 hover:text-destructive"
+                          onClick={() => setNewField(p => ({ ...p, opcoes: p.opcoes.filter((_, i) => i !== idx) }))}
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Obrigatório */}
+            <div className="flex items-center justify-between rounded-xl border border-border p-4 bg-muted/20">
+              <div>
+                <Label className="text-sm font-semibold text-foreground">Campo Obrigatório</Label>
+                <p className="text-[10px] text-muted-foreground mt-0.5">O profissional não poderá salvar o prontuário sem preencher</p>
+              </div>
+              <Switch checked={newField.obrigatorio} onCheckedChange={v => setNewField(p => ({ ...p, obrigatorio: v }))} />
+            </div>
+
+            {/* Tipos de prontuário */}
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Aparece nos Tipos</Label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {TIPOS_PRONTUARIO.map(t => {
+                  const selected = newField.tiposProntuario.includes(t.key);
+                  return (
+                    <button
+                      key={t.key}
+                      type="button"
+                      onClick={() => setNewField(p => ({
+                        ...p,
+                        tiposProntuario: selected
+                          ? p.tiposProntuario.filter(x => x !== t.key)
+                          : [...p.tiposProntuario, t.key]
+                      }))}
+                      className={`flex items-center gap-2.5 p-3 rounded-xl border-2 transition-all ${
+                        selected
+                          ? 'border-primary bg-primary/5'
+                          : 'border-border hover:border-primary/40 hover:bg-muted/30'
+                      }`}
+                    >
+                      <div className={`w-3 h-3 rounded-sm border-2 flex items-center justify-center transition-colors ${
+                        selected ? 'bg-primary border-primary' : 'border-muted-foreground/40'
+                      }`}>
+                        {selected && <svg width="8" height="8" viewBox="0 0 10 10" fill="none"><path d="M2 5L4 7L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                      </div>
+                      <span className={`text-sm font-medium ${selected ? 'text-foreground' : 'text-muted-foreground'}`}>
+                        {t.label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              {newField.tiposProntuario.length === 0 && (
+                <p className="text-[10px] text-destructive flex items-center gap-1">
+                  <AlertTriangle className="w-3 h-3" /> Selecione ao menos um tipo
+                </p>
+              )}
+            </div>
           </div>
-          <DialogFooter>
+
+          <DialogFooter className="gap-2 sm:gap-0">
             <Button variant="outline" onClick={() => setAddFieldDialog(false)}>Cancelar</Button>
-            <Button onClick={addCampo} disabled={!newField.label.trim()}>Adicionar</Button>
+            <Button
+              onClick={addCampo}
+              disabled={!newField.label.trim() || newField.tiposProntuario.length === 0 || (TIPOS_COM_OPCOES.includes(newField.tipo) && newField.opcoes.length === 0)}
+              className="gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Adicionar Campo
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
