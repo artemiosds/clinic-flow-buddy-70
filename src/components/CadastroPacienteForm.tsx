@@ -571,8 +571,9 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                 </div>
               )}
 
+              {!H("telefoneSecundario") && (
               <div>
-                <Label>Telefone Secundário</Label>
+                <Label>{L("telefoneSecundario", "Telefone Secundário")}</Label>
                 <Input
                   value={cd.telefoneSecundario || ""}
                   onChange={(e) => setCustom("telefoneSecundario", applyPhoneMask(e.target.value))}
@@ -580,6 +581,7 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                   inputMode="numeric"
                 />
               </div>
+              )}
 
               {!H("email") && (
                 <div className="md:col-span-2">
