@@ -346,8 +346,9 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                 </div>
               )}
 
+              {!H("sexo") && (
               <div>
-                <Label>Sexo</Label>
+                <Label>{L("sexo", "Sexo")}</Label>
                 <Select value={cd.sexo || ""} onValueChange={(v) => setCustom("sexo", v)}>
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent>
@@ -356,6 +357,7 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                   </SelectContent>
                 </Select>
               </div>
+              )}
 
               {!H("cpf") && (
                 <div>
@@ -383,6 +385,7 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                 </div>
               )}
 
+              {!H("situacaoRua") && (
               <div className="flex items-center gap-3 p-2 rounded-md bg-muted/40 md:col-span-2">
                 <Switch
                   id="situacao-rua"
@@ -390,9 +393,10 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                   onCheckedChange={(v) => setCustom("situacaoRua", v)}
                 />
                 <Label htmlFor="situacao-rua" className="text-sm cursor-pointer">
-                  Pessoa em situação de rua?
+                  {L("situacaoRua", "Pessoa em situação de rua?")}
                 </Label>
               </div>
+              )}
             </div>
 
             {/* Menor de idade */}
@@ -426,8 +430,9 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
           {/* ═══ ABA 2 — ENDEREÇO ═══ */}
           <TabsContent value="endereco" className="space-y-4 mt-2">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {!H("cep") && (
               <div>
-                <Label>CEP</Label>
+                <Label>{L("cep", "CEP")}</Label>
                 <div className="relative">
                   <Input
                     value={cd.cep || ""}
@@ -441,10 +446,12 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                   )}
                 </div>
               </div>
+              )}
 
+              {!H("tipoLogradouro") && (
               <div>
                 <Label>
-                  Tipo de Logradouro (DNE) <span className="text-destructive">*</span>
+                  {L("tipoLogradouro", "Tipo de Logradouro (DNE)")} <span className="text-destructive">*</span>
                 </Label>
                 <LogradouroDneAutocomplete
                   value={cd.tipoLogradouro || ""}
@@ -462,18 +469,22 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                   required
                 />
               </div>
+              )}
 
+              {!H("logradouro") && (
               <div className="md:col-span-2">
-                <Label>Logradouro</Label>
+                <Label>{L("logradouro", "Logradouro")}</Label>
                 <Input
                   value={cd.logradouro || ""}
                   onChange={(e) => setCustom("logradouro", sanitizeUpper(e.target.value))}
                   placeholder="NOME DA RUA / AVENIDA"
                 />
               </div>
+              )}
 
+              {!H("numero") && (
               <div>
-                <Label>Número</Label>
+                <Label>{L("numero", "Número")}</Label>
                 <Input
                   value={cd.numero || ""}
                   onChange={(e) => setCustom("numero", e.target.value.replace(/[^\dA-Za-z\/\-]/g, "").toUpperCase())}
@@ -481,24 +492,29 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                   inputMode="numeric"
                 />
               </div>
+              )}
 
+              {!H("complemento") && (
               <div>
-                <Label>Complemento</Label>
+                <Label>{L("complemento", "Complemento")}</Label>
                 <Input
                   value={cd.complemento || ""}
                   onChange={(e) => setCustom("complemento", sanitizeUpper(e.target.value))}
                   placeholder="APTO, BLOCO, ETC"
                 />
               </div>
+              )}
 
+              {!H("bairro") && (
               <div>
-                <Label>Bairro</Label>
+                <Label>{L("bairro", "Bairro")}</Label>
                 <Input
                   value={cd.bairro || ""}
                   onChange={(e) => setCustom("bairro", sanitizeUpper(e.target.value))}
                   placeholder="BAIRRO"
                 />
               </div>
+              )}
 
               {!H("municipio") && (
                 <div>
@@ -513,8 +529,9 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                 </div>
               )}
 
+              {!H("uf") && (
               <div>
-                <Label>UF</Label>
+                <Label>{L("uf", "UF")}</Label>
                 <Select value={cd.uf || ""} onValueChange={(v) => setCustom("uf", v)}>
                   <SelectTrigger><SelectValue placeholder="UF" /></SelectTrigger>
                   <SelectContent>
@@ -522,6 +539,7 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                   </SelectContent>
                 </Select>
               </div>
+              )}
 
               {/* Mantém endereco legacy (oculto, sincroniza para retrocompat) */}
               {!H("endereco") && (
@@ -553,8 +571,9 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                 </div>
               )}
 
+              {!H("telefoneSecundario") && (
               <div>
-                <Label>Telefone Secundário</Label>
+                <Label>{L("telefoneSecundario", "Telefone Secundário")}</Label>
                 <Input
                   value={cd.telefoneSecundario || ""}
                   onChange={(e) => setCustom("telefoneSecundario", applyPhoneMask(e.target.value))}
@@ -562,6 +581,7 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                   inputMode="numeric"
                 />
               </div>
+              )}
 
               {!H("email") && (
                 <div className="md:col-span-2">
