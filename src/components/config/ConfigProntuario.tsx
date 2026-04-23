@@ -281,6 +281,14 @@ const ConfigProntuario: React.FC = () => {
 
   const addCampo = () => {
     if (!newField.label.trim()) return;
+    if (TIPOS_COM_OPCOES.includes(newField.tipo) && newField.opcoes.length === 0) {
+      toast.error('Adicione ao menos uma opção de resposta');
+      return;
+    }
+    if (newField.tiposProntuario.length === 0) {
+      toast.error('Selecione ao menos um tipo de prontuário');
+      return;
+    }
     const campo: CampoConfig = {
       id: `custom_${Date.now()}`,
       key: `custom_${Date.now()}`,
@@ -291,12 +299,12 @@ const ConfigProntuario: React.FC = () => {
       isBuiltin: false,
       order: camposFiltrados.length + 1,
       tiposProntuario: newField.tiposProntuario,
-      opcoes: newField.tipo === 'select' ? newField.opcoes.split(',').map(o => o.trim()).filter(Boolean) : undefined,
+      opcoes: TIPOS_COM_OPCOES.includes(newField.tipo) ? newField.opcoes : undefined,
     };
     const updated = { ...config, campos: [...config.campos, campo] };
     saveConfig(updated);
     setAddFieldDialog(false);
-    setNewField({ label: '', tipo: 'textarea', obrigatorio: false, opcoes: '', tiposProntuario: ['primeira_consulta'] });
+    setNewField({ label: '', tipo: 'textarea', obrigatorio: false, opcoes: [], novaOpcao: '', tiposProntuario: ['primeira_consulta'] });
   };
 
   const deleteCampo = (id: string) => {
