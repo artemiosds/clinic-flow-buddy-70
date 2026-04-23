@@ -190,7 +190,7 @@ const ConfigPersonalizarCampos: React.FC = () => {
 
   const [fieldForm, setFieldForm] = useState({
     rotulo: '', tipo: 'text' as CustomFieldType, obrigatorio: false,
-    opcoes: '', valorPadrao: '', mostrarListagem: false,
+    opcoes: [] as string[], novaOpcao: '', valorPadrao: '', mostrarListagem: false,
   });
 
   const sensors = useSensors(
