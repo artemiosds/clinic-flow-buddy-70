@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,10 +20,14 @@ import {
   arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-
-const CONFIG_KEY = 'config_especialidades_campos';
-
-export type TipoProntuario = 'avaliacao' | 'retorno' | 'sessao' | 'urgencia' | 'procedimento';
+import {
+  useEspecialidades,
+  type EspecialidadeConfig,
+  type CampoEspecialidade,
+  type TipoProntuario,
+  type CondicaoVisibilidade,
+  DEFAULT_TIPOS,
+} from '@/contexts/EspecialidadesContext';
 
 const TIPOS_PRONTUARIO: { key: TipoProntuario; label: string; short: string }[] = [
   { key: 'avaliacao', label: 'Avaliação Inicial', short: 'Avaliação' },
