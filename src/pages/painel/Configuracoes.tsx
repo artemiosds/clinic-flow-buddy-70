@@ -62,7 +62,7 @@ const Configuracoes: React.FC = () => {
   const { configuracoes, updateConfiguracoes, unidades, funcionarios } = useData();
   const { user } = useAuth();
   const { whatsapp, googleCalendar, filaEspera, templates, webhook } = configuracoes;
-  const gcal = useGoogleCalendar();
+  
   const [searchParams, setSearchParams] = useSearchParams();
   const [webhookUrl, setWebhookUrl] = useState(webhook.url);
   const [webhookEditing, setWebhookEditing] = useState(!webhook.url);
@@ -258,21 +258,6 @@ const Configuracoes: React.FC = () => {
     })();
   }, [user?.unidadeId]);
 
-  useEffect(() => {
-    const code = searchParams.get('code');
-    if (code) {
-      gcal.exchangeCode(code).then(() => {
-        toast.success('Google Agenda conectada com sucesso!');
-        updateConfiguracoes({ googleCalendar: { ...googleCalendar, conectado: true } });
-        searchParams.delete('code');
-        searchParams.delete('state');
-        searchParams.delete('scope');
-        setSearchParams(searchParams, { replace: true });
-      }).catch(() => {
-        toast.error('Erro ao conectar Google Agenda.');
-      });
-    }
-  }, []);
 
   useEffect(() => {
     if (!isMaster) return;
@@ -333,13 +318,6 @@ const Configuracoes: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    gcal.checkStatus().then((connected) => {
-      if (connected !== googleCalendar.conectado) {
-        updateConfiguracoes({ googleCalendar: { ...googleCalendar, conectado: connected } });
-      }
-    });
-  }, []);
 
   useEffect(() => {
     if (!isMaster) { setEvolutionLoading(false); return; }
@@ -481,27 +459,6 @@ const Configuracoes: React.FC = () => {
     updateConfiguracoes({ whatsapp: { ...whatsapp, notificacoes: { ...whatsapp.notificacoes, ...data } } });
   };
 
-  const updateGoogle = (data: Partial<typeof googleCalendar>) => {
-    updateConfiguracoes({ googleCalendar: { ...googleCalendar, ...data } });
-  };
-
-  const handleConnectGoogle = async () => {
-    try {
-      await gcal.connect();
-    } catch {
-      toast.error('Erro ao iniciar conexão com Google Agenda.');
-    }
-  };
-
-  const handleDisconnectGoogle = async () => {
-    try {
-      await gcal.disconnect();
-      updateConfiguracoes({ googleCalendar: { ...googleCalendar, conectado: false } });
-      toast.success('Google Agenda desconectada.');
-    } catch {
-      toast.error('Erro ao desconectar.');
-    }
-  };
 
   if (!isMaster) {
     return <Navigate to="/painel/dashboard" replace />;
