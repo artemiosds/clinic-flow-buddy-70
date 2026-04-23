@@ -448,9 +448,10 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
               </div>
               )}
 
+              {!H("tipoLogradouro") && (
               <div>
                 <Label>
-                  Tipo de Logradouro (DNE) <span className="text-destructive">*</span>
+                  {L("tipoLogradouro", "Tipo de Logradouro (DNE)")} <span className="text-destructive">*</span>
                 </Label>
                 <LogradouroDneAutocomplete
                   value={cd.tipoLogradouro || ""}
@@ -468,18 +469,22 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                   required
                 />
               </div>
+              )}
 
+              {!H("logradouro") && (
               <div className="md:col-span-2">
-                <Label>Logradouro</Label>
+                <Label>{L("logradouro", "Logradouro")}</Label>
                 <Input
                   value={cd.logradouro || ""}
                   onChange={(e) => setCustom("logradouro", sanitizeUpper(e.target.value))}
                   placeholder="NOME DA RUA / AVENIDA"
                 />
               </div>
+              )}
 
+              {!H("numero") && (
               <div>
-                <Label>Número</Label>
+                <Label>{L("numero", "Número")}</Label>
                 <Input
                   value={cd.numero || ""}
                   onChange={(e) => setCustom("numero", e.target.value.replace(/[^\dA-Za-z\/\-]/g, "").toUpperCase())}
@@ -487,24 +492,29 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                   inputMode="numeric"
                 />
               </div>
+              )}
 
+              {!H("complemento") && (
               <div>
-                <Label>Complemento</Label>
+                <Label>{L("complemento", "Complemento")}</Label>
                 <Input
                   value={cd.complemento || ""}
                   onChange={(e) => setCustom("complemento", sanitizeUpper(e.target.value))}
                   placeholder="APTO, BLOCO, ETC"
                 />
               </div>
+              )}
 
+              {!H("bairro") && (
               <div>
-                <Label>Bairro</Label>
+                <Label>{L("bairro", "Bairro")}</Label>
                 <Input
                   value={cd.bairro || ""}
                   onChange={(e) => setCustom("bairro", sanitizeUpper(e.target.value))}
                   placeholder="BAIRRO"
                 />
               </div>
+              )}
 
               {!H("municipio") && (
                 <div>
