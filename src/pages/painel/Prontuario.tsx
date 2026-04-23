@@ -2454,6 +2454,19 @@ const ProntuarioPage: React.FC = () => {
             )}
 
             {form.paciente_id && (
+              <ProntuarioAnexos
+                prontuarioId={editId}
+                pacienteId={form.paciente_id}
+                agendamentoId={form.agendamento_id || undefined}
+                tipoRegistro={form.tipo_registro}
+                unidadeId={user?.unidadeId || ""}
+                uploadedBy={user?.id || ""}
+                uploadedByNome={user?.nome || ""}
+                showResultadosAnteriores={form.tipo_registro === "retorno"}
+              />
+            )}
+
+            {form.paciente_id && (
               <Button
                 type="button"
                 variant="outline"
