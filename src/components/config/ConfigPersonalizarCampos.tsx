@@ -41,13 +41,14 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { cn } from '@/lib/utils';
 
-const FIELD_TYPE_LABELS: Record<CustomFieldType, { label: string; icon: React.ElementType }> = {
-  text: { label: 'Texto', icon: Type },
-  number: { label: 'Número', icon: Hash },
-  date: { label: 'Data', icon: Calendar },
-  checkbox: { label: 'Checkbox', icon: CheckSquare },
-  select: { label: 'Seleção', icon: List },
-  textarea: { label: 'Texto Longo', icon: AlignLeft },
+const FIELD_TYPE_LABELS: Record<CustomFieldType, { label: string; icon: React.ElementType; desc: string }> = {
+  text: { label: 'Texto', icon: Type, desc: 'Campo de texto curto' },
+  number: { label: 'Número', icon: Hash, desc: 'Valor numérico' },
+  date: { label: 'Data', icon: Calendar, desc: 'Seletor de data' },
+  checkbox: { label: 'Múltipla escolha', icon: CheckSquare, desc: 'Várias opções selecionáveis' },
+  radio: { label: 'Escolha única', icon: List, desc: 'Apenas uma opção por vez' },
+  select: { label: 'Seleção (dropdown)', icon: List, desc: 'Lista suspensa de opções' },
+  textarea: { label: 'Texto Longo', icon: AlignLeft, desc: 'Campo de texto extenso' },
 };
 
 const generateId = () => `cf_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -84,7 +85,8 @@ const SortableItem: React.FC<SortableItemProps> = ({
     opacity: isDragging ? 0.6 : 1,
   };
 
-  const TypeIcon = row.kind === 'custom' ? (FIELD_TYPE_LABELS[row.field.tipo]?.icon || Type) : Lock;
+  const typeInfo = row.kind === 'custom' ? FIELD_TYPE_LABELS[row.field.tipo] : undefined;
+  const TypeIcon = typeInfo?.icon || (row.kind === 'native' ? Lock : Type);
 
   return (
     <div
@@ -188,7 +190,7 @@ const ConfigPersonalizarCampos: React.FC = () => {
 
   const [fieldForm, setFieldForm] = useState({
     rotulo: '', tipo: 'text' as CustomFieldType, obrigatorio: false,
-    opcoes: '', valorPadrao: '', mostrarListagem: false,
+    opcoes: [] as string[], novaOpcao: '', valorPadrao: '', mostrarListagem: false,
   });
 
   const sensors = useSensors(
@@ -282,7 +284,7 @@ const ConfigPersonalizarCampos: React.FC = () => {
   // ---------- Custom field CRUD ----------
   const openAddModal = () => {
     setEditingField(null);
-    setFieldForm({ rotulo: '', tipo: 'text', obrigatorio: false, opcoes: '', valorPadrao: '', mostrarListagem: false });
+    setFieldForm({ rotulo: '', tipo: 'text', obrigatorio: false, opcoes: [], novaOpcao: '', valorPadrao: '', mostrarListagem: false });
     setModalOpen(true);
   };
 
@@ -292,7 +294,8 @@ const ConfigPersonalizarCampos: React.FC = () => {
       rotulo: field.rotulo,
       tipo: field.tipo,
       obrigatorio: field.obrigatorio,
-      opcoes: field.opcoes.join(', '),
+      opcoes: [...field.opcoes],
+      novaOpcao: '',
       valorPadrao: field.valorPadrao,
       mostrarListagem: field.mostrarListagem,
     });
@@ -302,6 +305,11 @@ const ConfigPersonalizarCampos: React.FC = () => {
   const saveField = async () => {
     if (!fieldForm.rotulo.trim()) {
       toast.error('Rótulo é obrigatório');
+      return;
+    }
+    const needsOptions = ['select', 'checkbox', 'radio'].includes(fieldForm.tipo);
+    if (needsOptions && fieldForm.opcoes.filter(Boolean).length === 0) {
+      toast.error('Adicione pelo menos uma opção para este tipo de campo');
       return;
     }
 
@@ -316,7 +324,7 @@ const ConfigPersonalizarCampos: React.FC = () => {
       nome,
       rotulo: fieldForm.rotulo.trim(),
       tipo: fieldForm.tipo,
-      opcoes: fieldForm.tipo === 'select' ? fieldForm.opcoes.split(',').map((o) => o.trim()).filter(Boolean) : [],
+      opcoes: ['select', 'checkbox', 'radio'].includes(fieldForm.tipo) ? fieldForm.opcoes.filter(Boolean) : [],
       obrigatorio: fieldForm.obrigatorio,
       ativo: editingField?.ativo ?? true,
       ordem: editingField?.ordem ?? (screenConfig.fields.length + 1) * 10,
@@ -467,62 +475,149 @@ const ConfigPersonalizarCampos: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Add/Edit Modal */}
+      {/* Add/Edit Modal — Premium */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingField ? 'Editar Campo' : 'Adicionar Campo'}</DialogTitle>
+            <DialogTitle className="text-lg">{editingField ? 'Editar Campo' : 'Adicionar Campo Personalizado'}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-5">
+            {/* Rótulo */}
             <div>
-              <Label>Rótulo (nome exibido)</Label>
+              <Label className="font-medium">Nome do campo</Label>
               <Input
                 value={fieldForm.rotulo}
                 onChange={(e) => setFieldForm((p) => ({ ...p, rotulo: e.target.value }))}
                 placeholder="Ex: Nome do acompanhante"
+                className="mt-1.5"
               />
             </div>
+
+            {/* Tipo — Visual cards */}
             <div>
-              <Label>Tipo</Label>
-              <Select value={fieldForm.tipo} onValueChange={(v) => setFieldForm((p) => ({ ...p, tipo: v as CustomFieldType }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {(Object.keys(FIELD_TYPE_LABELS) as CustomFieldType[]).map((t) => (
-                    <SelectItem key={t} value={t}>{FIELD_TYPE_LABELS[t].label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label className="font-medium mb-2 block">Tipo de campo</Label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {(Object.keys(FIELD_TYPE_LABELS) as CustomFieldType[]).map((t) => {
+                  const info = FIELD_TYPE_LABELS[t];
+                  const Icon = info.icon;
+                  const selected = fieldForm.tipo === t;
+                  return (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setFieldForm((p) => ({ ...p, tipo: t }))}
+                      className={cn(
+                        'flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all text-center',
+                        selected
+                          ? 'border-primary bg-primary/5 shadow-sm'
+                          : 'border-border hover:border-primary/40 hover:bg-muted/50',
+                      )}
+                    >
+                      <Icon className={cn('w-5 h-5', selected ? 'text-primary' : 'text-muted-foreground')} />
+                      <span className={cn('text-xs font-medium', selected ? 'text-primary' : 'text-foreground')}>{info.label}</span>
+                      <span className="text-[10px] text-muted-foreground leading-tight">{info.desc}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-            {fieldForm.tipo === 'select' && (
+
+            {/* Opções — para select, checkbox, radio */}
+            {['select', 'checkbox', 'radio'].includes(fieldForm.tipo) && (
               <div>
-                <Label>Opções (separadas por vírgula)</Label>
-                <Input
-                  value={fieldForm.opcoes}
-                  onChange={(e) => setFieldForm((p) => ({ ...p, opcoes: e.target.value }))}
-                  placeholder="Opção 1, Opção 2, Opção 3"
-                />
+                <Label className="font-medium mb-2 block">Opções</Label>
+                <div className="space-y-2">
+                  {fieldForm.opcoes.map((opt, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <Input
+                        value={opt}
+                        onChange={(e) => {
+                          const newOpcoes = [...fieldForm.opcoes];
+                          newOpcoes[i] = e.target.value;
+                          setFieldForm((p) => ({ ...p, opcoes: newOpcoes }));
+                        }}
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive shrink-0"
+                        onClick={() => setFieldForm((p) => ({ ...p, opcoes: p.opcoes.filter((_, idx) => idx !== i) }))}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  ))}
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={fieldForm.novaOpcao}
+                      onChange={(e) => setFieldForm((p) => ({ ...p, novaOpcao: e.target.value }))}
+                      placeholder="Digite uma opção e pressione Enter"
+                      className="flex-1"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          const v = fieldForm.novaOpcao.trim();
+                          if (v && !fieldForm.opcoes.includes(v)) {
+                            setFieldForm((p) => ({ ...p, opcoes: [...p.opcoes, v], novaOpcao: '' }));
+                          }
+                        }
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const v = fieldForm.novaOpcao.trim();
+                        if (v && !fieldForm.opcoes.includes(v)) {
+                          setFieldForm((p) => ({ ...p, opcoes: [...p.opcoes, v], novaOpcao: '' }));
+                        }
+                      }}
+                    >
+                      <Plus className="w-3.5 h-3.5 mr-1" /> Adicionar
+                    </Button>
+                  </div>
+                  {fieldForm.opcoes.length === 0 && (
+                    <p className="text-xs text-muted-foreground">Adicione pelo menos uma opção.</p>
+                  )}
+                </div>
               </div>
             )}
+
+            {/* Valor padrão */}
             <div>
-              <Label>Valor padrão</Label>
+              <Label className="font-medium">Valor padrão</Label>
               <Input
                 value={fieldForm.valorPadrao}
                 onChange={(e) => setFieldForm((p) => ({ ...p, valorPadrao: e.target.value }))}
                 placeholder="Deixe vazio se não houver"
+                className="mt-1.5"
               />
             </div>
-            <div className="flex items-center justify-between">
-              <Label>Obrigatório?</Label>
-              <Switch checked={fieldForm.obrigatorio} onCheckedChange={(v) => setFieldForm((p) => ({ ...p, obrigatorio: v }))} />
-            </div>
-            <div className="flex items-center justify-between">
-              <Label>Mostrar na listagem?</Label>
-              <Switch checked={fieldForm.mostrarListagem} onCheckedChange={(v) => setFieldForm((p) => ({ ...p, mostrarListagem: v }))} />
+
+            {/* Obrigatório + Listagem */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="flex items-center justify-between gap-2 p-3 rounded-xl border bg-muted/30">
+                <div>
+                  <p className="text-sm font-medium">Obrigatório</p>
+                  <p className="text-[10px] text-muted-foreground">Campo deve ser preenchido</p>
+                </div>
+                <Switch checked={fieldForm.obrigatorio} onCheckedChange={(v) => setFieldForm((p) => ({ ...p, obrigatorio: v }))} />
+              </div>
+              <div className="flex items-center justify-between gap-2 p-3 rounded-xl border bg-muted/30">
+                <div>
+                  <p className="text-sm font-medium">Na listagem</p>
+                  <p className="text-[10px] text-muted-foreground">Exibir na tabela de dados</p>
+                </div>
+                <Switch checked={fieldForm.mostrarListagem} onCheckedChange={(v) => setFieldForm((p) => ({ ...p, mostrarListagem: v }))} />
+              </div>
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="mt-2">
             <Button variant="outline" onClick={() => setModalOpen(false)}>Cancelar</Button>
-            <Button onClick={saveField}>{editingField ? 'Salvar' : 'Adicionar'}</Button>
+            <Button onClick={saveField}>{editingField ? 'Salvar Alterações' : 'Adicionar Campo'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

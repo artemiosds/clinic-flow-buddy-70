@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-export type CustomFieldType = 'text' | 'number' | 'date' | 'checkbox' | 'select' | 'textarea';
+export type CustomFieldType = 'text' | 'number' | 'date' | 'checkbox' | 'select' | 'textarea' | 'radio';
 
 export interface CustomFieldDef {
   id: string;
