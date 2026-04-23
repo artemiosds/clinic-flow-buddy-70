@@ -153,6 +153,11 @@ const CamposEspecialidade: React.FC<CamposEspecialidadeProps> = ({
 
   if (!masterEsp) return null;
 
+  const icon = SPECIALTY_ICONS[prof] || '📋';
+  const title = `Avaliação — ${masterEsp.label}`;
+  const v = (key: string) => values[`esp_${key}`] || "";
+  const set = (key: string, val: string) => onChange(`esp_${key}`, val);
+
   if (visibleFields.length === 0 && profCustomFields.length === 0) return null;
 
   /* ─── Special rendering for known field types ───────────────────────────── */
