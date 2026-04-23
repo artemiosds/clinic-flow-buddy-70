@@ -307,6 +307,11 @@ const ConfigPersonalizarCampos: React.FC = () => {
       toast.error('Rótulo é obrigatório');
       return;
     }
+    const needsOptions = ['select', 'checkbox', 'radio'].includes(fieldForm.tipo);
+    if (needsOptions && fieldForm.opcoes.filter(Boolean).length === 0) {
+      toast.error('Adicione pelo menos uma opção para este tipo de campo');
+      return;
+    }
 
     const nome = editingField?.nome || fieldForm.rotulo
       .toLowerCase()
