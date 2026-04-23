@@ -1643,6 +1643,60 @@ export type Database = {
         }
         Relationships: []
       }
+      prontuario_anexos: {
+        Row: {
+          agendamento_id: string | null
+          categoria: string
+          criado_em: string
+          descricao: string
+          id: string
+          mime_type: string
+          nome_arquivo: string
+          paciente_id: string
+          prontuario_id: string
+          storage_path: string
+          tamanho_bytes: number
+          tipo_registro: string
+          unidade_id: string
+          uploaded_by: string
+          uploaded_by_nome: string
+        }
+        Insert: {
+          agendamento_id?: string | null
+          categoria?: string
+          criado_em?: string
+          descricao?: string
+          id?: string
+          mime_type?: string
+          nome_arquivo: string
+          paciente_id: string
+          prontuario_id: string
+          storage_path: string
+          tamanho_bytes?: number
+          tipo_registro?: string
+          unidade_id?: string
+          uploaded_by?: string
+          uploaded_by_nome?: string
+        }
+        Update: {
+          agendamento_id?: string | null
+          categoria?: string
+          criado_em?: string
+          descricao?: string
+          id?: string
+          mime_type?: string
+          nome_arquivo?: string
+          paciente_id?: string
+          prontuario_id?: string
+          storage_path?: string
+          tamanho_bytes?: number
+          tipo_registro?: string
+          unidade_id?: string
+          uploaded_by?: string
+          uploaded_by_nome?: string
+        }
+        Relationships: []
+      }
       prontuario_config: {
         Row: {
           config: Json

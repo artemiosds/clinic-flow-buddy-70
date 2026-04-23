@@ -91,7 +91,7 @@ const FichaPacienteCabecalho: React.FC<FichaPacienteCabecalhoProps> = ({
   const [paciente, setPaciente] = useState<any>(null);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
   const [editData, setEditData] = useState({
     nome: "",
     data_nascimento: "",
@@ -115,11 +115,31 @@ const FichaPacienteCabecalho: React.FC<FichaPacienteCabecalhoProps> = ({
 
   useEffect(() => {
     if (!pacienteId) return;
+    let cancelled = false;
     const load = async () => {
       const { data } = await supabase.from("pacientes").select("*").eq("id", pacienteId).single();
-      if (data) setPaciente(data);
+      if (data && !cancelled) setPaciente(data);
     };
     load();
+
+    // Realtime sync: refletir edições feitas em outras telas (Pacientes, Cadastro, etc.)
+    const channel = supabase
+      .channel(`paciente_realtime_${pacienteId}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "pacientes", filter: `id=eq.${pacienteId}` },
+        (payload) => {
+          if (!cancelled && payload.new) {
+            setPaciente(payload.new);
+          }
+        },
+      )
+      .subscribe();
+
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(channel);
+    };
   }, [pacienteId]);
 
   const startEdit = () => {
