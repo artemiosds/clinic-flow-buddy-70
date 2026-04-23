@@ -121,8 +121,7 @@ const SortableCampo: React.FC<SortableCampoProps> = ({
 
 // ---------- Main component ----------
 const ConfigEspecialidades: React.FC = () => {
-  const [especialidades, setEspecialidades] = useState<EspecialidadeConfig[]>(DEFAULT_ESPECIALIDADES);
-  const [loading, setLoading] = useState(true);
+  const { especialidades, loading, setEspecialidades: saveEspecialidades } = useEspecialidades();
   const [selected, setSelected] = useState('fisioterapia');
   const [addFieldDialog, setAddFieldDialog] = useState(false);
   const [addEspDialog, setAddEspDialog] = useState(false);
@@ -138,39 +137,8 @@ const ConfigEspecialidades: React.FC = () => {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
-  const loadConfig = useCallback(async () => {
-    const { data } = await supabase.from('system_config').select('configuracoes').eq('id', 'default').maybeSingle();
-    const cfg = data?.configuracoes as any;
-    if (cfg?.[CONFIG_KEY]) {
-      const stored: EspecialidadeConfig[] = cfg[CONFIG_KEY];
-      setEspecialidades(stored.map(normalizeEspecialidade));
-    }
-    setLoading(false);
-  }, []);
-
-  useEffect(() => {
-    loadConfig();
-    // Realtime sync
-    const channel = supabase
-      .channel('config_especialidades_realtime')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'system_config', filter: 'id=eq.default' },
-        () => loadConfig(),
-      )
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [loadConfig]);
-
   const save = async (updated: EspecialidadeConfig[], silent = false) => {
-    const { data: existing } = await supabase.from('system_config').select('configuracoes').eq('id', 'default').maybeSingle();
-    const existingConfig = (existing?.configuracoes as any) || {};
-    await supabase.from('system_config').upsert({
-      id: 'default',
-      configuracoes: { ...existingConfig, [CONFIG_KEY]: updated },
-      updated_at: new Date().toISOString(),
-    });
-    setEspecialidades(updated);
+    await saveEspecialidades(updated, silent);
     if (!silent) toast.success('Configuração salva');
   };
 
