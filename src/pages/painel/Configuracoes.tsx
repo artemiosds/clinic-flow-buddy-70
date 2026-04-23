@@ -61,7 +61,7 @@ type TabId = typeof TABS[number]['id'];
 const Configuracoes: React.FC = () => {
   const { configuracoes, updateConfiguracoes, unidades, funcionarios } = useData();
   const { user } = useAuth();
-  const { whatsapp, googleCalendar, filaEspera, templates, webhook } = configuracoes;
+  const { whatsapp, filaEspera, templates, webhook } = configuracoes;
   
   const [searchParams, setSearchParams] = useSearchParams();
   const [webhookUrl, setWebhookUrl] = useState(webhook.url);
