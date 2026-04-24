@@ -2454,30 +2454,28 @@ const ProntuarioPage: React.FC = () => {
               </div>
             )}
 
-            {form.paciente_id && (
-              <ProntuarioAnexos
-                prontuarioId={editId}
-                pacienteId={form.paciente_id}
-                agendamentoId={form.agendamento_id || undefined}
-                tipoRegistro={form.tipo_registro}
-                unidadeId={user?.unidadeId || ""}
-                uploadedBy={user?.id || ""}
-                uploadedByNome={user?.nome || ""}
-                showResultadosAnteriores={form.tipo_registro === "retorno"}
-              />
-            )}
+            <ProntuarioAnexos
+              prontuarioId={editId}
+              pacienteId={form.paciente_id || ""}
+              agendamentoId={form.agendamento_id || undefined}
+              tipoRegistro={form.tipo_registro}
+              unidadeId={user?.unidadeId || ""}
+              uploadedBy={user?.id || ""}
+              uploadedByNome={user?.nome || ""}
+              showResultadosAnteriores={!!form.paciente_id && form.tipo_registro === "retorno"}
+              disabled={!form.paciente_id}
+            />
 
-            {form.paciente_id && (
-              <ResultadosExames
-                prontuarioId={editId}
-                pacienteId={form.paciente_id}
-                agendamentoId={form.agendamento_id || undefined}
-                tipoAtendimento={form.tipo_registro}
-                unidadeId={user?.unidadeId || ""}
-                uploadedBy={user?.id || ""}
-                uploadedByNome={user?.nome || ""}
-              />
-            )}
+            <ResultadosExames
+              prontuarioId={editId}
+              pacienteId={form.paciente_id || ""}
+              agendamentoId={form.agendamento_id || undefined}
+              tipoAtendimento={form.tipo_registro}
+              unidadeId={user?.unidadeId || ""}
+              uploadedBy={user?.id || ""}
+              uploadedByNome={user?.nome || ""}
+              disabled={!form.paciente_id}
+            />
 
             {form.paciente_id && (
               <Button
