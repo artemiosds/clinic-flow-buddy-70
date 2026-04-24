@@ -350,6 +350,14 @@ const ResultadosExames: React.FC<ResultadosExamesProps> = ({
       </div>
 
       <div className="p-4 space-y-3">
+        {disabled && (
+          <div className="rounded-lg border border-dashed border-border/60 bg-muted/20 px-4 py-5 text-center">
+            <FlaskConical className="w-6 h-6 mx-auto mb-2 text-muted-foreground/60" />
+            <p className="text-sm font-medium text-foreground">Selecione um paciente para liberar os resultados de exames</p>
+            <p className="text-[11px] text-muted-foreground mt-1">Depois disso você poderá registrar exames, anexar arquivos e acompanhar o histórico.</p>
+          </div>
+        )}
+
         {/* Status counters / filters */}
         <div className="flex flex-wrap gap-1.5">
           <button
