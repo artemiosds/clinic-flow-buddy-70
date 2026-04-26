@@ -261,7 +261,8 @@ const ProntuarioPage: React.FC = () => {
     if (cidsByProc[procId]) return;
     procedureService.getCidsForProcedure(procId).then((list) => {
       setCidsByProc((m) => ({ ...m, [procId]: list }));
-      setSelectedCidsByProc((m) => ({ ...m, [procId]: m[procId] ?? list.map((x) => x.codigo) }));
+      // NÃO pré-seleciona automaticamente. A seleção deve ser explícita do profissional.
+      setSelectedCidsByProc((m) => ({ ...m, [procId]: m[procId] ?? [] }));
     });
   }, [cidsByProc]);
 
