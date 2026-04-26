@@ -647,6 +647,7 @@ const ProntuarioPage: React.FC = () => {
     });
   };
 
+  const loadEpisodios = async (pacienteId: string) => {
     const { data } = await (supabase as any)
       .from("episodios_clinicos")
       .select("id,titulo,status")
