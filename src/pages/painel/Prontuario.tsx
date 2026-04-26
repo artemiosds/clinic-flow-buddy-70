@@ -2376,20 +2376,36 @@ const ProntuarioPage: React.FC = () => {
                                       .map((c) => {
                                         const isSel = (selectedCidsByProc[proc.id] || []).includes(c.codigo);
                                         return (
-                                          <Badge
+                                          <button
+                                            type="button"
                                             key={c.codigo}
-                                            variant={isSel ? "default" : "secondary"}
-                                            className="cursor-pointer text-[11px] font-normal"
                                             onClick={() => {
-                                              setCidsByProc((m) => ({ ...m, [proc.id]: [...(m[proc.id] || []), c] }));
+                                              if (!checked) {
+                                                setSelectedProcIds((prev) => prev.includes(proc.id) ? prev : [...prev, proc.id]);
+                                              }
+                                              // Adiciona ao catálogo local sem duplicar
+                                              setCidsByProc((m) => {
+                                                const existing = m[proc.id] || [];
+                                                if (existing.some((x) => x.codigo === c.codigo)) return m;
+                                                return { ...m, [proc.id]: [...existing, c] };
+                                              });
                                               setSelectedCidsByProc((m) => ({
                                                 ...m,
-                                                [proc.id]: isSel ? (m[proc.id] || []).filter((x) => x !== c.codigo) : [...(m[proc.id] || []), c.codigo],
+                                                [proc.id]: isSel
+                                                  ? (m[proc.id] || []).filter((x) => x !== c.codigo)
+                                                  : Array.from(new Set([...(m[proc.id] || []), c.codigo])),
                                               }));
                                             }}
+                                            className={
+                                              isSel
+                                                ? "inline-flex items-center gap-1 rounded-md border border-primary bg-primary px-2 py-0.5 text-[11px] font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+                                                : "inline-flex items-center gap-1 rounded-md border border-dashed border-border bg-muted px-2 py-0.5 text-[11px] font-normal text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                                            }
+                                            aria-pressed={isSel}
                                           >
-                                            + {c.codigo}{c.descricao ? ` · ${c.descricao.slice(0, 36)}` : ''}
-                                          </Badge>
+                                            {isSel ? <CheckCircle className="h-3 w-3 shrink-0" /> : <Plus className="h-3 w-3 shrink-0" />}
+                                            <span className="truncate max-w-[220px]">{c.codigo}{c.descricao ? ` · ${c.descricao.slice(0, 36)}` : ''}</span>
+                                          </button>
                                         );
                                       })}
                                   </div>
