@@ -261,7 +261,8 @@ const ProntuarioPage: React.FC = () => {
     if (cidsByProc[procId]) return;
     procedureService.getCidsForProcedure(procId).then((list) => {
       setCidsByProc((m) => ({ ...m, [procId]: list }));
-      setSelectedCidsByProc((m) => ({ ...m, [procId]: m[procId] ?? list.map((x) => x.codigo) }));
+      // NÃO pré-seleciona automaticamente. A seleção deve ser explícita do profissional.
+      setSelectedCidsByProc((m) => ({ ...m, [procId]: m[procId] ?? [] }));
     });
   }, [cidsByProc]);
 
@@ -603,10 +604,47 @@ const ProntuarioPage: React.FC = () => {
   const loadProntuarioProcedimentos = async (prontuarioId: string) => {
     const { data } = await (supabase as any)
       .from("prontuario_procedimentos")
-      .select("procedimento_id")
+      .select("procedimento_id, observacao")
       .eq("prontuario_id", prontuarioId);
-    if (data) setSelectedProcIds(data.map((d: any) => d.procedimento_id));
-    else setSelectedProcIds([]);
+    if (data) {
+      setSelectedProcIds(data.map((d: any) => d.procedimento_id));
+      // Restaura CIDs vinculados a partir do JSON salvo em observacao
+      const cidsByProcMap: Record<string, { codigo: string; descricao: string }[]> = {};
+      const selectedCidsMap: Record<string, string[]> = {};
+      data.forEach((d: any) => {
+        try {
+          const parsed = d.observacao ? JSON.parse(d.observacao) : null;
+          const cids: { codigo: string; descricao: string }[] = Array.isArray(parsed?.cids) ? parsed.cids : [];
+          if (cids.length > 0) {
+            cidsByProcMap[d.procedimento_id] = cids;
+            selectedCidsMap[d.procedimento_id] = cids.map((c) => c.codigo);
+          }
+        } catch { /* observação não-JSON: ignora */ }
+      });
+      if (Object.keys(cidsByProcMap).length > 0) {
+        setCidsByProc((m) => ({ ...m, ...cidsByProcMap }));
+      }
+      setSelectedCidsByProc((m) => ({ ...m, ...selectedCidsMap }));
+    } else {
+      setSelectedProcIds([]);
+    }
+  };
+
+  // Monta os links procedimento↔prontuário, embarcando os CIDs selecionados em observacao (JSON)
+  const buildProntuarioProcedimentoLinks = (prontuarioId: string) => {
+    return selectedProcIds.map((pid) => {
+      const codigosSelecionados = selectedCidsByProc[pid] || [];
+      const cidsCatalogo = cidsByProc[pid] || [];
+      // Resolve descrição a partir do catálogo já carregado (evita CIDs "soltos")
+      const cidsPayload = codigosSelecionados.map((codigo) => {
+        const found = cidsCatalogo.find((c) => c.codigo === codigo);
+        return { codigo, descricao: found?.descricao || '' };
+      });
+      const observacao = cidsPayload.length > 0
+        ? JSON.stringify({ cids: cidsPayload })
+        : '';
+      return { prontuario_id: prontuarioId, procedimento_id: pid, observacao };
+    });
   };
 
   const loadEpisodios = async (pacienteId: string) => {
@@ -974,7 +1012,7 @@ const ProntuarioPage: React.FC = () => {
       if (prontuarioId) {
         await (supabase as any).from("prontuario_procedimentos").delete().eq("prontuario_id", prontuarioId);
         if (selectedProcIds.length > 0) {
-          const links = selectedProcIds.map((pid) => ({ prontuario_id: prontuarioId, procedimento_id: pid }));
+          const links = buildProntuarioProcedimentoLinks(prontuarioId);
           await (supabase as any).from("prontuario_procedimentos").insert(links);
         }
       }
@@ -1342,7 +1380,7 @@ const ProntuarioPage: React.FC = () => {
       if (prontuarioId) {
         await (supabase as any).from("prontuario_procedimentos").delete().eq("prontuario_id", prontuarioId);
         if (selectedProcIds.length > 0) {
-          const links = selectedProcIds.map(pid => ({ prontuario_id: prontuarioId, procedimento_id: pid }));
+          const links = buildProntuarioProcedimentoLinks(prontuarioId);
           await (supabase as any).from("prontuario_procedimentos").insert(links);
         }
       }
@@ -2291,23 +2329,35 @@ const ProntuarioPage: React.FC = () => {
                                   {cids.length === 0 ? 'Nenhum CID vinculado.' : 'Nenhum CID sugerido corresponde à busca.'}
                                 </p>
                               ) : (
-                                <div className="flex flex-wrap gap-1">
+                                <div className="flex flex-wrap gap-1.5">
                                   {filteredCids.map((c) => {
                                     const isSel = selCids.includes(c.codigo);
                                     return (
-                                      <Badge
+                                      <button
+                                        type="button"
                                         key={c.codigo}
-                                        variant={isSel ? "default" : "outline"}
-                                        className="cursor-pointer text-[11px] font-normal"
                                         onClick={() => {
+                                          // Auto-marca o procedimento se o usuário escolher um CID sem ter marcado o proc
+                                          if (!checked) {
+                                            setSelectedProcIds((prev) => prev.includes(proc.id) ? prev : [...prev, proc.id]);
+                                          }
                                           setSelectedCidsByProc((m) => ({
                                             ...m,
-                                            [proc.id]: isSel ? (m[proc.id] || []).filter((x) => x !== c.codigo) : [...(m[proc.id] || []), c.codigo],
+                                            [proc.id]: isSel
+                                              ? (m[proc.id] || []).filter((x) => x !== c.codigo)
+                                              : Array.from(new Set([...(m[proc.id] || []), c.codigo])),
                                           }));
                                         }}
+                                        className={
+                                          isSel
+                                            ? "inline-flex items-center gap-1 rounded-md border border-primary bg-primary px-2 py-0.5 text-[11px] font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+                                            : "inline-flex items-center gap-1 rounded-md border border-border bg-background px-2 py-0.5 text-[11px] font-normal text-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                                        }
+                                        aria-pressed={isSel}
                                       >
-                                        {c.codigo}{c.descricao ? ` · ${c.descricao.slice(0, 36)}` : ''}
-                                      </Badge>
+                                        {isSel && <CheckCircle className="h-3 w-3 shrink-0" />}
+                                        <span className="truncate max-w-[220px]">{c.codigo}{c.descricao ? ` · ${c.descricao.slice(0, 36)}` : ''}</span>
+                                      </button>
                                     );
                                   })}
                                 </div>
@@ -2326,20 +2376,36 @@ const ProntuarioPage: React.FC = () => {
                                       .map((c) => {
                                         const isSel = (selectedCidsByProc[proc.id] || []).includes(c.codigo);
                                         return (
-                                          <Badge
+                                          <button
+                                            type="button"
                                             key={c.codigo}
-                                            variant={isSel ? "default" : "secondary"}
-                                            className="cursor-pointer text-[11px] font-normal"
                                             onClick={() => {
-                                              setCidsByProc((m) => ({ ...m, [proc.id]: [...(m[proc.id] || []), c] }));
+                                              if (!checked) {
+                                                setSelectedProcIds((prev) => prev.includes(proc.id) ? prev : [...prev, proc.id]);
+                                              }
+                                              // Adiciona ao catálogo local sem duplicar
+                                              setCidsByProc((m) => {
+                                                const existing = m[proc.id] || [];
+                                                if (existing.some((x) => x.codigo === c.codigo)) return m;
+                                                return { ...m, [proc.id]: [...existing, c] };
+                                              });
                                               setSelectedCidsByProc((m) => ({
                                                 ...m,
-                                                [proc.id]: isSel ? (m[proc.id] || []).filter((x) => x !== c.codigo) : [...(m[proc.id] || []), c.codigo],
+                                                [proc.id]: isSel
+                                                  ? (m[proc.id] || []).filter((x) => x !== c.codigo)
+                                                  : Array.from(new Set([...(m[proc.id] || []), c.codigo])),
                                               }));
                                             }}
+                                            className={
+                                              isSel
+                                                ? "inline-flex items-center gap-1 rounded-md border border-primary bg-primary px-2 py-0.5 text-[11px] font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+                                                : "inline-flex items-center gap-1 rounded-md border border-dashed border-border bg-muted px-2 py-0.5 text-[11px] font-normal text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                                            }
+                                            aria-pressed={isSel}
                                           >
-                                            + {c.codigo}{c.descricao ? ` · ${c.descricao.slice(0, 36)}` : ''}
-                                          </Badge>
+                                            {isSel ? <CheckCircle className="h-3 w-3 shrink-0" /> : <Plus className="h-3 w-3 shrink-0" />}
+                                            <span className="truncate max-w-[220px]">{c.codigo}{c.descricao ? ` · ${c.descricao.slice(0, 36)}` : ''}</span>
+                                          </button>
                                         );
                                       })}
                                   </div>
