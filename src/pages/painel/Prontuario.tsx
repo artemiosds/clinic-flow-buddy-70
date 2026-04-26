@@ -604,10 +604,30 @@ const ProntuarioPage: React.FC = () => {
   const loadProntuarioProcedimentos = async (prontuarioId: string) => {
     const { data } = await (supabase as any)
       .from("prontuario_procedimentos")
-      .select("procedimento_id")
+      .select("procedimento_id, observacao")
       .eq("prontuario_id", prontuarioId);
-    if (data) setSelectedProcIds(data.map((d: any) => d.procedimento_id));
-    else setSelectedProcIds([]);
+    if (data) {
+      setSelectedProcIds(data.map((d: any) => d.procedimento_id));
+      // Restaura CIDs vinculados a partir do JSON salvo em observacao
+      const cidsByProcMap: Record<string, { codigo: string; descricao: string }[]> = {};
+      const selectedCidsMap: Record<string, string[]> = {};
+      data.forEach((d: any) => {
+        try {
+          const parsed = d.observacao ? JSON.parse(d.observacao) : null;
+          const cids: { codigo: string; descricao: string }[] = Array.isArray(parsed?.cids) ? parsed.cids : [];
+          if (cids.length > 0) {
+            cidsByProcMap[d.procedimento_id] = cids;
+            selectedCidsMap[d.procedimento_id] = cids.map((c) => c.codigo);
+          }
+        } catch { /* observação não-JSON: ignora */ }
+      });
+      if (Object.keys(cidsByProcMap).length > 0) {
+        setCidsByProc((m) => ({ ...m, ...cidsByProcMap }));
+      }
+      setSelectedCidsByProc((m) => ({ ...m, ...selectedCidsMap }));
+    } else {
+      setSelectedProcIds([]);
+    }
   };
 
   const loadEpisodios = async (pacienteId: string) => {
