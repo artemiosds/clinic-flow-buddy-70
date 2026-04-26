@@ -630,7 +630,23 @@ const ProntuarioPage: React.FC = () => {
     }
   };
 
-  const loadEpisodios = async (pacienteId: string) => {
+  // Monta os links procedimento↔prontuário, embarcando os CIDs selecionados em observacao (JSON)
+  const buildProntuarioProcedimentoLinks = (prontuarioId: string) => {
+    return selectedProcIds.map((pid) => {
+      const codigosSelecionados = selectedCidsByProc[pid] || [];
+      const cidsCatalogo = cidsByProc[pid] || [];
+      // Resolve descrição a partir do catálogo já carregado (evita CIDs "soltos")
+      const cidsPayload = codigosSelecionados.map((codigo) => {
+        const found = cidsCatalogo.find((c) => c.codigo === codigo);
+        return { codigo, descricao: found?.descricao || '' };
+      });
+      const observacao = cidsPayload.length > 0
+        ? JSON.stringify({ cids: cidsPayload })
+        : '';
+      return { prontuario_id: prontuarioId, procedimento_id: pid, observacao };
+    });
+  };
+
     const { data } = await (supabase as any)
       .from("episodios_clinicos")
       .select("id,titulo,status")
