@@ -2329,23 +2329,35 @@ const ProntuarioPage: React.FC = () => {
                                   {cids.length === 0 ? 'Nenhum CID vinculado.' : 'Nenhum CID sugerido corresponde à busca.'}
                                 </p>
                               ) : (
-                                <div className="flex flex-wrap gap-1">
+                                <div className="flex flex-wrap gap-1.5">
                                   {filteredCids.map((c) => {
                                     const isSel = selCids.includes(c.codigo);
                                     return (
-                                      <Badge
+                                      <button
+                                        type="button"
                                         key={c.codigo}
-                                        variant={isSel ? "default" : "outline"}
-                                        className="cursor-pointer text-[11px] font-normal"
                                         onClick={() => {
+                                          // Auto-marca o procedimento se o usuário escolher um CID sem ter marcado o proc
+                                          if (!checked) {
+                                            setSelectedProcIds((prev) => prev.includes(proc.id) ? prev : [...prev, proc.id]);
+                                          }
                                           setSelectedCidsByProc((m) => ({
                                             ...m,
-                                            [proc.id]: isSel ? (m[proc.id] || []).filter((x) => x !== c.codigo) : [...(m[proc.id] || []), c.codigo],
+                                            [proc.id]: isSel
+                                              ? (m[proc.id] || []).filter((x) => x !== c.codigo)
+                                              : Array.from(new Set([...(m[proc.id] || []), c.codigo])),
                                           }));
                                         }}
+                                        className={
+                                          isSel
+                                            ? "inline-flex items-center gap-1 rounded-md border border-primary bg-primary px-2 py-0.5 text-[11px] font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+                                            : "inline-flex items-center gap-1 rounded-md border border-border bg-background px-2 py-0.5 text-[11px] font-normal text-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                                        }
+                                        aria-pressed={isSel}
                                       >
-                                        {c.codigo}{c.descricao ? ` · ${c.descricao.slice(0, 36)}` : ''}
-                                      </Badge>
+                                        {isSel && <CheckCircle className="h-3 w-3 shrink-0" />}
+                                        <span className="truncate max-w-[220px]">{c.codigo}{c.descricao ? ` · ${c.descricao.slice(0, 36)}` : ''}</span>
+                                      </button>
                                     );
                                   })}
                                 </div>
