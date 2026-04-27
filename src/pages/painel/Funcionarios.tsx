@@ -232,6 +232,7 @@ const Funcionarios: React.FC = () => {
             coren: form.coren,
             cbo_codigo: cbo?.codigo || '',
             cbo_descricao: cbo?.descricao || '',
+            aceita_encaminhamento_externo: !!customData?.aceita_encaminhamento_externo,
             criado_por: user?.id || '',
           },
         });
