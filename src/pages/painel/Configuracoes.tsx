@@ -40,6 +40,8 @@ import ConfigFluxoAtendimento from '@/components/config/ConfigFluxoAtendimento';
 import ConfigSistema from '@/components/config/ConfigSistema';
 import ConfigPersonalizarCampos from '@/components/config/ConfigPersonalizarCampos';
 import ConfigWhatsApp from '@/components/config/ConfigWhatsApp';
+import ConfigSistemasIntegrados from '@/components/config/ConfigSistemasIntegrados';
+import { Network } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const TABS = [
@@ -52,7 +54,7 @@ const TABS = [
   { id: 'whatsapp', label: 'WhatsApp', icon: MessageSquare, globalOnly: false },
   { id: 'usuarios', label: 'Usuários e Permissões', icon: Users, globalOnly: false },
   { id: 'unidades', label: 'Unidades e Setores', icon: Building2, globalOnly: true },
-  
+  { id: 'integracoes', label: 'Sistemas Integrados', icon: Network, globalOnly: true },
   { id: 'sistema', label: 'Sistema', icon: Monitor, globalOnly: true },
 ] as const;
 
@@ -1035,6 +1037,9 @@ const Configuracoes: React.FC = () => {
 
       case 'sistema':
         return <ConfigSistema />;
+
+      case 'integracoes':
+        return <ConfigSistemasIntegrados />;
 
       default:
         return null;
