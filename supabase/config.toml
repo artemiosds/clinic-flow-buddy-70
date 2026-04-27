@@ -1,1 +1,10 @@
 project_id = "dgebfmohtoszzrmzxefy"
+
+# Edge Functions de Integração entre Sistemas Lovable iguais
+# Essas duas funções são chamadas por OUTROS sistemas autenticando via API Key (x-integration-token + x-system-id),
+# por isso o JWT do Supabase deve ser desabilitado.
+[functions.integracao-listar-profissionais]
+verify_jwt = false
+
+[functions.integracao-receber-encaminhamento]
+verify_jwt = false
