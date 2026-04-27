@@ -26,6 +26,7 @@ import { Plus, Search, Phone, Mail, Pencil, Trash2, FileDown, Users, Clock, File
 import ContactActionButton from "@/components/ContactActionButton";
 import DetalheDrawer, { Secao, Campo, calcularIdade, formatarData } from "@/components/DetalheDrawer";
 import PacienteDetalheModal, { PSecao, PCampo, AlergiasBlock, formatCPF, formatCNS, formatTelefoneBR, formatarDataBR } from "@/components/PacienteDetalheModal";
+import { formatCNS as maskCNSInput } from "@/lib/cnsUtils";
 import { useCustomFields } from "@/hooks/useCustomFields";
 import { toast } from "sonner";
 import { validatePacienteFields } from "@/lib/validation";
@@ -260,7 +261,7 @@ const Pacientes: React.FC = () => {
       ...emptyPacienteForm,
       nome: p.nome,
       cpf: p.cpf,
-      cns: p.cns || "",
+      cns: maskCNSInput(p.cns || ""),
       nomeMae: p.nomeMae || "",
       telefone: p.telefone,
       dataNascimento: p.dataNascimento,
