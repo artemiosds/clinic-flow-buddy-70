@@ -112,6 +112,7 @@ serve(async (req) => {
           coren: coren || "",
           custom_data: {
             ...(cbo_codigo ? { cbo_codigo: String(cbo_codigo), cbo_descricao: String(cbo_descricao || '') } : {}),
+            ...(aceita_encaminhamento_externo !== undefined ? { aceita_encaminhamento_externo: !!aceita_encaminhamento_externo } : {}),
           },
         })
         .select()
