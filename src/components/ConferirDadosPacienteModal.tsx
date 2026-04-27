@@ -245,6 +245,10 @@ export function ConferirDadosPacienteModal({
         uf: form.uf,
         cep: form.cep,
         telefoneSecundario: form.telefone_secundario,
+        // Naturalidade (município de nascimento, IBGE)
+        naturalidade: form.naturalidade,
+        naturalidadeUf: form.naturalidade_uf,
+        naturalidadeCodigoIbge: form.naturalidade_codigo_ibge,
         data_ultima_validacao_cadastro: new Date().toISOString(),
       };
       const updatePayload: any = {
