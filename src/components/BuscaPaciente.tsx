@@ -101,12 +101,21 @@ export function BuscaPaciente({ pacientes, value, onChange }: BuscaPacienteProps
       setLoading(true);
 
       const ilikeTerm = escapeIlikeTerm(term);
+      // Se o termo parece um CNS (somente dígitos), busca também por CNS sem máscara
+      const digitsOnly = term.replace(/\D/g, '');
+      const isCnsLike = digitsOnly.length >= 6 && /^[\d\s]+$/.test(term);
+      const orParts = [
+        `nome.ilike.%${ilikeTerm}%`,
+        `cpf.ilike.%${ilikeTerm}%`,
+        `telefone.ilike.%${ilikeTerm}%`,
+      ];
+      if (isCnsLike) orParts.push(`cns.ilike.%${digitsOnly}%`);
       const { data, error } = await supabase
         .from('pacientes')
         .select(
           'id, nome, cpf, cns, nome_mae, telefone, data_nascimento, email, endereco, observacoes, descricao_clinica, cid, criado_em',
         )
-        .or(`nome.ilike.%${ilikeTerm}%,cpf.ilike.%${ilikeTerm}%,telefone.ilike.%${ilikeTerm}%`)
+        .or(orParts.join(','))
         .order('nome', { ascending: true })
         .limit(10);
 
