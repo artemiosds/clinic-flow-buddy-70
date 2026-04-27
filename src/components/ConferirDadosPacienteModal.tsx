@@ -214,11 +214,12 @@ export function ConferirDadosPacienteModal({
   };
 
   const handleSave = async () => {
-    if (!paciente) return;
+    if (!paciente) return false;
     setSaving(true);
     try {
+      const oldCd = paciente.custom_data || {};
       const customData = {
-        ...(paciente.custom_data || {}),
+        ...oldCd,
         sexo: form.sexo,
         // Persistir Raça/Cor em ambas as chaves (compat com BPA)
         racaCor: form.raca_cor,
@@ -227,9 +228,13 @@ export function ConferirDadosPacienteModal({
         etniaOutra: form.etnia_outra,
         nacionalidade: form.nacionalidade,
         paisNascimento: form.pais_nascimento,
-        // Tipo de logradouro DNE: salvar código + descrição
+        // Tipo de logradouro: chave canônica usada pela página Pacientes (tipoLogradouro)
+        // + chave legacy (tipoLogradouroDne) para compat
+        tipoLogradouro: form.tipo_logradouro_dne,
         tipoLogradouroDne: form.tipo_logradouro_dne,
         tipoLogradouroCodigo: form.tipo_logradouro_codigo,
+        // Endereço estruturado (mesmas chaves do CadastroPacienteForm)
+        logradouro: form.endereco,
         numero: form.numero,
         complemento: form.complemento,
         bairro: form.bairro,
@@ -238,23 +243,38 @@ export function ConferirDadosPacienteModal({
         telefoneSecundario: form.telefone_secundario,
         data_ultima_validacao_cadastro: new Date().toISOString(),
       };
+      const updatePayload: any = {
+        nome: form.nome,
+        nome_mae: form.nome_mae,
+        data_nascimento: form.data_nascimento || null,
+        cpf: form.cpf,
+        cns: form.cns,
+        telefone: form.telefone,
+        email: form.email,
+        endereco: form.endereco, // mantém coluna legada sincronizada
+        municipio: form.municipio,
+        custom_data: customData,
+      };
       const { error } = await (supabase as any)
         .from("pacientes")
-        .update({
-          nome: form.nome,
-          nome_mae: form.nome_mae,
-          data_nascimento: form.data_nascimento || null,
-          cpf: form.cpf,
-          cns: form.cns,
-          telefone: form.telefone,
-          email: form.email,
-          endereco: form.endereco,
-          municipio: form.municipio,
-          custom_data: customData,
-        })
+        .update(updatePayload)
         .eq("id", paciente.id);
       if (error) throw error;
-      setPaciente({ ...paciente, ...form, custom_data: customData });
+
+      // Auditoria (best-effort, não bloqueia)
+      try {
+        const { auditService } = await import("@/services/auditService");
+        await auditService.log({
+          acao: "atualizar",
+          entidade: "paciente",
+          entidadeId: paciente.id,
+          modulo: "Conferir Dados do Paciente",
+          oldValue: { ...paciente },
+          newValue: { ...paciente, ...updatePayload },
+        });
+      } catch {}
+
+      setPaciente({ ...paciente, ...updatePayload });
       setDirty(false);
       // CRÍTICO: invalidar caches + recarregar contexto global para refletir
       // imediatamente em Paciente, Agenda, Prontuário, Tratamento, PTS, Triagem, BPA.
@@ -264,8 +284,10 @@ export function ConferirDadosPacienteModal({
       queryClient.invalidateQueries({ queryKey: queryKeys.prontuarios.byPaciente(paciente.id) });
       try { await refreshPacientes(); } catch {}
       toast.success("Dados atualizados em todo o sistema!");
+      return true;
     } catch (e: any) {
       toast.error("Erro ao salvar: " + (e?.message || "desconhecido"));
+      return false;
     } finally {
       setSaving(false);
     }
