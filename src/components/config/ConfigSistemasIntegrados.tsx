@@ -226,6 +226,31 @@ const ConfigSistemasIntegrados: React.FC = () => {
           </div>
         </div>
 
+        <div className="rounded-lg border bg-muted/30 p-4 mb-4">
+          <div className="flex items-start justify-between gap-3 flex-wrap">
+            <div className="flex-1 min-w-[260px]">
+              <Label className="text-sm font-semibold">Identificador deste sistema</Label>
+              <p className="text-xs text-muted-foreground mt-1">
+                Compartilhe este texto com a unidade parceira. Ela deve cadastrá-lo como "Identificador do sistema" para nos reconhecer ao receber encaminhamentos.
+              </p>
+              <Input
+                value={identificadorLocal}
+                onChange={e => setIdentificadorLocal(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
+                placeholder="ex.: sms-oriximina-cer"
+                className="mt-2 max-w-md font-mono"
+              />
+            </div>
+            <Button
+              size="sm"
+              onClick={handleSaveIdentificador}
+              disabled={savingIdent || identificadorLocal.trim() === identificadorLocalLoaded.trim()}
+            >
+              {savingIdent ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Salvar identificador
+            </Button>
+          </div>
+        </div>
+
         <div className="rounded-lg border overflow-hidden">
           <Table>
             <TableHeader>
