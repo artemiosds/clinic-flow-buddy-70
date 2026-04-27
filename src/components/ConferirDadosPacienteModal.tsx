@@ -155,7 +155,7 @@ export function ConferirDadosPacienteModal({
         nome_mae: data.nome_mae || "",
         data_nascimento: data.data_nascimento || "",
         cpf: data.cpf || "",
-        cns: data.cns || "",
+        cns: maskCns(data.cns || ""),
         telefone: data.telefone || "",
         email: data.email || "",
         // Endereço: prioriza cd.logradouro (estruturado da página Pacientes), fallback p/ coluna legada
