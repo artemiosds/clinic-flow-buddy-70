@@ -432,6 +432,25 @@ export function ConferirDadosPacienteModal({
                   {renderFieldSelect("Sexo", "sexo", SEXO_OPTIONS)}
                   {renderFieldText("CPF", "cpf", "text", "000.000.000-00", "numeric")}
                   {renderFieldText("CNS", "cns", "text", "000 0000 0000 0000", "numeric")}
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <Label className="text-xs text-muted-foreground">Naturalidade</Label>
+                    <MunicipioIbgeCombobox
+                      value={form.naturalidade || ""}
+                      onChange={(label, payload) => {
+                        setForm((p: any) => ({
+                          ...p,
+                          naturalidade: label,
+                          naturalidade_uf: payload?.uf || "",
+                          naturalidade_codigo_ibge: payload?.codigoIbge || "",
+                        }));
+                        setDirty(true);
+                      }}
+                      placeholder="Selecione o município de naturalidade"
+                    />
+                    <p className="text-[11px] text-muted-foreground">
+                      Município de nascimento (não confundir com Município de Residência).
+                    </p>
+                  </div>
                 </div>
               </div>
 
