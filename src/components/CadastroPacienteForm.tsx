@@ -385,6 +385,30 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                 </div>
               )}
 
+              {!H("naturalidade") && (
+                <div className="md:col-span-2">
+                  <Label>{L("naturalidade", "Naturalidade")}</Label>
+                  <MunicipioIbgeCombobox
+                    value={cd.naturalidade || ""}
+                    onChange={(label, payload) => {
+                      onChange({
+                        ...form,
+                        customData: {
+                          ...(form.customData || {}),
+                          naturalidade: label,
+                          naturalidadeUf: payload?.uf || "",
+                          naturalidadeCodigoIbge: payload?.codigoIbge || "",
+                        },
+                      });
+                    }}
+                    placeholder="Selecione o município de naturalidade"
+                  />
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    Município de nascimento. Não confundir com Município de Residência.
+                  </p>
+                </div>
+              )}
+
               {!H("situacaoRua") && (
               <div className="flex items-center gap-3 p-2 rounded-md bg-muted/40 md:col-span-2">
                 <Switch
