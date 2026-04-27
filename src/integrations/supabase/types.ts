@@ -521,6 +521,143 @@ export type Database = {
         }
         Relationships: []
       }
+      encaminhamentos_externos: {
+        Row: {
+          aceito_em: string | null
+          agendado_em: string | null
+          cid: string
+          created_at: string
+          criado_por: string
+          destino_especialidade: string
+          destino_profissional_id: string
+          destino_profissional_nome: string
+          destino_unidade: string
+          direcao: string
+          documento_texto: string
+          documento_url: string
+          id: string
+          justificativa_recusa: string
+          motivo: string
+          origem_especialidade: string
+          origem_identificador_sistema: string
+          origem_profissional_id: string
+          origem_profissional_nome: string
+          origem_unidade: string
+          paciente_cns: string
+          paciente_cpf: string
+          paciente_dados: Json
+          paciente_data_nascimento: string
+          paciente_id_destino: string
+          paciente_id_origem: string
+          paciente_nome: string
+          paciente_telefone: string
+          procedimentos: Json
+          recebido_em: string | null
+          recusado_em: string | null
+          remoto_encaminhamento_id: string
+          resumo_clinico: string
+          sistema_integrado_id: string | null
+          status: string
+          tentativas: number
+          ultima_tentativa_em: string | null
+          ultimo_erro: string
+          updated_at: string
+          visualizado_em: string | null
+        }
+        Insert: {
+          aceito_em?: string | null
+          agendado_em?: string | null
+          cid?: string
+          created_at?: string
+          criado_por?: string
+          destino_especialidade?: string
+          destino_profissional_id?: string
+          destino_profissional_nome?: string
+          destino_unidade?: string
+          direcao: string
+          documento_texto?: string
+          documento_url?: string
+          id?: string
+          justificativa_recusa?: string
+          motivo?: string
+          origem_especialidade?: string
+          origem_identificador_sistema?: string
+          origem_profissional_id?: string
+          origem_profissional_nome?: string
+          origem_unidade?: string
+          paciente_cns?: string
+          paciente_cpf?: string
+          paciente_dados?: Json
+          paciente_data_nascimento?: string
+          paciente_id_destino?: string
+          paciente_id_origem?: string
+          paciente_nome?: string
+          paciente_telefone?: string
+          procedimentos?: Json
+          recebido_em?: string | null
+          recusado_em?: string | null
+          remoto_encaminhamento_id?: string
+          resumo_clinico?: string
+          sistema_integrado_id?: string | null
+          status?: string
+          tentativas?: number
+          ultima_tentativa_em?: string | null
+          ultimo_erro?: string
+          updated_at?: string
+          visualizado_em?: string | null
+        }
+        Update: {
+          aceito_em?: string | null
+          agendado_em?: string | null
+          cid?: string
+          created_at?: string
+          criado_por?: string
+          destino_especialidade?: string
+          destino_profissional_id?: string
+          destino_profissional_nome?: string
+          destino_unidade?: string
+          direcao?: string
+          documento_texto?: string
+          documento_url?: string
+          id?: string
+          justificativa_recusa?: string
+          motivo?: string
+          origem_especialidade?: string
+          origem_identificador_sistema?: string
+          origem_profissional_id?: string
+          origem_profissional_nome?: string
+          origem_unidade?: string
+          paciente_cns?: string
+          paciente_cpf?: string
+          paciente_dados?: Json
+          paciente_data_nascimento?: string
+          paciente_id_destino?: string
+          paciente_id_origem?: string
+          paciente_nome?: string
+          paciente_telefone?: string
+          procedimentos?: Json
+          recebido_em?: string | null
+          recusado_em?: string | null
+          remoto_encaminhamento_id?: string
+          resumo_clinico?: string
+          sistema_integrado_id?: string | null
+          status?: string
+          tentativas?: number
+          ultima_tentativa_em?: string | null
+          ultimo_erro?: string
+          updated_at?: string
+          visualizado_em?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "encaminhamentos_externos_sistema_integrado_id_fkey"
+            columns: ["sistema_integrado_id"]
+            isOneToOne: false
+            referencedRelation: "sistemas_integrados"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       episodios_clinicos: {
         Row: {
           atualizado_em: string
@@ -901,6 +1038,68 @@ export type Database = {
           descricao?: string
         }
         Relationships: []
+      }
+      logs_integracao: {
+        Row: {
+          created_at: string
+          detalhes: Json
+          direcao: string
+          encaminhamento_id: string | null
+          http_status: number | null
+          id: string
+          identificador_remoto: string
+          ip: string
+          mensagem: string
+          paciente_id: string
+          sistema_integrado_id: string | null
+          status: string
+          tipo_acao: string
+          usuario_id: string
+          usuario_nome: string
+        }
+        Insert: {
+          created_at?: string
+          detalhes?: Json
+          direcao?: string
+          encaminhamento_id?: string | null
+          http_status?: number | null
+          id?: string
+          identificador_remoto?: string
+          ip?: string
+          mensagem?: string
+          paciente_id?: string
+          sistema_integrado_id?: string | null
+          status?: string
+          tipo_acao: string
+          usuario_id?: string
+          usuario_nome?: string
+        }
+        Update: {
+          created_at?: string
+          detalhes?: Json
+          direcao?: string
+          encaminhamento_id?: string | null
+          http_status?: number | null
+          id?: string
+          identificador_remoto?: string
+          ip?: string
+          mensagem?: string
+          paciente_id?: string
+          sistema_integrado_id?: string | null
+          status?: string
+          tipo_acao?: string
+          usuario_id?: string
+          usuario_nome?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "logs_integracao_sistema_integrado_id_fkey"
+            columns: ["sistema_integrado_id"]
+            isOneToOne: false
+            referencedRelation: "sistemas_integrados"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       medications: {
         Row: {
@@ -2277,6 +2476,57 @@ export type Database = {
           total_cids?: number
           updated_at?: string
           valor?: number | null
+        }
+        Relationships: []
+      }
+      sistemas_integrados: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          criado_por: string
+          id: string
+          identificador_sistema: string
+          nome: string
+          observacoes: string
+          permite_enviar: boolean
+          permite_receber: boolean
+          token_entrada_hash: string
+          token_saida: string
+          ultima_sincronizacao: string | null
+          updated_at: string
+          url_base: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          criado_por?: string
+          id?: string
+          identificador_sistema: string
+          nome: string
+          observacoes?: string
+          permite_enviar?: boolean
+          permite_receber?: boolean
+          token_entrada_hash?: string
+          token_saida?: string
+          ultima_sincronizacao?: string | null
+          updated_at?: string
+          url_base?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          criado_por?: string
+          id?: string
+          identificador_sistema?: string
+          nome?: string
+          observacoes?: string
+          permite_enviar?: boolean
+          permite_receber?: boolean
+          token_entrada_hash?: string
+          token_saida?: string
+          ultima_sincronizacao?: string | null
+          updated_at?: string
+          url_base?: string
         }
         Relationships: []
       }
