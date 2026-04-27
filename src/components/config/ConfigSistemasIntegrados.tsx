@@ -62,19 +62,52 @@ const ConfigSistemasIntegrados: React.FC = () => {
   const [showOutToken, setShowOutToken] = useState(false);
   const [showInToken, setShowInToken] = useState(false);
   const [testingId, setTestingId] = useState<string | null>(null);
+  const [identificadorLocal, setIdentificadorLocal] = useState('');
+  const [identificadorLocalLoaded, setIdentificadorLocalLoaded] = useState('');
+  const [savingIdent, setSavingIdent] = useState(false);
+  const [clinicaConfigId, setClinicaConfigId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('sistemas_integrados')
-      .select('*')
-      .order('created_at', { ascending: false });
+    const [{ data, error }, cfgRes] = await Promise.all([
+      supabase.from('sistemas_integrados').select('*').order('created_at', { ascending: false }),
+      supabase.from('clinica_config').select('id, identificador_local').limit(1).maybeSingle(),
+    ]);
     if (error) toast.error('Erro ao carregar sistemas integrados');
     setList((data ?? []) as SistemaIntegrado[]);
+    if (cfgRes?.data) {
+      setClinicaConfigId((cfgRes.data as any).id);
+      const v = ((cfgRes.data as any).identificador_local ?? '').toString();
+      setIdentificadorLocal(v);
+      setIdentificadorLocalLoaded(v);
+    }
     setLoading(false);
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  const handleSaveIdentificador = async () => {
+    const v = identificadorLocal.trim();
+    if (!v) { toast.error('Informe o identificador deste sistema.'); return; }
+    if (!/^[a-z0-9-]+$/i.test(v)) { toast.error('Use apenas letras, números e hífen.'); return; }
+    setSavingIdent(true);
+    try {
+      let err;
+      if (clinicaConfigId) {
+        ({ error: err } = await supabase.from('clinica_config').update({ identificador_local: v } as any).eq('id', clinicaConfigId));
+      } else {
+        ({ error: err } = await supabase.from('clinica_config').insert({ identificador_local: v, nome_clinica: '' } as any));
+      }
+      if (err) throw err;
+      setIdentificadorLocalLoaded(v);
+      toast.success('Identificador deste sistema salvo.');
+      load();
+    } catch (e: any) {
+      toast.error(e?.message ?? 'Erro ao salvar');
+    } finally {
+      setSavingIdent(false);
+    }
+  };
 
   const openNew = () => {
     setForm({ ...emptyForm });
