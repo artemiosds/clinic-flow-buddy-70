@@ -469,7 +469,7 @@ const Funcionarios: React.FC = () => {
                   </>
                 )}
                 {form.role === 'profissional' && canManage && (
-                  <div className="border-t pt-3 mt-2">
+                  <div className="border-t pt-3 mt-2 space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
                         <Label className="text-sm font-semibold">Permissão de Retorno</Label>
@@ -478,6 +478,18 @@ const Funcionarios: React.FC = () => {
                       <Switch
                         checked={form.pode_agendar_retorno}
                         onCheckedChange={v => setForm(p => ({ ...p, pode_agendar_retorno: v }))}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label className="text-sm font-semibold">Aceita Encaminhamento Externo</Label>
+                        <p className="text-xs text-muted-foreground">
+                          Aparecerá na lista de profissionais para sistemas integrados parceiros enviarem encaminhamentos.
+                        </p>
+                      </div>
+                      <Switch
+                        checked={!!customData?.aceita_encaminhamento_externo}
+                        onCheckedChange={v => setCustomData(prev => ({ ...prev, aceita_encaminhamento_externo: v }))}
                       />
                     </div>
                   </div>
