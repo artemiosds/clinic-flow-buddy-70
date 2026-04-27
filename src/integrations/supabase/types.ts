@@ -324,6 +324,7 @@ export type Database = {
           evolution_base_url: string
           evolution_instance_name: string
           id: string
+          identificador_local: string
           logo_url: string
           nome_clinica: string
           telefone: string
@@ -335,6 +336,7 @@ export type Database = {
           evolution_base_url?: string
           evolution_instance_name?: string
           id?: string
+          identificador_local?: string
           logo_url?: string
           nome_clinica?: string
           telefone?: string
@@ -346,6 +348,7 @@ export type Database = {
           evolution_base_url?: string
           evolution_instance_name?: string
           id?: string
+          identificador_local?: string
           logo_url?: string
           nome_clinica?: string
           telefone?: string
