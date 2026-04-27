@@ -255,7 +255,7 @@ export function ConferirDadosPacienteModal({
         nome_mae: form.nome_mae,
         data_nascimento: form.data_nascimento || null,
         cpf: form.cpf,
-        cns: form.cns,
+        cns: (form.cns || "").replace(/\D/g, "").slice(0, 15),
         telefone: form.telefone,
         email: form.email,
         endereco: form.endereco, // mantém coluna legada sincronizada
