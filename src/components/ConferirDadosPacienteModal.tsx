@@ -11,6 +11,7 @@ import { AlertTriangle, CheckCircle2, Save, User, MapPin, Phone, Globe, Calendar
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import LogradouroDneAutocomplete from "@/components/LogradouroDneAutocomplete";
+import MunicipioIbgeCombobox from "@/components/MunicipioIbgeCombobox";
 import { applyPhoneMask } from "@/lib/phoneUtils";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/hooks/queries/queryKeys";
@@ -176,6 +177,9 @@ export function ConferirDadosPacienteModal({
         uf: cd.uf || "PA",
         cep: cd.cep || "",
         telefone_secundario: cd.telefoneSecundario || cd.telefone_secundario || "",
+        naturalidade: cd.naturalidade || "",
+        naturalidade_uf: cd.naturalidadeUf || cd.naturalidade_uf || "",
+        naturalidade_codigo_ibge: cd.naturalidadeCodigoIbge || cd.naturalidade_codigo_ibge || "",
       });
     } catch (err: any) {
       console.error("[ConferirDados] Erro ao carregar:", err);
@@ -241,6 +245,10 @@ export function ConferirDadosPacienteModal({
         uf: form.uf,
         cep: form.cep,
         telefoneSecundario: form.telefone_secundario,
+        // Naturalidade (município de nascimento, IBGE)
+        naturalidade: form.naturalidade,
+        naturalidadeUf: form.naturalidade_uf,
+        naturalidadeCodigoIbge: form.naturalidade_codigo_ibge,
         data_ultima_validacao_cadastro: new Date().toISOString(),
       };
       const updatePayload: any = {
@@ -432,6 +440,25 @@ export function ConferirDadosPacienteModal({
                   {renderFieldSelect("Sexo", "sexo", SEXO_OPTIONS)}
                   {renderFieldText("CPF", "cpf", "text", "000.000.000-00", "numeric")}
                   {renderFieldText("CNS", "cns", "text", "000 0000 0000 0000", "numeric")}
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <Label className="text-xs text-muted-foreground">Naturalidade</Label>
+                    <MunicipioIbgeCombobox
+                      value={form.naturalidade || ""}
+                      onChange={(label, payload) => {
+                        setForm((p: any) => ({
+                          ...p,
+                          naturalidade: label,
+                          naturalidade_uf: payload?.uf || "",
+                          naturalidade_codigo_ibge: payload?.codigoIbge || "",
+                        }));
+                        setDirty(true);
+                      }}
+                      placeholder="Selecione o município de naturalidade"
+                    />
+                    <p className="text-[11px] text-muted-foreground">
+                      Município de nascimento (não confundir com Município de Residência).
+                    </p>
+                  </div>
                 </div>
               </div>
 

@@ -17,6 +17,7 @@ import CustomFieldsRenderer from "@/components/CustomFieldsRenderer";
 import { useCustomFields } from "@/hooks/useCustomFields";
 import { useAuth } from "@/contexts/AuthContext";
 import LogradouroDneAutocomplete from "@/components/LogradouroDneAutocomplete";
+import MunicipioIbgeCombobox from "@/components/MunicipioIbgeCombobox";
 
 const ESPECIALIDADES_DESTINO = [
   { value: "fisioterapia", label: "Fisioterapia" },
@@ -382,6 +383,30 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                     inputMode="numeric"
                   />
                   {errors.cns && <p className="text-xs text-destructive mt-1">{errors.cns}</p>}
+                </div>
+              )}
+
+              {!H("naturalidade") && (
+                <div className="md:col-span-2">
+                  <Label>{L("naturalidade", "Naturalidade")}</Label>
+                  <MunicipioIbgeCombobox
+                    value={cd.naturalidade || ""}
+                    onChange={(label, payload) => {
+                      onChange({
+                        ...form,
+                        customData: {
+                          ...(form.customData || {}),
+                          naturalidade: label,
+                          naturalidadeUf: payload?.uf || "",
+                          naturalidadeCodigoIbge: payload?.codigoIbge || "",
+                        },
+                      });
+                    }}
+                    placeholder="Selecione o município de naturalidade"
+                  />
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    Município de nascimento. Não confundir com Município de Residência.
+                  </p>
                 </div>
               )}
 
