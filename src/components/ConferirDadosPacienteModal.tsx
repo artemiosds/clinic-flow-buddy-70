@@ -99,8 +99,7 @@ const maskCpf = (v: string) =>
     .replace(/(\d{3})(\d)/, "$1.$2")
     .replace(/(\d{3})(\d)/, "$1.$2")
     .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
-const maskCns = (v: string) =>
-  v.replace(/\D/g, "").slice(0, 15).replace(/(\d{4})(?=\d)/g, "$1 ").trim();
+import { maskCNS as maskCns } from "@/lib/cnsUtils";
 const maskCep = (v: string) =>
   v.replace(/\D/g, "").slice(0, 8).replace(/(\d{5})(\d)/, "$1-$2");
 
@@ -156,7 +155,7 @@ export function ConferirDadosPacienteModal({
         nome_mae: data.nome_mae || "",
         data_nascimento: data.data_nascimento || "",
         cpf: data.cpf || "",
-        cns: data.cns || "",
+        cns: maskCns(data.cns || ""),
         telefone: data.telefone || "",
         email: data.email || "",
         // Endereço: prioriza cd.logradouro (estruturado da página Pacientes), fallback p/ coluna legada
@@ -256,7 +255,7 @@ export function ConferirDadosPacienteModal({
         nome_mae: form.nome_mae,
         data_nascimento: form.data_nascimento || null,
         cpf: form.cpf,
-        cns: form.cns,
+        cns: (form.cns || "").replace(/\D/g, "").slice(0, 15),
         telefone: form.telefone,
         email: form.email,
         endereco: form.endereco, // mantém coluna legada sincronizada

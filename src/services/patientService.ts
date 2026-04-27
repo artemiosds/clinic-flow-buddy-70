@@ -26,9 +26,10 @@ export const patientService = {
   },
 
   async search(query: string, unidadeId?: string) {
-    let q = supabase.from('pacientes').select('*')
-      .or(`nome.ilike.%${query}%,cpf.ilike.%${query}%,cns.ilike.%${query}%`)
-      .limit(50);
+    const digitsOnly = query.replace(/\D/g, '');
+    const orParts = [`nome.ilike.%${query}%`, `cpf.ilike.%${query}%`];
+    if (digitsOnly) orParts.push(`cns.ilike.%${digitsOnly}%`);
+    let q = supabase.from('pacientes').select('*').or(orParts.join(',')).limit(50);
     if (unidadeId) q = q.eq('unidade_id', unidadeId);
     const { data } = await q;
     return data || [];

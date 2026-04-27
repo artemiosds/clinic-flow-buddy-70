@@ -214,7 +214,13 @@ const ImportarPacientesCSV: React.FC<Props> = ({ open, onOpenChange }) => {
       // Clean data
       const nome = capitalizeName(row.nome);
       const cpfClean = cleanCPF(row.cpf);
-      const cnsClean = (row.cns || '').replace(/\D/g, '');
+      const cnsRaw = (row.cns || '').replace(/\D/g, '');
+      // Se vier com mais de 15 dígitos: marca pendência mas não quebra (salva vazio)
+      const cnsInvalido = cnsRaw.length > 0 && cnsRaw.length !== 15;
+      const cnsClean = cnsInvalido ? '' : cnsRaw;
+      if (cnsInvalido) {
+        errorRows.push({ linha: lineNum, nome: row.nome, telefone: row.telefone, motivo: `CNS inválido (${cnsRaw.length} dígitos) — paciente importado sem CNS para correção manual` });
+      }
       const phoneClean = cleanPhone(row.telefone);
       const emailClean = (row.email || '').trim().toLowerCase();
       const endereco = (row.endereco || '').trim();
