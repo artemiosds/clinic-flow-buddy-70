@@ -177,6 +177,9 @@ export function ConferirDadosPacienteModal({
         uf: cd.uf || "PA",
         cep: cd.cep || "",
         telefone_secundario: cd.telefoneSecundario || cd.telefone_secundario || "",
+        naturalidade: cd.naturalidade || "",
+        naturalidade_uf: cd.naturalidadeUf || cd.naturalidade_uf || "",
+        naturalidade_codigo_ibge: cd.naturalidadeCodigoIbge || cd.naturalidade_codigo_ibge || "",
       });
     } catch (err: any) {
       console.error("[ConferirDados] Erro ao carregar:", err);
