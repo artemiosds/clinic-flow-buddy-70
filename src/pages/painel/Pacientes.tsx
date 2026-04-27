@@ -192,11 +192,16 @@ const Pacientes: React.FC = () => {
   const filtered = useMemo(() => {
     const q = debouncedSearch.toLowerCase();
     let list = visiblePacientes.filter(
-      (p) =>
-        p.nome.toLowerCase().includes(q) ||
-        p.cpf.includes(debouncedSearch) ||
-        p.telefone.includes(debouncedSearch) ||
-        (p.cns && p.cns.includes(debouncedSearch)),
+      (p) => {
+        const cnsClean = (p.cns || '').replace(/\D/g, '');
+        const searchCnsClean = debouncedSearch.replace(/\D/g, '');
+        return (
+          p.nome.toLowerCase().includes(q) ||
+          p.cpf.includes(debouncedSearch) ||
+          p.telefone.includes(debouncedSearch) ||
+          (cnsClean && searchCnsClean && cnsClean.includes(searchCnsClean))
+        );
+      },
     );
 
     // Filter by fila
@@ -325,7 +330,7 @@ const Pacientes: React.FC = () => {
     const dbFields: any = {
       nome: form.nome,
       cpf: form.cpf,
-      cns: form.cns,
+      cns: (form.cns || "").replace(/\D/g, "").slice(0, 15),
       nome_mae: form.nomeMae,
       telefone: normalizedPhone,
       data_nascimento: form.dataNascimento,
@@ -386,13 +391,14 @@ const Pacientes: React.FC = () => {
           if (cpfMatch && cpfMatch.length > 0) duplicateChecks.push(`CPF já cadastrado: ${cpfMatch[0].nome}`);
         }
 
-        if (form.cns.trim()) {
+        const cnsCleanCheck = (form.cns || "").replace(/\D/g, "");
+        if (cnsCleanCheck) {
           const { data: cnsMatch } = await supabase
             .from("pacientes")
-            .select("id, nome")
-            .eq("cns", form.cns.trim())
-            .limit(1);
-          if (cnsMatch && cnsMatch.length > 0) duplicateChecks.push(`CNS já cadastrado: ${cnsMatch[0].nome}`);
+            .select("id, nome, cns")
+            .limit(1000);
+          const dup = (cnsMatch || []).find((m: any) => (m.cns || '').replace(/\D/g, '') === cnsCleanCheck);
+          if (dup) duplicateChecks.push(`CNS já cadastrado: ${dup.nome}`);
         }
 
         if (form.nome.trim() && form.dataNascimento && form.nomeMae.trim()) {
