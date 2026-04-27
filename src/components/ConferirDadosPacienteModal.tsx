@@ -158,7 +158,8 @@ export function ConferirDadosPacienteModal({
         cns: data.cns || "",
         telefone: data.telefone || "",
         email: data.email || "",
-        endereco: data.endereco || "",
+        // Endereço: prioriza cd.logradouro (estruturado da página Pacientes), fallback p/ coluna legada
+        endereco: cd.logradouro || data.endereco || "",
         municipio: data.municipio || "",
         sexo: cd.sexo || "",
         raca_cor: cd.racaCor || cd.raca_cor || "",
@@ -166,7 +167,8 @@ export function ConferirDadosPacienteModal({
         etnia_outra: cd.etniaOutra || "",
         nacionalidade: cd.nacionalidade || "brasileiro",
         pais_nascimento: cd.paisNascimento || "",
-        tipo_logradouro_dne: cd.tipoLogradouroDne || cd.tipo_logradouro_dne || "",
+        // Tipo logradouro: lê chave canônica do Pacientes (tipoLogradouro) com fallbacks
+        tipo_logradouro_dne: cd.tipoLogradouro || cd.tipoLogradouroDne || cd.tipo_logradouro_dne || "",
         tipo_logradouro_codigo: cd.tipoLogradouroCodigo || cd.tipo_logradouro_codigo || "",
         numero: cd.numero || "",
         complemento: cd.complemento || "",
