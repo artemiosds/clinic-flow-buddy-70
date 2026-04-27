@@ -17,6 +17,7 @@ import CustomFieldsRenderer from "@/components/CustomFieldsRenderer";
 import { useCustomFields } from "@/hooks/useCustomFields";
 import { useAuth } from "@/contexts/AuthContext";
 import LogradouroDneAutocomplete from "@/components/LogradouroDneAutocomplete";
+import MunicipioIbgeCombobox from "@/components/MunicipioIbgeCombobox";
 
 const ESPECIALIDADES_DESTINO = [
   { value: "fisioterapia", label: "Fisioterapia" },
