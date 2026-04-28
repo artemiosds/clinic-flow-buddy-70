@@ -60,6 +60,7 @@ import { BuscaPaciente } from "@/components/BuscaPaciente";
 import { useUnidadeFilter } from "@/hooks/useUnidadeFilter";
 import { SlotInfoBadge } from "@/components/SlotInfoBadge";
 import { CalendarioAgenda } from "./CalendarioAgenda";
+import { getManchesterBadgeStyle } from "@/lib/manchesterProtocol";
 import { whatsappService } from "@/services/whatsappService";
 import { AgendaNotificacaoIndividual, AgendaNotificacoesMassa } from "@/components/AgendaNotificacoes";
 import { RegistrarFaltaModal } from "@/components/RegistrarFaltaModal";
@@ -230,7 +231,8 @@ const Agenda: React.FC = () => {
     let cancelled = false;
     const dayAgIds = agendamentos.filter((a) => a.data === selectedDate).map((a) => a.id);
     if (dayAgIds.length === 0) { setTriageMap({}); setArrivalMap({}); return; }
-    (async () => {
+
+    const loadTriageAndArrival = async () => {
       const [triageRes, filaRes] = await Promise.all([
         supabase
           .from("triage_records")
@@ -241,24 +243,44 @@ const Agenda: React.FC = () => {
           .select("id, hora_chegada")
           .in("id", dayAgIds),
       ]);
-      if (!cancelled) {
-        if (triageRes.data) {
-          const m: Record<string, { risco: string }> = {};
-          for (const r of triageRes.data) {
-            m[r.agendamento_id] = { risco: (r.classificacao_risco || "").toLowerCase() };
-          }
-          setTriageMap(m);
+      if (cancelled) return;
+      if (triageRes.data) {
+        const m: Record<string, { risco: string }> = {};
+        for (const r of triageRes.data) {
+          m[r.agendamento_id] = { risco: (r.classificacao_risco || "").toLowerCase() };
         }
-        if (filaRes.data) {
-          const a: Record<string, string> = {};
-          for (const f of filaRes.data as any[]) {
-            if (f.hora_chegada) a[f.id] = f.hora_chegada;
-          }
-          setArrivalMap(a);
-        }
+        setTriageMap(m);
       }
-    })();
-    return () => { cancelled = true; };
+      if (filaRes.data) {
+        const a: Record<string, string> = {};
+        for (const f of filaRes.data as any[]) {
+          if (f.hora_chegada) a[f.id] = f.hora_chegada;
+        }
+        setArrivalMap(a);
+      }
+    };
+
+    loadTriageAndArrival();
+
+    // Realtime: refresh triage map when triagem of any of today's agendamentos is created/updated
+    const channel = supabase
+      .channel(`agenda-triage-${selectedDate}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'triage_records' },
+        (payload: any) => {
+          const agId = payload?.new?.agendamento_id || payload?.old?.agendamento_id;
+          if (agId && dayAgIds.includes(agId)) {
+            loadTriageAndArrival();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(channel);
+    };
   }, [agendamentos, selectedDate]);
 
   // NOVO: aba pendentes / agenda
@@ -408,9 +430,11 @@ const Agenda: React.FC = () => {
       "em_atendimento", "aguardando_enfermagem", "apto_atendimento",
     ]);
 
-    // Dynamic priority from triage: 1=Vermelho, 2=Amarelo/Laranja, 4=Verde, 6=Azul
+    // Dynamic priority from triage (Manchester):
+    //  1=Vermelho (Emergência), 2=Laranja (Muito Urgente),
+    //  3=Amarelo (Urgente), 4=Verde (Pouco Urgente), 6=Azul (Não Urgente)
     const RISCO_PRIO: Record<string, number> = {
-      vermelho: 1, laranja: 2, amarelo: 2, verde: 4, azul: 6,
+      vermelho: 1, laranja: 2, amarelo: 3, verde: 4, azul: 6,
     };
 
     const calcAge = (dob: string): number => {
@@ -430,12 +454,12 @@ const Agenda: React.FC = () => {
 
     /**
      * Unified priority hierarchy (lower = higher priority):
-     *  1 = Risco Vermelho (dynamic)
-     *  2 = Risco Amarelo/Laranja (dynamic)
-     *  3 = Dor intensa 7-10 (dynamic, future)
-     *  4 = Risco Verde (dynamic)
+     *  1 = Risco Vermelho — Emergência (dynamic)
+     *  2 = Risco Laranja  — Muito Urgente (dynamic)
+     *  3 = Risco Amarelo  — Urgente (dynamic)
+     *  4 = Risco Verde    — Pouco Urgente (dynamic)
      *  5 = Fixed: Gestante / PNE / Autista
-     *  6 = Fixed: Idoso (≥60) OR Risco Azul (dynamic)
+     *  6 = Fixed: Idoso (≥60) OR Risco Azul (dynamic, Não Urgente)
      *  7 = Fixed: Criança (0-12)
      *  8 = Normal (no priority)
      * 50 = Not checked in (before triage/dynamic, use fixed priority)
@@ -2250,6 +2274,29 @@ const Agenda: React.FC = () => {
                         >
                           {statusLabels[ag.status] || ag.status}
                         </span>
+                        {(() => {
+                          const risco = triageMap[ag.id]?.risco;
+                          if (!risco) return null;
+                          const m = getManchesterBadgeStyle(risco);
+                          return (
+                            <span
+                              className={cn(
+                                "text-xs px-2 py-0.5 rounded-full font-semibold shrink-0 inline-flex items-center gap-1 border",
+                                m.bg,
+                                m.text,
+                                m.pulse && "animate-pulse",
+                              )}
+                              style={{ borderColor: m.color }}
+                              title={`Classificação de risco: ${m.label}`}
+                            >
+                              <span
+                                className="w-2 h-2 rounded-full"
+                                style={{ backgroundColor: m.color }}
+                              />
+                              Risco {m.label}
+                            </span>
+                          );
+                        })()}
                         {ag.googleEventId && (
                           <span
                             className={cn(
