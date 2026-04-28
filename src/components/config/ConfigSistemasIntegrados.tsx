@@ -346,11 +346,22 @@ const ConfigSistemasIntegrados: React.FC = () => {
             <Button size="sm" variant="outline" onClick={load} disabled={loading}>
               <RefreshCcw className="w-4 h-4 mr-2" /> Atualizar
             </Button>
-            <Button size="sm" onClick={openNew}>
-              <Plus className="w-4 h-4 mr-2" /> Novo Sistema
-            </Button>
+            {activeTab === 'sistemas' && (
+              <Button size="sm" onClick={openNew}>
+                <Plus className="w-4 h-4 mr-2" /> Novo Sistema
+              </Button>
+            )}
           </div>
         </div>
+
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
+          <TabsList className="mb-4">
+            <TabsTrigger value="sistemas"><Network className="w-4 h-4 mr-2" />Sistemas</TabsTrigger>
+            <TabsTrigger value="logs"><ScrollText className="w-4 h-4 mr-2" />Logs e Reenvios</TabsTrigger>
+            <TabsTrigger value="metricas"><BarChart3 className="w-4 h-4 mr-2" />Métricas</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="sistemas">
 
         <div className="rounded-lg border bg-muted/30 p-4 mb-4">
           <div className="flex items-start justify-between gap-3 flex-wrap">
