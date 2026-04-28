@@ -3033,6 +3033,29 @@ const ProntuarioPage: React.FC = () => {
         );
       })()}
 
+      {/* Modal Encaminhamento Externo */}
+      {encExternoOpen && queryPacienteId && (() => {
+        const p = pacientes.find(x => x.id === queryPacienteId);
+        if (!p) return null;
+        return (
+          <EncaminhamentoExternoModal
+            open={encExternoOpen}
+            onOpenChange={setEncExternoOpen}
+            paciente={{
+              id: p.id,
+              nome: p.nome,
+              cpf: p.cpf,
+              cns: p.cns,
+              data_nascimento: p.dataNascimento,
+              telefone: (p as any).telefone,
+              cid: p.cid,
+              endereco: (p as any).endereco,
+              municipio: (p as any).municipio,
+            }}
+          />
+        );
+      })()}
+
       {/* Histórico Completo Modal */}
       {(historicoPacienteId || queryPacienteId || form.paciente_id) && (
         <HistoricoCompletoModal
