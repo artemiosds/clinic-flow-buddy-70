@@ -1762,6 +1762,13 @@ const ProntuarioPage: React.FC = () => {
                 <Send className="w-4 h-4 mr-2" />
                 Encaminhar Paciente
               </Button>
+              <Button
+                variant="outline"
+                onClick={() => setEncExternoOpen(true)}
+              >
+                <Send className="w-4 h-4 mr-2" />
+                Encaminhamento Externo
+              </Button>
               <Button variant="outline" onClick={() => navigate("/painel/prontuario")}>
                 Ver todos
               </Button>
