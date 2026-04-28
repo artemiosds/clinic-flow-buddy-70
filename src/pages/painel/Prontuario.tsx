@@ -1372,11 +1372,22 @@ const ProntuarioPage: React.FC = () => {
     let prontuarioId: string | null = editId;
     try {
       const procTexto = selectedProcIds.map(id => procedimentos.find(pr => pr.id === id)?.nome || "").filter(Boolean).join(", ");
+      // Save+finalize: preserva profissional original em edição
+      const isMasterEditingFin = user?.role === 'master' && !!editId;
+      const overrideProfFin = isMasterEditingFin && overrideProfissionalId
+        ? funcionarios.find((fc: any) => fc.id === overrideProfissionalId)
+        : null;
+      const profIdFin = editId
+        ? (overrideProfFin?.id || originalProfissional?.id || user?.id || '')
+        : (user?.id || '');
+      const profNomeFin = editId
+        ? (overrideProfFin?.nome || originalProfissional?.nome || user?.nome || '')
+        : (user?.nome || '');
       const record: any = {
         paciente_id: form.paciente_id || `manual_${Date.now()}`,
         paciente_nome: form.paciente_nome,
-        profissional_id: user?.id || "",
-        profissional_nome: user?.nome || "",
+        profissional_id: profIdFin,
+        profissional_nome: profNomeFin,
         unidade_id: user?.unidadeId || "",
         setor: user?.setor || "",
         agendamento_id: form.agendamento_id,
