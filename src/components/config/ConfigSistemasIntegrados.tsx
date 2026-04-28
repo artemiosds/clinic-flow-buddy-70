@@ -450,6 +450,183 @@ const ConfigSistemasIntegrados: React.FC = () => {
           </Table>
         </div>
 
+          </TabsContent>
+
+          <TabsContent value="logs">
+            <div className="flex flex-wrap items-end gap-2 mb-3">
+              <div>
+                <Label className="text-xs">Status</Label>
+                <select
+                  value={logFilters.status}
+                  onChange={e => setLogFilters({ ...logFilters, status: e.target.value })}
+                  className="h-9 px-2 rounded-md border bg-background text-sm block"
+                >
+                  <option value="">Todos</option>
+                  <option value="sucesso">Sucesso</option>
+                  <option value="falha">Falha</option>
+                  <option value="erro">Erro</option>
+                </select>
+              </div>
+              <div>
+                <Label className="text-xs">Sistema</Label>
+                <select
+                  value={logFilters.sistema}
+                  onChange={e => setLogFilters({ ...logFilters, sistema: e.target.value })}
+                  className="h-9 px-2 rounded-md border bg-background text-sm block min-w-[180px]"
+                >
+                  <option value="">Todos</option>
+                  {list.map(s => (
+                    <option key={s.id} value={s.id}>{s.nome}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <Label className="text-xs">Desde</Label>
+                <Input type="date" value={logFilters.desde} onChange={e => setLogFilters({ ...logFilters, desde: e.target.value })} className="h-9 w-[150px]" />
+              </div>
+              <div>
+                <Label className="text-xs">Até</Label>
+                <Input type="date" value={logFilters.ate} onChange={e => setLogFilters({ ...logFilters, ate: e.target.value })} className="h-9 w-[150px]" />
+              </div>
+              <Button size="sm" onClick={loadLogs} disabled={logsLoading}>
+                {logsLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCcw className="w-4 h-4 mr-2" />}
+                Aplicar
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleProcessarFilaRetry} disabled={retryRunning}>
+                {retryRunning ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
+                Processar fila de retry
+              </Button>
+            </div>
+
+            <div className="rounded-lg border overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Quando</TableHead>
+                    <TableHead>Ação</TableHead>
+                    <TableHead>Direção</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>HTTP</TableHead>
+                    <TableHead>Mensagem</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {logsLoading ? (
+                    <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-6">Carregando...</TableCell></TableRow>
+                  ) : logs.length === 0 ? (
+                    <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-6">Nenhum log encontrado.</TableCell></TableRow>
+                  ) : logs.map(l => (
+                    <TableRow key={l.id}>
+                      <TableCell className="text-xs">{new Date(l.created_at).toLocaleString('pt-BR')}</TableCell>
+                      <TableCell className="text-xs font-mono">{l.tipo_acao}</TableCell>
+                      <TableCell className="text-xs">{l.direcao}</TableCell>
+                      <TableCell>
+                        {l.status === 'sucesso' ? (
+                          <Badge className="bg-emerald-500/10 text-emerald-700 border-emerald-500/30">OK</Badge>
+                        ) : (
+                          <Badge variant="destructive">{l.status}</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-xs">{l.http_status ?? '—'}</TableCell>
+                      <TableCell className="text-xs max-w-[320px] truncate" title={l.mensagem}>{l.mensagem}</TableCell>
+                      <TableCell className="text-right">
+                        {l.encaminhamento_id && l.status !== 'sucesso' && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleReenviar(l.encaminhamento_id)}
+                            disabled={reenvioId === l.encaminhamento_id}
+                          >
+                            {reenvioId === l.encaminhamento_id ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Send className="w-3.5 h-3.5 mr-1" />Reenviar</>}
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="metricas">
+            {metricasLoading ? (
+              <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+            ) : !metricas ? (
+              <p className="text-sm text-muted-foreground">Sem dados.</p>
+            ) : (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="rounded-lg border p-3 bg-muted/30">
+                    <p className="text-xs text-muted-foreground">Total (30d)</p>
+                    <p className="text-2xl font-bold text-foreground">{metricas.total}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{metricas.totalEntrada} recebidos · {metricas.totalSaida} enviados</p>
+                  </div>
+                  <div className="rounded-lg border p-3 bg-muted/30">
+                    <p className="text-xs text-muted-foreground">Tempo médio até visualização</p>
+                    <p className="text-2xl font-bold text-foreground">{metricas.media_visualizacao_min.toFixed(1)} min</p>
+                  </div>
+                  <div className="rounded-lg border p-3 bg-muted/30">
+                    <p className="text-xs text-muted-foreground">Tempo médio até aceite</p>
+                    <p className="text-2xl font-bold text-foreground">{metricas.media_aceite_min.toFixed(1)} min</p>
+                  </div>
+                  <div className="rounded-lg border p-3 bg-muted/30">
+                    <p className="text-xs text-muted-foreground">Tempo médio até agendamento</p>
+                    <p className="text-2xl font-bold text-foreground">{metricas.media_agendamento_min.toFixed(1)} min</p>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-sm mb-2">Taxa de recusa por sistema parceiro</h4>
+                  <div className="rounded-lg border overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Sistema</TableHead>
+                          <TableHead>Total</TableHead>
+                          <TableHead>Recusados</TableHead>
+                          <TableHead>Taxa</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {metricas.taxaRecusaPorSistema.map((r: any) => {
+                          const sis = list.find(s => s.id === r.sistema_id);
+                          return (
+                            <TableRow key={r.sistema_id}>
+                              <TableCell className="text-sm">{sis?.nome ?? r.sistema_id}</TableCell>
+                              <TableCell className="text-sm">{r.total}</TableCell>
+                              <TableCell className="text-sm">{r.recusados}</TableCell>
+                              <TableCell className="text-sm font-semibold">{r.taxa.toFixed(1)}%</TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-sm mb-2">Volume diário (últimos 30 dias)</h4>
+                  <div className="rounded-lg border p-3 bg-muted/30">
+                    <div className="flex items-end gap-1 h-32">
+                      {metricas.volumeDiario.map(([dia, qtd]: [string, number]) => {
+                        const max = Math.max(...metricas.volumeDiario.map((d: any) => d[1]), 1);
+                        const h = Math.max(4, (qtd / max) * 100);
+                        return (
+                          <div key={dia} className="flex-1 flex flex-col items-center gap-1" title={`${dia}: ${qtd}`}>
+                            <div className="w-full bg-primary/70 hover:bg-primary rounded-t" style={{ height: `${h}%` }} />
+                            <span className="text-[9px] text-muted-foreground rotate-45 origin-left">{dia.slice(5)}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
