@@ -59,6 +59,9 @@ const EncaminhamentoExternoModal: React.FC<Props> = ({ open, onOpenChange, pacie
   const [resumo, setResumo] = useState('');
   const [cid, setCid] = useState('');
   const [sending, setSending] = useState(false);
+  const [anexos, setAnexos] = useState<Array<{ nome: string; mime_type: string; tamanho: number; storage_path: string }>>([]);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (!open) return;
