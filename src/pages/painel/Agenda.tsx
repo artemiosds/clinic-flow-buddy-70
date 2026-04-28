@@ -408,9 +408,11 @@ const Agenda: React.FC = () => {
       "em_atendimento", "aguardando_enfermagem", "apto_atendimento",
     ]);
 
-    // Dynamic priority from triage: 1=Vermelho, 2=Amarelo/Laranja, 4=Verde, 6=Azul
+    // Dynamic priority from triage (Manchester):
+    //  1=Vermelho (Emergência), 2=Laranja (Muito Urgente),
+    //  3=Amarelo (Urgente), 4=Verde (Pouco Urgente), 6=Azul (Não Urgente)
     const RISCO_PRIO: Record<string, number> = {
-      vermelho: 1, laranja: 2, amarelo: 2, verde: 4, azul: 6,
+      vermelho: 1, laranja: 2, amarelo: 3, verde: 4, azul: 6,
     };
 
     const calcAge = (dob: string): number => {
