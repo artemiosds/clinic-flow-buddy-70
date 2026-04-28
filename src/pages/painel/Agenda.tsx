@@ -2274,6 +2274,29 @@ const Agenda: React.FC = () => {
                         >
                           {statusLabels[ag.status] || ag.status}
                         </span>
+                        {(() => {
+                          const risco = triageMap[ag.id]?.risco;
+                          if (!risco) return null;
+                          const m = getManchesterBadgeStyle(risco);
+                          return (
+                            <span
+                              className={cn(
+                                "text-xs px-2 py-0.5 rounded-full font-semibold shrink-0 inline-flex items-center gap-1 border",
+                                m.bg,
+                                m.text,
+                                m.pulse && "animate-pulse",
+                              )}
+                              style={{ borderColor: m.color }}
+                              title={`Classificação de risco: ${m.label}`}
+                            >
+                              <span
+                                className="w-2 h-2 rounded-full"
+                                style={{ backgroundColor: m.color }}
+                              />
+                              Risco {m.label}
+                            </span>
+                          );
+                        })()}
                         {ag.googleEventId && (
                           <span
                             className={cn(
