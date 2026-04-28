@@ -201,6 +201,10 @@ const ProntuarioPage: React.FC = () => {
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [previousForm, setPreviousForm] = useState<typeof emptyForm | null>(null);
+  // Profissional responsável original (preservado em edições)
+  const [originalProfissional, setOriginalProfissional] = useState<{ id: string; nome: string } | null>(null);
+  // Master pode reatribuir o profissional responsável durante a edição
+  const [overrideProfissionalId, setOverrideProfissionalId] = useState<string>('');
   // Autosave state
   const [autosaveStatus, setAutosaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [autosaveAt, setAutosaveAt] = useState<Date | null>(null);
