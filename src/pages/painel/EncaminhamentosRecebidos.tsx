@@ -102,6 +102,16 @@ const EncaminhamentosRecebidos: React.FC = () => {
     });
   }, [list, search, statusFilter]);
 
+  const notificarOrigem = async (encId: string, status: string, extra: Record<string, any> = {}) => {
+    try {
+      await supabase.functions.invoke('integracao-callback-status', {
+        body: { encaminhamento_id: encId, status, ...extra },
+      });
+    } catch (e) {
+      console.warn('[callback-status] falha ao notificar origem:', e);
+    }
+  };
+
   const openDetalhe = async (e: Encaminhamento) => {
     setSelected(e);
     if (e.direcao === 'entrada' && e.status === 'recebido' && !e.visualizado_em) {
@@ -109,6 +119,7 @@ const EncaminhamentosRecebidos: React.FC = () => {
         status: 'visualizado',
         visualizado_em: new Date().toISOString(),
       }).eq('id', e.id);
+      notificarOrigem(e.id, 'visualizado');
       load();
     }
   };
@@ -127,7 +138,8 @@ const EncaminhamentosRecebidos: React.FC = () => {
     }).eq('id', selected.id);
     setActionLoading(false);
     if (error) return toast.error('Erro ao recusar');
-    toast.success('Encaminhamento recusado');
+    await notificarOrigem(selected.id, 'recusado', { justificativa_recusa: justificativa.trim() });
+    toast.success('Encaminhamento recusado e origem notificada');
     setActionOpen(null); setSelected(null); setJustificativa('');
     load();
   };
@@ -141,7 +153,8 @@ const EncaminhamentosRecebidos: React.FC = () => {
     }).eq('id', selected.id);
     setActionLoading(false);
     if (error) return toast.error('Erro ao aceitar');
-    toast.success('Encaminhamento aceito. Vincule ou cadastre o paciente para agendar.');
+    await notificarOrigem(selected.id, 'aceito');
+    toast.success('Encaminhamento aceito. Origem notificada. Vincule ou cadastre o paciente para agendar.');
     setActionOpen(null);
     load();
   };
