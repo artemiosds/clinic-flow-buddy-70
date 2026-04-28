@@ -23,7 +23,7 @@ serve(async (req) => {
     const { action } = body;
 
     if (action === "create") {
-      const { nome, usuario, email, cpf, senha, setor, unidade_id, sala_id, cargo, role, criado_por, tempo_atendimento, profissao, tipo_conselho, numero_conselho, uf_conselho, pode_agendar_retorno, coren, cbo_codigo, cbo_descricao } = body;
+      const { nome, usuario, email, cpf, senha, setor, unidade_id, sala_id, cargo, role, criado_por, tempo_atendimento, profissao, tipo_conselho, numero_conselho, uf_conselho, pode_agendar_retorno, coren, cbo_codigo, cbo_descricao, aceita_encaminhamento_externo } = body;
 
       if (!nome || !usuario || !email || !senha) {
         return new Response(
@@ -112,6 +112,7 @@ serve(async (req) => {
           coren: coren || "",
           custom_data: {
             ...(cbo_codigo ? { cbo_codigo: String(cbo_codigo), cbo_descricao: String(cbo_descricao || '') } : {}),
+            ...(aceita_encaminhamento_externo !== undefined ? { aceita_encaminhamento_externo: !!aceita_encaminhamento_externo } : {}),
           },
         })
         .select()
@@ -169,14 +170,21 @@ serve(async (req) => {
         }
       }
 
-      // Merge CBO into custom_data (preserve existing custom fields)
+      // Merge CBO + flag aceita_encaminhamento_externo into custom_data (preserve existing)
+      const existingCustom = (current.custom_data as Record<string, any>) || {};
+      let customDataChanged = false;
+      const mergedCustom: Record<string, any> = { ...existingCustom };
       if (body.cbo_codigo !== undefined || body.cbo_descricao !== undefined) {
-        const existingCustom = (current.custom_data as Record<string, any>) || {};
-        dbFields.custom_data = {
-          ...existingCustom,
-          cbo_codigo: String(body.cbo_codigo || ''),
-          cbo_descricao: String(body.cbo_descricao || ''),
-        };
+        mergedCustom.cbo_codigo = String(body.cbo_codigo || '');
+        mergedCustom.cbo_descricao = String(body.cbo_descricao || '');
+        customDataChanged = true;
+      }
+      if (body.aceita_encaminhamento_externo !== undefined) {
+        mergedCustom.aceita_encaminhamento_externo = !!body.aceita_encaminhamento_externo;
+        customDataChanged = true;
+      }
+      if (customDataChanged) {
+        dbFields.custom_data = mergedCustom;
       }
 
       // Normalize email

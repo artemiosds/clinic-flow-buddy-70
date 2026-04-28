@@ -51,6 +51,7 @@ import PrescricaoMedicamentos from "@/components/PrescricaoMedicamentos";
 import CamposEspecialidade from "@/components/CamposEspecialidade";
 import HistoricoCompletoModal from "@/components/HistoricoCompletoModal";
 import EncaminhamentoInternoModal from "@/components/EncaminhamentoInternoModal";
+import EncaminhamentoExternoModal from "@/components/EncaminhamentoExternoModal";
 import SoapFieldsAdaptive from "@/components/SoapFieldsAdaptive";
 import TriagemDetalhada from "@/components/TriagemDetalhada";
 import ProntuarioAnexos from "@/components/ProntuarioAnexos";
@@ -288,6 +289,7 @@ const ProntuarioPage: React.FC = () => {
   const showSoapDropdown = hasDropdownSoap(user?.profissao);
   const [docModalOpen, setDocModalOpen] = useState(false);
   const [encInternoOpen, setEncInternoOpen] = useState(false);
+  const [encExternoOpen, setEncExternoOpen] = useState(false);
   const [historicoCompletoOpen, setHistoricoCompletoOpen] = useState(false);
   const [viewerProntuario, setViewerProntuario] = useState<any | null>(null);
   const [historicoPacienteId, setHistoricoPacienteId] = useState<{ id: string; nome: string } | null>(null);
@@ -1760,6 +1762,13 @@ const ProntuarioPage: React.FC = () => {
                 <Send className="w-4 h-4 mr-2" />
                 Encaminhar Paciente
               </Button>
+              <Button
+                variant="outline"
+                onClick={() => setEncExternoOpen(true)}
+              >
+                <Send className="w-4 h-4 mr-2" />
+                Encaminhamento Externo
+              </Button>
               <Button variant="outline" onClick={() => navigate("/painel/prontuario")}>
                 Ver todos
               </Button>
@@ -3019,6 +3028,29 @@ const ProntuarioPage: React.FC = () => {
               data_nascimento: p.dataNascimento,
               cid: p.cid,
               unidadeId: p.unidadeId,
+            }}
+          />
+        );
+      })()}
+
+      {/* Modal Encaminhamento Externo */}
+      {encExternoOpen && queryPacienteId && (() => {
+        const p = pacientes.find(x => x.id === queryPacienteId);
+        if (!p) return null;
+        return (
+          <EncaminhamentoExternoModal
+            open={encExternoOpen}
+            onOpenChange={setEncExternoOpen}
+            paciente={{
+              id: p.id,
+              nome: p.nome,
+              cpf: p.cpf,
+              cns: p.cns,
+              data_nascimento: p.dataNascimento,
+              telefone: (p as any).telefone,
+              cid: p.cid,
+              endereco: (p as any).endereco,
+              municipio: (p as any).municipio,
             }}
           />
         );

@@ -62,19 +62,52 @@ const ConfigSistemasIntegrados: React.FC = () => {
   const [showOutToken, setShowOutToken] = useState(false);
   const [showInToken, setShowInToken] = useState(false);
   const [testingId, setTestingId] = useState<string | null>(null);
+  const [identificadorLocal, setIdentificadorLocal] = useState('');
+  const [identificadorLocalLoaded, setIdentificadorLocalLoaded] = useState('');
+  const [savingIdent, setSavingIdent] = useState(false);
+  const [clinicaConfigId, setClinicaConfigId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('sistemas_integrados')
-      .select('*')
-      .order('created_at', { ascending: false });
+    const [{ data, error }, cfgRes] = await Promise.all([
+      supabase.from('sistemas_integrados').select('*').order('created_at', { ascending: false }),
+      supabase.from('clinica_config').select('id, identificador_local').limit(1).maybeSingle(),
+    ]);
     if (error) toast.error('Erro ao carregar sistemas integrados');
     setList((data ?? []) as SistemaIntegrado[]);
+    if (cfgRes?.data) {
+      setClinicaConfigId((cfgRes.data as any).id);
+      const v = ((cfgRes.data as any).identificador_local ?? '').toString();
+      setIdentificadorLocal(v);
+      setIdentificadorLocalLoaded(v);
+    }
     setLoading(false);
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  const handleSaveIdentificador = async () => {
+    const v = identificadorLocal.trim();
+    if (!v) { toast.error('Informe o identificador deste sistema.'); return; }
+    if (!/^[a-z0-9-]+$/i.test(v)) { toast.error('Use apenas letras, números e hífen.'); return; }
+    setSavingIdent(true);
+    try {
+      let err;
+      if (clinicaConfigId) {
+        ({ error: err } = await supabase.from('clinica_config').update({ identificador_local: v } as any).eq('id', clinicaConfigId));
+      } else {
+        ({ error: err } = await supabase.from('clinica_config').insert({ identificador_local: v, nome_clinica: '' } as any));
+      }
+      if (err) throw err;
+      setIdentificadorLocalLoaded(v);
+      toast.success('Identificador deste sistema salvo.');
+      load();
+    } catch (e: any) {
+      toast.error(e?.message ?? 'Erro ao salvar');
+    } finally {
+      setSavingIdent(false);
+    }
+  };
 
   const openNew = () => {
     setForm({ ...emptyForm });
@@ -189,6 +222,31 @@ const ConfigSistemasIntegrados: React.FC = () => {
             </Button>
             <Button size="sm" onClick={openNew}>
               <Plus className="w-4 h-4 mr-2" /> Novo Sistema
+            </Button>
+          </div>
+        </div>
+
+        <div className="rounded-lg border bg-muted/30 p-4 mb-4">
+          <div className="flex items-start justify-between gap-3 flex-wrap">
+            <div className="flex-1 min-w-[260px]">
+              <Label className="text-sm font-semibold">Identificador deste sistema</Label>
+              <p className="text-xs text-muted-foreground mt-1">
+                Compartilhe este texto com a unidade parceira. Ela deve cadastrá-lo como "Identificador do sistema" para nos reconhecer ao receber encaminhamentos.
+              </p>
+              <Input
+                value={identificadorLocal}
+                onChange={e => setIdentificadorLocal(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
+                placeholder="ex.: sms-oriximina-cer"
+                className="mt-2 max-w-md font-mono"
+              />
+            </div>
+            <Button
+              size="sm"
+              onClick={handleSaveIdentificador}
+              disabled={savingIdent || identificadorLocal.trim() === identificadorLocalLoaded.trim()}
+            >
+              {savingIdent ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Salvar identificador
             </Button>
           </div>
         </div>

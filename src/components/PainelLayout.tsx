@@ -40,6 +40,7 @@ const menuItems: {
   { to: '/painel/multiprofissional',label: 'Avaliação Multi',        icon: BookOpen,           modulo: 'atendimento' },
   { to: '/painel/alta',              label: 'Relatório de Alta',      icon: FileText,           modulo: 'prontuario' },
   { to: '/painel/encaminhamentos',  label: 'Encaminhamentos',        icon: Send,               modulo: 'encaminhamento' },
+  { to: '/painel/encaminhamentos-externos', label: 'Encam. Externos',  icon: Send,               modulo: 'encaminhamento' },
   { to: '/painel/relatorios',       label: 'Relatórios',             icon: FileText,           modulo: 'relatorios' },
   { to: '/painel/bpa-producao',     label: 'BPA-Produção',           icon: FileText,           modulo: 'relatorios' },
   { to: '/painel/funcionarios',     label: 'Funcionários',           icon: UserCog,            modulo: 'usuarios' },
