@@ -399,6 +399,52 @@ const EncaminhamentosRecebidos: React.FC = () => {
                   <Link2 className="w-3 h-3 inline mr-1" /> Vinculado ao paciente local <span className="font-mono">{selected.paciente_id_destino}</span>
                 </div>
               )}
+
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <Paperclip className="w-4 h-4 text-primary" />
+                  <b>Anexos clínicos</b>
+                  {anexosLoading && <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />}
+                  {!anexosLoading && <span className="text-xs text-muted-foreground">({anexos.length})</span>}
+                </div>
+                {!anexosLoading && anexos.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">Nenhum anexo enviado junto com este encaminhamento.</p>
+                ) : (
+                  <ul className="space-y-1">
+                    {anexos.map(a => {
+                      const href = signedUrls[a.id] || a.url_remota || '';
+                      const isImg = (a.mime_type || '').startsWith('image/');
+                      return (
+                        <li key={a.id} className="flex items-center justify-between gap-2 rounded-md border bg-muted/30 px-2 py-1.5 text-xs">
+                          <div className="flex items-center gap-2 min-w-0">
+                            {isImg && href ? (
+                              <img src={href} alt={a.nome_arquivo} className="w-8 h-8 object-cover rounded" />
+                            ) : (
+                              <FileText className="w-4 h-4 text-primary shrink-0" />
+                            )}
+                            <span className="truncate" title={a.nome_arquivo}>{a.nome_arquivo}</span>
+                            <span className="text-muted-foreground shrink-0">
+                              ({((a.tamanho_bytes || 0) / 1024).toFixed(0)} KB)
+                            </span>
+                          </div>
+                          {href ? (
+                            <a
+                              href={href}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-primary hover:underline flex items-center gap-1 shrink-0"
+                            >
+                              <Download className="w-3.5 h-3.5" /> abrir
+                            </a>
+                          ) : (
+                            <span className="text-muted-foreground shrink-0">indisponível</span>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
             </div>
           )}
           {selected?.direcao === 'entrada' && (
