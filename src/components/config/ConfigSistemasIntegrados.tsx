@@ -9,8 +9,9 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Network, Plus, Plug, Trash2, Eye, EyeOff, CheckCircle2, XCircle, Loader2, RefreshCcw } from 'lucide-react';
+import { Network, Plus, Plug, Trash2, Eye, EyeOff, CheckCircle2, XCircle, Loader2, RefreshCcw, ScrollText, BarChart3, Send } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface SistemaIntegrado {
