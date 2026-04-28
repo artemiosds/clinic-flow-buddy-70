@@ -2562,6 +2562,34 @@ const ProntuarioPage: React.FC = () => {
               </div>
             )}
 
+            {editId && user?.role === 'master' && (
+              <div className="rounded-md border border-warning/40 bg-warning/5 p-3 space-y-2">
+                <Label className="text-warning text-xs font-semibold">
+                  Profissional Responsável (Master pode reatribuir)
+                </Label>
+                <Select
+                  value={overrideProfissionalId || originalProfissional?.id || ''}
+                  onValueChange={(v) => setOverrideProfissionalId(v === originalProfissional?.id ? '' : v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar profissional responsável..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {funcionarios
+                      .filter((f: any) => f.ativo && (f.role === 'profissional' || f.role === 'enfermagem' || f.role === 'tecnico'))
+                      .map((f: any) => (
+                        <SelectItem key={f.id} value={f.id}>
+                          {f.nome} {f.profissao ? `— ${f.profissao}` : ''}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[11px] text-muted-foreground">
+                  O nome no histórico exibirá este profissional. A edição fica registrada na auditoria como sua ação.
+                </p>
+              </div>
+            )}
+
             {editId && (
               <div>
                 <Label className="text-warning">Motivo da Alteração *</Label>
