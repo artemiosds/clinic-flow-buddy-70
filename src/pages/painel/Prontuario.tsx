@@ -852,6 +852,11 @@ const ProntuarioPage: React.FC = () => {
     };
     setForm(formData);
     setPreviousForm(formData);
+    setOriginalProfissional({
+      id: (p as any).profissional_id || '',
+      nome: (p as any).profissional_nome || '',
+    });
+    setOverrideProfissionalId('');
     // Load exames from solicitacao_exames JSON
     try {
       const parsed = p.solicitacao_exames ? JSON.parse(p.solicitacao_exames) : null;
