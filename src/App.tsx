@@ -220,6 +220,7 @@ const App = () => (
                     <Route path="configuracoes-avancadas" element={<ModuleRoute modulo="usuarios" masterOnly><ConfiguracoesAvancadas /></ModuleRoute>} />
                     <Route path="alta" element={<ModuleRoute modulo="prontuario"><RelatorioAlta /></ModuleRoute>} />
                     <Route path="encaminhamentos" element={<ModuleRoute modulo="encaminhamento"><Encaminhamentos /></ModuleRoute>} />
+                    <Route path="encaminhamentos-externos" element={<ModuleRoute modulo="encaminhamento"><EncaminhamentosRecebidos /></ModuleRoute>} />
                     <Route path="meu-prontuario" element={<ModuleRoute modulo="prontuario"><MeuProntuario /></ModuleRoute>} />
                     <Route path="bpa-producao" element={<ModuleRoute modulo="relatorios"><BpaProducao /></ModuleRoute>} />
                   </Route>
