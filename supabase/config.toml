@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.integracao-receber-encaminhamento]
 verify_jwt = false
+
+[functions.integracao-atualizar-status]
+verify_jwt = false
