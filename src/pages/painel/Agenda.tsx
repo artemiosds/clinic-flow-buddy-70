@@ -230,7 +230,8 @@ const Agenda: React.FC = () => {
     let cancelled = false;
     const dayAgIds = agendamentos.filter((a) => a.data === selectedDate).map((a) => a.id);
     if (dayAgIds.length === 0) { setTriageMap({}); setArrivalMap({}); return; }
-    (async () => {
+
+    const loadTriageAndArrival = async () => {
       const [triageRes, filaRes] = await Promise.all([
         supabase
           .from("triage_records")
@@ -241,24 +242,44 @@ const Agenda: React.FC = () => {
           .select("id, hora_chegada")
           .in("id", dayAgIds),
       ]);
-      if (!cancelled) {
-        if (triageRes.data) {
-          const m: Record<string, { risco: string }> = {};
-          for (const r of triageRes.data) {
-            m[r.agendamento_id] = { risco: (r.classificacao_risco || "").toLowerCase() };
-          }
-          setTriageMap(m);
+      if (cancelled) return;
+      if (triageRes.data) {
+        const m: Record<string, { risco: string }> = {};
+        for (const r of triageRes.data) {
+          m[r.agendamento_id] = { risco: (r.classificacao_risco || "").toLowerCase() };
         }
-        if (filaRes.data) {
-          const a: Record<string, string> = {};
-          for (const f of filaRes.data as any[]) {
-            if (f.hora_chegada) a[f.id] = f.hora_chegada;
-          }
-          setArrivalMap(a);
-        }
+        setTriageMap(m);
       }
-    })();
-    return () => { cancelled = true; };
+      if (filaRes.data) {
+        const a: Record<string, string> = {};
+        for (const f of filaRes.data as any[]) {
+          if (f.hora_chegada) a[f.id] = f.hora_chegada;
+        }
+        setArrivalMap(a);
+      }
+    };
+
+    loadTriageAndArrival();
+
+    // Realtime: refresh triage map when triagem of any of today's agendamentos is created/updated
+    const channel = supabase
+      .channel(`agenda-triage-${selectedDate}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'triage_records' },
+        (payload: any) => {
+          const agId = payload?.new?.agendamento_id || payload?.old?.agendamento_id;
+          if (agId && dayAgIds.includes(agId)) {
+            loadTriageAndArrival();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(channel);
+    };
   }, [agendamentos, selectedDate]);
 
   // NOVO: aba pendentes / agenda
