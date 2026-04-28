@@ -524,6 +524,45 @@ export type Database = {
         }
         Relationships: []
       }
+      encaminhamentos_anexos: {
+        Row: {
+          created_at: string
+          direcao: string
+          encaminhamento_id: string
+          id: string
+          mime_type: string
+          nome_arquivo: string
+          origem: string
+          storage_path: string
+          tamanho_bytes: number
+          url_remota: string
+        }
+        Insert: {
+          created_at?: string
+          direcao?: string
+          encaminhamento_id: string
+          id?: string
+          mime_type?: string
+          nome_arquivo?: string
+          origem?: string
+          storage_path?: string
+          tamanho_bytes?: number
+          url_remota?: string
+        }
+        Update: {
+          created_at?: string
+          direcao?: string
+          encaminhamento_id?: string
+          id?: string
+          mime_type?: string
+          nome_arquivo?: string
+          origem?: string
+          storage_path?: string
+          tamanho_bytes?: number
+          url_remota?: string
+        }
+        Relationships: []
+      }
       encaminhamentos_externos: {
         Row: {
           aceito_em: string | null
@@ -554,7 +593,10 @@ export type Database = {
           paciente_id_origem: string
           paciente_nome: string
           paciente_telefone: string
+          pdf_path: string
+          pdf_url: string
           procedimentos: Json
+          proxima_tentativa_em: string | null
           recebido_em: string | null
           recusado_em: string | null
           remoto_encaminhamento_id: string
@@ -596,7 +638,10 @@ export type Database = {
           paciente_id_origem?: string
           paciente_nome?: string
           paciente_telefone?: string
+          pdf_path?: string
+          pdf_url?: string
           procedimentos?: Json
+          proxima_tentativa_em?: string | null
           recebido_em?: string | null
           recusado_em?: string | null
           remoto_encaminhamento_id?: string
@@ -638,7 +683,10 @@ export type Database = {
           paciente_id_origem?: string
           paciente_nome?: string
           paciente_telefone?: string
+          pdf_path?: string
+          pdf_url?: string
           procedimentos?: Json
+          proxima_tentativa_em?: string | null
           recebido_em?: string | null
           recusado_em?: string | null
           remoto_encaminhamento_id?: string

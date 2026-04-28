@@ -125,6 +125,23 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Persiste anexos recebidos (URLs assinadas pelo emissor — visualização inline no modal)
+    if (Array.isArray(body.anexos) && body.anexos.length) {
+      const rows = body.anexos
+        .filter((a: any) => a && (a.url || a.storage_path))
+        .map((a: any) => ({
+          encaminhamento_id: inserted.id,
+          direcao: 'entrada',
+          nome_arquivo: String(a.nome || a.nome_arquivo || 'anexo'),
+          mime_type: String(a.mime_type || 'application/octet-stream'),
+          tamanho_bytes: Number(a.tamanho || a.tamanho_bytes || 0),
+          storage_path: '',
+          url_remota: String(a.url || ''),
+          origem: 'remoto',
+        }));
+      if (rows.length) await supabase.from('encaminhamentos_anexos').insert(rows);
+    }
+
     await supabase.from('logs_integracao').insert({
       tipo_acao: 'recebimento', direcao: 'entrada',
       sistema_integrado_id: sis.id, identificador_remoto: systemId,

@@ -50,7 +50,12 @@ Deno.serve(async (req) => {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-    const { sistema_id, payload } = body as { sistema_id: string; payload: Record<string, any> };
+    const { sistema_id, payload, anexos, pdf } = body as {
+      sistema_id: string;
+      payload: Record<string, any>;
+      anexos?: Array<{ nome: string; mime_type: string; tamanho: number; storage_path?: string; url?: string }>;
+      pdf?: { storage_path: string; url?: string } | null;
+    };
 
     if (!sistema_id || !payload?.paciente_nome || !payload?.motivo) {
       return new Response(JSON.stringify({ ok: false, error: 'missing_required_fields' }), {
@@ -120,11 +125,17 @@ Deno.serve(async (req) => {
       criado_por: userId,
       tentativas: 0,
     };
+    if (pdf?.storage_path) {
+      (insertLocal as any).pdf_path = pdf.storage_path;
+      const { data: signed } = await admin.storage.from('encaminhamentos').createSignedUrl(pdf.storage_path, 60 * 60 * 24 * 7);
+      (insertLocal as any).pdf_url = signed?.signedUrl ?? '';
+      (insertLocal as any).documento_url = (insertLocal as any).pdf_url;
+    }
 
     const { data: saved, error: insErr } = await admin
       .from('encaminhamentos_externos')
       .insert(insertLocal)
-      .select('id')
+      .select('id, pdf_url, pdf_path')
       .single();
     if (insErr || !saved) {
       return new Response(JSON.stringify({ ok: false, error: 'erro_persistir', detail: insErr?.message }), {
@@ -132,9 +143,39 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Persiste anexos + gera URLs assinadas para envio
+    const anexosPayload: any[] = [];
+    if (Array.isArray(anexos) && anexos.length) {
+      for (const a of anexos) {
+        const url = a.url || (a.storage_path
+          ? (await admin.storage.from('encaminhamentos').createSignedUrl(a.storage_path, 60 * 60 * 24 * 7)).data?.signedUrl
+          : '');
+        if (a.storage_path || a.url) {
+          await admin.from('encaminhamentos_anexos').insert({
+            encaminhamento_id: saved.id,
+            direcao: 'saida',
+            nome_arquivo: a.nome || 'anexo',
+            mime_type: a.mime_type || 'application/octet-stream',
+            tamanho_bytes: a.tamanho || 0,
+            storage_path: a.storage_path || '',
+            url_remota: a.url || '',
+          });
+        }
+        if (url) {
+          anexosPayload.push({ nome: a.nome, mime_type: a.mime_type, tamanho: a.tamanho, url });
+        }
+      }
+    }
+
     // Envia ao parceiro
     const target = `${sis.url_base.replace(/\/+$/, '')}/functions/v1/integracao-receber-encaminhamento`;
-    const remotePayload = { ...payload, remoto_encaminhamento_id: saved.id, origem_unidade: insertLocal.origem_unidade };
+    const remotePayload = {
+      ...payload,
+      remoto_encaminhamento_id: saved.id,
+      origem_unidade: insertLocal.origem_unidade,
+      documento_url: (saved as any).pdf_url || payload.documento_url || '',
+      anexos: anexosPayload,
+    };
 
     const t0 = Date.now();
     let httpStatus = 0;
@@ -160,11 +201,13 @@ Deno.serve(async (req) => {
     }
     const elapsedMs = Date.now() - t0;
 
-    // Atualiza registro local
+    // Atualiza registro local — agenda retry com backoff exponencial em caso de falha
+    const proximaTentativa = okFlag ? null : new Date(Date.now() + 5 * 60 * 1000).toISOString();
     await admin.from('encaminhamentos_externos').update({
       status: okFlag ? 'enviado' : 'falha_envio',
       tentativas: 1,
       ultima_tentativa_em: new Date().toISOString(),
+      proxima_tentativa_em: proximaTentativa,
       ultimo_erro: okFlag ? '' : mensagem.slice(0, 500),
       remoto_encaminhamento_id: okFlag && respPayload?.id ? String(respPayload.id) : '',
     }).eq('id', saved.id);

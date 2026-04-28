@@ -1,11 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Send, Network, RefreshCcw } from 'lucide-react';
+import { Loader2, Send, Network, RefreshCcw, Paperclip, X, FileText } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
@@ -59,12 +59,16 @@ const EncaminhamentoExternoModal: React.FC<Props> = ({ open, onOpenChange, pacie
   const [resumo, setResumo] = useState('');
   const [cid, setCid] = useState('');
   const [sending, setSending] = useState(false);
+  const [anexos, setAnexos] = useState<Array<{ nome: string; mime_type: string; tamanho: number; storage_path: string }>>([]);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (!open) return;
     setSistemaId(''); setProfissionais([]); setProfDestinoId('');
     setEspecialidadeDestino(''); setMotivo(''); setResumo('');
     setCid(paciente?.cid || '');
+    setAnexos([]);
     (async () => {
       const { data } = await supabase
         .from('sistemas_integrados')
@@ -106,6 +110,36 @@ const EncaminhamentoExternoModal: React.FC<Props> = ({ open, onOpenChange, pacie
     if (!especialidadeDestino) return profissionais;
     return profissionais.filter(p => p.especialidade === especialidadeDestino);
   }, [especialidadeDestino, profissionais]);
+
+  const handleFiles = async (files: FileList | null) => {
+    if (!files?.length) return;
+    setUploading(true);
+    try {
+      const novos: typeof anexos = [];
+      for (const f of Array.from(files)) {
+        if (f.size > 15 * 1024 * 1024) {
+          toast.error(`${f.name}: tamanho máximo 15MB`);
+          continue;
+        }
+        const path = `enviados/${paciente?.id || 'anon'}/${Date.now()}-${f.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+        const { error } = await supabase.storage.from('encaminhamentos').upload(path, f, {
+          contentType: f.type || 'application/octet-stream',
+          upsert: false,
+        });
+        if (error) { toast.error(`${f.name}: ${error.message}`); continue; }
+        novos.push({ nome: f.name, mime_type: f.type || 'application/octet-stream', tamanho: f.size, storage_path: path });
+      }
+      if (novos.length) setAnexos(prev => [...prev, ...novos]);
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = '';
+    }
+  };
+
+  const removerAnexo = async (storagePath: string) => {
+    await supabase.storage.from('encaminhamentos').remove([storagePath]).catch(() => {});
+    setAnexos(prev => prev.filter(a => a.storage_path !== storagePath));
+  };
 
   const handleSubmit = async () => {
     if (!paciente) { toast.error('Paciente não identificado.'); return; }
@@ -157,7 +191,7 @@ const EncaminhamentoExternoModal: React.FC<Props> = ({ open, onOpenChange, pacie
       };
 
       const { data, error } = await supabase.functions.invoke('integracao-enviar-encaminhamento', {
-        body: { sistema_id: sistemaId, payload },
+        body: { sistema_id: sistemaId, payload, anexos },
       });
       if (error) throw error;
       if (!data?.ok) {
