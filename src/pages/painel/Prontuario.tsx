@@ -930,11 +930,24 @@ const ProntuarioPage: React.FC = () => {
         .filter(Boolean)
         .join(", ");
 
+      // Resolve profissional responsável: preserva o original em edições.
+      // Master pode reatribuir via overrideProfissionalId.
+      const isMasterEditing = user?.role === 'master' && !!editId;
+      const overrideProf = isMasterEditing && overrideProfissionalId
+        ? funcionarios.find((f: any) => f.id === overrideProfissionalId)
+        : null;
+      const profIdResolvido = editId
+        ? (overrideProf?.id || originalProfissional?.id || user?.id || '')
+        : (user?.id || '');
+      const profNomeResolvido = editId
+        ? (overrideProf?.nome || originalProfissional?.nome || user?.nome || '')
+        : (user?.nome || '');
+
       const record: any = {
         paciente_id: form.paciente_id || `manual_${Date.now()}`,
         paciente_nome: form.paciente_nome,
-        profissional_id: user?.id || "",
-        profissional_nome: user?.nome || "",
+        profissional_id: profIdResolvido,
+        profissional_nome: profNomeResolvido,
         unidade_id: user?.unidadeId || "",
         setor: user?.setor || "",
         agendamento_id: form.agendamento_id,
