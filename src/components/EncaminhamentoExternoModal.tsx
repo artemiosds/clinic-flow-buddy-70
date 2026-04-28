@@ -68,6 +68,7 @@ const EncaminhamentoExternoModal: React.FC<Props> = ({ open, onOpenChange, pacie
     setSistemaId(''); setProfissionais([]); setProfDestinoId('');
     setEspecialidadeDestino(''); setMotivo(''); setResumo('');
     setCid(paciente?.cid || '');
+    setAnexos([]);
     (async () => {
       const { data } = await supabase
         .from('sistemas_integrados')
