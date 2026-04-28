@@ -1159,11 +1159,22 @@ const ProntuarioPage: React.FC = () => {
         .map((id) => procedimentos.find((pr) => pr.id === id)?.nome || '')
         .filter(Boolean)
         .join(', ');
+      // Autosave: preserva profissional original em edição
+      const isMasterEditingAuto = user?.role === 'master' && !!editIdRef.current;
+      const overrideProfAuto = isMasterEditingAuto && overrideProfissionalId
+        ? funcionarios.find((fc: any) => fc.id === overrideProfissionalId)
+        : null;
+      const profIdAuto = editIdRef.current
+        ? (overrideProfAuto?.id || originalProfissional?.id || user?.id || '')
+        : (user?.id || '');
+      const profNomeAuto = editIdRef.current
+        ? (overrideProfAuto?.nome || originalProfissional?.nome || user?.nome || '')
+        : (user?.nome || '');
       const record: any = {
         paciente_id: f.paciente_id,
         paciente_nome: f.paciente_nome,
-        profissional_id: user?.id || '',
-        profissional_nome: user?.nome || '',
+        profissional_id: profIdAuto,
+        profissional_nome: profNomeAuto,
         unidade_id: user?.unidadeId || '',
         setor: user?.setor || '',
         agendamento_id: f.agendamento_id,
