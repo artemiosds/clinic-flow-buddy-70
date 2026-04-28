@@ -169,7 +169,13 @@ Deno.serve(async (req) => {
 
     // Envia ao parceiro
     const target = `${sis.url_base.replace(/\/+$/, '')}/functions/v1/integracao-receber-encaminhamento`;
-    const remotePayload = { ...payload, remoto_encaminhamento_id: saved.id, origem_unidade: insertLocal.origem_unidade };
+    const remotePayload = {
+      ...payload,
+      remoto_encaminhamento_id: saved.id,
+      origem_unidade: insertLocal.origem_unidade,
+      documento_url: (saved as any).pdf_url || payload.documento_url || '',
+      anexos: anexosPayload,
+    };
 
     const t0 = Date.now();
     let httpStatus = 0;
@@ -195,11 +201,13 @@ Deno.serve(async (req) => {
     }
     const elapsedMs = Date.now() - t0;
 
-    // Atualiza registro local
+    // Atualiza registro local — agenda retry com backoff exponencial em caso de falha
+    const proximaTentativa = okFlag ? null : new Date(Date.now() + 5 * 60 * 1000).toISOString();
     await admin.from('encaminhamentos_externos').update({
       status: okFlag ? 'enviado' : 'falha_envio',
       tentativas: 1,
       ultima_tentativa_em: new Date().toISOString(),
+      proxima_tentativa_em: proximaTentativa,
       ultimo_erro: okFlag ? '' : mensagem.slice(0, 500),
       remoto_encaminhamento_id: okFlag && respPayload?.id ? String(respPayload.id) : '',
     }).eq('id', saved.id);
