@@ -313,6 +313,57 @@ const EncaminhamentoExternoModal: React.FC<Props> = ({ open, onOpenChange, pacie
               className="mt-1"
             />
           </div>
+
+          <div>
+            <Label className="text-sm">Anexos clínicos (exames, imagens, PDFs)</Label>
+            <div className="mt-1 flex items-center gap-2">
+              <input
+                ref={fileRef}
+                type="file"
+                multiple
+                className="hidden"
+                accept="image/*,application/pdf,.doc,.docx"
+                onChange={(e) => handleFiles(e.target.files)}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => fileRef.current?.click()}
+                disabled={uploading}
+              >
+                {uploading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Paperclip className="w-4 h-4 mr-2" />}
+                Adicionar arquivos
+              </Button>
+              <span className="text-xs text-muted-foreground">Máx. 15MB por arquivo</span>
+            </div>
+            {anexos.length > 0 && (
+              <ul className="mt-2 space-y-1">
+                {anexos.map(a => (
+                  <li
+                    key={a.storage_path}
+                    className="flex items-center justify-between gap-2 rounded-md border bg-muted/30 px-2 py-1.5 text-xs"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <FileText className="w-4 h-4 text-primary shrink-0" />
+                      <span className="truncate" title={a.nome}>{a.nome}</span>
+                      <span className="text-muted-foreground shrink-0">
+                        ({(a.tamanho / 1024).toFixed(0)} KB)
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      className="text-muted-foreground hover:text-destructive shrink-0"
+                      onClick={() => removerAnexo(a.storage_path)}
+                      aria-label={`Remover ${a.nome}`}
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
 
         <DialogFooter>

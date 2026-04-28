@@ -9,8 +9,9 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Network, Plus, Plug, Trash2, Eye, EyeOff, CheckCircle2, XCircle, Loader2, RefreshCcw } from 'lucide-react';
+import { Network, Plus, Plug, Trash2, Eye, EyeOff, CheckCircle2, XCircle, Loader2, RefreshCcw, ScrollText, BarChart3, Send } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface SistemaIntegrado {
@@ -66,6 +67,131 @@ const ConfigSistemasIntegrados: React.FC = () => {
   const [identificadorLocalLoaded, setIdentificadorLocalLoaded] = useState('');
   const [savingIdent, setSavingIdent] = useState(false);
   const [clinicaConfigId, setClinicaConfigId] = useState<string | null>(null);
+
+  // Subaba: Logs e Reenvios
+  const [activeTab, setActiveTab] = useState<'sistemas' | 'logs' | 'metricas'>('sistemas');
+  const [logs, setLogs] = useState<any[]>([]);
+  const [logsLoading, setLogsLoading] = useState(false);
+  const [logFilters, setLogFilters] = useState({ status: '', sistema: '', desde: '', ate: '' });
+  const [reenvioId, setReenvioId] = useState<string | null>(null);
+  const [retryRunning, setRetryRunning] = useState(false);
+
+  // Subaba: Métricas
+  const [metricas, setMetricas] = useState<any | null>(null);
+  const [metricasLoading, setMetricasLoading] = useState(false);
+
+  const loadLogs = useCallback(async () => {
+    setLogsLoading(true);
+    try {
+      let q = supabase
+        .from('logs_integracao')
+        .select('id, created_at, tipo_acao, direcao, sistema_integrado_id, identificador_remoto, usuario_nome, status, http_status, mensagem, encaminhamento_id')
+        .order('created_at', { ascending: false })
+        .limit(500);
+      if (logFilters.status) q = q.eq('status', logFilters.status);
+      if (logFilters.sistema) q = q.eq('sistema_integrado_id', logFilters.sistema);
+      if (logFilters.desde) q = q.gte('created_at', `${logFilters.desde}T00:00:00`);
+      if (logFilters.ate) q = q.lte('created_at', `${logFilters.ate}T23:59:59`);
+      const { data, error } = await q;
+      if (error) throw error;
+      setLogs(data ?? []);
+    } catch (e: any) {
+      toast.error(`Erro ao carregar logs: ${e?.message ?? ''}`);
+    } finally {
+      setLogsLoading(false);
+    }
+  }, [logFilters]);
+
+  const handleReenviar = async (encaminhamentoId: string) => {
+    setReenvioId(encaminhamentoId);
+    try {
+      const { data, error } = await supabase.functions.invoke('integracao-retry-envios', {
+        body: { encaminhamento_id: encaminhamentoId, force: true },
+      });
+      if (error) throw error;
+      if (data?.ok) {
+        toast.success('Reenvio disparado.');
+      } else {
+        toast.error(`Falha: ${data?.message ?? 'desconhecida'}`);
+      }
+      loadLogs();
+    } catch (e: any) {
+      toast.error(`Erro: ${e?.message ?? ''}`);
+    } finally {
+      setReenvioId(null);
+    }
+  };
+
+  const handleProcessarFilaRetry = async () => {
+    setRetryRunning(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('integracao-retry-envios', { body: {} });
+      if (error) throw error;
+      toast.success(`Fila processada: ${data?.processados ?? 0} item(ns).`);
+      loadLogs();
+    } catch (e: any) {
+      toast.error(`Erro: ${e?.message ?? ''}`);
+    } finally {
+      setRetryRunning(false);
+    }
+  };
+
+  const loadMetricas = useCallback(async () => {
+    setMetricasLoading(true);
+    try {
+      const desde = new Date(); desde.setDate(desde.getDate() - 30);
+      const { data, error } = await supabase
+        .from('encaminhamentos_externos')
+        .select('id, direcao, status, sistema_integrado_id, recebido_em, visualizado_em, aceito_em, recusado_em, agendado_em, created_at')
+        .gte('created_at', desde.toISOString());
+      if (error) throw error;
+      const all = data ?? [];
+      const diff = (a?: string | null, b?: string | null) => (a && b ? (new Date(a).getTime() - new Date(b).getTime()) / 60000 : null);
+      const tempos = { visualizacao: [] as number[], aceite: [] as number[], agendamento: [] as number[] };
+      const recusados: Record<string, number> = {};
+      const totalPorSistema: Record<string, number> = {};
+      const volumeDiario: Record<string, number> = {};
+      let totalEntrada = 0, totalSaida = 0;
+      for (const e of all) {
+        const dia = (e.created_at || '').slice(0, 10);
+        if (dia) volumeDiario[dia] = (volumeDiario[dia] || 0) + 1;
+        if (e.direcao === 'entrada') totalEntrada++;
+        if (e.direcao === 'saida') totalSaida++;
+        const sid = e.sistema_integrado_id || 'sem-sistema';
+        totalPorSistema[sid] = (totalPorSistema[sid] || 0) + 1;
+        if (e.status === 'recusado') recusados[sid] = (recusados[sid] || 0) + 1;
+        const tv = diff(e.visualizado_em, e.recebido_em || e.created_at); if (tv != null) tempos.visualizacao.push(tv);
+        const ta = diff(e.aceito_em, e.recebido_em || e.created_at); if (ta != null) tempos.aceite.push(ta);
+        const tg = diff(e.agendado_em, e.aceito_em || e.recebido_em || e.created_at); if (tg != null) tempos.agendamento.push(tg);
+      }
+      const avg = (arr: number[]) => arr.length ? arr.reduce((s, n) => s + n, 0) / arr.length : 0;
+      const taxaRecusaPorSistema = Object.entries(totalPorSistema).map(([sid, total]) => ({
+        sistema_id: sid,
+        total,
+        recusados: recusados[sid] || 0,
+        taxa: total ? ((recusados[sid] || 0) / total) * 100 : 0,
+      }));
+      setMetricas({
+        total: all.length,
+        totalEntrada,
+        totalSaida,
+        media_visualizacao_min: avg(tempos.visualizacao),
+        media_aceite_min: avg(tempos.aceite),
+        media_agendamento_min: avg(tempos.agendamento),
+        taxaRecusaPorSistema,
+        volumeDiario: Object.entries(volumeDiario).sort(([a], [b]) => a.localeCompare(b)),
+      });
+    } catch (e: any) {
+      toast.error(`Erro ao carregar métricas: ${e?.message ?? ''}`);
+    } finally {
+      setMetricasLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'logs') loadLogs();
+    if (activeTab === 'metricas') loadMetricas();
+  }, [activeTab, loadLogs, loadMetricas]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -220,11 +346,22 @@ const ConfigSistemasIntegrados: React.FC = () => {
             <Button size="sm" variant="outline" onClick={load} disabled={loading}>
               <RefreshCcw className="w-4 h-4 mr-2" /> Atualizar
             </Button>
-            <Button size="sm" onClick={openNew}>
-              <Plus className="w-4 h-4 mr-2" /> Novo Sistema
-            </Button>
+            {activeTab === 'sistemas' && (
+              <Button size="sm" onClick={openNew}>
+                <Plus className="w-4 h-4 mr-2" /> Novo Sistema
+              </Button>
+            )}
           </div>
         </div>
+
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
+          <TabsList className="mb-4">
+            <TabsTrigger value="sistemas"><Network className="w-4 h-4 mr-2" />Sistemas</TabsTrigger>
+            <TabsTrigger value="logs"><ScrollText className="w-4 h-4 mr-2" />Logs e Reenvios</TabsTrigger>
+            <TabsTrigger value="metricas"><BarChart3 className="w-4 h-4 mr-2" />Métricas</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="sistemas">
 
         <div className="rounded-lg border bg-muted/30 p-4 mb-4">
           <div className="flex items-start justify-between gap-3 flex-wrap">
@@ -312,6 +449,183 @@ const ConfigSistemasIntegrados: React.FC = () => {
             </TableBody>
           </Table>
         </div>
+
+          </TabsContent>
+
+          <TabsContent value="logs">
+            <div className="flex flex-wrap items-end gap-2 mb-3">
+              <div>
+                <Label className="text-xs">Status</Label>
+                <select
+                  value={logFilters.status}
+                  onChange={e => setLogFilters({ ...logFilters, status: e.target.value })}
+                  className="h-9 px-2 rounded-md border bg-background text-sm block"
+                >
+                  <option value="">Todos</option>
+                  <option value="sucesso">Sucesso</option>
+                  <option value="falha">Falha</option>
+                  <option value="erro">Erro</option>
+                </select>
+              </div>
+              <div>
+                <Label className="text-xs">Sistema</Label>
+                <select
+                  value={logFilters.sistema}
+                  onChange={e => setLogFilters({ ...logFilters, sistema: e.target.value })}
+                  className="h-9 px-2 rounded-md border bg-background text-sm block min-w-[180px]"
+                >
+                  <option value="">Todos</option>
+                  {list.map(s => (
+                    <option key={s.id} value={s.id}>{s.nome}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <Label className="text-xs">Desde</Label>
+                <Input type="date" value={logFilters.desde} onChange={e => setLogFilters({ ...logFilters, desde: e.target.value })} className="h-9 w-[150px]" />
+              </div>
+              <div>
+                <Label className="text-xs">Até</Label>
+                <Input type="date" value={logFilters.ate} onChange={e => setLogFilters({ ...logFilters, ate: e.target.value })} className="h-9 w-[150px]" />
+              </div>
+              <Button size="sm" onClick={loadLogs} disabled={logsLoading}>
+                {logsLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCcw className="w-4 h-4 mr-2" />}
+                Aplicar
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleProcessarFilaRetry} disabled={retryRunning}>
+                {retryRunning ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
+                Processar fila de retry
+              </Button>
+            </div>
+
+            <div className="rounded-lg border overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Quando</TableHead>
+                    <TableHead>Ação</TableHead>
+                    <TableHead>Direção</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>HTTP</TableHead>
+                    <TableHead>Mensagem</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {logsLoading ? (
+                    <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-6">Carregando...</TableCell></TableRow>
+                  ) : logs.length === 0 ? (
+                    <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-6">Nenhum log encontrado.</TableCell></TableRow>
+                  ) : logs.map(l => (
+                    <TableRow key={l.id}>
+                      <TableCell className="text-xs">{new Date(l.created_at).toLocaleString('pt-BR')}</TableCell>
+                      <TableCell className="text-xs font-mono">{l.tipo_acao}</TableCell>
+                      <TableCell className="text-xs">{l.direcao}</TableCell>
+                      <TableCell>
+                        {l.status === 'sucesso' ? (
+                          <Badge className="bg-emerald-500/10 text-emerald-700 border-emerald-500/30">OK</Badge>
+                        ) : (
+                          <Badge variant="destructive">{l.status}</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-xs">{l.http_status ?? '—'}</TableCell>
+                      <TableCell className="text-xs max-w-[320px] truncate" title={l.mensagem}>{l.mensagem}</TableCell>
+                      <TableCell className="text-right">
+                        {l.encaminhamento_id && l.status !== 'sucesso' && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleReenviar(l.encaminhamento_id)}
+                            disabled={reenvioId === l.encaminhamento_id}
+                          >
+                            {reenvioId === l.encaminhamento_id ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Send className="w-3.5 h-3.5 mr-1" />Reenviar</>}
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="metricas">
+            {metricasLoading ? (
+              <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+            ) : !metricas ? (
+              <p className="text-sm text-muted-foreground">Sem dados.</p>
+            ) : (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="rounded-lg border p-3 bg-muted/30">
+                    <p className="text-xs text-muted-foreground">Total (30d)</p>
+                    <p className="text-2xl font-bold text-foreground">{metricas.total}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{metricas.totalEntrada} recebidos · {metricas.totalSaida} enviados</p>
+                  </div>
+                  <div className="rounded-lg border p-3 bg-muted/30">
+                    <p className="text-xs text-muted-foreground">Tempo médio até visualização</p>
+                    <p className="text-2xl font-bold text-foreground">{metricas.media_visualizacao_min.toFixed(1)} min</p>
+                  </div>
+                  <div className="rounded-lg border p-3 bg-muted/30">
+                    <p className="text-xs text-muted-foreground">Tempo médio até aceite</p>
+                    <p className="text-2xl font-bold text-foreground">{metricas.media_aceite_min.toFixed(1)} min</p>
+                  </div>
+                  <div className="rounded-lg border p-3 bg-muted/30">
+                    <p className="text-xs text-muted-foreground">Tempo médio até agendamento</p>
+                    <p className="text-2xl font-bold text-foreground">{metricas.media_agendamento_min.toFixed(1)} min</p>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-sm mb-2">Taxa de recusa por sistema parceiro</h4>
+                  <div className="rounded-lg border overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Sistema</TableHead>
+                          <TableHead>Total</TableHead>
+                          <TableHead>Recusados</TableHead>
+                          <TableHead>Taxa</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {metricas.taxaRecusaPorSistema.map((r: any) => {
+                          const sis = list.find(s => s.id === r.sistema_id);
+                          return (
+                            <TableRow key={r.sistema_id}>
+                              <TableCell className="text-sm">{sis?.nome ?? r.sistema_id}</TableCell>
+                              <TableCell className="text-sm">{r.total}</TableCell>
+                              <TableCell className="text-sm">{r.recusados}</TableCell>
+                              <TableCell className="text-sm font-semibold">{r.taxa.toFixed(1)}%</TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-sm mb-2">Volume diário (últimos 30 dias)</h4>
+                  <div className="rounded-lg border p-3 bg-muted/30">
+                    <div className="flex items-end gap-1 h-32">
+                      {metricas.volumeDiario.map(([dia, qtd]: [string, number]) => {
+                        const max = Math.max(...metricas.volumeDiario.map((d: any) => d[1]), 1);
+                        const h = Math.max(4, (qtd / max) * 100);
+                        return (
+                          <div key={dia} className="flex-1 flex flex-col items-center gap-1" title={`${dia}: ${qtd}`}>
+                            <div className="w-full bg-primary/70 hover:bg-primary rounded-t" style={{ height: `${h}%` }} />
+                            <span className="text-[9px] text-muted-foreground rotate-45 origin-left">{dia.slice(5)}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
 
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogContent className="max-w-2xl">
