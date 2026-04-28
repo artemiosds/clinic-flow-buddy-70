@@ -812,6 +812,8 @@ const ProntuarioPage: React.FC = () => {
     setSoapErrors(false);
     setSoapEnabled(true);
     setForm({ ...emptyForm, data_atendimento: new Date().toISOString().split("T")[0], tipo_registro: "avaliacao_inicial" });
+    setOriginalProfissional(null);
+    setOverrideProfissionalId('');
     setDialogOpen(true);
   };
 
