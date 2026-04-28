@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.integracao-atualizar-status]
 verify_jwt = false
+
+[functions.integracao-retry-envios]
+verify_jwt = false
