@@ -191,7 +191,7 @@ const EncaminhamentoExternoModal: React.FC<Props> = ({ open, onOpenChange, pacie
       };
 
       const { data, error } = await supabase.functions.invoke('integracao-enviar-encaminhamento', {
-        body: { sistema_id: sistemaId, payload },
+        body: { sistema_id: sistemaId, payload, anexos },
       });
       if (error) throw error;
       if (!data?.ok) {
