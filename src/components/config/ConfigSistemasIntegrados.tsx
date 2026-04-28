@@ -68,6 +68,131 @@ const ConfigSistemasIntegrados: React.FC = () => {
   const [savingIdent, setSavingIdent] = useState(false);
   const [clinicaConfigId, setClinicaConfigId] = useState<string | null>(null);
 
+  // Subaba: Logs e Reenvios
+  const [activeTab, setActiveTab] = useState<'sistemas' | 'logs' | 'metricas'>('sistemas');
+  const [logs, setLogs] = useState<any[]>([]);
+  const [logsLoading, setLogsLoading] = useState(false);
+  const [logFilters, setLogFilters] = useState({ status: '', sistema: '', desde: '', ate: '' });
+  const [reenvioId, setReenvioId] = useState<string | null>(null);
+  const [retryRunning, setRetryRunning] = useState(false);
+
+  // Subaba: Métricas
+  const [metricas, setMetricas] = useState<any | null>(null);
+  const [metricasLoading, setMetricasLoading] = useState(false);
+
+  const loadLogs = useCallback(async () => {
+    setLogsLoading(true);
+    try {
+      let q = supabase
+        .from('logs_integracao')
+        .select('id, created_at, tipo_acao, direcao, sistema_integrado_id, identificador_remoto, usuario_nome, status, http_status, mensagem, encaminhamento_id')
+        .order('created_at', { ascending: false })
+        .limit(500);
+      if (logFilters.status) q = q.eq('status', logFilters.status);
+      if (logFilters.sistema) q = q.eq('sistema_integrado_id', logFilters.sistema);
+      if (logFilters.desde) q = q.gte('created_at', `${logFilters.desde}T00:00:00`);
+      if (logFilters.ate) q = q.lte('created_at', `${logFilters.ate}T23:59:59`);
+      const { data, error } = await q;
+      if (error) throw error;
+      setLogs(data ?? []);
+    } catch (e: any) {
+      toast.error(`Erro ao carregar logs: ${e?.message ?? ''}`);
+    } finally {
+      setLogsLoading(false);
+    }
+  }, [logFilters]);
+
+  const handleReenviar = async (encaminhamentoId: string) => {
+    setReenvioId(encaminhamentoId);
+    try {
+      const { data, error } = await supabase.functions.invoke('integracao-retry-envios', {
+        body: { encaminhamento_id: encaminhamentoId, force: true },
+      });
+      if (error) throw error;
+      if (data?.ok) {
+        toast.success('Reenvio disparado.');
+      } else {
+        toast.error(`Falha: ${data?.message ?? 'desconhecida'}`);
+      }
+      loadLogs();
+    } catch (e: any) {
+      toast.error(`Erro: ${e?.message ?? ''}`);
+    } finally {
+      setReenvioId(null);
+    }
+  };
+
+  const handleProcessarFilaRetry = async () => {
+    setRetryRunning(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('integracao-retry-envios', { body: {} });
+      if (error) throw error;
+      toast.success(`Fila processada: ${data?.processados ?? 0} item(ns).`);
+      loadLogs();
+    } catch (e: any) {
+      toast.error(`Erro: ${e?.message ?? ''}`);
+    } finally {
+      setRetryRunning(false);
+    }
+  };
+
+  const loadMetricas = useCallback(async () => {
+    setMetricasLoading(true);
+    try {
+      const desde = new Date(); desde.setDate(desde.getDate() - 30);
+      const { data, error } = await supabase
+        .from('encaminhamentos_externos')
+        .select('id, direcao, status, sistema_integrado_id, recebido_em, visualizado_em, aceito_em, recusado_em, agendado_em, created_at')
+        .gte('created_at', desde.toISOString());
+      if (error) throw error;
+      const all = data ?? [];
+      const diff = (a?: string | null, b?: string | null) => (a && b ? (new Date(a).getTime() - new Date(b).getTime()) / 60000 : null);
+      const tempos = { visualizacao: [] as number[], aceite: [] as number[], agendamento: [] as number[] };
+      const recusados: Record<string, number> = {};
+      const totalPorSistema: Record<string, number> = {};
+      const volumeDiario: Record<string, number> = {};
+      let totalEntrada = 0, totalSaida = 0;
+      for (const e of all) {
+        const dia = (e.created_at || '').slice(0, 10);
+        if (dia) volumeDiario[dia] = (volumeDiario[dia] || 0) + 1;
+        if (e.direcao === 'entrada') totalEntrada++;
+        if (e.direcao === 'saida') totalSaida++;
+        const sid = e.sistema_integrado_id || 'sem-sistema';
+        totalPorSistema[sid] = (totalPorSistema[sid] || 0) + 1;
+        if (e.status === 'recusado') recusados[sid] = (recusados[sid] || 0) + 1;
+        const tv = diff(e.visualizado_em, e.recebido_em || e.created_at); if (tv != null) tempos.visualizacao.push(tv);
+        const ta = diff(e.aceito_em, e.recebido_em || e.created_at); if (ta != null) tempos.aceite.push(ta);
+        const tg = diff(e.agendado_em, e.aceito_em || e.recebido_em || e.created_at); if (tg != null) tempos.agendamento.push(tg);
+      }
+      const avg = (arr: number[]) => arr.length ? arr.reduce((s, n) => s + n, 0) / arr.length : 0;
+      const taxaRecusaPorSistema = Object.entries(totalPorSistema).map(([sid, total]) => ({
+        sistema_id: sid,
+        total,
+        recusados: recusados[sid] || 0,
+        taxa: total ? ((recusados[sid] || 0) / total) * 100 : 0,
+      }));
+      setMetricas({
+        total: all.length,
+        totalEntrada,
+        totalSaida,
+        media_visualizacao_min: avg(tempos.visualizacao),
+        media_aceite_min: avg(tempos.aceite),
+        media_agendamento_min: avg(tempos.agendamento),
+        taxaRecusaPorSistema,
+        volumeDiario: Object.entries(volumeDiario).sort(([a], [b]) => a.localeCompare(b)),
+      });
+    } catch (e: any) {
+      toast.error(`Erro ao carregar métricas: ${e?.message ?? ''}`);
+    } finally {
+      setMetricasLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'logs') loadLogs();
+    if (activeTab === 'metricas') loadMetricas();
+  }, [activeTab, loadLogs, loadMetricas]);
+
   const load = useCallback(async () => {
     setLoading(true);
     const [{ data, error }, cfgRes] = await Promise.all([
