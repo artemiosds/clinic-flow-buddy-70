@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Inbox, RefreshCcw, CheckCircle2, XCircle, UserPlus, Link2, Loader2, Eye, Send } from 'lucide-react';
+import { Inbox, RefreshCcw, CheckCircle2, XCircle, UserPlus, Link2, Loader2, Eye, Send, Paperclip, FileText, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -70,6 +70,9 @@ const EncaminhamentosRecebidos: React.FC = () => {
   const [justificativa, setJustificativa] = useState('');
   const [vinculoBusca, setVinculoBusca] = useState('');
   const [vinculoResultados, setVinculoResultados] = useState<any[]>([]);
+  const [anexos, setAnexos] = useState<Array<{ id: string; nome_arquivo: string; mime_type: string; tamanho_bytes: number; storage_path: string; url_remota: string; direcao: string }>>([]);
+  const [anexosLoading, setAnexosLoading] = useState(false);
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -114,6 +117,32 @@ const EncaminhamentosRecebidos: React.FC = () => {
 
   const openDetalhe = async (e: Encaminhamento) => {
     setSelected(e);
+    setAnexos([]);
+    setSignedUrls({});
+    setAnexosLoading(true);
+    try {
+      const { data: ax } = await supabase
+        .from('encaminhamentos_anexos')
+        .select('id, nome_arquivo, mime_type, tamanho_bytes, storage_path, url_remota, direcao')
+        .eq('encaminhamento_id', e.id)
+        .order('created_at', { ascending: true });
+      const lista = (ax ?? []) as any[];
+      setAnexos(lista);
+      // gerar signed URLs em paralelo apenas para arquivos no storage local
+      const entries = await Promise.all(
+        lista
+          .filter(a => a.storage_path)
+          .map(async (a) => {
+            const { data } = await supabase.storage.from('encaminhamentos').createSignedUrl(a.storage_path, 3600);
+            return [a.id, data?.signedUrl || ''] as const;
+          })
+      );
+      setSignedUrls(Object.fromEntries(entries));
+    } catch (err) {
+      console.warn('[anexos] erro:', err);
+    } finally {
+      setAnexosLoading(false);
+    }
     if (e.direcao === 'entrada' && e.status === 'recebido' && !e.visualizado_em) {
       await supabase.from('encaminhamentos_externos').update({
         status: 'visualizado',
