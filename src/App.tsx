@@ -81,6 +81,7 @@ const Permissoes                  = lazyRetry(() => import("./pages/painel/Permi
 const HistoricoTriagem            = lazyRetry(() => import("./pages/painel/HistoricoTriagem"));
 const RelatorioAlta               = lazyRetry(() => import("./pages/painel/RelatorioAlta"));
 const Encaminhamentos             = lazyRetry(() => import("./pages/painel/Encaminhamentos"));
+const EncaminhamentosRecebidos    = lazyRetry(() => import("./pages/painel/EncaminhamentosRecebidos"));
 const ConfiguracoesAvancadas      = lazyRetry(() => import("./pages/painel/ConfiguracoesAvancadas"));
 const MeuProntuario               = lazyRetry(() => import("./pages/painel/MeuProntuario"));
 const BpaProducao                 = lazyRetry(() => import("./pages/painel/BpaProducao"));
