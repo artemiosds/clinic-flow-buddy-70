@@ -81,14 +81,6 @@ const EncaminhamentoExternoModal: React.FC<Props> = ({ open, onOpenChange, pacie
     setLoadingProfs(true);
     setProfissionais([]); setProfDestinoId('');
     try {
-      const { data, error } = await supabase.functions.invoke('integracao-test-connection', {
-        body: { sistema_id: sId },
-      });
-      // test-connection apenas pinga; usamos um endpoint dedicado: invoke a edge enviar-encam não lista; vamos usar fetch direto via uma função alternativa
-      // Como temos integracao-listar-profissionais como endpoint público no parceiro, precisamos de um proxy autenticado.
-      // Reaproveitamos o test-connection apenas para validar; e listamos via uma chamada extra:
-      if (error) throw error;
-      // Chama listar via outra invocação proxy (criamos abaixo)
       const { data: lista, error: lErr } = await supabase.functions.invoke('integracao-listar-profissionais-proxy', {
         body: { sistema_id: sId },
       });
