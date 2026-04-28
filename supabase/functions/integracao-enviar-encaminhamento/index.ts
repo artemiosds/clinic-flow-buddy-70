@@ -50,7 +50,12 @@ Deno.serve(async (req) => {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-    const { sistema_id, payload } = body as { sistema_id: string; payload: Record<string, any> };
+    const { sistema_id, payload, anexos, pdf } = body as {
+      sistema_id: string;
+      payload: Record<string, any>;
+      anexos?: Array<{ nome: string; mime_type: string; tamanho: number; storage_path?: string; url?: string }>;
+      pdf?: { storage_path: string; url?: string } | null;
+    };
 
     if (!sistema_id || !payload?.paciente_nome || !payload?.motivo) {
       return new Response(JSON.stringify({ ok: false, error: 'missing_required_fields' }), {
