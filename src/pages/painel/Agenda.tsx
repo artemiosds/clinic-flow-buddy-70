@@ -432,12 +432,12 @@ const Agenda: React.FC = () => {
 
     /**
      * Unified priority hierarchy (lower = higher priority):
-     *  1 = Risco Vermelho (dynamic)
-     *  2 = Risco Amarelo/Laranja (dynamic)
-     *  3 = Dor intensa 7-10 (dynamic, future)
-     *  4 = Risco Verde (dynamic)
+     *  1 = Risco Vermelho — Emergência (dynamic)
+     *  2 = Risco Laranja  — Muito Urgente (dynamic)
+     *  3 = Risco Amarelo  — Urgente (dynamic)
+     *  4 = Risco Verde    — Pouco Urgente (dynamic)
      *  5 = Fixed: Gestante / PNE / Autista
-     *  6 = Fixed: Idoso (≥60) OR Risco Azul (dynamic)
+     *  6 = Fixed: Idoso (≥60) OR Risco Azul (dynamic, Não Urgente)
      *  7 = Fixed: Criança (0-12)
      *  8 = Normal (no priority)
      * 50 = Not checked in (before triage/dynamic, use fixed priority)
