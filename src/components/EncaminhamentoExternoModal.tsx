@@ -111,6 +111,36 @@ const EncaminhamentoExternoModal: React.FC<Props> = ({ open, onOpenChange, pacie
     return profissionais.filter(p => p.especialidade === especialidadeDestino);
   }, [especialidadeDestino, profissionais]);
 
+  const handleFiles = async (files: FileList | null) => {
+    if (!files?.length) return;
+    setUploading(true);
+    try {
+      const novos: typeof anexos = [];
+      for (const f of Array.from(files)) {
+        if (f.size > 15 * 1024 * 1024) {
+          toast.error(`${f.name}: tamanho máximo 15MB`);
+          continue;
+        }
+        const path = `enviados/${paciente?.id || 'anon'}/${Date.now()}-${f.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+        const { error } = await supabase.storage.from('encaminhamentos').upload(path, f, {
+          contentType: f.type || 'application/octet-stream',
+          upsert: false,
+        });
+        if (error) { toast.error(`${f.name}: ${error.message}`); continue; }
+        novos.push({ nome: f.name, mime_type: f.type || 'application/octet-stream', tamanho: f.size, storage_path: path });
+      }
+      if (novos.length) setAnexos(prev => [...prev, ...novos]);
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = '';
+    }
+  };
+
+  const removerAnexo = async (storagePath: string) => {
+    await supabase.storage.from('encaminhamentos').remove([storagePath]).catch(() => {});
+    setAnexos(prev => prev.filter(a => a.storage_path !== storagePath));
+  };
+
   const handleSubmit = async () => {
     if (!paciente) { toast.error('Paciente não identificado.'); return; }
     if (!sistemaId) { toast.error('Selecione o sistema de destino.'); return; }
