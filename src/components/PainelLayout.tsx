@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { AnimatePresence } from 'framer-motion';
 import logoSms from '@/assets/logo-sms.jpeg';
 import WhatsappPausedBanner from '@/components/WhatsappPausedBanner';
+import { useEncaminhamentosExternosRealtime } from '@/hooks/useEncaminhamentosExternosRealtime';
 
 // Mapeamento: cada item do menu exige um módulo + ação do PermissionsContext
 const menuItems: {
@@ -76,6 +77,7 @@ const PainelLayout: React.FC = () => {
   const location = useLocation();
   
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { pendingCount: externosPendentes } = useEncaminhamentosExternosRealtime();
 
   const isMaster = user?.role?.toLowerCase().trim() === 'master';
 
@@ -149,23 +151,34 @@ const PainelLayout: React.FC = () => {
         )}
 
         <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
-          {filteredMenu.map(item => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.to === '/painel'}
-              onClick={() => setSidebarOpen(false)}
-              className={({ isActive }) => cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 relative group",
-                isActive
-                  ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm sidebar-active-glow"
-                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-              )}
-            >
-              <item.icon className="w-4 h-4 shrink-0" strokeWidth={1.5} />
-              {item.label}
-            </NavLink>
-          ))}
+          {filteredMenu.map(item => {
+            const badge =
+              item.to === '/painel/encaminhamentos-externos' && externosPendentes > 0
+                ? externosPendentes
+                : 0;
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.to === '/painel'}
+                onClick={() => setSidebarOpen(false)}
+                className={({ isActive }) => cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 relative group",
+                  isActive
+                    ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm sidebar-active-glow"
+                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                )}
+              >
+                <item.icon className="w-4 h-4 shrink-0" strokeWidth={1.5} />
+                <span className="flex-1">{item.label}</span>
+                {badge > 0 && (
+                  <span className="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-bold rounded-full bg-destructive text-destructive-foreground animate-pulse">
+                    {badge > 99 ? '99+' : badge}
+                  </span>
+                )}
+              </NavLink>
+            );
+          })}
         </nav>
 
         <div className="p-4 border-t border-sidebar-border">
