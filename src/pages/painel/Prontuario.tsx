@@ -289,6 +289,7 @@ const ProntuarioPage: React.FC = () => {
   const showSoapDropdown = hasDropdownSoap(user?.profissao);
   const [docModalOpen, setDocModalOpen] = useState(false);
   const [encInternoOpen, setEncInternoOpen] = useState(false);
+  const [encExternoOpen, setEncExternoOpen] = useState(false);
   const [historicoCompletoOpen, setHistoricoCompletoOpen] = useState(false);
   const [viewerProntuario, setViewerProntuario] = useState<any | null>(null);
   const [historicoPacienteId, setHistoricoPacienteId] = useState<{ id: string; nome: string } | null>(null);
