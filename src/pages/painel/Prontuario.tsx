@@ -201,6 +201,10 @@ const ProntuarioPage: React.FC = () => {
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [previousForm, setPreviousForm] = useState<typeof emptyForm | null>(null);
+  // Profissional responsável original (preservado em edições)
+  const [originalProfissional, setOriginalProfissional] = useState<{ id: string; nome: string } | null>(null);
+  // Master pode reatribuir o profissional responsável durante a edição
+  const [overrideProfissionalId, setOverrideProfissionalId] = useState<string>('');
   // Autosave state
   const [autosaveStatus, setAutosaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [autosaveAt, setAutosaveAt] = useState<Date | null>(null);
@@ -808,6 +812,8 @@ const ProntuarioPage: React.FC = () => {
     setSoapErrors(false);
     setSoapEnabled(true);
     setForm({ ...emptyForm, data_atendimento: new Date().toISOString().split("T")[0], tipo_registro: "avaliacao_inicial" });
+    setOriginalProfissional(null);
+    setOverrideProfissionalId('');
     setDialogOpen(true);
   };
 
@@ -846,6 +852,11 @@ const ProntuarioPage: React.FC = () => {
     };
     setForm(formData);
     setPreviousForm(formData);
+    setOriginalProfissional({
+      id: (p as any).profissional_id || '',
+      nome: (p as any).profissional_nome || '',
+    });
+    setOverrideProfissionalId('');
     // Load exames from solicitacao_exames JSON
     try {
       const parsed = p.solicitacao_exames ? JSON.parse(p.solicitacao_exames) : null;
@@ -919,11 +930,24 @@ const ProntuarioPage: React.FC = () => {
         .filter(Boolean)
         .join(", ");
 
+      // Resolve profissional responsável: preserva o original em edições.
+      // Master pode reatribuir via overrideProfissionalId.
+      const isMasterEditing = user?.role === 'master' && !!editId;
+      const overrideProf = isMasterEditing && overrideProfissionalId
+        ? funcionarios.find((f: any) => f.id === overrideProfissionalId)
+        : null;
+      const profIdResolvido = editId
+        ? (overrideProf?.id || originalProfissional?.id || user?.id || '')
+        : (user?.id || '');
+      const profNomeResolvido = editId
+        ? (overrideProf?.nome || originalProfissional?.nome || user?.nome || '')
+        : (user?.nome || '');
+
       const record: any = {
         paciente_id: form.paciente_id || `manual_${Date.now()}`,
         paciente_nome: form.paciente_nome,
-        profissional_id: user?.id || "",
-        profissional_nome: user?.nome || "",
+        profissional_id: profIdResolvido,
+        profissional_nome: profNomeResolvido,
         unidade_id: user?.unidadeId || "",
         setor: user?.setor || "",
         agendamento_id: form.agendamento_id,
@@ -998,6 +1022,13 @@ const ProntuarioPage: React.FC = () => {
             paciente_cpf: pac?.cpf || "",
             motivo_alteracao: form.motivo_alteracao,
             campos_alterados: camposAlterados,
+            ...(originalProfissional && originalProfissional.id !== profIdResolvido ? {
+              profissional_responsavel_alterado: {
+                anterior: { id: originalProfissional.id, nome: originalProfissional.nome },
+                novo: { id: profIdResolvido, nome: profNomeResolvido },
+              },
+            } : {}),
+            editado_por: { id: user?.id || '', nome: user?.nome || '', role: user?.role || '' },
           },
         });
       } else {
@@ -1135,11 +1166,22 @@ const ProntuarioPage: React.FC = () => {
         .map((id) => procedimentos.find((pr) => pr.id === id)?.nome || '')
         .filter(Boolean)
         .join(', ');
+      // Autosave: preserva profissional original em edição
+      const isMasterEditingAuto = user?.role === 'master' && !!editIdRef.current;
+      const overrideProfAuto = isMasterEditingAuto && overrideProfissionalId
+        ? funcionarios.find((fc: any) => fc.id === overrideProfissionalId)
+        : null;
+      const profIdAuto = editIdRef.current
+        ? (overrideProfAuto?.id || originalProfissional?.id || user?.id || '')
+        : (user?.id || '');
+      const profNomeAuto = editIdRef.current
+        ? (overrideProfAuto?.nome || originalProfissional?.nome || user?.nome || '')
+        : (user?.nome || '');
       const record: any = {
         paciente_id: f.paciente_id,
         paciente_nome: f.paciente_nome,
-        profissional_id: user?.id || '',
-        profissional_nome: user?.nome || '',
+        profissional_id: profIdAuto,
+        profissional_nome: profNomeAuto,
         unidade_id: user?.unidadeId || '',
         setor: user?.setor || '',
         agendamento_id: f.agendamento_id,
@@ -1337,11 +1379,22 @@ const ProntuarioPage: React.FC = () => {
     let prontuarioId: string | null = editId;
     try {
       const procTexto = selectedProcIds.map(id => procedimentos.find(pr => pr.id === id)?.nome || "").filter(Boolean).join(", ");
+      // Save+finalize: preserva profissional original em edição
+      const isMasterEditingFin = user?.role === 'master' && !!editId;
+      const overrideProfFin = isMasterEditingFin && overrideProfissionalId
+        ? funcionarios.find((fc: any) => fc.id === overrideProfissionalId)
+        : null;
+      const profIdFin = editId
+        ? (overrideProfFin?.id || originalProfissional?.id || user?.id || '')
+        : (user?.id || '');
+      const profNomeFin = editId
+        ? (overrideProfFin?.nome || originalProfissional?.nome || user?.nome || '')
+        : (user?.nome || '');
       const record: any = {
         paciente_id: form.paciente_id || `manual_${Date.now()}`,
         paciente_nome: form.paciente_nome,
-        profissional_id: user?.id || "",
-        profissional_nome: user?.nome || "",
+        profissional_id: profIdFin,
+        profissional_nome: profNomeFin,
         unidade_id: user?.unidadeId || "",
         setor: user?.setor || "",
         agendamento_id: form.agendamento_id,
@@ -2513,6 +2566,34 @@ const ProntuarioPage: React.FC = () => {
                     <Activity className="w-3.5 h-3.5 mr-1" /> Criar Ciclo de Tratamento
                   </Button>
                 </div>
+              </div>
+            )}
+
+            {editId && user?.role === 'master' && (
+              <div className="rounded-md border border-warning/40 bg-warning/5 p-3 space-y-2">
+                <Label className="text-warning text-xs font-semibold">
+                  Profissional Responsável (Master pode reatribuir)
+                </Label>
+                <Select
+                  value={overrideProfissionalId || originalProfissional?.id || ''}
+                  onValueChange={(v) => setOverrideProfissionalId(v === originalProfissional?.id ? '' : v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar profissional responsável..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {funcionarios
+                      .filter((f: any) => f.ativo && (f.role === 'profissional' || f.role === 'enfermagem' || f.role === 'tecnico'))
+                      .map((f: any) => (
+                        <SelectItem key={f.id} value={f.id}>
+                          {f.nome} {f.profissao ? `— ${f.profissao}` : ''}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[11px] text-muted-foreground">
+                  O nome no histórico exibirá este profissional. A edição fica registrada na auditoria como sua ação.
+                </p>
               </div>
             )}
 
