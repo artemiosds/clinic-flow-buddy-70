@@ -1022,6 +1022,13 @@ const ProntuarioPage: React.FC = () => {
             paciente_cpf: pac?.cpf || "",
             motivo_alteracao: form.motivo_alteracao,
             campos_alterados: camposAlterados,
+            ...(originalProfissional && originalProfissional.id !== profIdResolvido ? {
+              profissional_responsavel_alterado: {
+                anterior: { id: originalProfissional.id, nome: originalProfissional.nome },
+                novo: { id: profIdResolvido, nome: profNomeResolvido },
+              },
+            } : {}),
+            editado_por: { id: user?.id || '', nome: user?.nome || '', role: user?.role || '' },
           },
         });
       } else {
