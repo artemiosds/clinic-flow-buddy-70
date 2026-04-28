@@ -51,6 +51,7 @@ import PrescricaoMedicamentos from "@/components/PrescricaoMedicamentos";
 import CamposEspecialidade from "@/components/CamposEspecialidade";
 import HistoricoCompletoModal from "@/components/HistoricoCompletoModal";
 import EncaminhamentoInternoModal from "@/components/EncaminhamentoInternoModal";
+import EncaminhamentoExternoModal from "@/components/EncaminhamentoExternoModal";
 import SoapFieldsAdaptive from "@/components/SoapFieldsAdaptive";
 import TriagemDetalhada from "@/components/TriagemDetalhada";
 import ProntuarioAnexos from "@/components/ProntuarioAnexos";
