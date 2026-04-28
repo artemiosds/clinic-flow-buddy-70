@@ -125,16 +125,46 @@ Deno.serve(async (req) => {
       criado_por: userId,
       tentativas: 0,
     };
+    if (pdf?.storage_path) {
+      (insertLocal as any).pdf_path = pdf.storage_path;
+      const { data: signed } = await admin.storage.from('encaminhamentos').createSignedUrl(pdf.storage_path, 60 * 60 * 24 * 7);
+      (insertLocal as any).pdf_url = signed?.signedUrl ?? '';
+      (insertLocal as any).documento_url = (insertLocal as any).pdf_url;
+    }
 
     const { data: saved, error: insErr } = await admin
       .from('encaminhamentos_externos')
       .insert(insertLocal)
-      .select('id')
+      .select('id, pdf_url, pdf_path')
       .single();
     if (insErr || !saved) {
       return new Response(JSON.stringify({ ok: false, error: 'erro_persistir', detail: insErr?.message }), {
         status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
+    }
+
+    // Persiste anexos + gera URLs assinadas para envio
+    const anexosPayload: any[] = [];
+    if (Array.isArray(anexos) && anexos.length) {
+      for (const a of anexos) {
+        const url = a.url || (a.storage_path
+          ? (await admin.storage.from('encaminhamentos').createSignedUrl(a.storage_path, 60 * 60 * 24 * 7)).data?.signedUrl
+          : '');
+        if (a.storage_path || a.url) {
+          await admin.from('encaminhamentos_anexos').insert({
+            encaminhamento_id: saved.id,
+            direcao: 'saida',
+            nome_arquivo: a.nome || 'anexo',
+            mime_type: a.mime_type || 'application/octet-stream',
+            tamanho_bytes: a.tamanho || 0,
+            storage_path: a.storage_path || '',
+            url_remota: a.url || '',
+          });
+        }
+        if (url) {
+          anexosPayload.push({ nome: a.nome, mime_type: a.mime_type, tamanho: a.tamanho, url });
+        }
+      }
     }
 
     // Envia ao parceiro
