@@ -50,7 +50,7 @@ import {
 } from "lucide-react";
 import DetalheDrawer, { Secao, Campo, StatusBadge, calcularIdade, formatarData } from "@/components/DetalheDrawer";
 import ContactActionButton from "@/components/ContactActionButton";
-import { addDaysToDateStr, cn, isoDayOfWeek, todayLocalStr } from "@/lib/utils";
+import { addDaysToDateStr, cn, isoDayOfWeek, nowMinutesInBrazil, todayLocalStr } from "@/lib/utils";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -164,6 +164,12 @@ const Agenda: React.FC = () => {
   const navigate = useNavigate();
   const resolvePaciente = usePacienteNomeResolver();
   const [selectedDate, setSelectedDate] = useState(todayLocalStr());
+  // Tick a minute timer so the shift block order auto-flips when it crosses 12:00
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNowTick(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, []);
   const [filterUnit, setFilterUnit] = useState("all");
   const [filterProf, setFilterProf] = useState("all");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -515,9 +521,16 @@ const Agenda: React.FC = () => {
         return true;
       })
       .sort((a, b) => {
-        // 1. Separate by shift (morning first)
+        // 1. Separate by shift. When current local time is in the afternoon
+        // turn (>=12:00) AND viewing today, the afternoon block goes on top
+        // and the morning block goes below — without changing internal order
+        // of either group. Otherwise, morning stays on top as before.
         const shiftA = getShift(a.hora);
         const shiftB = getShift(b.hora);
+
+        const isToday = selectedDate === todayLocalStr();
+        const nowMin = nowMinutesInBrazil();
+        const isAfternoonNow = isToday && nowMin >= 12 * 60;
 
         // Concluded items go to the end of their own shift
         const prioA = getPrioLevel(a);
@@ -525,8 +538,11 @@ const Agenda: React.FC = () => {
         const isConcA = prioA === 99;
         const isConcB = prioB === 99;
 
-        // Sort: shift ASC, then non-concluded before concluded, then priority, then time
-        if (shiftA !== shiftB) return shiftA - shiftB;
+        // Sort: shift first (flipped when afternoon now), then non-concluded
+        // before concluded, then priority, then time
+        if (shiftA !== shiftB) {
+          return isAfternoonNow ? shiftB - shiftA : shiftA - shiftB;
+        }
         if (isConcA !== isConcB) return isConcA ? 1 : -1;
         if (prioA !== prioB) return prioA - prioB;
 
@@ -547,7 +563,7 @@ const Agenda: React.FC = () => {
       const cns = pac?.cns?.toLowerCase() || "";
       return nome.includes(debouncedSearch) || cpf.includes(debouncedSearch) || cns.includes(debouncedSearch);
     });
-  }, [agendamentos, selectedDate, filterUnit, filterProf, isProfissional, user, debouncedSearch, pacientes, triageMap, arrivalMap]);
+  }, [agendamentos, selectedDate, filterUnit, filterProf, isProfissional, user, debouncedSearch, pacientes, triageMap, arrivalMap, nowTick]);
 
   const filteredPacienteKey = React.useMemo(
     () => [...new Set(filtered.map((f) => f.pacienteId))].sort().join(","),
