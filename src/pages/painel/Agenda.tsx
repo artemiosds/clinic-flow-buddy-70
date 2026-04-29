@@ -508,29 +508,47 @@ const Agenda: React.FC = () => {
       return fixedPrio;
     };
 
-    const base = agendamentos
-      .filter((a) => {
-        if (a.data !== selectedDate) return false;
-        if (filterUnit !== "all" && a.unidadeId !== filterUnit) return false;
-        if (filterProf !== "all" && a.profissionalId !== filterProf) return false;
-        if (isProfissional && user) {
-          if (a.profissionalId !== user.id) return false;
+    const visiveis = agendamentos.filter((a) => {
+      if (a.data !== selectedDate) return false;
+      if (filterUnit !== "all" && a.unidadeId !== filterUnit) return false;
+      if (filterProf !== "all" && a.profissionalId !== filterProf) return false;
+      if (isProfissional && user) {
+        if (a.profissionalId !== user.id) return false;
+      }
+      // Universal unit isolation: any user with unidadeId only sees their unit (except admin.sms)
+      if (user?.unidadeId && user?.usuario !== 'admin.sms' && a.unidadeId !== user.unidadeId) return false;
+      return true;
+    });
+
+    // Earliest scheduled afternoon (>=12:00) appointment time of the day,
+    // expressed in minutes-from-midnight. If no afternoon appointment exists,
+    // the threshold is null and the morning block stays on top all day.
+    const tardeStartMin: number | null = (() => {
+      let min: number | null = null;
+      for (const a of visiveis) {
+        if (a.hora >= "12:00") {
+          const [hh, mm] = a.hora.split(":").map(Number);
+          const m = (hh || 0) * 60 + (mm || 0);
+          if (min === null || m < min) min = m;
         }
-        // Universal unit isolation: any user with unidadeId only sees their unit (except admin.sms)
-        if (user?.unidadeId && user?.usuario !== 'admin.sms' && a.unidadeId !== user.unidadeId) return false;
-        return true;
-      })
+      }
+      return min;
+    })();
+
+    const isToday = selectedDate === todayLocalStr();
+    const nowMin = nowMinutesInBrazil();
+    // Flip blocks only on TODAY and only once the clock reaches the actual
+    // start time of the first afternoon appointment.
+    const afternoonOnTop = isToday && tardeStartMin !== null && nowMin >= tardeStartMin;
+
+    const base = visiveis
       .sort((a, b) => {
-        // 1. Separate by shift. When current local time is in the afternoon
-        // turn (>=12:00) AND viewing today, the afternoon block goes on top
-        // and the morning block goes below — without changing internal order
-        // of either group. Otherwise, morning stays on top as before.
+        // 1. Separate by shift. The afternoon block only rises to the top
+        // once the current local time reaches the EARLIEST scheduled
+        // afternoon appointment of the day (e.g. 13:30 if that's the first
+        // afternoon slot). Internal order of each group is preserved.
         const shiftA = getShift(a.hora);
         const shiftB = getShift(b.hora);
-
-        const isToday = selectedDate === todayLocalStr();
-        const nowMin = nowMinutesInBrazil();
-        const isAfternoonNow = isToday && nowMin >= 12 * 60;
 
         // Concluded items go to the end of their own shift
         const prioA = getPrioLevel(a);
@@ -538,10 +556,10 @@ const Agenda: React.FC = () => {
         const isConcA = prioA === 99;
         const isConcB = prioB === 99;
 
-        // Sort: shift first (flipped when afternoon now), then non-concluded
-        // before concluded, then priority, then time
+        // Sort: shift first (flipped once afternoon turn started), then
+        // non-concluded before concluded, then priority, then time
         if (shiftA !== shiftB) {
-          return isAfternoonNow ? shiftB - shiftA : shiftA - shiftB;
+          return afternoonOnTop ? shiftB - shiftA : shiftA - shiftB;
         }
         if (isConcA !== isConcB) return isConcA ? 1 : -1;
         if (prioA !== prioB) return prioA - prioB;
