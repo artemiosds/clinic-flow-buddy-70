@@ -521,16 +521,12 @@ const Agenda: React.FC = () => {
         return true;
       })
       .sort((a, b) => {
-        // 1. Separate by shift. When current local time is in the afternoon
-        // turn (>=12:00) AND viewing today, the afternoon block goes on top
-        // and the morning block goes below — without changing internal order
-        // of either group. Otherwise, morning stays on top as before.
+        // 1. Separate by shift. The afternoon block only rises to the top
+        // once the current local time reaches the EARLIEST scheduled
+        // afternoon appointment of the day (e.g. 13:30 if that's the first
+        // afternoon slot). Internal order of each group is preserved.
         const shiftA = getShift(a.hora);
         const shiftB = getShift(b.hora);
-
-        const isToday = selectedDate === todayLocalStr();
-        const nowMin = nowMinutesInBrazil();
-        const isAfternoonNow = isToday && nowMin >= 12 * 60;
 
         // Concluded items go to the end of their own shift
         const prioA = getPrioLevel(a);
@@ -538,10 +534,10 @@ const Agenda: React.FC = () => {
         const isConcA = prioA === 99;
         const isConcB = prioB === 99;
 
-        // Sort: shift first (flipped when afternoon now), then non-concluded
-        // before concluded, then priority, then time
+        // Sort: shift first (flipped once afternoon turn started), then
+        // non-concluded before concluded, then priority, then time
         if (shiftA !== shiftB) {
-          return isAfternoonNow ? shiftB - shiftA : shiftA - shiftB;
+          return afternoonOnTop ? shiftB - shiftA : shiftA - shiftB;
         }
         if (isConcA !== isConcB) return isConcA ? 1 : -1;
         if (prioA !== prioB) return prioA - prioB;
