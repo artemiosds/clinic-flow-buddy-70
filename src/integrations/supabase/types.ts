@@ -792,8 +792,15 @@ export type Database = {
           criado_em: string
           id: string
           is_global: boolean
+          necessidade_jejum: boolean
           nome: string
+          observacoes: string
+          origem: string
+          preparo: string
           profissional_id: string | null
+          subcategoria: string
+          tempo_jejum: string
+          updated_at: string
         }
         Insert: {
           ativo?: boolean
@@ -802,8 +809,15 @@ export type Database = {
           criado_em?: string
           id?: string
           is_global?: boolean
+          necessidade_jejum?: boolean
           nome: string
+          observacoes?: string
+          origem?: string
+          preparo?: string
           profissional_id?: string | null
+          subcategoria?: string
+          tempo_jejum?: string
+          updated_at?: string
         }
         Update: {
           ativo?: boolean
@@ -812,8 +826,15 @@ export type Database = {
           criado_em?: string
           id?: string
           is_global?: boolean
+          necessidade_jejum?: boolean
           nome?: string
+          observacoes?: string
+          origem?: string
+          preparo?: string
           profissional_id?: string | null
+          subcategoria?: string
+          tempo_jejum?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1157,39 +1178,54 @@ export type Database = {
           apresentacao: string
           ativo: boolean
           classe_terapeutica: string
+          concentracao: string
           created_at: string
           dosagem_padrao: string
+          forma_farmaceutica: string
           id: string
           is_global: boolean
           nome: string
+          observacoes: string
+          origem: string
           principio_ativo: string
           profissional_id: string | null
+          updated_at: string
           via_padrao: string
         }
         Insert: {
           apresentacao?: string
           ativo?: boolean
           classe_terapeutica?: string
+          concentracao?: string
           created_at?: string
           dosagem_padrao?: string
+          forma_farmaceutica?: string
           id?: string
           is_global?: boolean
           nome: string
+          observacoes?: string
+          origem?: string
           principio_ativo?: string
           profissional_id?: string | null
+          updated_at?: string
           via_padrao?: string
         }
         Update: {
           apresentacao?: string
           ativo?: boolean
           classe_terapeutica?: string
+          concentracao?: string
           created_at?: string
           dosagem_padrao?: string
+          forma_farmaceutica?: string
           id?: string
           is_global?: boolean
           nome?: string
+          observacoes?: string
+          origem?: string
           principio_ativo?: string
           profissional_id?: string | null
+          updated_at?: string
           via_padrao?: string
         }
         Relationships: []
