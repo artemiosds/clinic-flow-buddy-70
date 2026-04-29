@@ -556,11 +556,19 @@ const Agenda: React.FC = () => {
         const isConcA = prioA === 99;
         const isConcB = prioB === 99;
 
+        // "Apto p/ Atendimento" boost: dentro do mesmo turno, esses pacientes
+        // sobem para o topo do grupo, mantendo a ordenação interna por
+        // classificação de risco / idade / horário.
+        const isAptoA = (a.status as string) === "apto_atendimento";
+        const isAptoB = (b.status as string) === "apto_atendimento";
+
         // Sort: shift first (flipped once afternoon turn started), then
-        // non-concluded before concluded, then priority, then time
+        // apto_atendimento on top of its shift, then non-concluded before
+        // concluded, then priority, then time.
         if (shiftA !== shiftB) {
           return afternoonOnTop ? shiftB - shiftA : shiftA - shiftB;
         }
+        if (isAptoA !== isAptoB) return isAptoA ? -1 : 1;
         if (isConcA !== isConcB) return isConcA ? 1 : -1;
         if (prioA !== prioB) return prioA - prioB;
 
