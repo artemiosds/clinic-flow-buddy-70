@@ -14,3 +14,7 @@ verify_jwt = false
 
 [functions.integracao-retry-envios]
 verify_jwt = false
+
+# admin-credentials valida JWT manualmente em código (verifica role master via funcionarios)
+[functions.admin-credentials]
+verify_jwt = false
