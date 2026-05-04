@@ -373,7 +373,7 @@ const ConfigSistemasIntegrados: React.FC = () => {
               <Input
                 value={identificadorLocal}
                 onChange={e => setIdentificadorLocal(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
-                placeholder="ex.: sms-oriximina-cer"
+                placeholder="ex.: sms-oriximina-caps"
                 className="mt-2 max-w-md font-mono"
               />
             </div>
@@ -644,7 +644,7 @@ const ConfigSistemasIntegrados: React.FC = () => {
                   <Input
                     value={form.identificador_sistema}
                     onChange={e => setForm({ ...form, identificador_sistema: e.target.value })}
-                    placeholder="sms-oriximina-cer"
+                    placeholder="sms-oriximina-caps"
                   />
                   <p className="text-xs text-muted-foreground mt-1">Texto único usado por ambos os sistemas para se identificar.</p>
                 </div>

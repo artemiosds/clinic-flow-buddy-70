@@ -1,5 +1,5 @@
 import logoSmsFallback from '@/assets/logo-sms-oriximina.jpeg';
-import logoCerFallback from '@/assets/logo-cer-ii.png';
+import logoCapsFallback from '@/assets/logo-caps-ii.png';
 
 interface FichaPacienteData {
   paciente: {
@@ -65,7 +65,7 @@ const calcularIdade = (dataNascimento: string): string => {
 
 export function printFichaPaciente(data: FichaPacienteData): void {
     const logoLeft = resolveLogoUrl(logoSmsFallback);
-    const logoRight = resolveLogoUrl(logoCerFallback);
+    const logoRight = resolveLogoUrl(logoCapsFallback);
   const printWindow = window.open('', '_blank');
   if (!printWindow) return;
 
