@@ -920,6 +920,7 @@ const ProntuarioPage: React.FC = () => {
     }
     setSoapErrors(false);
     setSaving(true);
+    const toastId = toast.loading("Salvando prontuário...");
     let insertedNewProntuario = false;
     let prontuarioId: string | null = editId;
     try {
