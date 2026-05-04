@@ -1,9 +1,9 @@
-import React, { useCallback, useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Printer } from 'lucide-react';
-import { loadDocumentConfig, type DocumentConfig } from '@/lib/printLayout';
-import logoSmsFallback from '@/assets/logo-sms-oriximina.jpeg';
-import logoCerFallback from '@/assets/logo-cer-ii.png';
+import React, { useCallback, useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Printer } from "lucide-react";
+import { loadDocumentConfig, type DocumentConfig } from "@/lib/printLayout";
+import logoSmsFallback from "@/assets/logo-sms-oriximina.jpeg";
+import logoCerFallback from "@/assets/logo-cer-ii.png";
 
 interface FichaData {
   paciente: {
@@ -22,7 +22,7 @@ interface FichaData {
     menor_idade?: boolean;
     nome_responsavel?: string;
     cpf_responsavel?: string;
-    
+
     // Endereço
     cep?: string;
     tipo_logradouro?: string;
@@ -82,34 +82,34 @@ interface FichaData {
 }
 
 const formatarData = (data: string): string => {
-  if (!data) return '___/___/______';
+  if (!data) return "___/___/______";
   try {
-    const d = new Date(data.length <= 10 ? data + 'T12:00:00' : data);
-    if (isNaN(d.getTime())) return '___/___/______';
-    return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const d = new Date(data.length <= 10 ? data + "T12:00:00" : data);
+    if (isNaN(d.getTime())) return "___/___/______";
+    return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
   } catch {
-    return '___/___/______';
+    return "___/___/______";
   }
 };
 
 const calcIdade = (dataNasc: string): string => {
-  if (!dataNasc) return '__';
+  if (!dataNasc) return "__";
   try {
-    const d = new Date(dataNasc.length <= 10 ? dataNasc + 'T12:00:00' : dataNasc);
-    if (isNaN(d.getTime())) return '__';
+    const d = new Date(dataNasc.length <= 10 ? dataNasc + "T12:00:00" : dataNasc);
+    if (isNaN(d.getTime())) return "__";
     const now = new Date();
     let age = now.getFullYear() - d.getFullYear();
     const m = now.getMonth() - d.getMonth();
     if (m < 0 || (m === 0 && now.getDate() < d.getDate())) age--;
-    return age >= 0 ? `${age} anos` : '__';
+    return age >= 0 ? `${age} anos` : "__";
   } catch {
-    return '__';
+    return "__";
   }
 };
 
-const v = (valor: string | undefined): string => valor?.trim() || '';
+const v = (valor: string | undefined): string => valor?.trim() || "";
 
-export type FichaPrintMode = 'completa' | 'dados_pessoais';
+export type FichaPrintMode = "completa" | "dados_pessoais";
 
 interface FichaImpressaoProps {
   data: FichaData;
@@ -118,7 +118,7 @@ interface FichaImpressaoProps {
 }
 
 const resolveLogoUrl = (src: string): string => {
-  if (src.startsWith('http') || src.startsWith('/')) return src;
+  if (src.startsWith("http") || src.startsWith("/")) return src;
   return src;
 };
 
@@ -346,9 +346,8 @@ const PRINT_CSS = `
   }
 `;
 
-
-export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'completa', onPrintComplete }) => {
-  const somentePessoais = mode === 'dados_pessoais';
+export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = "completa", onPrintComplete }) => {
+  const somentePessoais = mode === "dados_pessoais";
   const [config, setConfig] = useState<DocumentConfig | null>(null);
 
   useEffect(() => {
@@ -362,12 +361,12 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
   const buildHTML = useCallback(() => {
     const logoLeft = config?.logoEsquerda || resolveLogoUrl(logoSmsFallback);
     const logoRight = config?.logoDireita || resolveLogoUrl(logoCerFallback);
-    const linha1 = config?.linha1 || 'Secretaria Municipal de Saúde de Oriximiná';
-    const linha2 = config?.linha2 || 'Centro Especializado em Reabilitação Nível II — CER II';
-    
+    const linha1 = config?.linha1 || "Secretaria Municipal de Saúde de Oriximiná";
+    const linha2 = config?.linha2 || "CAPS II";
+
     const now = new Date();
     const dataAtual = formatarData(now.toISOString());
-    const horaAtual = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    const horaAtual = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
     const p = data.paciente;
     const dc = data.dadosClinicos;
     const sv = data.sinaisVitais;
@@ -375,37 +374,41 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
 
     const getRacaLabel = (val?: string) => {
       const options: Record<string, string> = {
-        branca: 'Branca', preta: 'Preta', parda: 'Parda',
-        amarela: 'Amarela', indigena: 'Indígena', nao_declarado: 'Não declarado'
+        branca: "Branca",
+        preta: "Preta",
+        parda: "Parda",
+        amarela: "Amarela",
+        indigena: "Indígena",
+        nao_declarado: "Não declarado",
       };
-      return options[val || ''] || 'Não declarado';
+      return options[val || ""] || "Não declarado";
     };
 
     const getSexoLabel = (val?: string) => {
-      const s = String(val || '').toUpperCase();
-      if (s === 'M' || s === 'MASCULINO') return 'Masculino';
-      if (s === 'F' || s === 'FEMININO') return 'Feminino';
-      if (s === 'I' || s === 'IGNORADO') return 'Ignorado';
-      return 'Não informado';
+      const s = String(val || "").toUpperCase();
+      if (s === "M" || s === "MASCULINO") return "Masculino";
+      if (s === "F" || s === "FEMININO") return "Feminino";
+      if (s === "I" || s === "IGNORADO") return "Ignorado";
+      return "Não informado";
     };
 
-    const val = (value: any, fallback = '—') => {
-      if (value === undefined || value === null || value === '') return fallback;
-      if (typeof value === 'boolean') return value ? 'Sim' : 'Não';
+    const val = (value: any, fallback = "—") => {
+      if (value === undefined || value === null || value === "") return fallback;
+      if (typeof value === "boolean") return value ? "Sim" : "Não";
       return String(value).trim() || fallback;
     };
 
     const valVital = (v: any) => {
-      return '________';
+      return "________";
     };
 
-    const evolucaoHTML = '';
+    const evolucaoHTML = "";
 
     const linhasVazias = (titulo: string, numLinhas: number = 3) => `
       <div class="bloco">
         <div class="bloco-titulo">${titulo}</div>
         <div class="bloco-body">
-          ${Array.from({ length: numLinhas }, () => '<div class="evo-line"></div>').join('')}
+          ${Array.from({ length: numLinhas }, () => '<div class="evo-line"></div>').join("")}
         </div>
       </div>
     `;
@@ -436,7 +439,7 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
     <div class="header-center">
       <h1>${linha1}</h1>
       <h2>${linha2}</h2>
-      <div class="ficha-tipo">${somentePessoais ? 'FICHA CADASTRAL SIMPLIFICADA' : 'FICHA DE ATENDIMENTO COMPLETA'}</div>
+      <div class="ficha-tipo">${somentePessoais ? "FICHA CADASTRAL SIMPLIFICADA" : "FICHA DE ATENDIMENTO COMPLETA"}</div>
     </div>
     <div class="header-logo">
       <img src="${logoRight}" alt="Logo CER II" />
@@ -444,7 +447,7 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
     <div class="header-right">
       <div><b>Data:</b> ${dataAtual}</div>
       <div><b>Hora:</b> ${horaAtual}</div>
-      <div><b>Prontuário:</b> ${val(dc.numero_prontuario, 'NOVO')}</div>
+      <div><b>Prontuário:</b> ${val(dc.numero_prontuario, "NOVO")}</div>
     </div>
   </div>
 
@@ -452,25 +455,25 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
   <div class="bloco">
     <div class="bloco-titulo">
       <span>1. Identificação do Paciente</span>
-      ${p.menor_idade ? '<span class="badge-menor">Paciente Menor de Idade</span>' : ''}
+      ${p.menor_idade ? '<span class="badge-menor">Paciente Menor de Idade</span>' : ""}
     </div>
     <div class="bloco-body">
       <div class="grid-2">
-        <div class="campo campo-full"><b>Nome Completo</b><span style="font-size:12px; font-weight:700">${val(p.nome_completo, 'Não informado')}</span></div>
-        <div class="campo"><b>Nome da Mãe</b><span>${val(p.nome_mae, 'Não informado')}</span></div>
-        <div class="campo"><b>Naturalidade / UF</b><span>${val(p.naturalidade)} / ${val(p.naturalidade_uf, '—')}</span></div>
+        <div class="campo campo-full"><b>Nome Completo</b><span style="font-size:12px; font-weight:700">${val(p.nome_completo, "Não informado")}</span></div>
+        <div class="campo"><b>Nome da Mãe</b><span>${val(p.nome_mae, "Não informado")}</span></div>
+        <div class="campo"><b>Naturalidade / UF</b><span>${val(p.naturalidade)} / ${val(p.naturalidade_uf, "—")}</span></div>
       </div>
       <div class="grid-5" style="margin-top:4px">
         <div class="campo"><b>Data de Nasc.</b><span>${formatarData(p.data_nascimento)}</span></div>
         <div class="campo"><b>Idade</b><span>${idade}</span></div>
         <div class="campo"><b>Sexo</b><span>${getSexoLabel(p.sexo)}</span></div>
-        <div class="campo"><b>CPF</b><span>${val(p.cpf, 'Não informado')}</span></div>
-        <div class="campo"><b>CNS (Cartão SUS)</b><span>${val(p.cns, 'Não informado')}</span></div>
+        <div class="campo"><b>CPF</b><span>${val(p.cpf, "Não informado")}</span></div>
+        <div class="campo"><b>CNS (Cartão SUS)</b><span>${val(p.cns, "Não informado")}</span></div>
       </div>
       <div class="grid-3" style="margin-top:4px">
-        <div class="campo"><b>Nacionalidade</b><span>${val(p.nacionalidade, 'Brasileira')}</span></div>
+        <div class="campo"><b>Nacionalidade</b><span>${val(p.nacionalidade, "Brasileira")}</span></div>
         <div class="campo"><b>Raça / Cor (IBGE)</b><span>${getRacaLabel(p.raca_cor)}</span></div>
-        <div class="campo"><b>Situação de Rua?</b><span>${p.situacao_rua ? 'Sim' : 'Não'}</span></div>
+        <div class="campo"><b>Situação de Rua?</b><span>${p.situacao_rua ? "Sim" : "Não"}</span></div>
       </div>
     </div>
   </div>
@@ -480,16 +483,16 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
     <div class="bloco-titulo">2. Endereço e Localização</div>
     <div class="bloco-body">
       <div class="grid-address">
-        <div class="campo"><b>Tipo de Logradouro / Logradouro</b><span>${val(p.tipo_logradouro)} ${val(p.logradouro, 'Não informado')}</span></div>
-        <div class="campo"><b>Número</b><span>${val(p.numero, 'S/N')}</span></div>
-        <div class="campo"><b>Complemento</b><span>${val(p.complemento, '—')}</span></div>
+        <div class="campo"><b>Tipo de Logradouro / Logradouro</b><span>${val(p.tipo_logradouro)} ${val(p.logradouro, "Não informado")}</span></div>
+        <div class="campo"><b>Número</b><span>${val(p.numero, "S/N")}</span></div>
+        <div class="campo"><b>Complemento</b><span>${val(p.complemento, "—")}</span></div>
       </div>
       <div class="grid-3" style="margin-top:4px">
-        <div class="campo"><b>Bairro</b><span>${val(p.bairro, 'Não informado')}</span></div>
-        <div class="campo"><b>Município de Residência</b><span>${val(p.municipio, 'Oriximiná')}</span></div>
-        <div class="campo"><b>UF / CEP</b><span>${val(p.uf, 'PA')} / ${val(p.cep, '—')}</span></div>
+        <div class="campo"><b>Bairro</b><span>${val(p.bairro, "Não informado")}</span></div>
+        <div class="campo"><b>Município de Residência</b><span>${val(p.municipio, "Oriximiná")}</span></div>
+        <div class="campo"><b>UF / CEP</b><span>${val(p.uf, "PA")} / ${val(p.cep, "—")}</span></div>
       </div>
-      ${p.endereco_legado ? `<div class="campo" style="margin-top:4px; border-top:1px dashed #e2e8f0; padding-top:2px"><b>Endereço Completo (Referência)</b><span>${p.endereco_legado}</span></div>` : ''}
+      ${p.endereco_legado ? `<div class="campo" style="margin-top:4px; border-top:1px dashed #e2e8f0; padding-top:2px"><b>Endereço Completo (Referência)</b><span>${p.endereco_legado}</span></div>` : ""}
     </div>
   </div>
 
@@ -498,9 +501,9 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
     <div class="bloco-titulo">3. Informações de Contato</div>
     <div class="bloco-body">
       <div class="grid-3">
-        <div class="campo"><b>Telefone Principal</b><span>${val(p.telefone, 'Não informado')}</span></div>
-        <div class="campo"><b>Telefone Secundário</b><span>${val(p.telefone_secundario, '—')}</span></div>
-        <div class="campo"><b>E-mail</b><span>${val(p.email, '—')}</span></div>
+        <div class="campo"><b>Telefone Principal</b><span>${val(p.telefone, "Não informado")}</span></div>
+        <div class="campo"><b>Telefone Secundário</b><span>${val(p.telefone_secundario, "—")}</span></div>
+        <div class="campo"><b>E-mail</b><span>${val(p.email, "—")}</span></div>
       </div>
     </div>
   </div>
@@ -510,24 +513,26 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
     <div class="bloco-titulo">4. Dados Complementares / Responsável</div>
     <div class="bloco-body">
       <div class="grid-3">
-        <div class="campo"><b>Nome do Responsável</b><span>${val(p.nome_responsavel, 'O próprio')}</span></div>
-        <div class="campo"><b>CPF do Responsável</b><span>${val(p.cpf_responsavel, '—')}</span></div>
-        <div class="campo"><b>Vínculo / Parentesco</b><span>${val(p.parentesco, '—')}</span></div>
+        <div class="campo"><b>Nome do Responsável</b><span>${val(p.nome_responsavel, "O próprio")}</span></div>
+        <div class="campo"><b>CPF do Responsável</b><span>${val(p.cpf_responsavel, "—")}</span></div>
+        <div class="campo"><b>Vínculo / Parentesco</b><span>${val(p.parentesco, "—")}</span></div>
       </div>
       <div class="grid-3" style="margin-top:4px">
-        <div class="campo"><b>Unidade Vinculada</b><span>${val(p.unidade_vinculada, 'CER II')}</span></div>
-        <div class="campo"><b>UBS de Origem</b><span>${val(p.ubs_origem, '—')}</span></div>
-        <div class="campo"><b>Tipo Encaminhamento</b><span>${val(p.tipo_encaminhamento, '—')}</span></div>
+        <div class="campo"><b>Unidade Vinculada</b><span>${val(p.unidade_vinculada, "CER II")}</span></div>
+        <div class="campo"><b>UBS de Origem</b><span>${val(p.ubs_origem, "—")}</span></div>
+        <div class="campo"><b>Tipo Encaminhamento</b><span>${val(p.tipo_encaminhamento, "—")}</span></div>
       </div>
       <div class="grid-2" style="margin-top:4px">
-        <div class="campo"><b>Profissional Solicitante</b><span>${val(p.profissional_solicitante, '—')}</span></div>
-        <div class="campo"><b>Especialidade Destino</b><span>${val(p.especialidade_destino, '—')}</span></div>
+        <div class="campo"><b>Profissional Solicitante</b><span>${val(p.profissional_solicitante, "—")}</span></div>
+        <div class="campo"><b>Especialidade Destino</b><span>${val(p.especialidade_destino, "—")}</span></div>
       </div>
-      <div class="campo" style="margin-top:4px"><b>Observações Cadastrais</b><span>${val(p.observacoes, 'Nenhuma observação registrada.')}</span></div>
+      <div class="campo" style="margin-top:4px"><b>Observações Cadastrais</b><span>${val(p.observacoes, "Nenhuma observação registrada.")}</span></div>
     </div>
   </div>
 
-  ${!somentePessoais ? `
+  ${
+    !somentePessoais
+      ? `
   <!-- SEÇÃO 5: DADOS DO ATENDIMENTO -->
   <div class="bloco">
     <div class="bloco-titulo">5. Dados do Atendimento</div>
@@ -566,55 +571,56 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
   </div>
 
   <!-- CAMPOS CLÍNICOS -->
-  ${linhasVazias('7. Queixa Principal', 2)}
+  ${linhasVazias("7. Queixa Principal", 2)}
   
   <div class="bloco">
     <div class="bloco-titulo">8. Evolução Clínica</div>
     <div class="bloco-body">
-      ${Array.from({ length: 12 }, () => '<div class="evo-line"></div>').join('')}
+      ${Array.from({ length: 12 }, () => '<div class="evo-line"></div>').join("")}
     </div>
   </div>
 
-  ${linhasVazias('9. Conduta / Prescrição', 4)}
+  ${linhasVazias("9. Conduta / Prescrição", 4)}
   
   <div class="grid-2">
-    ${blocoCurto('10. Diagnóstico')}
-    ${blocoCurto('11. Retorno')}
+    ${blocoCurto("10. Diagnóstico")}
+    ${blocoCurto("11. Retorno")}
   </div>
 
-  ${linhasVazias('12. Medicação / Prescrição', 4)}
-  ${linhasVazias('13. Procedimentos', 3)}
-  ` : ''}
+  ${linhasVazias("12. Medicação / Prescrição", 4)}
+  ${linhasVazias("13. Procedimentos", 3)}
+  `
+      : ""
+  }
 
   <!-- ASSINATURA -->
   <div class="assinatura-area">
     <div class="data-local">Oriximiná &mdash; PA, ____/____/________</div>
     <div class="assinatura-bloco">
       <div class="assinatura-traco"></div>
-      <div class="assinatura-nome">${val(data.profissional.nome, 'PROFISSIONAL RESPONSÁVEL')}</div>
+      <div class="assinatura-nome">${val(data.profissional.nome, "PROFISSIONAL RESPONSÁVEL")}</div>
       <div class="assinatura-label">${val(data.profissional.cargo)} &mdash; ${val(data.profissional.registro)}</div>
     </div>
   </div>
 
   <div class="rodape">
-    Impresso via Lovable Cloud &mdash; CER II Oriximiná &mdash; ${dataAtual} ${horaAtual} &mdash; ${somentePessoais ? 'Ficha Cadastral Simplificada' : 'Ficha de Atendimento Completa'}
+    Impresso via Lovable Cloud &mdash; CER II Oriximiná &mdash; ${dataAtual} ${horaAtual} &mdash; ${somentePessoais ? "Ficha Cadastral Simplificada" : "Ficha de Atendimento Completa"}
   </div>
 
 </body>
 </html>`;
   }, [data, somentePessoais]);
 
-
   const handlePrint = useCallback(() => {
     const html = buildHTML();
-    const win = window.open('', '_blank', 'width=800,height=900');
+    const win = window.open("", "_blank", "width=800,height=900");
     if (!win) {
-      const iframe = document.createElement('iframe');
-      iframe.style.position = 'fixed';
-      iframe.style.top = '-9999px';
-      iframe.style.left = '-9999px';
-      iframe.style.width = '210mm';
-      iframe.style.height = '297mm';
+      const iframe = document.createElement("iframe");
+      iframe.style.position = "fixed";
+      iframe.style.top = "-9999px";
+      iframe.style.left = "-9999px";
+      iframe.style.width = "210mm";
+      iframe.style.height = "297mm";
       document.body.appendChild(iframe);
       const doc = iframe.contentDocument || iframe.contentWindow?.document;
       if (doc) {
@@ -637,7 +643,7 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
     win.focus();
     setTimeout(() => {
       win.print();
-      win.addEventListener('afterprint', () => {
+      win.addEventListener("afterprint", () => {
         win.close();
         onPrintComplete?.();
       });
@@ -650,15 +656,19 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
         <div className="flex items-center gap-4 mb-4 border-b-2 border-primary/20 pb-4">
           <img src={config?.logoEsquerda || logoSmsFallback} alt="Logo" className="w-12 h-12 object-contain" />
           <div className="flex-1 text-center">
-            <h2 className="text-sm font-bold uppercase tracking-tight text-primary">{config?.linha1 || 'Prefeitura Municipal de Oriximiná'}</h2>
-            <p className="text-[11px] font-bold text-muted-foreground uppercase">{config?.linha2 || 'Centro Especializado em Reabilitação II (CER II)'}</p>
+            <h2 className="text-sm font-bold uppercase tracking-tight text-primary">
+              {config?.linha1 || "Prefeitura Municipal de Oriximiná"}
+            </h2>
+            <p className="text-[11px] font-bold text-muted-foreground uppercase">
+              {config?.linha2 || "Centro Especializado em Reabilitação II (CER II)"}
+            </p>
           </div>
           <img src={config?.logoDireita || logoCerFallback} alt="Logo" className="w-12 h-12 object-contain" />
         </div>
 
         <div className="bg-primary/5 rounded px-3 py-1.5 mb-4 text-center">
           <span className="text-xs font-bold text-primary uppercase tracking-wider">
-            {somentePessoais ? 'Visualização da Ficha Cadastral' : 'Visualização da Ficha Completa'}
+            {somentePessoais ? "Visualização da Ficha Cadastral" : "Visualização da Ficha Completa"}
           </span>
         </div>
 
@@ -667,78 +677,159 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
           <div className="border border-slate-200 rounded p-3">
             <h3 className="text-[10px] font-bold uppercase text-primary mb-2 border-b border-slate-100 pb-1 flex justify-between">
               1. Identificação do Paciente
-              {data.paciente.menor_idade && <span className="text-[9px] bg-red-100 text-red-700 px-1.5 rounded">Menor de Idade</span>}
+              {data.paciente.menor_idade && (
+                <span className="text-[9px] bg-red-100 text-red-700 px-1.5 rounded">Menor de Idade</span>
+              )}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
-              <p><span className="text-[9px] font-bold uppercase text-slate-400">Nome:</span> <span className="font-semibold">{data.paciente.nome_completo || '—'}</span></p>
-              <p><span className="text-[9px] font-bold uppercase text-slate-400">Mãe:</span> {data.paciente.nome_mae || '—'}</p>
+              <p>
+                <span className="text-[9px] font-bold uppercase text-slate-400">Nome:</span>{" "}
+                <span className="font-semibold">{data.paciente.nome_completo || "—"}</span>
+              </p>
+              <p>
+                <span className="text-[9px] font-bold uppercase text-slate-400">Mãe:</span>{" "}
+                {data.paciente.nome_mae || "—"}
+              </p>
               <div className="grid grid-cols-3 gap-2">
-                <p><span className="text-[9px] font-bold uppercase text-slate-400">CPF:</span> {data.paciente.cpf || '—'}</p>
-                <p><span className="text-[9px] font-bold uppercase text-slate-400">CNS:</span> {data.paciente.cns || '—'}</p>
-                <p><span className="text-[9px] font-bold uppercase text-slate-400">Nasc.:</span> {formatarData(data.paciente.data_nascimento)}</p>
+                <p>
+                  <span className="text-[9px] font-bold uppercase text-slate-400">CPF:</span> {data.paciente.cpf || "—"}
+                </p>
+                <p>
+                  <span className="text-[9px] font-bold uppercase text-slate-400">CNS:</span> {data.paciente.cns || "—"}
+                </p>
+                <p>
+                  <span className="text-[9px] font-bold uppercase text-slate-400">Nasc.:</span>{" "}
+                  {formatarData(data.paciente.data_nascimento)}
+                </p>
               </div>
               <div className="grid grid-cols-3 gap-2">
-                <p><span className="text-[9px] font-bold uppercase text-slate-400">Sexo:</span> {data.paciente.sexo || '—'}</p>
-                <p><span className="text-[9px] font-bold uppercase text-slate-400">Naturalidade:</span> {data.paciente.naturalidade || '—'}</p>
-                <p><span className="text-[9px] font-bold uppercase text-slate-400">Raça:</span> {data.paciente.raca_cor || '—'}</p>
+                <p>
+                  <span className="text-[9px] font-bold uppercase text-slate-400">Sexo:</span>{" "}
+                  {data.paciente.sexo || "—"}
+                </p>
+                <p>
+                  <span className="text-[9px] font-bold uppercase text-slate-400">Naturalidade:</span>{" "}
+                  {data.paciente.naturalidade || "—"}
+                </p>
+                <p>
+                  <span className="text-[9px] font-bold uppercase text-slate-400">Raça:</span>{" "}
+                  {data.paciente.raca_cor || "—"}
+                </p>
               </div>
             </div>
           </div>
 
           {/* Endereço */}
           <div className="border border-slate-200 rounded p-3">
-            <h3 className="text-[10px] font-bold uppercase text-primary mb-2 border-b border-slate-100 pb-1">2. Endereço e Localização</h3>
+            <h3 className="text-[10px] font-bold uppercase text-primary mb-2 border-b border-slate-100 pb-1">
+              2. Endereço e Localização
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
-              <p><span className="text-[9px] font-bold uppercase text-slate-400">Rua/Logradouro:</span> {data.paciente.logradouro ? `${data.paciente.tipo_logradouro || ''} ${data.paciente.logradouro}` : '—'}</p>
+              <p>
+                <span className="text-[9px] font-bold uppercase text-slate-400">Rua/Logradouro:</span>{" "}
+                {data.paciente.logradouro ? `${data.paciente.tipo_logradouro || ""} ${data.paciente.logradouro}` : "—"}
+              </p>
               <div className="grid grid-cols-3 gap-2">
-                <p><span className="text-[9px] font-bold uppercase text-slate-400">Nº:</span> {data.paciente.numero || '—'}</p>
-                <p><span className="text-[9px] font-bold uppercase text-slate-400">Bairro:</span> {data.paciente.bairro || '—'}</p>
-                <p><span className="text-[9px] font-bold uppercase text-slate-400">Município:</span> {data.paciente.municipio || 'Oriximiná'}</p>
+                <p>
+                  <span className="text-[9px] font-bold uppercase text-slate-400">Nº:</span>{" "}
+                  {data.paciente.numero || "—"}
+                </p>
+                <p>
+                  <span className="text-[9px] font-bold uppercase text-slate-400">Bairro:</span>{" "}
+                  {data.paciente.bairro || "—"}
+                </p>
+                <p>
+                  <span className="text-[9px] font-bold uppercase text-slate-400">Município:</span>{" "}
+                  {data.paciente.municipio || "Oriximiná"}
+                </p>
               </div>
             </div>
           </div>
 
           {/* Contato */}
           <div className="border border-slate-200 rounded p-3">
-            <h3 className="text-[10px] font-bold uppercase text-primary mb-2 border-b border-slate-100 pb-1">3. Contato</h3>
+            <h3 className="text-[10px] font-bold uppercase text-primary mb-2 border-b border-slate-100 pb-1">
+              3. Contato
+            </h3>
             <div className="grid grid-cols-3 gap-2">
-              <p><span className="text-[9px] font-bold uppercase text-slate-400">Telefone:</span> {data.paciente.telefone || '—'}</p>
-              <p><span className="text-[9px] font-bold uppercase text-slate-400">Secundário:</span> {data.paciente.telefone_secundario || '—'}</p>
-              <p><span className="text-[9px] font-bold uppercase text-slate-400">Email:</span> {data.paciente.email || '—'}</p>
+              <p>
+                <span className="text-[9px] font-bold uppercase text-slate-400">Telefone:</span>{" "}
+                {data.paciente.telefone || "—"}
+              </p>
+              <p>
+                <span className="text-[9px] font-bold uppercase text-slate-400">Secundário:</span>{" "}
+                {data.paciente.telefone_secundario || "—"}
+              </p>
+              <p>
+                <span className="text-[9px] font-bold uppercase text-slate-400">Email:</span>{" "}
+                {data.paciente.email || "—"}
+              </p>
             </div>
           </div>
 
           {/* Dados Complementares */}
           <div className="border border-slate-200 rounded p-3">
-            <h3 className="text-[10px] font-bold uppercase text-primary mb-2 border-b border-slate-100 pb-1">4. Dados Complementares</h3>
+            <h3 className="text-[10px] font-bold uppercase text-primary mb-2 border-b border-slate-100 pb-1">
+              4. Dados Complementares
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
-              <p><span className="text-[9px] font-bold uppercase text-slate-400">Responsável:</span> {data.paciente.nome_responsavel || 'O próprio'}</p>
-              <p><span className="text-[9px] font-bold uppercase text-slate-400">Unidade Vinculada:</span> {data.paciente.unidade_vinculada || 'CER II'}</p>
+              <p>
+                <span className="text-[9px] font-bold uppercase text-slate-400">Responsável:</span>{" "}
+                {data.paciente.nome_responsavel || "O próprio"}
+              </p>
+              <p>
+                <span className="text-[9px] font-bold uppercase text-slate-400">Unidade Vinculada:</span>{" "}
+                {data.paciente.unidade_vinculada || "CER II"}
+              </p>
             </div>
           </div>
-          
+
           {/* Seção Clínica (Preview) - Sempre limpa */}
           {!somentePessoais && (
             <>
               <div className="border border-slate-200 rounded p-3">
-                <h3 className="text-[10px] font-bold uppercase text-primary mb-2 border-b border-slate-100 pb-1">5. Dados do Atendimento</h3>
+                <h3 className="text-[10px] font-bold uppercase text-primary mb-2 border-b border-slate-100 pb-1">
+                  5. Dados do Atendimento
+                </h3>
                 <div className="grid grid-cols-2 gap-2">
-                  <p><span className="text-[9px] font-bold uppercase text-slate-400">Unidade:</span> ________________</p>
-                  <p><span className="text-[9px] font-bold uppercase text-slate-400">Tipo:</span> ________________</p>
+                  <p>
+                    <span className="text-[9px] font-bold uppercase text-slate-400">Unidade:</span> ________________
+                  </p>
+                  <p>
+                    <span className="text-[9px] font-bold uppercase text-slate-400">Tipo:</span> ________________
+                  </p>
                 </div>
               </div>
 
               <div className="border border-slate-200 rounded p-3">
-                <h3 className="text-[10px] font-bold uppercase text-primary mb-2 border-b border-slate-100 pb-1">6. Triagem / Sinais Vitais</h3>
+                <h3 className="text-[10px] font-bold uppercase text-primary mb-2 border-b border-slate-100 pb-1">
+                  6. Triagem / Sinais Vitais
+                </h3>
                 <div className="grid grid-cols-4 gap-2">
-                  <p><span className="text-[9px] font-bold uppercase text-slate-400">PA:</span> ________</p>
-                  <p><span className="text-[9px] font-bold uppercase text-slate-400">FC:</span> ________</p>
-                  <p><span className="text-[9px] font-bold uppercase text-slate-400">FR:</span> ________</p>
-                  <p><span className="text-[9px] font-bold uppercase text-slate-400">Temp:</span> ________</p>
-                  <p><span className="text-[9px] font-bold uppercase text-slate-400">SpO2:</span> ________</p>
-                  <p><span className="text-[9px] font-bold uppercase text-slate-400">Peso:</span> ________</p>
-                  <p><span className="text-[9px] font-bold uppercase text-slate-400">Altura:</span> ________</p>
-                  <p><span className="text-[9px] font-bold uppercase text-slate-400">Glicemia:</span> ________</p>
+                  <p>
+                    <span className="text-[9px] font-bold uppercase text-slate-400">PA:</span> ________
+                  </p>
+                  <p>
+                    <span className="text-[9px] font-bold uppercase text-slate-400">FC:</span> ________
+                  </p>
+                  <p>
+                    <span className="text-[9px] font-bold uppercase text-slate-400">FR:</span> ________
+                  </p>
+                  <p>
+                    <span className="text-[9px] font-bold uppercase text-slate-400">Temp:</span> ________
+                  </p>
+                  <p>
+                    <span className="text-[9px] font-bold uppercase text-slate-400">SpO2:</span> ________
+                  </p>
+                  <p>
+                    <span className="text-[9px] font-bold uppercase text-slate-400">Peso:</span> ________
+                  </p>
+                  <p>
+                    <span className="text-[9px] font-bold uppercase text-slate-400">Altura:</span> ________
+                  </p>
+                  <p>
+                    <span className="text-[9px] font-bold uppercase text-slate-400">Glicemia:</span> ________
+                  </p>
                 </div>
               </div>
 
@@ -761,6 +852,5 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
     </div>
   );
 };
-
 
 export default FichaImpressao;
