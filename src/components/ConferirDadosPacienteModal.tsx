@@ -541,7 +541,15 @@ export function ConferirDadosPacienteModal({
                 <PacienteDocumentos pacienteId={pacienteId} unidadeId={paciente?.unidade_id} />
               </div>
 
-              {/* Botão salvar (quando houver alterações) */}
+              {/* Documentos */}
+              <div className="pt-2">
+                <div className="flex items-center gap-2 text-sm font-semibold text-foreground border-b pb-1.5 mb-3">
+                  <Paperclip className="w-4 h-4 text-primary" />Documentos e Anexos do Paciente
+                </div>
+                <PacienteDocumentos pacienteId={pacienteId} unidadeId={paciente?.unidade_id} />
+              </div>
+
+              {/* Botão salvar (quando houver alterações) tobacco */}
               {dirty && (
                 <div className="flex justify-end pt-1">
                   <Button size="sm" onClick={handleSave} disabled={saving}>
