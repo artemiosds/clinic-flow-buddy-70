@@ -6,15 +6,47 @@ import logoCerFallback from '@/assets/logo-cer-ii.png';
 
 interface FichaData {
   paciente: {
+    // Identificação
     nome_completo: string;
+    nome_mae: string;
+    data_nascimento: string;
+    sexo?: string;
     cpf: string;
     cns: string;
-    data_nascimento: string;
-    nome_mae: string;
+    naturalidade?: string;
+    naturalidade_uf?: string;
+    nacionalidade?: string;
+    raca_cor?: string;
+    situacao_rua?: boolean;
+    menor_idade?: boolean;
+    nome_responsavel?: string;
+    cpf_responsavel?: string;
+    
+    // Endereço
+    cep?: string;
+    tipo_logradouro?: string;
+    logradouro?: string;
+    numero?: string;
+    complemento?: string;
+    bairro?: string;
+    municipio?: string;
+    uf?: string;
+    endereco_legado?: string;
+
+    // Contato
     telefone: string;
-    endereco?: string;
-    responsavel?: string;
-    sexo?: string;
+    telefone_secundario?: string;
+    email?: string;
+
+    // Complementares
+    parentesco?: string;
+    observacoes?: string;
+    ubs_origem?: string;
+    profissional_solicitante?: string;
+    tipo_encaminhamento?: string;
+    especialidade_destino?: string;
+    unidade_vinculada?: string;
+    origem_cadastro?: string;
   };
   dadosClinicos: {
     numero_prontuario: string;
