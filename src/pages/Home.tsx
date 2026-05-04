@@ -57,7 +57,7 @@ const Home: React.FC = () => {
           >
             <img src={config?.logoEsquerda || logoSmsFallback} alt="Logo" className="w-20 h-20 rounded-2xl object-cover shadow-lg mb-4" />
             <h1 className="text-3xl md:text-5xl font-bold font-display leading-tight mb-4">
-              Secretaria Municipal de Saúde de Oriximiná
+              {config?.linha1 || 'Secretaria Municipal de Saúde de Oriximiná'}
             </h1>
             <p className="text-lg opacity-90 mb-8">
               Sistema de agendamento online. Agende sua consulta de forma rápida e prática.
