@@ -138,8 +138,8 @@ const Funcionarios: React.FC = () => {
     setDialogOpen(true);
   };
 
-  // Roles that require CBO (clinical/triage staff that generate BPA-I records)
-  const requiresCbo = (role: string) => role === 'profissional' || role === 'tecnico' || role === 'enfermagem';
+  // Roles that require CBO and Professional Council
+  const requiresProfessionalData = (role: string) => role === 'profissional' || role === 'tecnico' || role === 'enfermagem';
 
   const handleSave = async () => {
     if (!form.nome || !form.usuario || !form.email || !form.role) {
@@ -147,10 +147,16 @@ const Funcionarios: React.FC = () => {
       return;
     }
     // CBO is mandatory for clinical roles (used for BPA-I production export)
-    if (requiresCbo(form.role) && !cbo?.codigo) {
-      setShowCboError(true);
-      toast.error('CBO é obrigatório para profissionais clínicos. Selecione no autocomplete.');
-      return;
+    if (requiresProfessionalData(form.role)) {
+      if (!cbo?.codigo) {
+        setShowCboError(true);
+        toast.error('CBO é obrigatório para profissionais clínicos. Selecione no autocomplete.');
+        return;
+      }
+      if (!form.tipo_conselho || !form.numero_conselho || !form.uf_conselho) {
+        toast.error('O Conselho Profissional (Tipo, Número e UF) é obrigatório para este perfil.');
+        return;
+      }
     }
     // Unit master: force unit to their own and block editing global master
     if (isUnitMaster) {
@@ -400,7 +406,7 @@ const Funcionarios: React.FC = () => {
                     </div>
                   )}
                 </div>
-                {(form.role === 'profissional' || form.role === 'tecnico' || form.role === 'enfermagem') && (
+                {requiresProfessionalData(form.role) && (
                   <>
                     <div className="border-t pt-3 mt-2">
                       <p className="text-sm font-semibold text-foreground mb-2">Conselho Profissional</p>
@@ -418,55 +424,54 @@ const Funcionarios: React.FC = () => {
                         Obrigatório para geração do BPA-I (SIA/SUS).
                       </p>
                     </div>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label>Profissão</Label>
+                        <Select value={form.profissao || '__none__'} onValueChange={v => {
+                          const prof = v === '__none__' ? '' : v;
+                          const conselho = conselhoMap[prof] || '';
+                          setForm(p => ({ ...p, profissao: prof, tipo_conselho: conselho || p.tipo_conselho }));
+                        }}>
+                          <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="__none__">Selecione</SelectItem>
+                            {Object.keys(conselhoMap).map(p => (
+                              <SelectItem key={p} value={p}>{p}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>Tipo de Conselho *</Label>
+                        <Input value={form.tipo_conselho} onChange={e => setForm(p => ({ ...p, tipo_conselho: e.target.value }))} placeholder="CRM, COREN, CRP..." />
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label>Nº do Conselho *</Label>
+                        <Input value={form.numero_conselho} onChange={e => setForm(p => ({ ...p, numero_conselho: e.target.value }))} placeholder="000000" />
+                      </div>
+                      <div>
+                        <Label>UF do Conselho *</Label>
+                        <Select value={form.uf_conselho || '__none__'} onValueChange={v => setForm(p => ({ ...p, uf_conselho: v === '__none__' ? '' : v }))}>
+                          <SelectTrigger><SelectValue placeholder="UF" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="__none__">—</SelectItem>
+                            {['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'].map(uf => (
+                              <SelectItem key={uf} value={uf}>{uf}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
                     {(form.role === 'tecnico' || form.role === 'enfermagem') && (
                       <div>
-                        <Label>COREN</Label>
-                        <Input value={(form as any).coren || ''} onChange={e => setForm(p => ({ ...p, coren: e.target.value } as any))} placeholder="Nº do COREN" />
+                        <Label>Informação Adicional (Ex: COREN)</Label>
+                        <Input value={(form as any).coren || ''} onChange={e => setForm(p => ({ ...p, coren: e.target.value } as any))} placeholder="Nº do COREN ou outro" />
                       </div>
-                    )}
-                    {form.role === 'profissional' && (
-                      <>
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <Label>Profissão</Label>
-                            <Select value={form.profissao || '__none__'} onValueChange={v => {
-                              const prof = v === '__none__' ? '' : v;
-                              const conselho = conselhoMap[prof] || '';
-                              setForm(p => ({ ...p, profissao: prof, tipo_conselho: conselho || p.tipo_conselho }));
-                            }}>
-                              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="__none__">Selecione</SelectItem>
-                                {Object.keys(conselhoMap).map(p => (
-                                  <SelectItem key={p} value={p}>{p}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div>
-                            <Label>Tipo de Conselho</Label>
-                            <Input value={form.tipo_conselho} onChange={e => setForm(p => ({ ...p, tipo_conselho: e.target.value }))} placeholder="CRM, COREN..." />
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <Label>Nº do Conselho</Label>
-                            <Input value={form.numero_conselho} onChange={e => setForm(p => ({ ...p, numero_conselho: e.target.value }))} placeholder="000000" />
-                          </div>
-                          <div>
-                            <Label>UF do Conselho</Label>
-                            <Select value={form.uf_conselho || '__none__'} onValueChange={v => setForm(p => ({ ...p, uf_conselho: v === '__none__' ? '' : v }))}>
-                              <SelectTrigger><SelectValue placeholder="UF" /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="__none__">—</SelectItem>
-                                {['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'].map(uf => (
-                                  <SelectItem key={uf} value={uf}>{uf}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                      </>
                     )}
                   </>
                 )}
