@@ -664,150 +664,100 @@ const Pacientes: React.FC = () => {
 
   // Função para buscar dados da ficha em paralelo
   const fetchFichaData = useCallback(async (pacienteId: string): Promise<FichaDados> => {
-    // A) PACIENTE
-    const pacientePromise = supabase
+    // A) PACIENTE - SOMENTE DADOS CADASTRAIS ATUAIS
+    const { data: pacienteData, error: pacienteError } = await supabase
       .from("pacientes")
       .select("*")
       .eq("id", pacienteId)
-      .single()
-      .then(({ data, error }) => {
-        if (error || !data) throw new Error("Paciente não encontrado");
-        
-        const cd = (data.custom_data as any) || {};
-        const unidade = data.unidade_id ? unidades.find(u => u.id === data.unidade_id) : null;
-        
-        return {
-          paciente: {
-            nome_completo: data.nome || "",
-            nome_mae: data.nome_mae || "",
-            data_nascimento: data.data_nascimento || "",
-            sexo: cd.sexo || "",
-            cpf: data.cpf || "",
-            cns: data.cns || "",
-            naturalidade: cd.naturalidade || "",
-            naturalidade_uf: cd.naturalidadeUf || "",
-            nacionalidade: cd.nacionalidade || "Brasileira",
-            raca_cor: cd.racaCor || cd.raca_cor || "",
-            situacao_rua: !!cd.situacaoRua,
-            menor_idade: !!data.menor_idade,
-            nome_responsavel: data.nome_responsavel || "",
-            cpf_responsavel: data.cpf_responsavel || "",
-            
-            cep: cd.cep || "",
-            tipo_logradouro: cd.tipoLogradouro || "",
-            logradouro: cd.logradouro || "",
-            numero: cd.numero || "",
-            complemento: cd.complemento || "",
-            bairro: cd.bairro || "",
-            municipio: data.municipio || "Oriximiná",
-            uf: cd.uf || "PA",
-            endereco_legado: data.endereco || "",
+      .single();
 
-            telefone: data.telefone || "",
-            telefone_secundario: cd.telefoneSecundario || "",
-            email: data.email || "",
+    if (pacienteError || !pacienteData) throw new Error("Paciente não encontrado");
+    
+    const cd = (pacienteData.custom_data as any) || {};
+    const unidade = pacienteData.unidade_id ? unidades.find(u => u.id === pacienteData.unidade_id) : null;
+    
+    const paciente = {
+      nome_completo: pacienteData.nome || "",
+      nome_mae: pacienteData.nome_mae || "",
+      data_nascimento: pacienteData.data_nascimento || "",
+      sexo: cd.sexo || (pacienteData as any).sexo || "",
+      cpf: pacienteData.cpf || "",
+      cns: pacienteData.cns || "",
+      naturalidade: cd.naturalidade || (pacienteData as any).naturalidade || "",
+      naturalidade_uf: cd.naturalidadeUf || (pacienteData as any).naturalidade_uf || "",
+      nacionalidade: cd.nacionalidade || "Brasileira",
+      raca_cor: cd.racaCor || cd.raca_cor || (pacienteData as any).raca_cor || "",
+      situacao_rua: !!cd.situacaoRua || !!(pacienteData as any).situacao_rua,
+      menor_idade: !!pacienteData.menor_idade,
+      nome_responsavel: pacienteData.nome_responsavel || "",
+      cpf_responsavel: pacienteData.cpf_responsavel || "",
+      
+      cep: cd.cep || "",
+      tipo_logradouro: cd.tipoLogradouro || "",
+      logradouro: cd.logradouro || pacienteData.endereco || "",
+      numero: cd.numero || "",
+      complemento: cd.complemento || "",
+      bairro: cd.bairro || "",
+      municipio: pacienteData.municipio || "Oriximiná",
+      uf: cd.uf || "PA",
+      endereco_legado: pacienteData.endereco || "",
 
-            parentesco: cd.parentesco || "",
-            observacoes: data.observacoes || "",
-            ubs_origem: data.ubs_origem || "",
-            profissional_solicitante: data.profissional_solicitante || "",
-            tipo_encaminhamento: data.tipo_encaminhamento || "",
-            especialidade_destino: data.especialidade_destino || "",
-            unidade_vinculada: unidade?.nome || "CER II",
-            origem_cadastro: (data as any).origem_cadastro || "Manual",
-          },
-          cid: data.cid || "",
-        };
-      });
+      telefone: pacienteData.telefone || "",
+      telefone_secundario: cd.telefoneSecundario || "",
+      email: pacienteData.email || "",
 
-    // B) DADOS CLÍNICOS — agendamento do dia atual (ou mais recente se não houver hoje)
-    const today = new Date().toISOString().split("T")[0];
-    const dadosClinicosPromise = supabase
-      .from("agendamentos")
-      .select("id, tipo, data, unidade_id, profissional_id")
-      .eq("paciente_id", pacienteId)
-      .order("data", { ascending: false })
-      .limit(20)
-      .then(({ data: agData }) => {
-        const todayAg = agData?.find((a) => a.data === today);
-        const lastAg = todayAg || agData?.[0];
-        const unidade = lastAg?.unidade_id ? unidades.find((u) => u.id === lastAg.unidade_id) : null;
-        
-        // Find professional if available
-        const prof = lastAg?.profissional_id ? funcionarios.find(f => f.id === lastAg.profissional_id) : null;
-        
-        return {
-          numero_prontuario: pacienteId,
-          tipo_atendimento: lastAg?.tipo || "",
-          unidade_origem: "",
-          unidade_atendimento: unidade?.nome || "",
-          data_atendimento: lastAg?.data || "",
-          especialidade: prof?.cargo || "",
-          encaminhamento: "",
-        };
-      });
+      parentesco: cd.parentesco || "",
+      observacoes: pacienteData.observacoes || "",
+      ubs_origem: pacienteData.ubs_origem || "",
+      profissional_solicitante: pacienteData.profissional_solicitante || "",
+      tipo_encaminhamento: pacienteData.tipo_encaminhamento || "",
+      especialidade_destino: pacienteData.especialidade_destino || "",
+      unidade_vinculada: unidade?.nome || "CER II",
+      origem_cadastro: (pacienteData as any).origem_cadastro || "Manual",
+    };
 
+    // B) DADOS CLÍNICOS - SEMPRE LIMPOS PARA FICHA DE IMPRESSÃO
+    const dadosClinicos = {
+      numero_prontuario: "NOVO",
+      cid: "",
+      tipo_atendimento: "",
+      unidade_origem: "",
+      unidade_atendimento: unidade?.nome || "CER II",
+      data_atendimento: "",
+      especialidade: "",
+      encaminhamento: "",
+    };
 
-    // C) SINAIS VITAIS — último registro de triagem
-    const sinaisVitaisPromise = (supabase as any)
-      .from("triage_records")
-      .select("pressao_arterial, frequencia_cardiaca, temperatura, saturacao_oxigenio, peso, altura, glicemia, frequencia_respiratoria")
-      .in("agendamento_id", agendamentos.filter(a => a.pacienteId === pacienteId).map(a => a.id))
-      .order("criado_em", { ascending: false })
-      .limit(1)
-      .then(({ data: triData }: any) => {
-        const triagem = triData?.[0];
-        return {
-          pressao_arterial: triagem?.pressao_arterial || "",
-          frequencia_cardiaca: triagem?.frequencia_cardiaca ? String(triagem.frequencia_cardiaca) : "",
-          temperatura: triagem?.temperatura ? String(triagem.temperatura) : "",
-          saturacao: triagem?.saturacao_oxigenio ? String(triagem.saturacao_oxigenio) : "",
-          peso: triagem?.peso ? String(triagem.peso) : "",
-          altura: triagem?.altura ? String(triagem.altura) : "",
-          glicemia: triagem?.glicemia || "",
-          frequencia_respiratoria: triagem?.frequencia_respiratoria || "",
-        };
-      });
+    // C) SINAIS VITAIS - SEMPRE LIMPOS PARA FICHA DE IMPRESSÃO
+    const sinaisVitais = {
+      pressao_arterial: "",
+      frequencia_cardiaca: "",
+      temperatura: "",
+      saturacao: "",
+      peso: "",
+      altura: "",
+      glicemia: "",
+      frequencia_respiratoria: "",
+    };
 
     // D) PROFISSIONAL LOGADO
-    const profissionalPromise = Promise.resolve({
+    const profissional = {
       nome: user?.nome || "",
       cargo: user?.role || "",
       registro: user?.numeroConselho || "",
-    });
+    };
 
-    // E) EVOLUÇÕES CLÍNICAS — prontuários reais (não agendamentos)
-    const evolucionesPromise = supabase
-      .from("prontuarios")
-      .select("data_atendimento, profissional_nome, soap_subjetivo, soap_objetivo, observacoes")
-      .eq("paciente_id", pacienteId)
-      .order("data_atendimento", { ascending: false })
-      .limit(5)
-      .then(({ data: prontData }) => {
-        return (prontData || []).map((p) => ({
-          data: p.data_atendimento || "",
-          observacao: p.soap_subjetivo || p.observacoes || "",
-          profissional: p.profissional_nome || "",
-        }));
-      });
-
-    // Executar todas as buscas em paralelo
-    const [pacienteResult, dadosClinicos, sinaisVitais, profissional, evoluciones] = await Promise.all([
-      pacientePromise,
-      dadosClinicosPromise,
-      sinaisVitaisPromise,
-      profissionalPromise,
-      evolucionesPromise,
-    ]);
+    // E) EVOLUÇÕES - SEMPRE LIMPO PARA FICHA DE IMPRESSÃO
+    const evoluciones: any[] = [];
 
     return {
-      paciente: pacienteResult.paciente,
-      dadosClinicos: { ...dadosClinicos, cid: pacienteResult.cid },
+      paciente,
+      dadosClinicos,
       sinaisVitais,
       profissional,
       evoluciones,
     };
-  }, [unidades, user, agendamentos, funcionarios]);
+  }, [unidades, user]);
 
 
   // Abrir ficha de impressão

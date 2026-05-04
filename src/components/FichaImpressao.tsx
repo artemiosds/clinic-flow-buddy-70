@@ -382,18 +382,10 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
     };
 
     const valVital = (v: any) => {
-      if (!v || v === '—' || v === 'undefined' || v === 'null') return '________';
-      return String(v).trim();
+      return '________';
     };
 
-    const evolucaoHTML = data.evoluciones.length > 0
-      ? data.evoluciones.map(evo => `
-        <div class="evo-item">
-          <div class="evo-meta">${formatarData(evo.data)} &mdash; ${val(evo.profissional)}</div>
-          <div class="evo-text">${val(evo.observacao)}</div>
-        </div>
-      `).join('')
-      : '';
+    const evolucaoHTML = '';
 
     const linhasVazias = (titulo: string, numLinhas: number = 3) => `
       <div class="bloco">
@@ -527,13 +519,13 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
     <div class="bloco-titulo">5. Dados do Atendimento</div>
     <div class="bloco-body">
       <div class="grid-3">
-        <div class="campo"><b>Unidade de Atendimento</b><span>${val(dc.unidade_atendimento, 'CER II')}</span></div>
-        <div class="campo"><b>Tipo de Atendimento</b><span>${val(dc.tipo_atendimento, '—')}</span></div>
-        <div class="campo"><b>Especialidade</b><span>${val(dc.especialidade, '—')}</span></div>
+        <div class="campo"><b>Unidade de Atendimento</b><span>________________</span></div>
+        <div class="campo"><b>Tipo de Atendimento</b><span>________________</span></div>
+        <div class="campo"><b>Especialidade</b><span>________________</span></div>
       </div>
       <div class="grid-2" style="margin-top:4px">
-        <div class="campo"><b>Unidade de Origem</b><span>${val(dc.unidade_origem, '—')}</span></div>
-        <div class="campo"><b>CID / Diagnóstico</b><span>${val(dc.cid, '—')}</span></div>
+        <div class="campo"><b>Unidade de Origem</b><span>________________</span></div>
+        <div class="campo"><b>CID / Diagnóstico</b><span>________________</span></div>
       </div>
     </div>
   </div>
@@ -544,16 +536,16 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
     <div class="bloco-body">
       <table class="vitais-table">
         <tr>
-          <td><b>PA (Pressão)</b><span>${valVital(sv.pressao_arterial)}</span></td>
-          <td><b>FC (BPM)</b><span>${valVital(sv.frequencia_cardiaca)}</span></td>
-          <td><b>FR (resp)</b><span>${valVital(sv.frequencia_respiratoria)}</span></td>
-          <td><b>Temp (°C)</b><span>${valVital(sv.temperatura)}</span></td>
+          <td><b>PA (Pressão)</b><span>________</span></td>
+          <td><b>FC (BPM)</b><span>________</span></td>
+          <td><b>FR (resp)</b><span>________</span></td>
+          <td><b>Temp (°C)</b><span>________</span></td>
         </tr>
         <tr>
-          <td><b>SpO2 (%)</b><span>${valVital(sv.saturacao)}</span></td>
-          <td><b>Peso (kg)</b><span>${valVital(sv.peso)}</span></td>
-          <td><b>Altura (m)</b><span>${valVital(sv.altura)}</span></td>
-          <td><b>Glicemia</b><span>${valVital(sv.glicemia)}</span></td>
+          <td><b>SpO2 (%)</b><span>________</span></td>
+          <td><b>Peso (kg)</b><span>________</span></td>
+          <td><b>Altura (m)</b><span>________</span></td>
+          <td><b>Glicemia</b><span>________</span></td>
         </tr>
       </table>
     </div>
@@ -565,8 +557,7 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
   <div class="bloco">
     <div class="bloco-titulo">8. Evolução Clínica</div>
     <div class="bloco-body">
-      ${evolucaoHTML}
-      ${Array.from({ length: 6 }, () => '<div class="evo-line"></div>').join('')}
+      ${Array.from({ length: 12 }, () => '<div class="evo-line"></div>').join('')}
     </div>
   </div>
 
@@ -712,34 +703,34 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
             </div>
           </div>
           
-          {/* Seção Clínica (Preview) */}
+          {/* Seção Clínica (Preview) - Sempre limpa */}
           {!somentePessoais && (
             <>
               <div className="border border-slate-200 rounded p-3">
                 <h3 className="text-[10px] font-bold uppercase text-primary mb-2 border-b border-slate-100 pb-1">5. Dados do Atendimento</h3>
                 <div className="grid grid-cols-2 gap-2">
-                  <p><span className="text-[9px] font-bold uppercase text-slate-400">Unidade:</span> {data.dadosClinicos.unidade_atendimento || '—'}</p>
-                  <p><span className="text-[9px] font-bold uppercase text-slate-400">Tipo:</span> {data.dadosClinicos.tipo_atendimento || '—'}</p>
+                  <p><span className="text-[9px] font-bold uppercase text-slate-400">Unidade:</span> ________________</p>
+                  <p><span className="text-[9px] font-bold uppercase text-slate-400">Tipo:</span> ________________</p>
                 </div>
               </div>
 
               <div className="border border-slate-200 rounded p-3">
                 <h3 className="text-[10px] font-bold uppercase text-primary mb-2 border-b border-slate-100 pb-1">6. Triagem / Sinais Vitais</h3>
                 <div className="grid grid-cols-4 gap-2">
-                  <p><span className="text-[9px] font-bold uppercase text-slate-400">PA:</span> {data.sinaisVitais.pressao_arterial || '—'}</p>
-                  <p><span className="text-[9px] font-bold uppercase text-slate-400">FC:</span> {data.sinaisVitais.frequencia_cardiaca || '—'}</p>
-                  <p><span className="text-[9px] font-bold uppercase text-slate-400">FR:</span> {data.sinaisVitais.frequencia_respiratoria || '—'}</p>
-                  <p><span className="text-[9px] font-bold uppercase text-slate-400">Temp:</span> {data.sinaisVitais.temperatura || '—'}</p>
-                  <p><span className="text-[9px] font-bold uppercase text-slate-400">SpO2:</span> {data.sinaisVitais.saturacao || '—'}</p>
-                  <p><span className="text-[9px] font-bold uppercase text-slate-400">Peso:</span> {data.sinaisVitais.peso || '—'}</p>
-                  <p><span className="text-[9px] font-bold uppercase text-slate-400">Altura:</span> {data.sinaisVitais.altura || '—'}</p>
-                  <p><span className="text-[9px] font-bold uppercase text-slate-400">Glicemia:</span> {data.sinaisVitais.glicemia || '—'}</p>
+                  <p><span className="text-[9px] font-bold uppercase text-slate-400">PA:</span> ________</p>
+                  <p><span className="text-[9px] font-bold uppercase text-slate-400">FC:</span> ________</p>
+                  <p><span className="text-[9px] font-bold uppercase text-slate-400">FR:</span> ________</p>
+                  <p><span className="text-[9px] font-bold uppercase text-slate-400">Temp:</span> ________</p>
+                  <p><span className="text-[9px] font-bold uppercase text-slate-400">SpO2:</span> ________</p>
+                  <p><span className="text-[9px] font-bold uppercase text-slate-400">Peso:</span> ________</p>
+                  <p><span className="text-[9px] font-bold uppercase text-slate-400">Altura:</span> ________</p>
+                  <p><span className="text-[9px] font-bold uppercase text-slate-400">Glicemia:</span> ________</p>
                 </div>
               </div>
 
               <div className="border border-slate-200 rounded p-3 bg-slate-50/50">
                 <p className="text-[9px] text-center text-slate-500 uppercase font-bold">
-                  Campos clínicos de 7 a 13 (Queixa, Evolução, Conduta, etc.) disponíveis na versão impressa.
+                  Ficha pronta para preenchimento manual. Campos clínicos e evolução estão em branco na versão impressa.
                 </p>
               </div>
             </>
