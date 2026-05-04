@@ -628,10 +628,14 @@ const FilaEspera: React.FC = () => {
   };
 
   const handleSave = async () => {
+    if (saving) return;
     if (!form.pacienteNome || !form.unidadeId) {
       toast.error("Informe o paciente e a unidade.");
       return;
     }
+    setSaving(true);
+    const toastId = toast.loading("Salvando registro...");
+    try {
     if (editId) {
       await updateFila(editId, { ...form, prioridade: form.prioridade as any });
       toast.success("Registro atualizado!");
