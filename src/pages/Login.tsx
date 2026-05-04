@@ -198,7 +198,7 @@ const Login: React.FC = () => {
         <Card className="shadow-elevated border-0">
           <CardContent className="p-8">
             <div className="text-center mb-8">
-              <img src={logoSms} alt="SMS Oriximiná" className="w-20 h-20 mx-auto rounded-2xl object-cover mb-4 shadow-md" />
+              <img src={config?.logoEsquerda || logoSmsFallback} alt="Logo" className="w-20 h-20 mx-auto rounded-2xl object-cover mb-4 shadow-md" />
               <h1 className="text-2xl font-bold font-display text-foreground">SMS Oriximiná</h1>
               <p className="text-muted-foreground text-sm mt-1">Secretaria Municipal de Saúde</p>
               <div className="mt-3 px-4 py-2 bg-amber-50 border border-amber-300 rounded-lg">
