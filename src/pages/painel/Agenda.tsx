@@ -2283,6 +2283,8 @@ const Agenda: React.FC = () => {
                 const paciente = pacientes.find((p) => p.id === ag.pacienteId);
                 const lastAppt = lastProntuarios[ag.pacienteId];
                 const ehPendenteOnline = ag.origem === "online" && ag.status === "pendente";
+                const isPendenteRevisao = agendamentosPendentesRevisao.some(p => p.id === ag.id);
+
                 const anexoUrl = (ag as any).attachment_url || ag.attachmentUrl;
 
                 const typeColorBar: Record<string, string> = {
