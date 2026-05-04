@@ -427,23 +427,30 @@ const Pacientes: React.FC = () => {
             `⚠️ Possível duplicidade detectada:\n\n${duplicateChecks.join("\n")}\n\nDeseja continuar com o cadastro mesmo assim?`,
           );
           if (!confirmed) {
+            toast.dismiss(toastId);
             setSaving(false);
             return;
           }
         }
 
         const id = `p${Date.now()}`;
-        // Close dialog immediately (optimistic)
+        const { error } = await supabase.from("pacientes").insert({ id, ...dbFields });
+        
+        if (error) {
+          console.error("Erro ao cadastrar paciente:", error);
+          toast.error("Erro ao cadastrar paciente.", { id: toastId });
+          setSaving(false);
+          return;
+        }
+
+        // Close dialog
         setDialogOpen(false);
-        setSaving(false);
-        Promise.resolve(supabase.from("pacientes").insert({ id, ...dbFields }))
-          .then(({ error }) => { if (error) console.error("Erro ao cadastrar paciente:", error); })
-          .catch((err) => console.error("Erro ao cadastrar paciente:", err))
-          .finally(() => refreshPacientes());
-        toast.success("Paciente cadastrado com sucesso!");
+        await refreshPacientes();
+        toast.success("Paciente cadastrado com sucesso!", { id: toastId });
       }
-    } catch {
-      toast.error("Erro ao salvar paciente.");
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao salvar paciente.", { id: toastId });
     } finally {
       setSaving(false);
     }
