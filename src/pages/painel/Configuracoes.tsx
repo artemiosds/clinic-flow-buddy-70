@@ -309,46 +309,26 @@ const Configuracoes: React.FC = () => {
     }
   }, [evolutionConfig.evolution_api_key, evolutionConfig.evolution_base_url]);
 
-  const saveEvolutionConfig = async () => {
-    setEvolutionSaving(true);
+  const testEvolutionWhatsApp = async () => {
+    setEvolutionTesting(true);
     try {
-      await atualizarConfiguracao('config_clinica', evolutionConfig, { auditAcao: 'ALTERAR_CONFIG_CLINICA' });
-      toast.success('Configurações da Evolution API salvas!');
+      const { data, error } = await supabase.functions.invoke('send-whatsapp-evolution', {
+        body: { tipo: 'teste', telefone_teste: evolutionConfig.telefone || user?.email },
+      });
+      if (error) throw error;
+      if (data?.success) {
+        toast.success('Mensagem de teste enviada com sucesso!');
+        setEvolutionStatus('connected');
+      } else {
+        toast.error(data?.error || 'Erro ao enviar teste');
+        setEvolutionStatus('error');
+      }
     } catch (err: any) {
       toast.error(`Erro: ${err.message}`);
+      setEvolutionStatus('error');
     } finally {
-      setEvolutionSaving(false);
+      setEvolutionTesting(false);
     }
-  };
-
-  const saveAgOnline = async () => {
-    setAgOnlineSaving(true);
-    try {
-      await atualizarConfiguracao('config_agendamento_online', agOnline, { auditAcao: 'ALTERAR_CONFIG_AG_ONLINE' });
-      toast.success('Configurações de agendamento online salvas!');
-    } catch (err: any) {
-      toast.error(`Erro: ${err.message}`);
-    } finally {
-      setAgOnlineSaving(false);
-    }
-  };
-
-  const saveCancelConfig = async () => {
-    setCancelSaving(true);
-    try {
-      await atualizarConfiguracao('config_cancelamentos', cancelConfig, { auditAcao: 'ALTERAR_CONFIG_CANCELAMENTOS' });
-      toast.success('Regras de cancelamento salvas!');
-    } catch (err: any) {
-      toast.error(`Erro: ${err.message}`);
-    } finally {
-      setCancelSaving(false);
-    }
-  };
-
-  const handleToggleTriage = async (v: boolean) => {
-    setTriageEnabled(v);
-    await atualizarConfiguracao('config_triagem_enabled', v, { auditAcao: 'ALTERAR_CONFIG_TRIAGEM' });
-    toast.success(v ? 'Triagem habilitada' : 'Triagem desabilitada');
   };
 
   const testEvolutionWhatsApp = async () => {
