@@ -1,6 +1,7 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Printer } from 'lucide-react';
+import { loadDocumentConfig, type DocumentConfig } from '@/lib/printLayout';
 import logoSmsFallback from '@/assets/logo-sms-oriximina.jpeg';
 import logoCerFallback from '@/assets/logo-cer-ii.png';
 
@@ -348,9 +349,22 @@ const PRINT_CSS = `
 
 export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'completa', onPrintComplete }) => {
   const somentePessoais = mode === 'dados_pessoais';
+  const [config, setConfig] = useState<DocumentConfig | null>(null);
+
+  useEffect(() => {
+    const fetchConfig = async () => {
+      const cfg = await loadDocumentConfig();
+      setConfig(cfg);
+    };
+    fetchConfig();
+  }, []);
+
   const buildHTML = useCallback(() => {
-    const logoLeft = resolveLogoUrl(logoSmsFallback);
-    const logoRight = resolveLogoUrl(logoCerFallback);
+    const logoLeft = config?.logoEsquerda || resolveLogoUrl(logoSmsFallback);
+    const logoRight = config?.logoDireita || resolveLogoUrl(logoCerFallback);
+    const linha1 = config?.linha1 || 'Secretaria Municipal de Saúde de Oriximiná';
+    const linha2 = config?.linha2 || 'Centro Especializado em Reabilitação Nível II — CER II';
+    
     const now = new Date();
     const dataAtual = formatarData(now.toISOString());
     const horaAtual = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
@@ -417,11 +431,11 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
   <!-- CABEÇALHO -->
   <div class="header">
     <div class="header-logo">
-      <img src="${logoLeft}" alt="Logo SMS" />
+      <img src="${logoLeft}" alt="Logo" />
     </div>
     <div class="header-center">
-      <h1>Secretaria Municipal de Saúde de Oriximiná</h1>
-      <h2>Centro Especializado em Reabilitação Nível II &mdash; CER II</h2>
+      <h1>${linha1}</h1>
+      <h2>${linha2}</h2>
       <div class="ficha-tipo">${somentePessoais ? 'FICHA CADASTRAL SIMPLIFICADA' : 'FICHA DE ATENDIMENTO COMPLETA'}</div>
     </div>
     <div class="header-logo">
@@ -634,12 +648,12 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
     <div className="flex flex-col items-center gap-6 py-4">
       <div className="w-full border rounded-lg bg-white p-6 shadow-sm max-h-[70vh] overflow-y-auto">
         <div className="flex items-center gap-4 mb-4 border-b-2 border-primary/20 pb-4">
-          <img src={logoSmsFallback} alt="Logo SMS" className="w-12 h-12 object-contain" />
+          <img src={config?.logoEsquerda || logoSmsFallback} alt="Logo" className="w-12 h-12 object-contain" />
           <div className="flex-1 text-center">
-            <h2 className="text-sm font-bold uppercase tracking-tight text-primary">Prefeitura Municipal de Oriximiná</h2>
-            <p className="text-[11px] font-bold text-muted-foreground uppercase">Centro Especializado em Reabilitação II (CER II)</p>
+            <h2 className="text-sm font-bold uppercase tracking-tight text-primary">{config?.linha1 || 'Prefeitura Municipal de Oriximiná'}</h2>
+            <p className="text-[11px] font-bold text-muted-foreground uppercase">{config?.linha2 || 'Centro Especializado em Reabilitação II (CER II)'}</p>
           </div>
-          <img src={logoCerFallback} alt="Logo CER II" className="w-12 h-12 object-contain" />
+          <img src={config?.logoDireita || logoCerFallback} alt="Logo" className="w-12 h-12 object-contain" />
         </div>
 
         <div className="bg-primary/5 rounded px-3 py-1.5 mb-4 text-center">

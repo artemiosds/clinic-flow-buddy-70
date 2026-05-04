@@ -11,7 +11,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
-import { openPrintDocument } from '@/lib/printLayout';
+import { openPrintDocument, loadDocumentConfig, type DocumentConfig } from '@/lib/printLayout';
+import logoSmsFallback from "@/assets/logo-sms.jpeg";
 
 interface PacienteData {
   id: string;
@@ -65,6 +66,11 @@ const PortalPaciente: React.FC = () => {
   const [agendamentos, setAgendamentos] = useState<AgendamentoData[]>([]);
   const [fila, setFila] = useState<FilaData[]>([]);
   const [unidades, setUnidades] = useState<any[]>([]);
+  const [config, setConfig] = useState<DocumentConfig | null>(null);
+
+  useEffect(() => {
+    loadDocumentConfig().then(setConfig);
+  }, []);
 
   // Recovery state
   const [recoveryStep, setRecoveryStep] = useState<RecoveryStep>('none');
@@ -222,8 +228,8 @@ const PortalPaciente: React.FC = () => {
               <button onClick={() => { setRecoveryStep('none'); setRecErro(''); }} className="inline-flex items-center text-sm opacity-70 hover:opacity-100 mb-4">
                 <ArrowLeft className="w-4 h-4 mr-1" />Voltar ao login
               </button>
-              <h1 className="text-2xl md:text-3xl font-bold font-display">Recuperar Senha</h1>
-              <p className="opacity-80 mt-1">Portal do Paciente — SMS Oriximiná</p>
+              <h1 className="text-2xl md:text-3xl font-bold font-display">{config?.linha1 || 'Recuperar Senha'}</h1>
+              <p className="opacity-80 mt-1">{config?.linha2 || 'Portal do Paciente — SMS Oriximiná'}</p>
             </div>
           </div>
           <div className="container mx-auto px-4 py-8 max-w-md">
@@ -291,8 +297,8 @@ const PortalPaciente: React.FC = () => {
             <Link to="/" className="inline-flex items-center text-sm opacity-70 hover:opacity-100 mb-4">
               <ArrowLeft className="w-4 h-4 mr-1" />Voltar
             </Link>
-            <h1 className="text-2xl md:text-3xl font-bold font-display">Portal do Paciente</h1>
-            <p className="opacity-80 mt-1">SMS Oriximiná — Acesse seus agendamentos</p>
+            <h1 className="text-2xl md:text-3xl font-bold font-display">{config?.linha1 || 'Portal do Paciente'}</h1>
+            <p className="opacity-80 mt-1">{config?.linha2 || 'SMS Oriximiná — Acesse seus agendamentos'}</p>
           </div>
         </div>
         <div className="container mx-auto px-4 py-8 max-w-md">

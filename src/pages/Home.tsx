@@ -21,7 +21,8 @@ import {
   UserCheck,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import logoSms from "@/assets/logo-sms.jpeg";
+import { loadDocumentConfig, type DocumentConfig } from "@/lib/printLayout";
+import logoSmsFallback from "@/assets/logo-sms.jpeg";
 
 const services = [
   { icon: Stethoscope, title: "Clínica Geral", desc: "Consultas médicas gerais" },
@@ -37,6 +38,12 @@ const services = [
 ];
 
 const Home: React.FC = () => {
+  const [config, setConfig] = React.useState<DocumentConfig | null>(null);
+
+  React.useEffect(() => {
+    loadDocumentConfig().then(setConfig);
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Hero */}
@@ -48,9 +55,9 @@ const Home: React.FC = () => {
             transition={{ duration: 0.6 }}
             className="max-w-2xl"
           >
-            <img src={logoSms} alt="SMS Oriximiná" className="w-20 h-20 rounded-2xl object-cover shadow-lg mb-4" />
+            <img src={config?.logoEsquerda || logoSmsFallback} alt="Logo" className="w-20 h-20 rounded-2xl object-cover shadow-lg mb-4" />
             <h1 className="text-3xl md:text-5xl font-bold font-display leading-tight mb-4">
-              Secretaria Municipal de Saúde de Oriximiná
+              {config?.linha1 || 'Secretaria Municipal de Saúde de Oriximiná'}
             </h1>
             <p className="text-lg opacity-90 mb-8">
               Sistema de agendamento online. Agende sua consulta de forma rápida e prática.

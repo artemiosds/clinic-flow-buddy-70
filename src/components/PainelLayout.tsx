@@ -1,4 +1,4 @@
-import React, { useState, Suspense, useMemo } from 'react';
+import React, { useState, Suspense, useMemo, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
@@ -13,7 +13,8 @@ import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { cn } from '@/lib/utils';
 import { AnimatePresence } from 'framer-motion';
-import logoSms from '@/assets/logo-sms.jpeg';
+import { loadDocumentConfig, type DocumentConfig } from '@/lib/printLayout';
+import logoSmsFallback from '@/assets/logo-sms.jpeg';
 import WhatsappPausedBanner from '@/components/WhatsappPausedBanner';
 import { useEncaminhamentosExternosRealtime } from '@/hooks/useEncaminhamentosExternosRealtime';
 
@@ -77,6 +78,12 @@ const PainelLayout: React.FC = () => {
   const location = useLocation();
   
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [config, setConfig] = useState<DocumentConfig | null>(null);
+
+  useEffect(() => {
+    loadDocumentConfig().then(setConfig);
+  }, []);
+
   const { pendingCount: externosPendentes } = useEncaminhamentosExternosRealtime();
 
   const isMaster = user?.role?.toLowerCase().trim() === 'master';
@@ -135,7 +142,7 @@ const PainelLayout: React.FC = () => {
         sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       )}>
         <div className="p-5 border-b border-sidebar-border flex items-center gap-3">
-          <img src={logoSms} alt="SMS Oriximiná" className="w-10 h-10 rounded-xl object-cover ring-2 ring-sidebar-primary/20" />
+          <img src={config?.logoEsquerda || logoSmsFallback} alt="Logo" className="w-10 h-10 rounded-xl object-cover ring-2 ring-sidebar-primary/20" />
           <div>
             <h2 className="text-lg font-bold font-display text-sidebar-foreground leading-tight truncate max-w-[160px]">{unitDisplayName}</h2>
             <p className="text-xs text-sidebar-foreground/60">Oriximiná</p>

@@ -13,6 +13,8 @@ import { validatePacienteFields } from '@/lib/validation';
 import { supabase } from '@/integrations/supabase/client';
 import type { DayInfo } from '@/components/CalendarioDisponibilidade';
 import { addDaysToDateStr, isoDayOfWeek, localDateStr, nowMinutesInBrazil, todayLocalStr } from '@/lib/utils';
+import { loadDocumentConfig, type DocumentConfig } from '@/lib/printLayout';
+import logoSmsFallback from "@/assets/logo-sms.jpeg";
 
 const applyDateMask = (value: string): string => {
   const digits = value.replace(/\D/g, '');
@@ -64,6 +66,11 @@ const AgendarOnline: React.FC = () => {
   const [bloqueios, setBloqueios] = useState<PublicBloqueio[]>([]);
   const [agendamentos, setAgendamentos] = useState<PublicAg[]>([]);
   const [onlineConfig, setOnlineConfig] = useState<OnlineConfig>({ habilitado: true, antecedencia_minima_dias: 1, antecedencia_maxima_dias: 30, limite_por_dia_profissional: 99, mensagem_confirmacao: '', exigir_confirmacao_sms: false });
+  const [docConfig, setDocConfig] = useState<DocumentConfig | null>(null);
+
+  useEffect(() => {
+    loadDocumentConfig().then(setDocConfig);
+  }, []);
 
   const [form, setForm] = useState({
     unidadeId: '', profissionalId: '', tipo: 'Consulta',
@@ -474,8 +481,8 @@ const AgendarOnline: React.FC = () => {
           <Link to="/" className="inline-flex items-center text-sm opacity-70 hover:opacity-100 mb-4">
             <ArrowLeft className="w-4 h-4 mr-1" />Voltar
           </Link>
-          <h1 className="text-2xl md:text-3xl font-bold font-display">Agendar Consulta Online</h1>
-          <p className="opacity-80 mt-1">SMS Oriximiná — Agendamento Público</p>
+          <h1 className="text-2xl md:text-3xl font-bold font-display">{docConfig?.linha1 || 'Agendar Consulta Online'}</h1>
+          <p className="opacity-80 mt-1">{docConfig?.linha2 || 'SMS Oriximiná — Agendamento Público'}</p>
         </div>
       </div>
 
