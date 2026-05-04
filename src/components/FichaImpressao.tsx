@@ -506,31 +506,47 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
   </div>
 
   ${!somentePessoais ? `
-  <!-- SEÇÃO 5: DADOS CLÍNICOS (Somente na versão completa) -->
+  <!-- SEÇÃO 5: TRIAGEM E SINAIS VITAIS -->
   <div class="bloco">
-    <div class="bloco-titulo">5. Triagem e Sinais Vitais</div>
+    <div class="bloco-titulo">5. Triagem / Sinais Vitais</div>
     <div class="bloco-body">
       <table class="vitais-table">
         <tr>
           <td><b>PA (Pressão)</b><span>${val(data.sinaisVitais.pressao_arterial)}</span></td>
           <td><b>FC (BPM)</b><span>${val(data.sinaisVitais.frequencia_cardiaca)}</span></td>
+          <td><b>FR (resp)</b><span>${val(data.sinaisVitais.frequencia_respiratoria)}</span></td>
           <td><b>Temp (°C)</b><span>${val(data.sinaisVitais.temperatura)}</span></td>
+        </tr>
+        <tr>
           <td><b>SpO2 (%)</b><span>${val(data.sinaisVitais.saturacao)}</span></td>
           <td><b>Peso (kg)</b><span>${val(data.sinaisVitais.peso)}</span></td>
           <td><b>Altura (m)</b><span>${val(data.sinaisVitais.altura)}</span></td>
           <td><b>Glicemia</b><span>${val(data.sinaisVitais.glicemia)}</span></td>
-          <td><b>FR (resp)</b><span>${val(data.sinaisVitais.frequencia_respiratoria)}</span></td>
         </tr>
       </table>
     </div>
   </div>
 
+  <!-- SEÇÃO 6: CAMPOS CLÍNICOS -->
+  ${linhasVazias('6. Queixa Principal', 2)}
+  
   <div class="bloco">
-    <div class="bloco-titulo">6. Evoluções Recentes</div>
+    <div class="bloco-titulo">7. Evolução Clínica</div>
     <div class="bloco-body">
       ${evolucaoHTML}
+      ${Array.from({ length: 6 }, () => '<div class="evo-line"></div>').join('')}
     </div>
   </div>
+
+  ${linhasVazias('8. Conduta / Prescrição', 4)}
+  
+  <div class="grid-2">
+    ${blocoCurto('9. Diagnóstico')}
+    ${blocoCurto('10. Retorno')}
+  </div>
+
+  ${linhasVazias('11. Medicação / Prescrição', 4)}
+  ${linhasVazias('12. Procedimentos', 3)}
   ` : ''}
 
   <!-- ASSINATURA -->
