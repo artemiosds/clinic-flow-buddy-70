@@ -324,7 +324,22 @@ const FichaPacienteCabecalho: React.FC<FichaPacienteCabecalhoProps> = ({
             </div>
 
             {/* Compact info grid (always visible) */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <InfoField 
+                icon={<User className="w-3.5 h-3.5" />} 
+                label="Sexo" 
+                value={
+                  (() => {
+                    const s = customData.sexo || paciente.sexo;
+                    if (!s) return "—";
+                    const val = String(s).toUpperCase();
+                    if (val === 'M' || val === 'MASCULINO') return 'Masculino';
+                    if (val === 'F' || val === 'FEMININO') return 'Feminino';
+                    if (val === 'I' || val === 'IGNORADO') return 'Ignorado';
+                    return s;
+                  })()
+                } 
+              />
               <InfoField icon={<CreditCard className="w-3.5 h-3.5" />} label="Cartão SUS (CNS)" value={paciente.cns || "—"} mono />
               <InfoField icon={<CreditCard className="w-3.5 h-3.5" />} label="CPF" value={paciente.cpf || "—"} mono />
               <InfoField icon={<Activity className="w-3.5 h-3.5" />} label="CID-10" value={cidDisplay} />
