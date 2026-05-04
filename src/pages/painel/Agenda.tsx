@@ -3081,7 +3081,79 @@ const Agenda: React.FC = () => {
         agendamento={conferenciaModal.agendamentoInfo}
         onConfirm={conferenciaModal.onConfirm}
       />
+      {/* REQUISITO 9 e 10: Modal de Revisão de Pendências */}
+      <Dialog open={revisaoDialogOpen} onOpenChange={setRevisaoDialogOpen}>
+        <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-display flex items-center gap-2">
+              <Bell className="w-5 h-5 text-warning" />
+              Pendências de agenda
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-muted-foreground">
+              Revise os agendamentos abaixo que não foram concluídos corretamente. 
+              Você pode marcar falta ou abrir o atendimento para finalizar o prontuário.
+            </p>
+            
+            <div className="space-y-6">
+              {Object.entries(
+                agendamentosPendentesRevisao.reduce((acc, ag) => {
+                  const date = ag.data;
+                  if (!acc[date]) acc[date] = [];
+                  acc[date].push(ag);
+                  return acc;
+                }, {} as Record<string, typeof agendamentos>)
+              )
+              .sort(([dateA], [dateB]) => dateB.localeCompare(dateA))
+              .map(([date, items]) => (
+                <div key={date} className="space-y-2">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                    <CalendarIcon className="w-3 h-3" />
+                    {new Date(date + "T12:00:00").toLocaleDateString("pt-BR", { day: '2-digit', month: 'long' })}
+                  </h3>
+                  <div className="grid gap-2">
+                    {items.sort((a, b) => a.hora.localeCompare(b.hora)).map(ag => (
+                      <div key={ag.id} className="flex items-center justify-between p-3 rounded-lg border bg-muted/30 gap-3">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold truncate">{ag.pacienteNome}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {ag.hora} • {ag.profissionalNome} • <span className={cn(statusBadgeClass[ag.status], "bg-transparent p-0")}>{statusLabels[ag.status] || ag.status}</span>
+                          </p>
+                        </div>
+                        <div className="flex gap-1 shrink-0">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2 text-[10px] border-destructive/50 text-destructive hover:bg-destructive/10"
+                            onClick={() => {
+                              setFaltaTarget(ag);
+                            }}
+                          >
+                            <X className="w-3 h-3 mr-1" /> Faltou
+                          </Button>
+                          <Button
+                            size="sm"
+                            className="h-7 px-2 text-[10px] bg-primary text-primary-foreground"
+                            onClick={() => {
+                              handleIniciarAtendimento(ag);
+                              setRevisaoDialogOpen(false);
+                            }}
+                          >
+                            <Play className="w-3 h-3 mr-1" /> Resolver
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
+
   );
 };
 
