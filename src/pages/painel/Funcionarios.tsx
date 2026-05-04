@@ -147,10 +147,16 @@ const Funcionarios: React.FC = () => {
       return;
     }
     // CBO is mandatory for clinical roles (used for BPA-I production export)
-    if (requiresCbo(form.role) && !cbo?.codigo) {
-      setShowCboError(true);
-      toast.error('CBO é obrigatório para profissionais clínicos. Selecione no autocomplete.');
-      return;
+    if (requiresProfessionalData(form.role)) {
+      if (!cbo?.codigo) {
+        setShowCboError(true);
+        toast.error('CBO é obrigatório para profissionais clínicos. Selecione no autocomplete.');
+        return;
+      }
+      if (!form.tipo_conselho || !form.numero_conselho || !form.uf_conselho) {
+        toast.error('O Conselho Profissional (Tipo, Número e UF) é obrigatório para este perfil.');
+        return;
+      }
     }
     // Unit master: force unit to their own and block editing global master
     if (isUnitMaster) {
