@@ -1079,7 +1079,39 @@ const Pacientes: React.FC = () => {
           );
         })}
       </div>
-      {visibleCount < filtered.length && (
+      {filterFila === "all" ? (
+        <div className="flex flex-col sm:flex-row items-center justify-between pt-4 border-t mt-4 gap-4">
+          <p className="text-sm text-muted-foreground order-2 sm:order-1">
+            Mostrando {serverPacientes.length} de {totalCount} pacientes
+          </p>
+          <div className="flex items-center gap-2 order-1 sm:order-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page === 0 || isLoadingServer}
+              onClick={() => {
+                setPage((p) => p - 1);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+            >
+              Anterior
+            </Button>
+            <span className="text-sm font-medium px-2">Página {page + 1}</span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={(page + 1) * PAGE_SIZE >= totalCount || isLoadingServer}
+              onClick={() => {
+                setPage((p) => p + 1);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+            >
+              Próxima
+            </Button>
+            {isLoadingServer && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground ml-2" />}
+          </div>
+        </div>
+      ) : visibleCount < filtered.length && (
         <div className="flex justify-center pt-2">
           <Button
             variant="outline"
