@@ -38,6 +38,12 @@ const services = [
 ];
 
 const Home: React.FC = () => {
+  const [config, setConfig] = React.useState<DocumentConfig | null>(null);
+
+  React.useEffect(() => {
+    loadDocumentConfig().then(setConfig);
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Hero */}
