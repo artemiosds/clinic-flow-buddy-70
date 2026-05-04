@@ -1,4 +1,4 @@
-import React, { useState, Suspense, useMemo } from 'react';
+import React, { useState, Suspense, useMemo, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
@@ -13,7 +13,8 @@ import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { cn } from '@/lib/utils';
 import { AnimatePresence } from 'framer-motion';
-import logoSms from '@/assets/logo-sms.jpeg';
+import { loadDocumentConfig, type DocumentConfig } from '@/lib/printLayout';
+import logoSmsFallback from '@/assets/logo-sms.jpeg';
 import WhatsappPausedBanner from '@/components/WhatsappPausedBanner';
 import { useEncaminhamentosExternosRealtime } from '@/hooks/useEncaminhamentosExternosRealtime';
 
