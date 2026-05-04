@@ -29,16 +29,23 @@ const UnidadesSalas: React.FC = () => {
   const openNewRoom = () => { setEditRoomId(null); setRoomForm({ nome: '', unidadeId: '' }); setRoomDialog(true); };
   const openEditRoom = (s: typeof salas[0]) => { setEditRoomId(s.id); setRoomForm({ nome: s.nome, unidadeId: s.unidadeId }); setRoomDialog(true); };
 
-  const handleSaveUnit = () => {
-    if (!unitForm.nome) return;
-    if (editUnitId) {
-      updateUnidade(editUnitId, unitForm);
-      toast.success('Unidade atualizada!');
-    } else {
-      addUnidade({ id: `un${Date.now()}`, ...unitForm, ativo: true });
-      toast.success('Unidade criada!');
+  const handleSaveUnit = async () => {
+    if (!unitForm.nome || saving) return;
+    setSaving(true);
+    try {
+      if (editUnitId) {
+        await updateUnidade(editUnitId, unitForm);
+        toast.success('Unidade atualizada!');
+      } else {
+        await addUnidade({ id: `un${Date.now()}`, ...unitForm, ativo: true });
+        toast.success('Unidade criada!');
+      }
+      setUnitDialog(false);
+    } catch (err) {
+      toast.error('Erro ao salvar unidade.');
+    } finally {
+      setSaving(false);
     }
-    setUnitDialog(false);
   };
 
   const handleSaveRoom = () => {
