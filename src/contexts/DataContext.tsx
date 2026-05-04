@@ -167,6 +167,7 @@ interface DataContextType {
   refreshDisponibilidades: () => Promise<void>;
   refreshAgendamentos: () => Promise<void>;
   refreshPacientes: () => Promise<void>;
+  searchPacientes: (query: string) => Promise<Paciente[]>;
   refreshFila: () => Promise<void>;
   refreshBloqueios: () => Promise<void>;
   logAction: (input: {
@@ -463,30 +464,25 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loadPacientes = useCallback(async () => {
     try {
-      // ALL staff see ALL patients regardless of unit — critical for cross-unit workflows
-      // Recursive pagination to handle >1000 patients
-      const PAGE = 1000;
+      // PERF: Only load the most recent 200 patients to keep the initial load fast.
+      // Searching will happen server-side for older records.
       const columns =
         "id,nome,cpf,cns,nome_mae,telefone,data_nascimento,email,endereco,observacoes,descricao_clinica,cid,criado_em,is_gestante,is_pne,is_autista,unidade_id";
-      let allData: any[] = [];
-      let from = 0;
-      while (true) {
-        const { data, error } = await supabase
-          .from("pacientes" as any)
-          .select(columns)
-          .order("criado_em", { ascending: false })
-          .range(from, from + PAGE - 1);
-        if (error) {
-          console.error("Error loading pacientes:", error);
-          break;
-        }
-        if (!data || data.length === 0) break;
-        allData = allData.concat(data);
-        if (data.length < PAGE) break;
-        from += PAGE;
+      
+      const { data, error } = await supabase
+        .from("pacientes" as any)
+        .select(columns)
+        .order("criado_em", { ascending: false })
+        .limit(200);
+
+      if (error) {
+        console.error("Error loading pacientes:", error);
+        return;
       }
-      setPacientes(
-        allData.map((p: any) => ({
+      
+      if (data) {
+        setPacientes(
+          data.map((p: any) => ({
           id: p.id,
           nome: p.nome,
           cpf: p.cpf || "",
@@ -506,8 +502,47 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           isAutista: !!p.is_autista,
         })),
       );
-    } catch (err) {
+    }
+  } catch (err) {
       console.error("Error loading pacientes:", err);
+    }
+  }, []);
+
+  const searchPacientes = useCallback(async (query: string): Promise<Paciente[]> => {
+    if (!query) return [];
+    try {
+      const q = query.trim();
+      const { data, error } = await supabase
+        .from("pacientes")
+        .select("*")
+        .or(`nome.ilike.%${q}%,cpf.ilike.%${q}%,telefone.ilike.%${q}%,cns.ilike.%${q}%`)
+        .order('nome', { ascending: true })
+        .limit(20);
+      
+      if (error) throw error;
+      
+      return (data || []).map((p: any) => ({
+        id: p.id,
+        nome: p.nome,
+        cpf: p.cpf || "",
+        cns: p.cns || "",
+        nomeMae: p.nome_mae || "",
+        telefone: p.telefone || "",
+        dataNascimento: p.data_nascimento || "",
+        email: p.email || "",
+        endereco: p.endereco || "",
+        observacoes: p.observacoes || "",
+        descricaoClinica: p.descricao_clinica || "",
+        cid: p.cid || "",
+        criadoEm: p.criado_em || "",
+        unidadeId: p.unidade_id || "",
+        isGestante: !!p.is_gestante,
+        isPne: !!p.is_pne,
+        isAutista: !!p.is_autista,
+      }));
+    } catch (err) {
+      console.error("Error searching patients:", err);
+      return [];
     }
   }, []);
 
@@ -1882,49 +1917,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await loadBloqueios();
   }, [loadBloqueios]);
 
-  const stableFunctions = useRef({
+  const stableFunctions = useRef<any>({
     addAgendamento,
-    updateAgendamento,
-    cancelAgendamento,
-    deleteAgendamento,
-    addPaciente,
-    updatePaciente,
-    addToFila,
-    updateFila,
-    removeFromFila,
-    addAtendimento,
-    updateAtendimento,
-    addUnidade,
-    updateUnidade,
-    deleteUnidade,
-    addSala,
-    updateSala,
-    deleteSala,
-    addFuncionario,
-    updateFuncionario,
-    deleteFuncionario,
-    addDisponibilidade,
-    updateDisponibilidade,
-    deleteDisponibilidade,
-    addBloqueio,
-    updateBloqueio,
-    deleteBloqueio,
-    getAvailableSlots,
-    getTurnoInfo,
-    getAvailableDates,
-    getNextAvailableSlots,
-    getBlockingInfo,
-    getDayInfoMap,
-    updateConfiguracoes,
-    checkFilaForSlot,
-    encaixarDaFila,
-    refreshFuncionarios,
-    refreshDisponibilidades,
-    refreshAgendamentos,
-    refreshPacientes,
-    refreshFila,
-    refreshBloqueios,
-    logAction,
+    searchPacientes,
   });
   stableFunctions.current = {
     addAgendamento,
@@ -1969,6 +1964,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     refreshFila,
     refreshBloqueios,
     logAction,
+    searchPacientes,
   };
 
   const contextValue = useMemo(

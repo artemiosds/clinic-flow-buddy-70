@@ -51,7 +51,14 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        let query = (supabase as any).from('atendimentos').select('id,profissional_nome,unidade_id,setor,data,status,duracao_minutos,sala_id').order('data', { ascending: false }).limit(1000);
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const cutoff = thirtyDaysAgo.toISOString().split('T')[0];
+
+        let query = (supabase as any).from('atendimentos')
+          .select('id,profissional_nome,unidade_id,setor,data,status,duracao_minutos,sala_id')
+          .gte('data', cutoff)
+          .order('data', { ascending: false });
         // Universal unit isolation (admin.sms sees all)
         if (user?.unidadeId && user?.usuario !== 'admin.sms') query = query.eq('unidade_id', user.unidadeId);
         if (user?.role === 'profissional' && user.id) query = query.eq('profissional_id', user.id);

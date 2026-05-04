@@ -22,34 +22,49 @@ const UnidadesSalas: React.FC = () => {
   const [editRoomId, setEditRoomId] = useState<string | null>(null);
   const [unitForm, setUnitForm] = useState({ nome: '', nomeExibicao: '', endereco: '', telefone: '', whatsapp: '' });
   const [roomForm, setRoomForm] = useState({ nome: '', unidadeId: '' });
+  const [saving, setSaving] = useState(false);
 
   const openNewUnit = () => { setEditUnitId(null); setUnitForm({ nome: '', nomeExibicao: '', endereco: '', telefone: '', whatsapp: '' }); setCustomData({}); setUnitDialog(true); };
   const openEditUnit = (u: typeof unidades[0]) => { setEditUnitId(u.id); setUnitForm({ nome: u.nome, nomeExibicao: u.nomeExibicao || '', endereco: u.endereco, telefone: u.telefone, whatsapp: u.whatsapp }); setCustomData({}); setUnitDialog(true); };
   const openNewRoom = () => { setEditRoomId(null); setRoomForm({ nome: '', unidadeId: '' }); setRoomDialog(true); };
   const openEditRoom = (s: typeof salas[0]) => { setEditRoomId(s.id); setRoomForm({ nome: s.nome, unidadeId: s.unidadeId }); setRoomDialog(true); };
 
-  const handleSaveUnit = () => {
-    if (!unitForm.nome) return;
-    if (editUnitId) {
-      updateUnidade(editUnitId, unitForm);
-      toast.success('Unidade atualizada!');
-    } else {
-      addUnidade({ id: `un${Date.now()}`, ...unitForm, ativo: true });
-      toast.success('Unidade criada!');
+  const handleSaveUnit = async () => {
+    if (!unitForm.nome || saving) return;
+    setSaving(true);
+    try {
+      if (editUnitId) {
+        await updateUnidade(editUnitId, unitForm);
+        toast.success('Unidade atualizada!');
+      } else {
+        await addUnidade({ id: `un${Date.now()}`, ...unitForm, ativo: true });
+        toast.success('Unidade criada!');
+      }
+      setUnitDialog(false);
+    } catch (err) {
+      toast.error('Erro ao salvar unidade.');
+    } finally {
+      setSaving(false);
     }
-    setUnitDialog(false);
   };
 
-  const handleSaveRoom = () => {
-    if (!roomForm.nome || !roomForm.unidadeId) return;
-    if (editRoomId) {
-      updateSala(editRoomId, roomForm);
-      toast.success('Sala atualizada!');
-    } else {
-      addSala({ id: `s${Date.now()}`, nome: roomForm.nome, unidadeId: roomForm.unidadeId, ativo: true });
-      toast.success('Sala criada!');
+  const handleSaveRoom = async () => {
+    if (!roomForm.nome || !roomForm.unidadeId || saving) return;
+    setSaving(true);
+    try {
+      if (editRoomId) {
+        await updateSala(editRoomId, roomForm);
+        toast.success('Sala atualizada!');
+      } else {
+        await addSala({ id: `s${Date.now()}`, nome: roomForm.nome, unidadeId: roomForm.unidadeId, ativo: true });
+        toast.success('Sala criada!');
+      }
+      setRoomDialog(false);
+    } catch (err) {
+      toast.error('Erro ao salvar sala.');
+    } finally {
+      setSaving(false);
     }
-    setRoomDialog(false);
   };
 
   return (
@@ -148,7 +163,7 @@ const UnidadesSalas: React.FC = () => {
                 onChange={(field, value) => setCustomData(prev => ({ ...prev, [field]: value }))}
               />
             )}
-            <Button onClick={handleSaveUnit} className="w-full gradient-primary text-primary-foreground">{editUnitId ? 'Salvar' : 'Criar'}</Button>
+            <Button onClick={handleSaveUnit} disabled={saving} className="w-full gradient-primary text-primary-foreground">{editUnitId ? 'Salvar' : 'Criar'}</Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -164,7 +179,7 @@ const UnidadesSalas: React.FC = () => {
                 <SelectContent>{unidades.map(u => <SelectItem key={u.id} value={u.id}>{u.nome}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <Button onClick={handleSaveRoom} className="w-full gradient-primary text-primary-foreground">{editRoomId ? 'Salvar' : 'Criar'}</Button>
+            <Button onClick={handleSaveRoom} disabled={saving} className="w-full gradient-primary text-primary-foreground">{editRoomId ? 'Salvar' : 'Criar'}</Button>
           </div>
         </DialogContent>
       </Dialog>

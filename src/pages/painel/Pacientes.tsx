@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useData } from "@/contexts/DataContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/contexts/PermissionsContext";
@@ -107,13 +108,16 @@ const Pacientes: React.FC = () => {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
-  const PAGE_SIZE = 50;
+  const [page, setPage] = useState(0);
+  const PAGE_SIZE = 20;
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const t = window.setTimeout(() => {
       setDebouncedSearch(search);
       setVisibleCount(PAGE_SIZE); // reset pagination on search
+      setPage(0); // reset server-side pagination on search
     }, 300);
     return () => window.clearTimeout(t);
   }, [search]);
@@ -135,9 +139,43 @@ const Pacientes: React.FC = () => {
   const [filterFila, setFilterFila] = useState("all");
   const [sortBy, setSortBy] = useState("nome");
 
+  const { data: paginatedData, isLoading: isLoadingServer } = useQuery({
+    queryKey: ['pacientes-paginated', page, debouncedSearch, user?.unidadeId, sortBy],
+    queryFn: async () => {
+      let query = supabase
+        .from("pacientes")
+        .select("*", { count: "exact" });
+
+      if (debouncedSearch) {
+        const q = debouncedSearch.trim();
+        query = query.or(`nome.ilike.%${q}%,cpf.ilike.%${q}%,telefone.ilike.%${q}%,cns.ilike.%${q}%`);
+      }
+
+      if (user?.unidadeId && user?.usuario !== 'admin.sms') {
+        query = query.eq('unidade_id', user.unidadeId);
+      }
+
+      if (sortBy === "nome") {
+        query = query.order("nome", { ascending: true });
+      } else {
+        query = query.order("criado_em", { ascending: false });
+      }
+
+      const from = page * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+      const { data, count, error } = await query.range(from, to);
+      if (error) throw error;
+      return { data: data as any[], count };
+    },
+  });
+
+  const serverPacientes = paginatedData?.data || [];
+  const totalCount = paginatedData?.count || 0;
+
   // Reset pagination when filter/sort changes
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
+    setPage(0);
   }, [filterFila, sortBy]);
 
   // Fila dialog
@@ -325,6 +363,9 @@ const Pacientes: React.FC = () => {
     }
     setErrors({});
     setSaving(true);
+    
+    // Feedback visual imediato
+    const toastId = toast.loading(editId ? "Atualizando paciente..." : "Cadastrando paciente...");
 
     const normalizedPhone = normalizePhone(rawPhone!) || "";
 
@@ -373,12 +414,17 @@ const Pacientes: React.FC = () => {
       if (editId) {
         // Close dialog immediately (optimistic)
         setDialogOpen(false);
-        setSaving(false);
-        Promise.resolve(supabase.from("pacientes").update(dbFields).eq("id", editId))
-          .then(({ error }) => { if (error) console.error("Erro ao atualizar paciente:", error); })
-          .catch((err) => console.error("Erro ao atualizar paciente:", err))
-          .finally(() => refreshPacientes());
-        toast.success("Paciente atualizado!");
+        const { error } = await supabase.from("pacientes").update(dbFields).eq("id", editId);
+        
+        if (error) {
+          console.error("Erro ao atualizar paciente:", error);
+          toast.error("Erro ao atualizar paciente.", { id: toastId });
+          setSaving(false);
+          return;
+        }
+
+        await refreshPacientes();
+        toast.success("Paciente atualizado!", { id: toastId });
       } else {
         // === DUPLICATE DETECTION ===
         const duplicateChecks: string[] = [];
@@ -419,23 +465,30 @@ const Pacientes: React.FC = () => {
             `⚠️ Possível duplicidade detectada:\n\n${duplicateChecks.join("\n")}\n\nDeseja continuar com o cadastro mesmo assim?`,
           );
           if (!confirmed) {
+            toast.dismiss(toastId);
             setSaving(false);
             return;
           }
         }
 
         const id = `p${Date.now()}`;
-        // Close dialog immediately (optimistic)
+        const { error } = await supabase.from("pacientes").insert({ id, ...dbFields });
+        
+        if (error) {
+          console.error("Erro ao cadastrar paciente:", error);
+          toast.error("Erro ao cadastrar paciente.", { id: toastId });
+          setSaving(false);
+          return;
+        }
+
+        // Close dialog
         setDialogOpen(false);
-        setSaving(false);
-        Promise.resolve(supabase.from("pacientes").insert({ id, ...dbFields }))
-          .then(({ error }) => { if (error) console.error("Erro ao cadastrar paciente:", error); })
-          .catch((err) => console.error("Erro ao cadastrar paciente:", err))
-          .finally(() => refreshPacientes());
-        toast.success("Paciente cadastrado com sucesso!");
+        await refreshPacientes();
+        toast.success("Paciente cadastrado com sucesso!", { id: toastId });
       }
-    } catch {
-      toast.error("Erro ao salvar paciente.");
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao salvar paciente.", { id: toastId });
     } finally {
       setSaving(false);
     }
@@ -888,7 +941,7 @@ const Pacientes: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-        {filtered.slice(0, visibleCount).map((p) => {
+        {(filterFila === "all" ? serverPacientes : filtered.slice(0, visibleCount)).map((p) => {
           const naFila = pacientesNaFila.has(p.id);
           const filaEntry = filaEntryMap.get(p.id);
 
@@ -1028,7 +1081,39 @@ const Pacientes: React.FC = () => {
           );
         })}
       </div>
-      {visibleCount < filtered.length && (
+      {filterFila === "all" ? (
+        <div className="flex flex-col sm:flex-row items-center justify-between pt-4 border-t mt-4 gap-4">
+          <p className="text-sm text-muted-foreground order-2 sm:order-1">
+            Mostrando {serverPacientes.length} de {totalCount} pacientes
+          </p>
+          <div className="flex items-center gap-2 order-1 sm:order-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page === 0 || isLoadingServer}
+              onClick={() => {
+                setPage((p) => p - 1);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+            >
+              Anterior
+            </Button>
+            <span className="text-sm font-medium px-2">Página {page + 1}</span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={(page + 1) * PAGE_SIZE >= totalCount || isLoadingServer}
+              onClick={() => {
+                setPage((p) => p + 1);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+            >
+              Próxima
+            </Button>
+            {isLoadingServer && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground ml-2" />}
+          </div>
+        </div>
+      ) : visibleCount < filtered.length && (
         <div className="flex justify-center pt-2">
           <Button
             variant="outline"

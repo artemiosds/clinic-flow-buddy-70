@@ -46,6 +46,7 @@ import {
   Search,
   CalendarClock,
   TriangleAlert,
+  Loader2,
 } from "lucide-react";
 import ContactActionButton from "@/components/ContactActionButton";
 import DetalheDrawer, {
@@ -247,6 +248,7 @@ const FilaEspera: React.FC = () => {
   const [importDup, setImportDup] = useState<(typeof pacientes)[0] | null>(null);
   const [importErrors, setImportErrors] = useState<Record<string, string>>({});
   const [importSaving, setImportSaving] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const [form, setForm] = useState({
     pacienteNome: "",
@@ -627,17 +629,29 @@ const FilaEspera: React.FC = () => {
   };
 
   const handleSave = async () => {
+    if (saving) return;
     if (!form.pacienteNome || !form.unidadeId) {
       toast.error("Informe o paciente e a unidade.");
       return;
     }
-    if (editId) {
-      await updateFila(editId, { ...form, prioridade: form.prioridade as any });
-      toast.success("Registro atualizado!");
-      setDialogOpen(false);
-    } else {
-      const pac = pacientes.find((p) => p.id === form.pacienteId);
-      await addToFilaWithPatient(form.pacienteId, form.pacienteNome, pac?.telefone || "", pac?.email || "");
+    setSaving(true);
+    const toastId = toast.loading("Salvando registro...");
+    try {
+      if (editId) {
+        await updateFila(editId, { ...form, prioridade: form.prioridade as any });
+        toast.success("Registro atualizado!", { id: toastId });
+        setDialogOpen(false);
+      } else {
+        const pac = pacientes.find((p) => p.id === form.pacienteId);
+        await addToFilaWithPatient(form.pacienteId, form.pacienteNome, pac?.telefone || "", pac?.email || "");
+        toast.success("Paciente adicionado à fila!", { id: toastId });
+        setDialogOpen(false);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao salvar.", { id: toastId });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -1590,7 +1604,8 @@ const FilaEspera: React.FC = () => {
                 Cadastrar Paciente e Adicionar à Fila
               </Button>
             ) : (
-              <Button onClick={handleSave} className="w-full gradient-primary text-primary-foreground">
+              <Button onClick={handleSave} disabled={saving} className="w-full gradient-primary text-primary-foreground">
+                {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                 {editId ? "Atualizar" : "Adicionar"}
               </Button>
             )}
