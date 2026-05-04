@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { downloadFullHistoryPdf } from "@/lib/prontuarioPdf";
 import { getSpecialtyColors } from "@/lib/specialtyColors";
+import { TIPO_REGISTRO_LABELS } from "@/utils/labels";
 
 // ── Types ──────────────────────────────────────────────────
 type EventType = "avaliacao_inicial" | "retorno" | "sessao" | "urgencia" | "procedimento" | "alta" | "falta" | "consulta";
