@@ -636,13 +636,21 @@ const FilaEspera: React.FC = () => {
     setSaving(true);
     const toastId = toast.loading("Salvando registro...");
     try {
-    if (editId) {
-      await updateFila(editId, { ...form, prioridade: form.prioridade as any });
-      toast.success("Registro atualizado!");
-      setDialogOpen(false);
-    } else {
-      const pac = pacientes.find((p) => p.id === form.pacienteId);
-      await addToFilaWithPatient(form.pacienteId, form.pacienteNome, pac?.telefone || "", pac?.email || "");
+      if (editId) {
+        await updateFila(editId, { ...form, prioridade: form.prioridade as any });
+        toast.success("Registro atualizado!", { id: toastId });
+        setDialogOpen(false);
+      } else {
+        const pac = pacientes.find((p) => p.id === form.pacienteId);
+        await addToFilaWithPatient(form.pacienteId, form.pacienteNome, pac?.telefone || "", pac?.email || "");
+        toast.success("Paciente adicionado à fila!", { id: toastId });
+        setDialogOpen(false);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao salvar.", { id: toastId });
+    } finally {
+      setSaving(false);
     }
   };
 
