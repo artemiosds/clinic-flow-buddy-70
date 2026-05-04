@@ -564,7 +564,7 @@ const EditCampoDialog: React.FC<EditCampoDialogProps> = ({ campo, outrosCampos, 
               ))}
             </div>
             <p className="text-[10px] text-muted-foreground mt-1">
-              Por padrão: Avaliação Inicial e Retorno.
+              Por padrão: 1ª Consulta e Retorno.
             </p>
           </div>
 
