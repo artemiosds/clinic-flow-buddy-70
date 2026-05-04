@@ -138,8 +138,8 @@ const Funcionarios: React.FC = () => {
     setDialogOpen(true);
   };
 
-  // Roles that require CBO (clinical/triage staff that generate BPA-I records)
-  const requiresCbo = (role: string) => role === 'profissional' || role === 'tecnico' || role === 'enfermagem';
+  // Roles that require CBO and Professional Council
+  const requiresProfessionalData = (role: string) => role === 'profissional' || role === 'tecnico' || role === 'enfermagem';
 
   const handleSave = async () => {
     if (!form.nome || !form.usuario || !form.email || !form.role) {
