@@ -1083,9 +1083,9 @@ const ProntuarioPage: React.FC = () => {
           user,
           detalhes: { paciente: form.paciente_nome, sessao_numero: currentSessionForRegistration.session_number, ciclo_id: sessaoCycle.id },
         });
-        toast.success(`✅ Sessão ${currentSessionForRegistration.session_number} registrada com sucesso!`);
+        toast.success(`✅ Sessão ${currentSessionForRegistration.session_number} registrada com sucesso!`, { id: toastId });
       } else {
-        toast.success(editId ? "Prontuário atualizado!" : "Prontuário criado!");
+        toast.success(editId ? "Prontuário atualizado!" : "Prontuário criado!", { id: toastId });
       }
 
       if (!editId) {
