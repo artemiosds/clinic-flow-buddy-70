@@ -1006,68 +1006,56 @@ const Agenda: React.FC = () => {
     if (statusUpdating) return;
     const ag = agendamentos.find((a) => a.id === agId);
     if (!ag) return;
+    
     setStatusUpdating(true);
     const toastId = toast.loading("Atualizando status...");
 
-    if (newStatus === "concluido") {
-      // Block concluding appointments for future dates
-      const today = todayLocalStr();
-      if (ag.data > today) {
-        toast.error("⚠️ Não é possível concluir um agendamento antes da data marcada.");
-        return;
-      }
-      try {
+    try {
+      if (newStatus === "concluido") {
+        const today = todayLocalStr();
+        if (ag.data > today) {
+          toast.error("⚠️ Não é possível concluir um agendamento antes da data marcada.", { id: toastId });
+          setStatusUpdating(false);
+          return;
+        }
         const { count } = await supabase
           .from("prontuarios")
           .select("*", { count: "exact", head: true })
           .eq("agendamento_id", agId)
           .not("tipo_registro", "in", '("triagem","avaliacao_enfermagem","avaliacao_multiprofissional")');
+        
         if (!count || count === 0) {
-          toast.error("⚠️ Não é possível concluir sem registro no prontuário. Preencha o prontuário primeiro.");
+          toast.error("⚠️ Não é possível concluir sem registro no prontuário. Preencha o prontuário primeiro.", { id: toastId });
+          setStatusUpdating(false);
           return;
         }
-      } catch (err) {
-        console.error("Error checking prontuário:", err);
       }
-    }
 
-    try {
       if (newStatus === "confirmado_chegada") {
         const horaChegada = new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-        // Update local arrival map immediately for correct sorting
         setArrivalMap((prev) => ({ ...prev, [agId]: horaChegada }));
 
-        // Triage routing is OPT-IN. Default = direct to professional's queue.
-        // Only routes to triage when explicitly enabled (per professional or globally).
         let triagemHabilitada = false;
-        try {
-          // 1) Per-professional setting takes precedence
-          const { data: profSetting } = await supabase
+        const { data: profSetting } = await supabase
+          .from('triage_settings')
+          .select('enabled')
+          .eq('profissional_id', ag.profissionalId)
+          .maybeSingle();
+        
+        if (profSetting) {
+          triagemHabilitada = !!profSetting.enabled;
+        } else {
+          const { data: globalSetting } = await supabase
             .from('triage_settings')
             .select('enabled')
-            .eq('profissional_id', ag.profissionalId)
+            .is('profissional_id', null)
             .maybeSingle();
-          if (profSetting) {
-            triagemHabilitada = !!profSetting.enabled;
-          } else {
-            // 2) Fallback to global setting (profissional_id IS NULL)
-            const { data: globalSetting } = await supabase
-              .from('triage_settings')
-              .select('enabled')
-              .is('profissional_id', null)
-              .maybeSingle();
-            if (globalSetting) triagemHabilitada = !!globalSetting.enabled;
-          }
-        } catch {}
+          if (globalSetting) triagemHabilitada = !!globalSetting.enabled;
+        }
 
         if (triagemHabilitada) {
-          // Normal flow: go to triage
           await updateAgendamento(agId, { status: "confirmado_chegada" as any });
-
-          const filaExistente = fila.find(
-            (item) => item.id === agId,
-          );
-
+          const filaExistente = fila.find((item) => item.id === agId);
           if (filaExistente) {
             await updateFila(filaExistente.id, {
               status: "chegada_confirmada" as any,
@@ -1094,17 +1082,11 @@ const Agenda: React.FC = () => {
               criadoPor: user?.nome || "recepcao",
             } as any);
           }
-
           await Promise.all([refreshAgendamentos(), refreshFila()]);
-          toast.success(`Chegada de ${ag.pacienteNome} confirmada! Encaminhado para triagem.`);
+          toast.success(`Chegada de ${ag.pacienteNome} confirmada! Encaminhado para triagem.`, { id: toastId });
         } else {
-          // Triage disabled for this professional: skip triage
           await updateAgendamento(agId, { status: "apto_atendimento" as any });
-
-          const filaExistente = fila.find(
-            (item) => item.id === agId,
-          );
-
+          const filaExistente = fila.find((item) => item.id === agId);
           if (filaExistente) {
             await updateFila(filaExistente.id, {
               status: "apto_atendimento" as any,
@@ -1131,87 +1113,81 @@ const Agenda: React.FC = () => {
               criadoPor: user?.nome || "recepcao",
             } as any);
           }
-
           await Promise.all([refreshAgendamentos(), refreshFila()]);
-          toast.success(`Triagem desabilitada para este profissional. ${ag.pacienteNome} liberado para atendimento direto.`);
+          toast.success(`Triagem desabilitada. ${ag.pacienteNome} liberado para atendimento direto.`, { id: toastId });
         }
       } else {
         await updateAgendamento(agId, { status: newStatus as any });
         await Promise.all([refreshAgendamentos(), refreshFila()]);
+        toast.success(`Status atualizado para: ${statusLabels[newStatus] || newStatus}`, { id: toastId });
       }
-    } catch (err) {
-      console.error("Error updating appointment status:", err);
-      toast.error("Erro ao atualizar status do agendamento.");
-      return;
-    }
 
-    const paciente = pacientes.find((p) => p.id === ag.pacienteId || p.nome === ag.pacienteNome);
-    const unidade = unidades.find((u) => u.id === ag.unidadeId);
-    const statusToEvento: Record<string, string> = {
-      cancelado: "cancelamento",
-      remarcado: "reagendamento",
-      falta: "nao_compareceu",
-      confirmado: "confirmacao",
-      confirmado_chegada: "confirmacao",
-      concluido: "atendimento_finalizado",
-    };
-    const evento = statusToEvento[newStatus];
-    if (evento) {
-      await notify({
-        evento: evento as any,
-        paciente_nome: ag.pacienteNome,
-        telefone: paciente?.telefone || "",
-        email: paciente?.email || "",
-        data_consulta: ag.data,
-        hora_consulta: ag.hora,
-        unidade: unidade?.nome || "",
-        profissional: ag.profissionalNome,
-        tipo_atendimento: ag.tipo,
-        status_agendamento: newStatus,
-        id_agendamento: agId,
-      });
-    }
-    // WhatsApp: enviar notificação por status
-    const statusToWhatsapp: Record<string, string> = {
-      cancelado: "cancelamento",
-      remarcado: "remarcacao",
-      falta: "falta",
-    };
-    const whatsappTipo = statusToWhatsapp[newStatus];
-    if (whatsappTipo) {
-      whatsappService.sendByAgendamento(agId, whatsappTipo).catch(() => {});
-    }
-    if (newStatus === "cancelado" || newStatus === "falta") {
-      await handleVagaLiberada(
-        {
-          id: agId,
-          data: ag.data,
-          hora: ag.hora,
-          profissionalId: ag.profissionalId,
-          profissionalNome: ag.profissionalNome,
-          unidadeId: ag.unidadeId,
-          salaId: ag.salaId,
-          tipo: ag.tipo,
-        },
-        newStatus === "cancelado" ? "cancelamento" : "falta",
-        user,
-      );
-    }
-    if (ag.googleEventId) {
-      try {
+      const paciente = pacientes.find((p) => p.id === ag.pacienteId || p.nome === ag.pacienteNome);
+      const unidade = unidades.find((u) => u.id === ag.unidadeId);
+      const statusToEvento: Record<string, string> = {
+        cancelado: "cancelamento",
+        remarcado: "reagendamento",
+        falta: "nao_compareceu",
+        confirmado: "confirmacao",
+        confirmado_chegada: "confirmacao",
+        concluido: "atendimento_finalizado",
+      };
+      const evento = statusToEvento[newStatus];
+      if (evento) {
+        await notify({
+          evento: evento as any,
+          paciente_nome: ag.pacienteNome,
+          telefone: paciente?.telefone || "",
+          email: paciente?.email || "",
+          data_consulta: ag.data,
+          hora_consulta: ag.hora,
+          unidade: unidade?.nome || "",
+          profissional: ag.profissionalNome,
+          tipo_atendimento: ag.tipo,
+          status_agendamento: newStatus,
+          id_agendamento: agId,
+        });
+      }
+      
+      const statusToWhatsapp: Record<string, string> = {
+        cancelado: "cancelamento",
+        remarcado: "remarcacao",
+        falta: "falta",
+      };
+      const whatsappTipo = statusToWhatsapp[newStatus];
+      if (whatsappTipo) {
+        whatsappService.sendByAgendamento(agId, whatsappTipo).catch(() => {});
+      }
+      
+      if (newStatus === "cancelado" || newStatus === "falta") {
+        await handleVagaLiberada(
+          {
+            id: agId,
+            data: ag.data,
+            hora: ag.hora,
+            profissionalId: ag.profissionalId,
+            profissionalNome: ag.profissionalNome,
+            unidadeId: ag.unidadeId,
+            salaId: ag.salaId,
+            tipo: ag.tipo,
+          },
+          newStatus === "cancelado" ? "cancelamento" : "falta",
+          user,
+        );
+      }
+      
+      if (ag.googleEventId) {
         if (newStatus === "cancelado" && configuracoes.googleCalendar.removerCancelar) {
           await gcal.deleteEvent(ag.googleEventId);
           await updateAgendamento(agId, { syncStatus: "ok" });
           await refreshAgendamentos();
-          toast.success("Evento removido do Google Agenda.");
-        } else if (newStatus === "remarcado" && configuracoes.googleCalendar.atualizarRemarcar) {
-          toast.info("Remarcação registrada.");
         }
-      } catch (err) {
-        console.error("Google Calendar sync error:", err);
-        await updateAgendamento(agId, { syncStatus: "erro" });
-        await refreshAgendamentos();
       }
+    } catch (err) {
+      console.error("Error updating status:", err);
+      toast.error("Erro ao atualizar status.", { id: toastId });
+    } finally {
+      setStatusUpdating(false);
     }
   };
 
