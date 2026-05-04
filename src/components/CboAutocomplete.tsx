@@ -25,7 +25,6 @@ interface CboAutocompleteProps {
 interface CboRow {
   codigo: string;
   descricao: string;
-  profissoes_relacionadas: string[];
 }
 
 const normalize = (s: string) =>
