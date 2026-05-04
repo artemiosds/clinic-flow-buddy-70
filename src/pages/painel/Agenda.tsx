@@ -2696,6 +2696,36 @@ const Agenda: React.FC = () => {
               })
             )}
           </div>
+
+          {/* REQUISITO 11: Legendas da agenda */}
+          <div className="flex flex-wrap gap-x-6 gap-y-3 mt-6 p-4 bg-muted/20 rounded-xl border border-border/50">
+            <h4 className="text-[10px] font-bold text-muted-foreground w-full mb-1 uppercase tracking-widest">Legenda de Status</h4>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <div className="w-2.5 h-2.5 rounded-full bg-success/20 ring-1 ring-success/40" />
+              Confirmado
+            </div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/20 ring-1 ring-emerald-500/40" />
+              Chegou
+            </div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <div className="w-2.5 h-2.5 rounded-full bg-primary/20 ring-1 ring-primary/40" />
+              Em Atendimento
+            </div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <div className="w-2.5 h-2.5 rounded-full bg-info/20 ring-1 ring-info/40" />
+              Concluído
+            </div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <div className="w-2.5 h-2.5 rounded-full bg-destructive/20 ring-1 ring-destructive/40" />
+              Faltou
+            </div>
+            <div className="flex items-center gap-2 text-xs text-warning-foreground font-semibold">
+              <div className="w-2.5 h-2.5 rounded-full bg-warning/20 ring-1 ring-warning/40 animate-pulse-gentle" />
+              Pendente de Revisão
+            </div>
+          </div>
+
         </>
       )}
 
