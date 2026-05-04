@@ -1,23 +1,34 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
-import { Textarea } from '@/components/ui/textarea';
-import { Separator } from '@/components/ui/separator';
-import { Slider } from '@/components/ui/slider';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { Separator } from "@/components/ui/separator";
+import { Slider } from "@/components/ui/slider";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  Loader2, Upload, ImageIcon, Trash2, Eye, Image as ImageLucide,
-  FileText, Type, AlignLeft, AlignCenter, AlignRight, CheckCircle2, Printer,
-} from 'lucide-react';
-import ModelosDocumentos from '@/components/ModelosDocumentos';
-import CarimboConfig from '@/components/CarimboConfig';
-import HeaderPreviewA4 from '@/components/config/sistema/HeaderPreviewA4';
-import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
+  Loader2,
+  Upload,
+  ImageIcon,
+  Trash2,
+  Eye,
+  Image as ImageLucide,
+  FileText,
+  Type,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  CheckCircle2,
+  Printer,
+} from "lucide-react";
+import ModelosDocumentos from "@/components/ModelosDocumentos";
+import CarimboConfig from "@/components/CarimboConfig";
+import HeaderPreviewA4 from "@/components/config/sistema/HeaderPreviewA4";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import {
   invalidateDocumentConfigCache,
   loadDocumentConfig,
@@ -25,9 +36,9 @@ import {
   docFooter,
   buildInstitutionalCSS,
   docMeta,
-} from '@/lib/printLayout';
+} from "@/lib/printLayout";
 
-const CONFIG_KEY = 'config_impressao';
+const CONFIG_KEY = "config_impressao";
 
 interface ImpressaoConfig {
   cabecalho: {
@@ -38,11 +49,24 @@ interface ImpressaoConfig {
     logoDireita: string;
     fonte: string;
     tamanhoFonte: number;
-    alinhamento: 'center' | 'left' | 'right';
+    alinhamento: "center" | "left" | "right";
     cor: string;
   };
-  receituario: { titulo: string; mostrarProntuario: boolean; mostrarConvenio: boolean; mostrarNascimento: boolean; mostrarAssinatura: boolean; rodape: string };
-  solicitacaoExames: { titulo: string; mostrarCodigoSus: boolean; mostrarIndicacao: boolean; mostrarAssinatura: boolean; rodape: string };
+  receituario: {
+    titulo: string;
+    mostrarProntuario: boolean;
+    mostrarConvenio: boolean;
+    mostrarNascimento: boolean;
+    mostrarAssinatura: boolean;
+    rodape: string;
+  };
+  solicitacaoExames: {
+    titulo: string;
+    mostrarCodigoSus: boolean;
+    mostrarIndicacao: boolean;
+    mostrarAssinatura: boolean;
+    rodape: string;
+  };
   relatorioEvolucao: { habilitado: boolean; camposVisiveis: string[]; historicoSessoes: number };
   termoConsentimento: { habilitado: boolean; texto: string };
   rodapeTexto: string;
@@ -50,27 +74,44 @@ interface ImpressaoConfig {
 
 const DEFAULT: ImpressaoConfig = {
   cabecalho: {
-    linha1: 'SECRETARIA MUNICIPAL DE SAÚDE DE ORIXIMINÁ',
-    linha2: 'CENTRO ESPECIALIZADO EM REABILITAÇÃO NÍVEL II',
-    logoUrl: '',
-    logoEsquerda: '',
-    logoDireita: '',
-    fonte: 'Arial',
+    linha1: "SECRETARIA MUNICIPAL DE SAÚDE DE ORIXIMINÁ",
+    linha2: "CAPS II",
+    logoUrl: "",
+    logoEsquerda: "",
+    logoDireita: "",
+    fonte: "Arial",
     tamanhoFonte: 12,
-    alinhamento: 'center',
-    cor: '#0c4a6e',
+    alinhamento: "center",
+    cor: "#0c4a6e",
   },
-  receituario: { titulo: 'RECEITUÁRIO MÉDICO', mostrarProntuario: true, mostrarConvenio: true, mostrarNascimento: false, mostrarAssinatura: true, rodape: '' },
-  solicitacaoExames: { titulo: 'SOLICITAÇÃO DE EXAMES', mostrarCodigoSus: true, mostrarIndicacao: true, mostrarAssinatura: true, rodape: '' },
-  relatorioEvolucao: { habilitado: true, camposVisiveis: ['subjetivo', 'objetivo', 'avaliacao', 'plano'], historicoSessoes: 5 },
-  termoConsentimento: { habilitado: false, texto: '' },
-  rodapeTexto: '',
+  receituario: {
+    titulo: "RECEITUÁRIO MÉDICO",
+    mostrarProntuario: true,
+    mostrarConvenio: true,
+    mostrarNascimento: false,
+    mostrarAssinatura: true,
+    rodape: "",
+  },
+  solicitacaoExames: {
+    titulo: "SOLICITAÇÃO DE EXAMES",
+    mostrarCodigoSus: true,
+    mostrarIndicacao: true,
+    mostrarAssinatura: true,
+    rodape: "",
+  },
+  relatorioEvolucao: {
+    habilitado: true,
+    camposVisiveis: ["subjetivo", "objetivo", "avaliacao", "plano"],
+    historicoSessoes: 5,
+  },
+  termoConsentimento: { habilitado: false, texto: "" },
+  rodapeTexto: "",
 };
 
-const FONT_OPTIONS = ['Arial', 'Times New Roman', 'Helvetica', 'Roboto', 'Georgia', 'Verdana'];
+const FONT_OPTIONS = ["Arial", "Times New Roman", "Helvetica", "Roboto", "Georgia", "Verdana"];
 
 interface LogoUploadCardProps {
-  side: 'esquerda' | 'direita';
+  side: "esquerda" | "direita";
   title: string;
   subtitle: string;
   url: string;
@@ -79,17 +120,25 @@ interface LogoUploadCardProps {
   onRemove: () => void;
 }
 
-const LogoUploadCard: React.FC<LogoUploadCardProps> = ({ side, title, subtitle, url, uploading, onUpload, onRemove }) => {
+const LogoUploadCard: React.FC<LogoUploadCardProps> = ({
+  side,
+  title,
+  subtitle,
+  url,
+  uploading,
+  onUpload,
+  onRemove,
+}) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
 
   const handleFile = (file: File) => {
     if (file.size > 2 * 1024 * 1024) {
-      toast.error('Arquivo deve ter no máximo 2MB');
+      toast.error("Arquivo deve ter no máximo 2MB");
       return;
     }
-    if (!['image/png', 'image/jpeg', 'image/svg+xml', 'image/webp'].includes(file.type)) {
-      toast.error('Use PNG, JPG, SVG ou WEBP');
+    if (!["image/png", "image/jpeg", "image/svg+xml", "image/webp"].includes(file.type)) {
+      toast.error("Use PNG, JPG, SVG ou WEBP");
       return;
     }
     onUpload(file);
@@ -114,11 +163,14 @@ const LogoUploadCard: React.FC<LogoUploadCardProps> = ({ side, title, subtitle, 
 
       <div
         className={cn(
-          'border-2 border-dashed rounded-lg p-4 transition-all',
-          dragOver ? 'border-primary bg-primary/5' : 'border-border bg-muted/20',
-          'flex flex-col items-center gap-3'
+          "border-2 border-dashed rounded-lg p-4 transition-all",
+          dragOver ? "border-primary bg-primary/5" : "border-border bg-muted/20",
+          "flex flex-col items-center gap-3",
         )}
-        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragOver(true);
+        }}
         onDragLeave={() => setDragOver(false)}
         onDrop={(e) => {
           e.preventDefault();
@@ -129,7 +181,11 @@ const LogoUploadCard: React.FC<LogoUploadCardProps> = ({ side, title, subtitle, 
       >
         {url ? (
           <div className="relative group">
-            <img src={url} alt={title} className="max-h-20 max-w-[160px] object-contain rounded bg-white p-1 border border-border" />
+            <img
+              src={url}
+              alt={title}
+              className="max-h-20 max-w-[160px] object-contain rounded bg-white p-1 border border-border"
+            />
           </div>
         ) : (
           <div className="w-20 h-20 rounded-lg bg-muted flex flex-col items-center justify-center gap-1">
@@ -148,11 +204,20 @@ const LogoUploadCard: React.FC<LogoUploadCardProps> = ({ side, title, subtitle, 
             type="file"
             accept="image/png,image/jpeg,image/webp,image/svg+xml"
             className="hidden"
-            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) handleFile(f);
+            }}
           />
-          <Button variant="outline" size="sm" onClick={() => inputRef.current?.click()} disabled={uploading} className="gap-1.5 h-8">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => inputRef.current?.click()}
+            disabled={uploading}
+            className="gap-1.5 h-8"
+          >
             {uploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
-            {url ? 'Alterar' : 'Selecionar'}
+            {url ? "Alterar" : "Selecionar"}
           </Button>
           {url && (
             <Button variant="ghost" size="sm" onClick={onRemove} className="text-destructive gap-1.5 h-8">
@@ -173,7 +238,7 @@ const ConfigImpressaoDocumentos: React.FC = () => {
   const [uploadingRight, setUploadingRight] = useState(false);
 
   const loadConfig = useCallback(async () => {
-    const { data } = await supabase.from('system_config').select('configuracoes').eq('id', 'default').maybeSingle();
+    const { data } = await supabase.from("system_config").select("configuracoes").eq("id", "default").maybeSingle();
     const cfg = data?.configuracoes as any;
     if (cfg?.[CONFIG_KEY]) {
       setConfig({
@@ -185,25 +250,31 @@ const ConfigImpressaoDocumentos: React.FC = () => {
     setLoading(false);
   }, []);
 
-  useEffect(() => { loadConfig(); }, [loadConfig]);
+  useEffect(() => {
+    loadConfig();
+  }, [loadConfig]);
 
   const save = async (updated: ImpressaoConfig) => {
     setSaving(true);
-    const { data: existing } = await supabase.from('system_config').select('configuracoes').eq('id', 'default').maybeSingle();
+    const { data: existing } = await supabase
+      .from("system_config")
+      .select("configuracoes")
+      .eq("id", "default")
+      .maybeSingle();
     const existingConfig = (existing?.configuracoes as any) || {};
-    await supabase.from('system_config').upsert({
-      id: 'default',
+    await supabase.from("system_config").upsert({
+      id: "default",
       configuracoes: { ...existingConfig, [CONFIG_KEY]: updated },
       updated_at: new Date().toISOString(),
     });
     setConfig(updated);
     invalidateDocumentConfigCache();
     setSaving(false);
-    toast.success('Configuração salva');
+    toast.success("Configuração salva");
   };
 
   const update = (path: string, value: any) => {
-    const parts = path.split('.');
+    const parts = path.split(".");
     const updated = { ...config };
     let obj: any = updated;
     for (let i = 0; i < parts.length - 1; i++) {
@@ -216,42 +287,46 @@ const ConfigImpressaoDocumentos: React.FC = () => {
 
   const saveField = () => save(config);
 
-  const uploadLogo = async (file: File, side: 'esquerda' | 'direita') => {
-    const setUploading = side === 'esquerda' ? setUploadingLeft : setUploadingRight;
+  const uploadLogo = async (file: File, side: "esquerda" | "direita") => {
+    const setUploading = side === "esquerda" ? setUploadingLeft : setUploadingRight;
     setUploading(true);
     try {
-      const ext = file.name.split('.').pop() || 'png';
+      const ext = file.name.split(".").pop() || "png";
       const path = `logo-${side}-${Date.now()}.${ext}`;
       const { error: uploadError } = await supabase.storage
-        .from('document-logos')
+        .from("document-logos")
         .upload(path, file, { upsert: true, contentType: file.type });
       if (uploadError) throw uploadError;
 
-      const { data: urlData } = supabase.storage.from('document-logos').getPublicUrl(path);
+      const { data: urlData } = supabase.storage.from("document-logos").getPublicUrl(path);
       const url = urlData.publicUrl;
-      const key = side === 'esquerda' ? 'logoEsquerda' : 'logoDireita';
+      const key = side === "esquerda" ? "logoEsquerda" : "logoDireita";
       const updated = { ...config, cabecalho: { ...config.cabecalho, [key]: url } };
       await save(updated);
       toast.success(`Logo ${side} atualizada`);
     } catch (e: any) {
-      toast.error('Erro no upload: ' + (e.message || ''));
+      toast.error("Erro no upload: " + (e.message || ""));
     }
     setUploading(false);
   };
 
-  const removeLogo = async (side: 'esquerda' | 'direita') => {
-    const key = side === 'esquerda' ? 'logoEsquerda' : 'logoDireita';
-    const updated = { ...config, cabecalho: { ...config.cabecalho, [key]: '' } };
+  const removeLogo = async (side: "esquerda" | "direita") => {
+    const key = side === "esquerda" ? "logoEsquerda" : "logoDireita";
+    const updated = { ...config, cabecalho: { ...config.cabecalho, [key]: "" } };
     await save(updated);
-    toast.success('Logo removida');
+    toast.success("Logo removida");
   };
 
   const handlePreview = async () => {
     const cfg = await loadDocumentConfig();
-    const previewWindow = window.open('', '_blank');
+    const previewWindow = window.open("", "_blank");
     if (!previewWindow) return;
     const css = buildInstitutionalCSS();
-    const meta = docMeta({ Paciente: 'João da Silva', CPF: '123.456.789-00', Data: new Date().toLocaleDateString('pt-BR') });
+    const meta = docMeta({
+      Paciente: "João da Silva",
+      CPF: "123.456.789-00",
+      Data: new Date().toLocaleDateString("pt-BR"),
+    });
     const body = `
       <div class="doc-content">
         <div class="content-block" style="margin-top:16px;">
@@ -266,7 +341,9 @@ const ConfigImpressaoDocumentos: React.FC = () => {
         </div>
       </div>
     `;
-    previewWindow.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"/><title>Pré-visualização</title>${css}</head><body>${docHeader('ATESTADO MÉDICO', cfg)}${meta}${body}${docFooter(cfg)}</body></html>`);
+    previewWindow.document.write(
+      `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"/><title>Pré-visualização</title>${css}</head><body>${docHeader("ATESTADO MÉDICO", cfg)}${meta}${body}${docFooter(cfg)}</body></html>`,
+    );
     previewWindow.document.close();
   };
 
@@ -289,8 +366,12 @@ const ConfigImpressaoDocumentos: React.FC = () => {
                 <FileText className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <h2 className="font-bold font-display text-foreground text-lg leading-tight">Logos e Cabeçalho Institucional</h2>
-                <p className="text-xs text-muted-foreground mt-0.5">Configure como cada documento clínico será impresso e exportado</p>
+                <h2 className="font-bold font-display text-foreground text-lg leading-tight">
+                  Logos e Cabeçalho Institucional
+                </h2>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Configure como cada documento clínico será impresso e exportado
+                </p>
               </div>
             </div>
             <div className="flex gap-2">
@@ -316,8 +397,8 @@ const ConfigImpressaoDocumentos: React.FC = () => {
                   subtitle="Ex: SMS Oriximiná"
                   url={config.cabecalho.logoEsquerda}
                   uploading={uploadingLeft}
-                  onUpload={(f) => uploadLogo(f, 'esquerda')}
-                  onRemove={() => removeLogo('esquerda')}
+                  onUpload={(f) => uploadLogo(f, "esquerda")}
+                  onRemove={() => removeLogo("esquerda")}
                 />
                 <LogoUploadCard
                   side="direita"
@@ -325,8 +406,8 @@ const ConfigImpressaoDocumentos: React.FC = () => {
                   subtitle="Ex: CER II"
                   url={config.cabecalho.logoDireita}
                   uploading={uploadingRight}
-                  onUpload={(f) => uploadLogo(f, 'direita')}
-                  onRemove={() => removeLogo('direita')}
+                  onUpload={(f) => uploadLogo(f, "direita")}
+                  onRemove={() => removeLogo("direita")}
                 />
               </div>
 
@@ -343,7 +424,7 @@ const ConfigImpressaoDocumentos: React.FC = () => {
                     <Label className="text-xs">Linha 1 — Nome da Secretaria</Label>
                     <Input
                       value={config.cabecalho.linha1}
-                      onChange={(e) => update('cabecalho.linha1', e.target.value)}
+                      onChange={(e) => update("cabecalho.linha1", e.target.value)}
                       onBlur={saveField}
                       placeholder="Nome da Secretaria"
                     />
@@ -352,7 +433,7 @@ const ConfigImpressaoDocumentos: React.FC = () => {
                     <Label className="text-xs">Linha 2 — Nome da Unidade</Label>
                     <Input
                       value={config.cabecalho.linha2}
-                      onChange={(e) => update('cabecalho.linha2', e.target.value)}
+                      onChange={(e) => update("cabecalho.linha2", e.target.value)}
                       onBlur={saveField}
                       placeholder="Nome da Unidade"
                     />
@@ -361,7 +442,7 @@ const ConfigImpressaoDocumentos: React.FC = () => {
                     <Label className="text-xs">Texto do Rodapé</Label>
                     <Input
                       value={config.rodapeTexto}
-                      onChange={(e) => update('rodapeTexto', e.target.value)}
+                      onChange={(e) => update("rodapeTexto", e.target.value)}
                       onBlur={saveField}
                       placeholder="Endereço completo"
                     />
@@ -374,14 +455,19 @@ const ConfigImpressaoDocumentos: React.FC = () => {
                     <Label className="text-xs">Fonte do cabeçalho</Label>
                     <Select
                       value={config.cabecalho.fonte}
-                      onValueChange={(v) => { update('cabecalho.fonte', v); save({ ...config, cabecalho: { ...config.cabecalho, fonte: v } }); }}
+                      onValueChange={(v) => {
+                        update("cabecalho.fonte", v);
+                        save({ ...config, cabecalho: { ...config.cabecalho, fonte: v } });
+                      }}
                     >
                       <SelectTrigger className="h-10">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         {FONT_OPTIONS.map((f) => (
-                          <SelectItem key={f} value={f} style={{ fontFamily: f }}>{f}</SelectItem>
+                          <SelectItem key={f} value={f} style={{ fontFamily: f }}>
+                            {f}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -398,7 +484,7 @@ const ConfigImpressaoDocumentos: React.FC = () => {
                         max={24}
                         step={1}
                         value={[config.cabecalho.tamanhoFonte]}
-                        onValueChange={(v) => update('cabecalho.tamanhoFonte', v[0])}
+                        onValueChange={(v) => update("cabecalho.tamanhoFonte", v[0])}
                         onValueCommit={() => saveField()}
                       />
                     </div>
@@ -410,13 +496,13 @@ const ConfigImpressaoDocumentos: React.FC = () => {
                       <input
                         type="color"
                         value={config.cabecalho.cor}
-                        onChange={(e) => update('cabecalho.cor', e.target.value)}
+                        onChange={(e) => update("cabecalho.cor", e.target.value)}
                         onBlur={saveField}
                         className="w-10 h-10 rounded-lg border border-input cursor-pointer bg-transparent"
                       />
                       <Input
                         value={config.cabecalho.cor}
-                        onChange={(e) => update('cabecalho.cor', e.target.value)}
+                        onChange={(e) => update("cabecalho.cor", e.target.value)}
                         onBlur={saveField}
                         className="flex-1 font-mono text-xs uppercase"
                       />
@@ -428,20 +514,22 @@ const ConfigImpressaoDocumentos: React.FC = () => {
                 <div className="space-y-1.5">
                   <Label className="text-xs">Alinhamento</Label>
                   <div className="grid grid-cols-3 gap-2 max-w-md">
-                    {([
-                      { v: 'left', icon: AlignLeft, label: 'Esquerda' },
-                      { v: 'center', icon: AlignCenter, label: 'Centro' },
-                      { v: 'right', icon: AlignRight, label: 'Direita' },
-                    ] as const).map(({ v, icon: Icon, label }) => (
+                    {(
+                      [
+                        { v: "left", icon: AlignLeft, label: "Esquerda" },
+                        { v: "center", icon: AlignCenter, label: "Centro" },
+                        { v: "right", icon: AlignRight, label: "Direita" },
+                      ] as const
+                    ).map(({ v, icon: Icon, label }) => (
                       <button
                         key={v}
                         type="button"
                         onClick={() => save({ ...config, cabecalho: { ...config.cabecalho, alinhamento: v } })}
                         className={cn(
-                          'flex flex-col items-center gap-1 px-2 py-2.5 rounded-lg border-2 transition-all text-xs',
+                          "flex flex-col items-center gap-1 px-2 py-2.5 rounded-lg border-2 transition-all text-xs",
                           config.cabecalho.alinhamento === v
-                            ? 'border-primary bg-primary/10 text-primary font-semibold'
-                            : 'border-border hover:border-primary/50 text-muted-foreground'
+                            ? "border-primary bg-primary/10 text-primary font-semibold"
+                            : "border-border hover:border-primary/50 text-muted-foreground",
                         )}
                       >
                         <Icon className="w-4 h-4" />
@@ -478,14 +566,18 @@ const ConfigImpressaoDocumentos: React.FC = () => {
           <div className="space-y-3">
             <div>
               <Label>Título do documento</Label>
-              <Input value={config.receituario.titulo} onChange={(e) => update('receituario.titulo', e.target.value)} onBlur={saveField} />
+              <Input
+                value={config.receituario.titulo}
+                onChange={(e) => update("receituario.titulo", e.target.value)}
+                onBlur={saveField}
+              />
             </div>
             <div className="grid grid-cols-2 gap-2">
               {[
-                { key: 'mostrarProntuario', label: 'Nº do prontuário' },
-                { key: 'mostrarConvenio', label: 'Convênio' },
-                { key: 'mostrarNascimento', label: 'Data de nascimento' },
-                { key: 'mostrarAssinatura', label: 'Campo de assinatura' },
+                { key: "mostrarProntuario", label: "Nº do prontuário" },
+                { key: "mostrarConvenio", label: "Convênio" },
+                { key: "mostrarNascimento", label: "Data de nascimento" },
+                { key: "mostrarAssinatura", label: "Campo de assinatura" },
               ].map((item) => (
                 <div key={item.key} className="flex items-center justify-between p-2 bg-muted/50 rounded-lg">
                   <span className="text-sm">{item.label}</span>
@@ -498,7 +590,12 @@ const ConfigImpressaoDocumentos: React.FC = () => {
             </div>
             <div>
               <Label>Rodapé personalizado</Label>
-              <Input value={config.receituario.rodape} onChange={(e) => update('receituario.rodape', e.target.value)} onBlur={saveField} placeholder="Texto opcional no rodapé" />
+              <Input
+                value={config.receituario.rodape}
+                onChange={(e) => update("receituario.rodape", e.target.value)}
+                onBlur={saveField}
+                placeholder="Texto opcional no rodapé"
+              />
             </div>
           </div>
         </CardContent>
@@ -511,26 +608,36 @@ const ConfigImpressaoDocumentos: React.FC = () => {
           <div className="space-y-3">
             <div>
               <Label>Título do documento</Label>
-              <Input value={config.solicitacaoExames.titulo} onChange={(e) => update('solicitacaoExames.titulo', e.target.value)} onBlur={saveField} />
+              <Input
+                value={config.solicitacaoExames.titulo}
+                onChange={(e) => update("solicitacaoExames.titulo", e.target.value)}
+                onBlur={saveField}
+              />
             </div>
             <div className="grid grid-cols-2 gap-2">
               {[
-                { key: 'mostrarCodigoSus', label: 'Código SUS' },
-                { key: 'mostrarIndicacao', label: 'Indicação clínica' },
-                { key: 'mostrarAssinatura', label: 'Campo de assinatura' },
+                { key: "mostrarCodigoSus", label: "Código SUS" },
+                { key: "mostrarIndicacao", label: "Indicação clínica" },
+                { key: "mostrarAssinatura", label: "Campo de assinatura" },
               ].map((item) => (
                 <div key={item.key} className="flex items-center justify-between p-2 bg-muted/50 rounded-lg">
                   <span className="text-sm">{item.label}</span>
                   <Switch
                     checked={(config.solicitacaoExames as any)[item.key]}
-                    onCheckedChange={(v) => save({ ...config, solicitacaoExames: { ...config.solicitacaoExames, [item.key]: v } })}
+                    onCheckedChange={(v) =>
+                      save({ ...config, solicitacaoExames: { ...config.solicitacaoExames, [item.key]: v } })
+                    }
                   />
                 </div>
               ))}
             </div>
             <div>
               <Label>Rodapé personalizado</Label>
-              <Input value={config.solicitacaoExames.rodape} onChange={(e) => update('solicitacaoExames.rodape', e.target.value)} onBlur={saveField} />
+              <Input
+                value={config.solicitacaoExames.rodape}
+                onChange={(e) => update("solicitacaoExames.rodape", e.target.value)}
+                onBlur={saveField}
+              />
             </div>
           </div>
         </CardContent>
@@ -543,7 +650,9 @@ const ConfigImpressaoDocumentos: React.FC = () => {
             <h3 className="font-semibold font-display text-foreground">Relatório de Evolução</h3>
             <Switch
               checked={config.relatorioEvolucao.habilitado}
-              onCheckedChange={(v) => save({ ...config, relatorioEvolucao: { ...config.relatorioEvolucao, habilitado: v } })}
+              onCheckedChange={(v) =>
+                save({ ...config, relatorioEvolucao: { ...config.relatorioEvolucao, habilitado: v } })
+              }
             />
           </div>
           <div className="space-y-3">
@@ -554,7 +663,7 @@ const ConfigImpressaoDocumentos: React.FC = () => {
                 min={1}
                 max={50}
                 value={config.relatorioEvolucao.historicoSessoes}
-                onChange={(e) => update('relatorioEvolucao.historicoSessoes', parseInt(e.target.value) || 5)}
+                onChange={(e) => update("relatorioEvolucao.historicoSessoes", parseInt(e.target.value) || 5)}
                 onBlur={saveField}
                 className="w-24"
               />
@@ -573,7 +682,9 @@ const ConfigImpressaoDocumentos: React.FC = () => {
             </div>
             <Switch
               checked={config.termoConsentimento.habilitado}
-              onCheckedChange={(v) => save({ ...config, termoConsentimento: { ...config.termoConsentimento, habilitado: v } })}
+              onCheckedChange={(v) =>
+                save({ ...config, termoConsentimento: { ...config.termoConsentimento, habilitado: v } })
+              }
             />
           </div>
           {config.termoConsentimento.habilitado && (
@@ -581,7 +692,7 @@ const ConfigImpressaoDocumentos: React.FC = () => {
               <Label>Texto do Termo</Label>
               <Textarea
                 value={config.termoConsentimento.texto}
-                onChange={(e) => update('termoConsentimento.texto', e.target.value)}
+                onChange={(e) => update("termoConsentimento.texto", e.target.value)}
                 onBlur={saveField}
                 className="min-h-[200px]"
                 placeholder="Eu, paciente acima identificado, declaro que..."
