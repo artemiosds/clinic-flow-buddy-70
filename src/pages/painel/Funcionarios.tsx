@@ -104,6 +104,7 @@ const Funcionarios: React.FC = () => {
     'Assistente Social': 'CRESS', 'Nutricionista': 'CRN', 'Farmacêutico': 'CRF', 'Farmacêutica': 'CRF',
     'Fonoaudiólogo': 'CRFa', 'Fonoaudióloga': 'CRFa', 'Terapeuta Ocupacional': 'CREFITO',
     'Biomédico': 'CRBM', 'Biomédica': 'CRBM', 'Fisio': 'CREFITO',
+    'Agente Comunitário de Saúde': 'OUTROS', 'Fonoaudiologia': 'CRFa', 'Serviço Social': 'CRESS',
   };
 
   const openEdit = (f: FuncionarioDB) => {
@@ -436,9 +437,9 @@ const Funcionarios: React.FC = () => {
                           <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="__none__">Selecione</SelectItem>
-                            {Object.keys(conselhoMap).map(p => (
-                              <SelectItem key={p} value={p}>{p}</SelectItem>
-                            ))}
+                             {Object.keys(conselhoMap).sort().map(p => (
+                               <SelectItem key={p} value={p}>{p}</SelectItem>
+                             ))}
                           </SelectContent>
                         </Select>
                       </div>
