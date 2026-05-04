@@ -297,8 +297,8 @@ const PortalPaciente: React.FC = () => {
             <Link to="/" className="inline-flex items-center text-sm opacity-70 hover:opacity-100 mb-4">
               <ArrowLeft className="w-4 h-4 mr-1" />Voltar
             </Link>
-            <h1 className="text-2xl md:text-3xl font-bold font-display">Portal do Paciente</h1>
-            <p className="opacity-80 mt-1">SMS Oriximiná — Acesse seus agendamentos</p>
+            <h1 className="text-2xl md:text-3xl font-bold font-display">{config?.linha1 || 'Portal do Paciente'}</h1>
+            <p className="opacity-80 mt-1">{config?.linha2 || 'SMS Oriximiná — Acesse seus agendamentos'}</p>
           </div>
         </div>
         <div className="container mx-auto px-4 py-8 max-w-md">
