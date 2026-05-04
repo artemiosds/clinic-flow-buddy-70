@@ -508,6 +508,44 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
+  const searchPacientes = useCallback(async (query: string): Promise<Paciente[]> => {
+    if (!query) return [];
+    try {
+      const q = query.trim();
+      const { data, error } = await supabase
+        .from("pacientes")
+        .select("*")
+        .or(`nome.ilike.%${q}%,cpf.ilike.%${q}%,telefone.ilike.%${q}%,cns.ilike.%${q}%`)
+        .order('nome', { ascending: true })
+        .limit(20);
+      
+      if (error) throw error;
+      
+      return (data || []).map((p: any) => ({
+        id: p.id,
+        nome: p.nome,
+        cpf: p.cpf || "",
+        cns: p.cns || "",
+        nomeMae: p.nome_mae || "",
+        telefone: p.telefone || "",
+        dataNascimento: p.data_nascimento || "",
+        email: p.email || "",
+        endereco: p.endereco || "",
+        observacoes: p.observacoes || "",
+        descricaoClinica: p.descricao_clinica || "",
+        cid: p.cid || "",
+        criadoEm: p.criado_em || "",
+        unidadeId: p.unidade_id || "",
+        isGestante: !!p.is_gestante,
+        isPne: !!p.is_pne,
+        isAutista: !!p.is_autista,
+      }));
+    } catch (err) {
+      console.error("Error searching patients:", err);
+      return [];
+    }
+  }, []);
+
   const loadAgendamentos = useCallback(async () => {
     try {
       // PERF: reduced window from 30 to 14 days back to keep startup fast.
