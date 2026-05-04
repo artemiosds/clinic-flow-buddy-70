@@ -1,7 +1,7 @@
 -- Update the unit name in the units table
 UPDATE public.unidades
 SET nome = 'CAPS II'
-WHERE nome = 'CER II' OR nome = 'Centro Especializado em Reabilitação Nível II';
+WHERE nome = 'CAPS II' OR nome = 'CAPS II';
 
 -- Update any mentions in the system_config table (JSONB)
 UPDATE public.system_config
