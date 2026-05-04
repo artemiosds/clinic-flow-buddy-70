@@ -1206,6 +1206,20 @@ const Pacientes: React.FC = () => {
           >
             <PSecao titulo="Dados Pessoais">
               <PCampo label={L('nome', 'Nome completo')} valor={detalhePaciente.nome} />
+              <PCampo 
+                label={L('sexo', 'Sexo')} 
+                valor={
+                  (() => {
+                    const s = (detalhePaciente as any).custom_data?.sexo || (detalhePaciente as any).sexo;
+                    if (!s) return null;
+                    const val = String(s).toUpperCase();
+                    if (val === 'M' || val === 'MASCULINO') return 'Masculino';
+                    if (val === 'F' || val === 'FEMININO') return 'Feminino';
+                    if (val === 'I' || val === 'IGNORADO') return 'Ignorado';
+                    return s;
+                  })()
+                } 
+              />
               <PCampo label={L('cpf', 'CPF')} valor={formatCPF(detalhePaciente.cpf)} />
               <PCampo label={L('cns', 'Cartão SUS')} valor={formatCNS(detalhePaciente.cns)} />
               <PCampo label={L('nomeMae', 'Nome da mãe')} valor={detalhePaciente.nomeMae} />
