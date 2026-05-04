@@ -49,11 +49,11 @@ interface FluxoConfig {
 
 const DEFAULT: FluxoConfig = {
   tiposAtendimento: [
-    { key: 'avaliacao_inicial', label: 'Avaliação Inicial', habilitado: true, isBuiltin: true },
-    { key: 'retorno', label: 'Retorno', habilitado: true, isBuiltin: true },
-    { key: 'sessao', label: 'Sessão de Tratamento', habilitado: true, isBuiltin: true },
-    { key: 'urgencia', label: 'Urgência', habilitado: true, isBuiltin: true },
-    { key: 'procedimento', label: 'Exame/Procedimento', habilitado: true, isBuiltin: true },
+    { key: 'avaliacao_inicial', label: TIPO_REGISTRO_LABELS.avaliacao_inicial, habilitado: true, isBuiltin: true },
+    { key: 'retorno', label: TIPO_REGISTRO_LABELS.retorno, habilitado: true, isBuiltin: true },
+    { key: 'sessao', label: TIPO_REGISTRO_LABELS.sessao, habilitado: true, isBuiltin: true },
+    { key: 'urgencia', label: TIPO_REGISTRO_LABELS.urgencia, habilitado: true, isBuiltin: true },
+    { key: 'procedimento', label: TIPO_REGISTRO_LABELS.procedimento, habilitado: true, isBuiltin: true },
   ],
   triagem: {
     camposObrigatorios: [
