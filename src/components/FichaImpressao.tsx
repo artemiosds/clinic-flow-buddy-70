@@ -671,9 +671,29 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
             </div>
           </div>
           
-          <p className="text-[10px] text-center text-slate-400 italic">
-            O layout final impresso será formatado em padrão A4 profissional.
-          </p>
+          {/* Sinais Vitais e Clínicos (Preview) */}
+          {!somentePessoais && (
+            <>
+              <div className="border border-slate-200 rounded p-3">
+                <h3 className="text-[10px] font-bold uppercase text-primary mb-2 border-b border-slate-100 pb-1">5. Sinais Vitais</h3>
+                <div className="grid grid-cols-4 gap-2">
+                  <p><span className="text-[9px] font-bold uppercase text-slate-400">PA:</span> {data.sinaisVitais.pressao_arterial || '—'}</p>
+                  <p><span className="text-[9px] font-bold uppercase text-slate-400">FC:</span> {data.sinaisVitais.frequencia_cardiaca || '—'}</p>
+                  <p><span className="text-[9px] font-bold uppercase text-slate-400">FR:</span> {data.sinaisVitais.frequencia_respiratoria || '—'}</p>
+                  <p><span className="text-[9px] font-bold uppercase text-slate-400">Temp:</span> {data.sinaisVitais.temperatura || '—'}</p>
+                  <p><span className="text-[9px] font-bold uppercase text-slate-400">SpO2:</span> {data.sinaisVitais.saturacao || '—'}</p>
+                  <p><span className="text-[9px] font-bold uppercase text-slate-400">Peso:</span> {data.sinaisVitais.peso || '—'}</p>
+                  <p><span className="text-[9px] font-bold uppercase text-slate-400">Altura:</span> {data.sinaisVitais.altura || '—'}</p>
+                  <p><span className="text-[9px] font-bold uppercase text-slate-400">Glicemia:</span> {data.sinaisVitais.glicemia || '—'}</p>
+                </div>
+              </div>
+              <div className="border border-slate-200 rounded p-3 bg-slate-50/50">
+                <p className="text-[9px] text-center text-slate-500 uppercase font-bold">
+                  Campos clínicos (Queixa, Evolução, Conduta, etc.) inclusos na versão impressa completa.
+                </p>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
