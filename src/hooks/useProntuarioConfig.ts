@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { TIPO_REGISTRO_LABELS } from '@/utils/labels';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 export interface BlocoConfig {
@@ -166,11 +167,11 @@ export function getDefaultConfig(tipo: string): ProntuarioConfigData {
 }
 
 export const TIPOS_PRONTUARIO = [
-  { value: 'avaliacao_inicial', label: '🟢 Avaliação Inicial', color: 'bg-green-500' },
-  { value: 'retorno', label: '🔵 Retorno', color: 'bg-blue-500' },
-  { value: 'sessao', label: '🟡 Sessão', color: 'bg-yellow-500' },
-  { value: 'urgencia', label: '🔴 Urgência', color: 'bg-red-500' },
-  { value: 'procedimento', label: '🟣 Procedimento', color: 'bg-purple-500' },
+  { value: 'avaliacao_inicial', label: `🟢 ${TIPO_REGISTRO_LABELS.avaliacao_inicial}`, color: 'bg-green-500' },
+  { value: 'retorno', label: `🔵 ${TIPO_REGISTRO_LABELS.retorno}`, color: 'bg-blue-500' },
+  { value: 'sessao', label: `🟡 ${TIPO_REGISTRO_LABELS.sessao}`, color: 'bg-yellow-500' },
+  { value: 'urgencia', label: `🔴 ${TIPO_REGISTRO_LABELS.urgencia}`, color: 'bg-red-500' },
+  { value: 'procedimento', label: `🟣 ${TIPO_REGISTRO_LABELS.procedimento}`, color: 'bg-purple-500' },
 ] as const;
 
 // ─── Profissão → specialty key mapping ───────────────────────────────────────

@@ -61,6 +61,7 @@ import { useSoapCustomOptions } from "@/hooks/useSoapCustomOptions";
 import { Stamp } from "lucide-react";
 import { getSoapValidationError, normalizeSoapPayload, treatmentService } from "@/services/treatmentService";
 import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
+import { TIPO_REGISTRO_LABELS } from "@/utils/labels";
 
 const PTS_SPECIALTIES = [
   'Fisioterapia', 'Fonoaudiologia', 'Psicologia', 'Terapia Ocupacional',
@@ -111,11 +112,11 @@ interface ProcedimentoDB {
 }
 
 const TIPOS_REGISTRO = [
-  { value: 'avaliacao_inicial', label: '🟢 Avaliação Inicial' },
-  { value: 'retorno', label: '🔵 Retorno' },
-  { value: 'sessao', label: '🟡 Sessão' },
-  { value: 'urgencia', label: '🔴 Urgência' },
-  { value: 'procedimento', label: '🟣 Procedimento' },
+  { value: 'avaliacao_inicial', label: `🟢 ${TIPO_REGISTRO_LABELS.avaliacao_inicial}` },
+  { value: 'retorno', label: `🔵 ${TIPO_REGISTRO_LABELS.retorno}` },
+  { value: 'sessao', label: `🟡 ${TIPO_REGISTRO_LABELS.sessao}` },
+  { value: 'urgencia', label: `🔴 ${TIPO_REGISTRO_LABELS.urgencia}` },
+  { value: 'procedimento', label: `🟣 ${TIPO_REGISTRO_LABELS.procedimento}` },
   { value: 'consulta', label: 'Consulta (legado)' },
   { value: 'reavaliacao', label: 'Reavaliação (legado)' },
   { value: 'avaliacao_enfermagem', label: 'Avaliação de Enfermagem (legado)' },
@@ -2082,11 +2083,11 @@ const ProntuarioPage: React.FC = () => {
                 procedimento: 'bg-purple-500/5 border-purple-500/20',
               };
               const TIPO_EMOJI: Record<string, string> = {
-                avaliacao_inicial: '🟢 Avaliação Inicial',
-                retorno: '🔵 Retorno',
-                sessao: '🟡 Sessão',
-                urgencia: '🔴 Urgência',
-                procedimento: '🟣 Procedimento',
+                avaliacao_inicial: `🟢 ${TIPO_REGISTRO_LABELS.avaliacao_inicial}`,
+                retorno: `🔵 ${TIPO_REGISTRO_LABELS.retorno}`,
+                sessao: `🟡 ${TIPO_REGISTRO_LABELS.sessao}`,
+                urgencia: `🔴 ${TIPO_REGISTRO_LABELS.urgencia}`,
+                procedimento: `🟣 ${TIPO_REGISTRO_LABELS.procedimento}`,
               };
               const colorClass = TIPO_COLORS[form.tipo_registro] || 'bg-muted/30 border-border';
               const tipoTitle = TIPO_EMOJI[form.tipo_registro] || form.tipo_registro;

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { TIPO_REGISTRO_LABELS } from "@/utils/labels";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -36,10 +37,10 @@ const STATUS_OPTIONS = [
 
 const TIPOS_ATENDIMENTO = [
   { value: "rotina", label: "Rotina" },
-  { value: "retorno", label: "Retorno" },
-  { value: "avaliacao_inicial", label: "Avaliação Inicial" },
+  { value: "retorno", label: TIPO_REGISTRO_LABELS.retorno },
+  { value: "avaliacao_inicial", label: TIPO_REGISTRO_LABELS.avaliacao_inicial },
   { value: "procedimentos", label: "Procedimentos" },
-  { value: "urgencia", label: "Urgência" },
+  { value: "urgencia", label: TIPO_REGISTRO_LABELS.urgencia },
   { value: "internacao", label: "Internação" },
   { value: "pos_operatorio", label: "Pós-operatório" },
 ];

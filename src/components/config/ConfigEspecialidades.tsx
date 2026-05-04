@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
 import { Plus, Pencil, Trash2, Loader2, ChevronUp, ChevronDown, Eye, Copy, GripVertical, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
+import { TIPO_REGISTRO_LABELS } from '@/utils/labels';
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors,
   type DragEndEvent,
@@ -30,11 +31,11 @@ import {
 } from '@/contexts/EspecialidadesContext';
 
 const TIPOS_PRONTUARIO: { key: TipoProntuario; label: string; short: string }[] = [
-  { key: 'avaliacao', label: 'Avaliação Inicial', short: 'Avaliação' },
-  { key: 'retorno', label: 'Retorno', short: 'Retorno' },
-  { key: 'sessao', label: 'Sessão', short: 'Sessão' },
-  { key: 'urgencia', label: 'Urgência', short: 'Urgência' },
-  { key: 'procedimento', label: 'Procedimento', short: 'Procedimento' },
+  { key: 'avaliacao', label: TIPO_REGISTRO_LABELS.avaliacao_inicial, short: '1ª Consulta' },
+  { key: 'retorno', label: TIPO_REGISTRO_LABELS.retorno, short: 'Retorno' },
+  { key: 'sessao', label: TIPO_REGISTRO_LABELS.sessao, short: 'Sessão' },
+  { key: 'urgencia', label: TIPO_REGISTRO_LABELS.urgencia, short: 'Urgência' },
+  { key: 'procedimento', label: TIPO_REGISTRO_LABELS.procedimento, short: 'Procedimento' },
 ];
 
 const PROFISSOES = ['fisioterapia', 'psicologia', 'fonoaudiologia', 'nutricao', 'terapia_ocupacional', 'medicina', 'odontologia', 'enfermagem', 'servico_social', 'assistente_social', 'cirurgia_geral', 'cirurgiao', 'infectologia', 'infectologista'];
@@ -563,7 +564,7 @@ const EditCampoDialog: React.FC<EditCampoDialogProps> = ({ campo, outrosCampos, 
               ))}
             </div>
             <p className="text-[10px] text-muted-foreground mt-1">
-              Por padrão: Avaliação Inicial e Retorno.
+              Por padrão: 1ª Consulta e Retorno.
             </p>
           </div>
 

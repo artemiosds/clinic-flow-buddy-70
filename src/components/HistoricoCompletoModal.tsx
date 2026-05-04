@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { downloadFullHistoryPdf } from "@/lib/prontuarioPdf";
 import { getSpecialtyColors } from "@/lib/specialtyColors";
+import { TIPO_REGISTRO_LABELS } from "@/utils/labels";
 
 // ── Types ──────────────────────────────────────────────────
 type EventType = "avaliacao_inicial" | "retorno" | "sessao" | "urgencia" | "procedimento" | "alta" | "falta" | "consulta";
@@ -57,14 +58,14 @@ interface Props {
 }
 
 const TYPE_CONFIG: Record<string, { icon: React.ReactNode; color: string; label: string; border: string }> = {
-  avaliacao_inicial: { icon: <Stethoscope className="w-3.5 h-3.5" />, color: "bg-green-500 text-white", label: "Avaliação Inicial", border: "border-l-green-500" },
-  retorno: { icon: <Calendar className="w-3.5 h-3.5" />, color: "bg-blue-500 text-white", label: "Retorno", border: "border-l-blue-500" },
-  sessao: { icon: <Activity className="w-3.5 h-3.5" />, color: "bg-yellow-500 text-white", label: "Sessão", border: "border-l-yellow-500" },
-  urgencia: { icon: <AlertTriangle className="w-3.5 h-3.5" />, color: "bg-red-500 text-white", label: "Urgência", border: "border-l-red-500" },
-  procedimento: { icon: <ListOrdered className="w-3.5 h-3.5" />, color: "bg-purple-500 text-white", label: "Procedimento", border: "border-l-purple-500" },
+  avaliacao_inicial: { icon: <Stethoscope className="w-3.5 h-3.5" />, color: "bg-green-500 text-white", label: TIPO_REGISTRO_LABELS.avaliacao_inicial, border: "border-l-green-500" },
+  retorno: { icon: <Calendar className="w-3.5 h-3.5" />, color: "bg-blue-500 text-white", label: TIPO_REGISTRO_LABELS.retorno, border: "border-l-blue-500" },
+  sessao: { icon: <Activity className="w-3.5 h-3.5" />, color: "bg-yellow-500 text-white", label: TIPO_REGISTRO_LABELS.sessao, border: "border-l-yellow-500" },
+  urgencia: { icon: <AlertTriangle className="w-3.5 h-3.5" />, color: "bg-red-500 text-white", label: TIPO_REGISTRO_LABELS.urgencia, border: "border-l-red-500" },
+  procedimento: { icon: <ListOrdered className="w-3.5 h-3.5" />, color: "bg-purple-500 text-white", label: TIPO_REGISTRO_LABELS.procedimento, border: "border-l-purple-500" },
   consulta: { icon: <Stethoscope className="w-3.5 h-3.5" />, color: "bg-blue-400 text-white", label: "Consulta", border: "border-l-blue-400" },
-  alta: { icon: <UserCheck className="w-3.5 h-3.5" />, color: "bg-gray-400 text-white", label: "Alta", border: "border-l-gray-400" },
-  falta: { icon: <X className="w-3.5 h-3.5" />, color: "bg-red-400 text-white", label: "Falta", border: "border-l-red-400" },
+  alta: { icon: <UserCheck className="w-3.5 h-3.5" />, color: "bg-gray-400 text-white", label: TIPO_REGISTRO_LABELS.alta, border: "border-l-gray-400" },
+  falta: { icon: <X className="w-3.5 h-3.5" />, color: "bg-red-400 text-white", label: TIPO_REGISTRO_LABELS.falta, border: "border-l-red-400" },
 };
 
 function formatDateBR(iso: string) {

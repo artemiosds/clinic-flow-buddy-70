@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, Trash2, Loader2, Pencil, Clock } from 'lucide-react';
 import ConfiguracaoTriagem from '@/components/ConfiguracaoTriagem';
 import { toast } from 'sonner';
+import { TIPO_REGISTRO_LABELS } from '@/utils/labels';
 
 const CONFIG_KEY = 'config_fluxo_atendimento';
 
@@ -48,11 +49,11 @@ interface FluxoConfig {
 
 const DEFAULT: FluxoConfig = {
   tiposAtendimento: [
-    { key: 'avaliacao_inicial', label: 'Avaliação Inicial', habilitado: true, isBuiltin: true },
-    { key: 'retorno', label: 'Retorno', habilitado: true, isBuiltin: true },
-    { key: 'sessao', label: 'Sessão de Tratamento', habilitado: true, isBuiltin: true },
-    { key: 'urgencia', label: 'Urgência', habilitado: true, isBuiltin: true },
-    { key: 'procedimento', label: 'Exame/Procedimento', habilitado: true, isBuiltin: true },
+    { key: 'avaliacao_inicial', label: TIPO_REGISTRO_LABELS.avaliacao_inicial, habilitado: true, isBuiltin: true },
+    { key: 'retorno', label: TIPO_REGISTRO_LABELS.retorno, habilitado: true, isBuiltin: true },
+    { key: 'sessao', label: TIPO_REGISTRO_LABELS.sessao, habilitado: true, isBuiltin: true },
+    { key: 'urgencia', label: TIPO_REGISTRO_LABELS.urgencia, habilitado: true, isBuiltin: true },
+    { key: 'procedimento', label: TIPO_REGISTRO_LABELS.procedimento, habilitado: true, isBuiltin: true },
   ],
   triagem: {
     camposObrigatorios: [
