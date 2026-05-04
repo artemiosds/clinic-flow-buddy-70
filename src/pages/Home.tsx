@@ -21,7 +21,8 @@ import {
   UserCheck,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import logoSms from "@/assets/logo-sms.jpeg";
+import { loadDocumentConfig, type DocumentConfig } from "@/lib/printLayout";
+import logoSmsFallback from "@/assets/logo-sms.jpeg";
 
 const services = [
   { icon: Stethoscope, title: "Clínica Geral", desc: "Consultas médicas gerais" },
