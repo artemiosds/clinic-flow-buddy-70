@@ -75,8 +75,8 @@ interface NotifLog {
 
 const ConfigWhatsApp: React.FC = () => {
   const { user } = useAuth();
-  const { unidades, configuracoes, updateConfiguracoes } = useData();
-  const { whatsapp } = configuracoes;
+  const { unidades, updateConfiguracoes, configuracoes: dataConfiguracoes } = useData();
+  const { whatsapp } = dataConfiguracoes;
 
   const isGlobalAdmin = user?.usuario === 'admin.sms';
   const userUnitId = user?.unidadeId || '';
