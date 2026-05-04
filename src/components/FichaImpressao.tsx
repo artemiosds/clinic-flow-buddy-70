@@ -703,34 +703,34 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
             </div>
           </div>
           
-          {/* Seção Clínica (Preview) */}
+          {/* Seção Clínica (Preview) - Sempre limpa */}
           {!somentePessoais && (
             <>
               <div className="border border-slate-200 rounded p-3">
                 <h3 className="text-[10px] font-bold uppercase text-primary mb-2 border-b border-slate-100 pb-1">5. Dados do Atendimento</h3>
                 <div className="grid grid-cols-2 gap-2">
-                  <p><span className="text-[9px] font-bold uppercase text-slate-400">Unidade:</span> {data.dadosClinicos.unidade_atendimento || '—'}</p>
-                  <p><span className="text-[9px] font-bold uppercase text-slate-400">Tipo:</span> {data.dadosClinicos.tipo_atendimento || '—'}</p>
+                  <p><span className="text-[9px] font-bold uppercase text-slate-400">Unidade:</span> ________________</p>
+                  <p><span className="text-[9px] font-bold uppercase text-slate-400">Tipo:</span> ________________</p>
                 </div>
               </div>
 
               <div className="border border-slate-200 rounded p-3">
                 <h3 className="text-[10px] font-bold uppercase text-primary mb-2 border-b border-slate-100 pb-1">6. Triagem / Sinais Vitais</h3>
                 <div className="grid grid-cols-4 gap-2">
-                  <p><span className="text-[9px] font-bold uppercase text-slate-400">PA:</span> {data.sinaisVitais.pressao_arterial || '—'}</p>
-                  <p><span className="text-[9px] font-bold uppercase text-slate-400">FC:</span> {data.sinaisVitais.frequencia_cardiaca || '—'}</p>
-                  <p><span className="text-[9px] font-bold uppercase text-slate-400">FR:</span> {data.sinaisVitais.frequencia_respiratoria || '—'}</p>
-                  <p><span className="text-[9px] font-bold uppercase text-slate-400">Temp:</span> {data.sinaisVitais.temperatura || '—'}</p>
-                  <p><span className="text-[9px] font-bold uppercase text-slate-400">SpO2:</span> {data.sinaisVitais.saturacao || '—'}</p>
-                  <p><span className="text-[9px] font-bold uppercase text-slate-400">Peso:</span> {data.sinaisVitais.peso || '—'}</p>
-                  <p><span className="text-[9px] font-bold uppercase text-slate-400">Altura:</span> {data.sinaisVitais.altura || '—'}</p>
-                  <p><span className="text-[9px] font-bold uppercase text-slate-400">Glicemia:</span> {data.sinaisVitais.glicemia || '—'}</p>
+                  <p><span className="text-[9px] font-bold uppercase text-slate-400">PA:</span> ________</p>
+                  <p><span className="text-[9px] font-bold uppercase text-slate-400">FC:</span> ________</p>
+                  <p><span className="text-[9px] font-bold uppercase text-slate-400">FR:</span> ________</p>
+                  <p><span className="text-[9px] font-bold uppercase text-slate-400">Temp:</span> ________</p>
+                  <p><span className="text-[9px] font-bold uppercase text-slate-400">SpO2:</span> ________</p>
+                  <p><span className="text-[9px] font-bold uppercase text-slate-400">Peso:</span> ________</p>
+                  <p><span className="text-[9px] font-bold uppercase text-slate-400">Altura:</span> ________</p>
+                  <p><span className="text-[9px] font-bold uppercase text-slate-400">Glicemia:</span> ________</p>
                 </div>
               </div>
 
               <div className="border border-slate-200 rounded p-3 bg-slate-50/50">
                 <p className="text-[9px] text-center text-slate-500 uppercase font-bold">
-                  Campos clínicos de 7 a 13 (Queixa, Evolução, Conduta, etc.) disponíveis na versão impressa.
+                  Ficha pronta para preenchimento manual. Campos clínicos e evolução estão em branco na versão impressa.
                 </p>
               </div>
             </>
