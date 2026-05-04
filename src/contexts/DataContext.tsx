@@ -481,12 +481,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       if (data) {
-        allData = allData.concat(data);
-        if (data.length < PAGE) break;
-        from += PAGE;
-      }
-      setPacientes(
-        allData.map((p: any) => ({
+        setPacientes(
+          data.map((p: any) => ({
           id: p.id,
           nome: p.nome,
           cpf: p.cpf || "",
