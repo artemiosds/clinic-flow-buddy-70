@@ -377,6 +377,52 @@ const Agenda: React.FC = () => {
       .sort((a, b) => a.criadoEm.localeCompare(b.criadoEm));
   }, [agendamentos, user]);
 
+  // REQUISITO 5 e 8: Agendamentos passados que ainda estão pendentes de conclusão
+  const agendamentosPendentesRevisao = React.useMemo(() => {
+    const today = todayLocalStr();
+    const nowTime = new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+    const PENDENTE_STATUSES = new Set([
+      "confirmado",
+      "aguardando",
+      "confirmado_chegada",
+      "apto_atendimento",
+      "chamado",
+      "em_atendimento",
+      "aguardando_triagem",
+      "aguardando_atendimento",
+      "aguardando_enfermagem",
+      "triagem_concluida",
+      "apto_agendamento",
+      "pendente"
+    ]);
+
+    return agendamentos.filter((a) => {
+      // Recorte temporal: mês atual e passados (até hoje que já passou o horário)
+      const currentMonth = new Date().getMonth();
+      const currentYear = new Date().getFullYear();
+      const agDate = new Date(a.data + "T12:00:00");
+      const isThisMonthOrPast =
+        agDate.getFullYear() < currentYear || (agDate.getFullYear() === currentYear && agDate.getMonth() <= currentMonth);
+
+      if (!isThisMonthOrPast) return false;
+
+      // Somente passado ou hoje com horário já transcorrido
+      if (a.data > today) return false;
+      if (a.data === today && a.hora >= nowTime) return false;
+
+      // Se for profissional, vê apenas as suas pendências
+      if (isProfissional && user?.id && a.profissionalId !== user.id) return false;
+      
+      // Master vê todas da unidade (respeitando a isolamento de unidade)
+      if (user?.unidadeId && user?.usuario !== 'admin.sms' && a.unidadeId !== user.unidadeId) return false;
+
+      return PENDENTE_STATUSES.has(a.status);
+    });
+  }, [agendamentos, user, isProfissional, nowTick]); // nowTick for time updates
+
+  const [revisaoDialogOpen, setRevisaoDialogOpen] = useState(false);
+
+
   const blockedForDate = React.useMemo(() => {
     return bloqueios.filter((b) => selectedDate >= b.dataInicio && selectedDate <= b.dataFim && b.diaInteiro);
   }, [selectedDate, bloqueios]);
