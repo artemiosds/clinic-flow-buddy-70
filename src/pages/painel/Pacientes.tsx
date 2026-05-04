@@ -175,6 +175,7 @@ const Pacientes: React.FC = () => {
   // Reset pagination when filter/sort changes
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
+    setPage(0);
   }, [filterFila, sortBy]);
 
   // Fila dialog
