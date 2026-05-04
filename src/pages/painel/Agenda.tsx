@@ -2395,7 +2395,7 @@ const Agenda: React.FC = () => {
                           {statusLabels[ag.status] || ag.status}
                         </span>
                         {isPendenteRevisao && (
-                          <span className="text-xs px-2 py-0.5 rounded-full font-bold bg-warning/20 text-warning-foreground flex items-center gap-1 animate-pulse-gentle">
+                          <span className="text-xs px-2 py-0.5 rounded-full font-bold bg-warning/20 text-warning-foreground flex items-center gap-1 animate-pulse">
                             <Bell className="w-3 h-3" /> Revisão Pendente
                           </span>
                         )}
