@@ -519,13 +519,13 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
     <div class="bloco-titulo">5. Dados do Atendimento</div>
     <div class="bloco-body">
       <div class="grid-3">
-        <div class="campo"><b>Unidade de Atendimento</b><span>${val(dc.unidade_atendimento, 'CER II')}</span></div>
-        <div class="campo"><b>Tipo de Atendimento</b><span>${val(dc.tipo_atendimento, '—')}</span></div>
-        <div class="campo"><b>Especialidade</b><span>${val(dc.especialidade, '—')}</span></div>
+        <div class="campo"><b>Unidade de Atendimento</b><span>________________</span></div>
+        <div class="campo"><b>Tipo de Atendimento</b><span>________________</span></div>
+        <div class="campo"><b>Especialidade</b><span>________________</span></div>
       </div>
       <div class="grid-2" style="margin-top:4px">
-        <div class="campo"><b>Unidade de Origem</b><span>${val(dc.unidade_origem, '—')}</span></div>
-        <div class="campo"><b>CID / Diagnóstico</b><span>${val(dc.cid, '—')}</span></div>
+        <div class="campo"><b>Unidade de Origem</b><span>________________</span></div>
+        <div class="campo"><b>CID / Diagnóstico</b><span>________________</span></div>
       </div>
     </div>
   </div>
@@ -536,16 +536,16 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
     <div class="bloco-body">
       <table class="vitais-table">
         <tr>
-          <td><b>PA (Pressão)</b><span>${valVital(sv.pressao_arterial)}</span></td>
-          <td><b>FC (BPM)</b><span>${valVital(sv.frequencia_cardiaca)}</span></td>
-          <td><b>FR (resp)</b><span>${valVital(sv.frequencia_respiratoria)}</span></td>
-          <td><b>Temp (°C)</b><span>${valVital(sv.temperatura)}</span></td>
+          <td><b>PA (Pressão)</b><span>________</span></td>
+          <td><b>FC (BPM)</b><span>________</span></td>
+          <td><b>FR (resp)</b><span>________</span></td>
+          <td><b>Temp (°C)</b><span>________</span></td>
         </tr>
         <tr>
-          <td><b>SpO2 (%)</b><span>${valVital(sv.saturacao)}</span></td>
-          <td><b>Peso (kg)</b><span>${valVital(sv.peso)}</span></td>
-          <td><b>Altura (m)</b><span>${valVital(sv.altura)}</span></td>
-          <td><b>Glicemia</b><span>${valVital(sv.glicemia)}</span></td>
+          <td><b>SpO2 (%)</b><span>________</span></td>
+          <td><b>Peso (kg)</b><span>________</span></td>
+          <td><b>Altura (m)</b><span>________</span></td>
+          <td><b>Glicemia</b><span>________</span></td>
         </tr>
       </table>
     </div>
@@ -557,8 +557,7 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
   <div class="bloco">
     <div class="bloco-titulo">8. Evolução Clínica</div>
     <div class="bloco-body">
-      ${evolucaoHTML}
-      ${Array.from({ length: 6 }, () => '<div class="evo-line"></div>').join('')}
+      ${Array.from({ length: 12 }, () => '<div class="evo-line"></div>').join('')}
     </div>
   </div>
 
