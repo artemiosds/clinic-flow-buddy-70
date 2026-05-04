@@ -349,9 +349,22 @@ const PRINT_CSS = `
 
 export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'completa', onPrintComplete }) => {
   const somentePessoais = mode === 'dados_pessoais';
+  const [config, setConfig] = useState<DocumentConfig | null>(null);
+
+  useEffect(() => {
+    const fetchConfig = async () => {
+      const cfg = await loadDocumentConfig();
+      setConfig(cfg);
+    };
+    fetchConfig();
+  }, []);
+
   const buildHTML = useCallback(() => {
-    const logoLeft = resolveLogoUrl(logoSmsFallback);
-    const logoRight = resolveLogoUrl(logoCerFallback);
+    const logoLeft = config?.logoEsquerda || resolveLogoUrl(logoSmsFallback);
+    const logoRight = config?.logoDireita || resolveLogoUrl(logoCerFallback);
+    const linha1 = config?.linha1 || 'Secretaria Municipal de Saúde de Oriximiná';
+    const linha2 = config?.linha2 || 'Centro Especializado em Reabilitação Nível II — CER II';
+    
     const now = new Date();
     const dataAtual = formatarData(now.toISOString());
     const horaAtual = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
