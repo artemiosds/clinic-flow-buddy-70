@@ -42,7 +42,7 @@ interface ConstrutorProntuarioModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   tipoKey: string;       // ex: 'primeira_consulta'
-  tipoLabel: string;     // ex: 'Avaliação Inicial'
+  tipoLabel: string;     // ex: '1ª Consulta'
 }
 
 const configKeyFor = (tipoKey: string) => `estrutura_prontuario_${tipoKey}`;
