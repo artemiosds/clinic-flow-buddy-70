@@ -939,7 +939,7 @@ const Pacientes: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-        {filtered.slice(0, visibleCount).map((p) => {
+        {(filterFila === "all" ? serverPacientes : filtered.slice(0, visibleCount)).map((p) => {
           const naFila = pacientesNaFila.has(p.id);
           const filaEntry = filaEntryMap.get(p.id);
 
