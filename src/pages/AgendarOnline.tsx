@@ -66,6 +66,11 @@ const AgendarOnline: React.FC = () => {
   const [bloqueios, setBloqueios] = useState<PublicBloqueio[]>([]);
   const [agendamentos, setAgendamentos] = useState<PublicAg[]>([]);
   const [onlineConfig, setOnlineConfig] = useState<OnlineConfig>({ habilitado: true, antecedencia_minima_dias: 1, antecedencia_maxima_dias: 30, limite_por_dia_profissional: 99, mensagem_confirmacao: '', exigir_confirmacao_sms: false });
+  const [docConfig, setDocConfig] = useState<DocumentConfig | null>(null);
+
+  useEffect(() => {
+    loadDocumentConfig().then(setDocConfig);
+  }, []);
 
   const [form, setForm] = useState({
     unidadeId: '', profissionalId: '', tipo: 'Consulta',
