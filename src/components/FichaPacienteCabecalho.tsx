@@ -95,6 +95,7 @@ const FichaPacienteCabecalho: React.FC<FichaPacienteCabecalhoProps> = ({
   const [editData, setEditData] = useState({
     nome: "",
     data_nascimento: "",
+    sexo: "",
     cpf: "",
     cns: "",
     cid: "",
@@ -148,6 +149,9 @@ const FichaPacienteCabecalho: React.FC<FichaPacienteCabecalhoProps> = ({
     setEditData({
       nome: paciente.nome || "",
       data_nascimento: paciente.data_nascimento || "",
+      sexo: (cd.sexo === "masculino" || cd.sexo === "M") ? "M" : 
+            (cd.sexo === "feminino" || cd.sexo === "F") ? "F" : 
+            (cd.sexo === "ignorado" || cd.sexo === "I") ? "I" : "",
       cpf: paciente.cpf || "",
       cns: paciente.cns || "",
       cid: paciente.cid || "",
@@ -204,6 +208,7 @@ const FichaPacienteCabecalho: React.FC<FichaPacienteCabecalhoProps> = ({
         ...prevCustom,
         contato_emergencia_nome: editData.contato_emergencia_nome.trim(),
         contato_emergencia_telefone: editData.contato_emergencia_telefone.trim(),
+        sexo: editData.sexo,
       };
 
       const { error } = await supabase.from("pacientes").update({
@@ -319,7 +324,22 @@ const FichaPacienteCabecalho: React.FC<FichaPacienteCabecalhoProps> = ({
             </div>
 
             {/* Compact info grid (always visible) */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <InfoField 
+                icon={<User className="w-3.5 h-3.5" />} 
+                label="Sexo" 
+                value={
+                  (() => {
+                    const s = customData.sexo || paciente.sexo;
+                    if (!s) return "—";
+                    const val = String(s).toUpperCase();
+                    if (val === 'M' || val === 'MASCULINO') return 'Masculino';
+                    if (val === 'F' || val === 'FEMININO') return 'Feminino';
+                    if (val === 'I' || val === 'IGNORADO') return 'Ignorado';
+                    return s;
+                  })()
+                } 
+              />
               <InfoField icon={<CreditCard className="w-3.5 h-3.5" />} label="Cartão SUS (CNS)" value={paciente.cns || "—"} mono />
               <InfoField icon={<CreditCard className="w-3.5 h-3.5" />} label="CPF" value={paciente.cpf || "—"} mono />
               <InfoField icon={<Activity className="w-3.5 h-3.5" />} label="CID-10" value={cidDisplay} />
@@ -398,6 +418,19 @@ const FichaPacienteCabecalho: React.FC<FichaPacienteCabecalhoProps> = ({
                   <Input type="date" value={editData.data_nascimento} onChange={e => setEditData(d => ({ ...d, data_nascimento: e.target.value }))} className="mt-1" />
                 </div>
                 <div>
+                  <Label className="text-xs font-medium text-muted-foreground">Sexo</Label>
+                  <Select value={editData.sexo} onValueChange={v => setEditData(d => ({ ...d, sexo: v }))}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="M">Masculino</SelectItem>
+                      <SelectItem value="F">Feminino</SelectItem>
+                      <SelectItem value="I">Ignorado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="hidden sm:block">
                   <Label className="text-xs font-medium text-muted-foreground flex items-center gap-1">Idade <Lock className="w-3 h-3" /></Label>
                   <Input value={calcularIdade(editData.data_nascimento)} disabled className="opacity-50 mt-1" />
                 </div>
