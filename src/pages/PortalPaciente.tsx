@@ -66,6 +66,11 @@ const PortalPaciente: React.FC = () => {
   const [agendamentos, setAgendamentos] = useState<AgendamentoData[]>([]);
   const [fila, setFila] = useState<FilaData[]>([]);
   const [unidades, setUnidades] = useState<any[]>([]);
+  const [config, setConfig] = useState<DocumentConfig | null>(null);
+
+  useEffect(() => {
+    loadDocumentConfig().then(setConfig);
+  }, []);
 
   // Recovery state
   const [recoveryStep, setRecoveryStep] = useState<RecoveryStep>('none');
