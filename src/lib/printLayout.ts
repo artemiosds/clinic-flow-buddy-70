@@ -277,7 +277,7 @@ export const institutionalCSS = buildInstitutionalCSS();
 /** Generate the standard document header HTML with dual logos */
 export function docHeader(title: string, config: DocumentConfig, extraRight?: string): string {
   const logoLeft = resolveLogoUrl(config.logoEsquerda, logoSmsFallback);
-  const logoRight = resolveLogoUrl(config.logoDireita, logoCerFallback);
+  const logoRight = resolveLogoUrl(config.logoDireita, logoCapsFallback);
   const now = new Date().toLocaleString('pt-BR');
 
   return `

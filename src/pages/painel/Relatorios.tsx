@@ -1065,7 +1065,7 @@ ${dataRows}
     if (!printWindow) return;
 
     const logoUrl = logoSmsFallback;
-    const logoUrlRight = logoCerFallback;
+    const logoUrlRight = logoCapsFallback;
 
     printWindow.document.write(`<!DOCTYPE html>
 <html lang="pt-BR"><head><meta charset="UTF-8"><title>Mapa de Atendimentos — SMS Oriximiná</title>
@@ -1489,7 +1489,7 @@ ${dataRows}
                     const printWindow = window.open('', '_blank');
                     if (!printWindow) return;
                     const logoUrl = logoSmsFallback;
-                    const logoUrlRight = logoCerFallback;
+                    const logoUrlRight = logoCapsFallback;
                     printWindow.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Relatório de Produtividade</title>
 <style>@page{size:A4 landscape;margin:10mm;}*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Arial,sans-serif;padding:16px;color:#1e293b;font-size:10px;}
 .header{display:flex;align-items:center;gap:14px;padding:12px 16px;margin-bottom:12px;border-bottom:2px solid #0369a1;}
@@ -2344,7 +2344,7 @@ th{background:#f1f5f9;font-weight:600;}
                   const printWindow = window.open('', '_blank');
                   if (!printWindow) return;
                   const logoUrl = logoSmsFallback;
-                  const logoUrlRight = logoCerFallback;
+                  const logoUrlRight = logoCapsFallback;
                   printWindow.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Mapa de Atendimentos</title>
 <style>@page{size:A4 landscape;margin:10mm;}*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Arial,sans-serif;padding:16px;color:#1e293b;font-size:10px;}
 .header{display:flex;align-items:center;gap:14px;padding:12px 16px;margin-bottom:12px;border-bottom:2px solid #0369a1;}

@@ -631,7 +631,7 @@ const Pacientes: React.FC = () => {
         email: filaPaciente.email,
         data_consulta: new Date().toISOString().split("T")[0],
         hora_consulta: new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
-        unidade: unidade?.nome || "",
+        unidade: unidade?.nome || "CAPS II",
         profissional: prof?.nome || "",
         tipo_atendimento: "Fila de Espera",
         status_agendamento: "aguardando",

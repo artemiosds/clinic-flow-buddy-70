@@ -663,7 +663,7 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = "co
               {config?.linha2 || "Centro Especializado em Reabilitação II (CER II)"}
             </p>
           </div>
-          <img src={config?.logoDireita || logoCerFallback} alt="Logo" className="w-12 h-12 object-contain" />
+          <img src={config?.logoDireita || logoCapsFallback} alt="Logo" className="w-12 h-12 object-contain" />
         </div>
 
         <div className="bg-primary/5 rounded px-3 py-1.5 mb-4 text-center">
