@@ -47,6 +47,7 @@ import {
   Bell,
   Search,
   Pencil,
+  Loader2,
 } from "lucide-react";
 import DetalheDrawer, { Secao, Campo, StatusBadge, calcularIdade, formatarData } from "@/components/DetalheDrawer";
 import ContactActionButton from "@/components/ContactActionButton";
