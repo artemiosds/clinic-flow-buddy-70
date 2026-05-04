@@ -1003,8 +1003,11 @@ const Agenda: React.FC = () => {
   };
 
   const executarStatusChange = async (agId: string, newStatus: string) => {
+    if (statusUpdating) return;
     const ag = agendamentos.find((a) => a.id === agId);
     if (!ag) return;
+    setStatusUpdating(true);
+    const toastId = toast.loading("Atualizando status...");
 
     if (newStatus === "concluido") {
       // Block concluding appointments for future dates
