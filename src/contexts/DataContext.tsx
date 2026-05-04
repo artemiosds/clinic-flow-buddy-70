@@ -1917,7 +1917,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await loadBloqueios();
   }, [loadBloqueios]);
 
-  const stableFunctions = useRef({
+  const stableFunctions = useRef<any>({
     addAgendamento,
     searchPacientes,
   });
