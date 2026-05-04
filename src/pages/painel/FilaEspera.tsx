@@ -247,6 +247,7 @@ const FilaEspera: React.FC = () => {
   const [importDup, setImportDup] = useState<(typeof pacientes)[0] | null>(null);
   const [importErrors, setImportErrors] = useState<Record<string, string>>({});
   const [importSaving, setImportSaving] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const [form, setForm] = useState({
     pacienteNome: "",
