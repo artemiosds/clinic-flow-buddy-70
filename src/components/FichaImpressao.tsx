@@ -385,7 +385,25 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
           <div class="evo-text">${val(evo.observacao)}</div>
         </div>
       `).join('')
-      : Array.from({ length: 8 }, () => '<div class="evo-line"></div>').join('');
+      : '';
+
+    const linhasVazias = (titulo: string, numLinhas: number = 3) => `
+      <div class="bloco">
+        <div class="bloco-titulo">${titulo}</div>
+        <div class="bloco-body">
+          ${Array.from({ length: numLinhas }, () => '<div class="evo-line"></div>').join('')}
+        </div>
+      </div>
+    `;
+
+    const blocoCurto = (titulo: string) => `
+      <div class="bloco">
+        <div class="bloco-titulo">${titulo}</div>
+        <div class="bloco-body">
+          <div class="evo-line"></div>
+        </div>
+      </div>
+    `;
 
     return `<!DOCTYPE html>
 <html lang="pt-BR">
