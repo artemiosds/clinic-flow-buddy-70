@@ -9,7 +9,8 @@ import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { User, MapPin, Phone, FileHeart, Upload, Loader2, Building2, Stethoscope, Loader, CheckCircle2 } from "lucide-react";
+import { User, MapPin, Phone, FileHeart, Upload, Loader2, Building2, Stethoscope, Loader, CheckCircle2, FileText, Paperclip } from "lucide-react";
+import PacienteDocumentos from "./PacienteDocumentos";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { applyPhoneMask, formatPhoneForDisplay } from "@/lib/phoneUtils";
@@ -151,10 +152,11 @@ interface Props {
   onSave: () => void;
   saving: boolean;
   isEdit: boolean;
+  pacienteId?: string;
   errors: Record<string, string>;
 }
 
-const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving, isEdit, errors }) => {
+const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving, isEdit, pacienteId, errors }) => {
   const set = (field: keyof PacienteFormData, value: any) => onChange({ ...form, [field]: value });
   const setCustom = (key: string, value: any) =>
     onChange({ ...form, customData: { ...(form.customData || {}), [key]: value } });
@@ -238,24 +240,6 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
     }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { toast.error("Arquivo máximo: 5MB"); return; }
-    setUploading(true);
-    try {
-      const ext = file.name.split(".").pop();
-      const path = `documentos/${Date.now()}.${ext}`;
-      const { error } = await supabase.storage.from("sms").upload(path, file);
-      if (error) throw error;
-      set("documentoUrl", path);
-      toast.success("Documento enviado!");
-    } catch {
-      toast.error("Erro ao enviar documento.");
-    } finally {
-      setUploading(false);
-    }
-  };
 
   const toggleEquipamento = (eq: string) => {
     const current = form.equipamentos;
@@ -808,20 +792,20 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                     onChange={(e) => set("dataEncaminhamento", e.target.value)}
                   />
                 </div>
-                <div>
-                  <Label>Documento</Label>
-                  <label className="flex items-center gap-2 cursor-pointer px-3 py-2 rounded-md border border-input bg-background text-sm hover:bg-accent transition-colors">
-                    <Upload className="w-4 h-4" />
-                    {uploading ? "Enviando..." : form.documentoUrl ? "Arquivo enviado ✓" : "Enviar arquivo"}
-                    <input
-                      type="file"
-                      className="hidden"
-                      accept=".pdf,.jpg,.jpeg,.png"
-                      onChange={handleFileUpload}
-                      disabled={uploading}
-                    />
-                  </label>
-                </div>
+                {isEdit && pacienteId ? (
+                  <div className="md:col-span-2 mt-4">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-primary mb-3">
+                      <FileText className="w-4 h-4" /> Arquivos e Documentos do Paciente
+                    </div>
+                    <PacienteDocumentos pacienteId={pacienteId} unidadeId={user?.unidadeId} />
+                  </div>
+                ) : (
+                  <div className="md:col-span-2 mt-4 p-4 rounded-lg border border-dashed border-muted-foreground/30 bg-muted/10 text-center">
+                    <p className="text-sm text-muted-foreground">
+                      Salve o cadastro do paciente primeiro para habilitar o envio de múltiplos documentos.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 

@@ -4,7 +4,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, FileText, ChevronDown, ChevronUp, Activity, AlertTriangle, RefreshCw, Eye, FileSignature, History, MoreVertical, Printer, Download, Link2, FileDown } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Loader2, FileText, ChevronDown, ChevronUp, Activity, AlertTriangle, RefreshCw, Eye, FileSignature, History, MoreVertical, Printer, Download, Link2, FileDown, Paperclip } from "lucide-react";
+import PacienteDocumentos from "./PacienteDocumentos";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -245,6 +247,24 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
           <Button size="sm" variant="outline" onClick={() => setHistoricoOpen(true)} className="h-8">
             <History className="w-3.5 h-3.5 mr-1" /> Histórico completo
           </Button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button size="sm" variant="outline" className="h-8">
+                <Paperclip className="w-3.5 h-3.5 mr-1" /> Documentos
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Paperclip className="w-5 h-5 text-primary" />
+                  Documentos de {pacienteNome}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="py-2">
+                <PacienteDocumentos pacienteId={pacienteId} />
+              </div>
+            </DialogContent>
+          </Dialog>
           <Button size="sm" variant="outline" onClick={() => setDocModalOpen(true)} className="h-8">
             <FileSignature className="w-3.5 h-3.5 mr-1" /> Gerar documento
           </Button>

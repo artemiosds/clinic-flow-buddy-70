@@ -1377,6 +1377,74 @@ export type Database = {
         }
         Relationships: []
       }
+      paciente_documentos: {
+        Row: {
+          ativo: boolean | null
+          created_at: string | null
+          deleted_at: string | null
+          deleted_by: string | null
+          id: string
+          mime_type: string | null
+          nome_arquivo: string
+          nome_original: string
+          paciente_id: string
+          storage_bucket: string
+          storage_path: string
+          tamanho_bytes: number | null
+          tipo_documento: string | null
+          unidade_id: string | null
+          updated_at: string | null
+          uploaded_by: string | null
+          uploaded_by_nome: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          created_at?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          id?: string
+          mime_type?: string | null
+          nome_arquivo: string
+          nome_original: string
+          paciente_id: string
+          storage_bucket?: string
+          storage_path: string
+          tamanho_bytes?: number | null
+          tipo_documento?: string | null
+          unidade_id?: string | null
+          updated_at?: string | null
+          uploaded_by?: string | null
+          uploaded_by_nome?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          created_at?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          id?: string
+          mime_type?: string | null
+          nome_arquivo?: string
+          nome_original?: string
+          paciente_id?: string
+          storage_bucket?: string
+          storage_path?: string
+          tamanho_bytes?: number | null
+          tipo_documento?: string | null
+          unidade_id?: string | null
+          updated_at?: string | null
+          uploaded_by?: string | null
+          uploaded_by_nome?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "paciente_documentos_paciente_id_fkey"
+            columns: ["paciente_id"]
+            isOneToOne: false
+            referencedRelation: "pacientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pacientes: {
         Row: {
           auth_user_id: string | null

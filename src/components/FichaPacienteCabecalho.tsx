@@ -4,10 +4,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import {
   Pencil, Save, X, Lock, Search, User, CreditCard, Heart, Activity,
-  FileText, Stethoscope, MapPin, Users, Phone, Mail, AlertCircle, ChevronDown, ChevronUp,
+  FileText, Stethoscope, MapPin, Users, Phone, Mail, AlertCircle, ChevronDown, ChevronUp, Paperclip
 } from "lucide-react";
+import PacienteDocumentos from "./PacienteDocumentos";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
@@ -283,6 +285,26 @@ const FichaPacienteCabecalho: React.FC<FichaPacienteCabecalhoProps> = ({
             >
               {expanded ? <><ChevronUp className="w-3 h-3" /> Recolher</> : <><ChevronDown className="w-3 h-3" /> Ver tudo</>}
             </Button>
+          )}
+          {!editing && (
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 rounded-lg border-border/60 hover:bg-accent/50">
+                  <Paperclip className="w-3 h-3" /> Documentos
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Paperclip className="w-5 h-5 text-primary" />
+                    Documentos de {paciente.nome}
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="py-2">
+                  <PacienteDocumentos pacienteId={pacienteId} unidadeId={paciente.unidade_id} />
+                </div>
+              </DialogContent>
+            </Dialog>
           )}
           {!editing ? (
             <Button variant="outline" size="sm" onClick={startEdit} className="h-8 text-xs gap-1.5 rounded-lg border-border/60 hover:bg-accent/50">

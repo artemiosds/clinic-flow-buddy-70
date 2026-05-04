@@ -23,7 +23,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Phone, Mail, Pencil, Trash2, FileDown, Users, Clock, FileUp, Eye, FileText, Printer, Loader2 } from "lucide-react";
+import { Plus, Search, Phone, Mail, Pencil, Trash2, FileDown, Users, Clock, FileUp, Eye, FileText, Printer, Loader2, Paperclip } from "lucide-react";
+import PacienteDocumentos from "@/components/PacienteDocumentos";
 import ContactActionButton from "@/components/ContactActionButton";
 import DetalheDrawer, { Secao, Campo, calcularIdade, formatarData } from "@/components/DetalheDrawer";
 import PacienteDetalheModal, { PSecao, PCampo, AlergiasBlock, formatCPF, formatCNS, formatTelefoneBR, formatarDataBR } from "@/components/PacienteDetalheModal";
@@ -828,6 +829,7 @@ const Pacientes: React.FC = () => {
             onSave={handleSave}
             saving={saving}
             isEdit={!!editId}
+            pacienteId={editId || undefined}
             errors={errors}
           />
         </DialogContent>
@@ -1281,6 +1283,14 @@ const Pacientes: React.FC = () => {
                 <PCampo label="Notas" valor={detalhePaciente.observacoes} />
               </PSecao>
             )}
+
+            <PSecao titulo="Documentos e Anexos">
+              <PacienteDocumentos 
+                pacienteId={detalhePaciente.id} 
+                unidadeId={user?.unidadeId} 
+                disabled={true} 
+              />
+            </PSecao>
           </PacienteDetalheModal>
         );
       })()}
