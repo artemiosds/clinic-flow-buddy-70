@@ -2721,7 +2721,7 @@ const Agenda: React.FC = () => {
               Faltou
             </div>
             <div className="flex items-center gap-2 text-xs text-warning-foreground font-semibold">
-              <div className="w-2.5 h-2.5 rounded-full bg-warning/20 ring-1 ring-warning/40 animate-pulse-gentle" />
+              <div className="w-2.5 h-2.5 rounded-full bg-warning/20 ring-1 ring-warning/40 animate-pulse" />
               Pendente de Revisão
             </div>
           </div>
