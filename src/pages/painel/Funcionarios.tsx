@@ -437,9 +437,9 @@ const Funcionarios: React.FC = () => {
                           <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="__none__">Selecione</SelectItem>
-                            {Object.keys(conselhoMap).map(p => (
-                              <SelectItem key={p} value={p}>{p}</SelectItem>
-                            ))}
+                             {Object.keys(conselhoMap).sort().map(p => (
+                               <SelectItem key={p} value={p}>{p}</SelectItem>
+                             ))}
                           </SelectContent>
                         </Select>
                       </div>
