@@ -355,6 +355,8 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
     const dataAtual = formatarData(now.toISOString());
     const horaAtual = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
     const p = data.paciente;
+    const dc = data.dadosClinicos;
+    const sv = data.sinaisVitais;
     const idade = calcIdade(p.data_nascimento);
 
     const getRacaLabel = (val?: string) => {
@@ -377,6 +379,11 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
       if (value === undefined || value === null || value === '') return fallback;
       if (typeof value === 'boolean') return value ? 'Sim' : 'Não';
       return String(value).trim() || fallback;
+    };
+
+    const valVital = (v: any) => {
+      if (!v || v === '—' || v === 'undefined' || v === 'null') return '________';
+      return String(v).trim();
     };
 
     const evolucaoHTML = data.evoluciones.length > 0
@@ -423,7 +430,7 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
     <div class="header-center">
       <h1>Secretaria Municipal de Saúde de Oriximiná</h1>
       <h2>Centro Especializado em Reabilitação Nível II &mdash; CER II</h2>
-      <div class="ficha-tipo">FICHA CADASTRAL DO PACIENTE</div>
+      <div class="ficha-tipo">${somentePessoais ? 'FICHA CADASTRAL SIMPLIFICADA' : 'FICHA DE ATENDIMENTO COMPLETA'}</div>
     </div>
     <div class="header-logo">
       <img src="${logoRight}" alt="Logo CER II" />
@@ -431,7 +438,7 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
     <div class="header-right">
       <div><b>Data:</b> ${dataAtual}</div>
       <div><b>Hora:</b> ${horaAtual}</div>
-      <div><b>Prontuário:</b> ${val(data.dadosClinicos.numero_prontuario, 'NOVO')}</div>
+      <div><b>Prontuário:</b> ${val(dc.numero_prontuario, 'NOVO')}</div>
     </div>
   </div>
 
@@ -492,62 +499,86 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
     </div>
   </div>
 
-  <!-- SEÇÃO 4: COMPLEMENTARES / RESPONSÁVEL -->
+  <!-- SEÇÃO 4: DADOS COMPLEMENTARES -->
   <div class="bloco">
     <div class="bloco-titulo">4. Dados Complementares / Responsável</div>
     <div class="bloco-body">
-      <div class="grid-2">
+      <div class="grid-3">
         <div class="campo"><b>Nome do Responsável</b><span>${val(p.nome_responsavel, 'O próprio')}</span></div>
         <div class="campo"><b>CPF do Responsável</b><span>${val(p.cpf_responsavel, '—')}</span></div>
         <div class="campo"><b>Vínculo / Parentesco</b><span>${val(p.parentesco, '—')}</span></div>
+      </div>
+      <div class="grid-3" style="margin-top:4px">
         <div class="campo"><b>Unidade Vinculada</b><span>${val(p.unidade_vinculada, 'CER II')}</span></div>
+        <div class="campo"><b>UBS de Origem</b><span>${val(p.ubs_origem, '—')}</span></div>
+        <div class="campo"><b>Tipo Encaminhamento</b><span>${val(p.tipo_encaminhamento, '—')}</span></div>
+      </div>
+      <div class="grid-2" style="margin-top:4px">
+        <div class="campo"><b>Profissional Solicitante</b><span>${val(p.profissional_solicitante, '—')}</span></div>
+        <div class="campo"><b>Especialidade Destino</b><span>${val(p.especialidade_destino, '—')}</span></div>
       </div>
       <div class="campo" style="margin-top:4px"><b>Observações Cadastrais</b><span>${val(p.observacoes, 'Nenhuma observação registrada.')}</span></div>
     </div>
   </div>
 
   ${!somentePessoais ? `
-  <!-- SEÇÃO 5: TRIAGEM E SINAIS VITAIS -->
+  <!-- SEÇÃO 5: DADOS DO ATENDIMENTO -->
   <div class="bloco">
-    <div class="bloco-titulo">5. Triagem / Sinais Vitais</div>
+    <div class="bloco-titulo">5. Dados do Atendimento</div>
+    <div class="bloco-body">
+      <div class="grid-3">
+        <div class="campo"><b>Unidade de Atendimento</b><span>${val(dc.unidade_atendimento, 'CER II')}</span></div>
+        <div class="campo"><b>Tipo de Atendimento</b><span>${val(dc.tipo_atendimento, '—')}</span></div>
+        <div class="campo"><b>Especialidade</b><span>${val(dc.especialidade, '—')}</span></div>
+      </div>
+      <div class="grid-2" style="margin-top:4px">
+        <div class="campo"><b>Unidade de Origem</b><span>${val(dc.unidade_origem, '—')}</span></div>
+        <div class="campo"><b>CID / Diagnóstico</b><span>${val(dc.cid, '—')}</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SEÇÃO 6: TRIAGEM E SINAIS VITAIS -->
+  <div class="bloco">
+    <div class="bloco-titulo">6. Triagem / Sinais Vitais</div>
     <div class="bloco-body">
       <table class="vitais-table">
         <tr>
-          <td><b>PA (Pressão)</b><span>${val(data.sinaisVitais.pressao_arterial)}</span></td>
-          <td><b>FC (BPM)</b><span>${val(data.sinaisVitais.frequencia_cardiaca)}</span></td>
-          <td><b>FR (resp)</b><span>${val(data.sinaisVitais.frequencia_respiratoria)}</span></td>
-          <td><b>Temp (°C)</b><span>${val(data.sinaisVitais.temperatura)}</span></td>
+          <td><b>PA (Pressão)</b><span>${valVital(sv.pressao_arterial)}</span></td>
+          <td><b>FC (BPM)</b><span>${valVital(sv.frequencia_cardiaca)}</span></td>
+          <td><b>FR (resp)</b><span>${valVital(sv.frequencia_respiratoria)}</span></td>
+          <td><b>Temp (°C)</b><span>${valVital(sv.temperatura)}</span></td>
         </tr>
         <tr>
-          <td><b>SpO2 (%)</b><span>${val(data.sinaisVitais.saturacao)}</span></td>
-          <td><b>Peso (kg)</b><span>${val(data.sinaisVitais.peso)}</span></td>
-          <td><b>Altura (m)</b><span>${val(data.sinaisVitais.altura)}</span></td>
-          <td><b>Glicemia</b><span>${val(data.sinaisVitais.glicemia)}</span></td>
+          <td><b>SpO2 (%)</b><span>${valVital(sv.saturacao)}</span></td>
+          <td><b>Peso (kg)</b><span>${valVital(sv.peso)}</span></td>
+          <td><b>Altura (m)</b><span>${valVital(sv.altura)}</span></td>
+          <td><b>Glicemia</b><span>${valVital(sv.glicemia)}</span></td>
         </tr>
       </table>
     </div>
   </div>
 
-  <!-- SEÇÃO 6: CAMPOS CLÍNICOS -->
-  ${linhasVazias('6. Queixa Principal', 2)}
+  <!-- CAMPOS CLÍNICOS -->
+  ${linhasVazias('7. Queixa Principal', 2)}
   
   <div class="bloco">
-    <div class="bloco-titulo">7. Evolução Clínica</div>
+    <div class="bloco-titulo">8. Evolução Clínica</div>
     <div class="bloco-body">
       ${evolucaoHTML}
       ${Array.from({ length: 6 }, () => '<div class="evo-line"></div>').join('')}
     </div>
   </div>
 
-  ${linhasVazias('8. Conduta / Prescrição', 4)}
+  ${linhasVazias('9. Conduta / Prescrição', 4)}
   
   <div class="grid-2">
-    ${blocoCurto('9. Diagnóstico')}
-    ${blocoCurto('10. Retorno')}
+    ${blocoCurto('10. Diagnóstico')}
+    ${blocoCurto('11. Retorno')}
   </div>
 
-  ${linhasVazias('11. Medicação / Prescrição', 4)}
-  ${linhasVazias('12. Procedimentos', 3)}
+  ${linhasVazias('12. Medicação / Prescrição', 4)}
+  ${linhasVazias('13. Procedimentos', 3)}
   ` : ''}
 
   <!-- ASSINATURA -->
