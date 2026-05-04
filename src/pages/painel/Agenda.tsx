@@ -92,7 +92,9 @@ const statusLabels: Record<string, string> = {
   apto_atendimento: "Apto p/ Atendimento", // NOVO
   aguardando_multiprofissional: "Aguard. Multiprofissional",
   indeferido: "Indeferido",
+  pendente_revisao: "Pendente de Revisão",
 };
+
 
 const statusBadgeClass: Record<string, string> = {
   pendente: "bg-warning/10 text-warning",
@@ -111,7 +113,9 @@ const statusBadgeClass: Record<string, string> = {
   apto_atendimento: "bg-green-500/10 text-green-600", // NOVO
   aguardando_multiprofissional: "bg-purple-500/10 text-purple-600",
   indeferido: "bg-destructive/10 text-destructive",
+  pendente_revisao: "bg-warning/10 text-warning ring-1 ring-warning/30",
 };
+
 
 const tipoBadge: Record<string, { label: string; class: string; icon: string }> = {
   Consulta: { label: "1ª Consulta", class: "bg-success/15 text-success border border-success/30", icon: "🟢" },
@@ -376,6 +380,52 @@ const Agenda: React.FC = () => {
       })
       .sort((a, b) => a.criadoEm.localeCompare(b.criadoEm));
   }, [agendamentos, user]);
+
+  // REQUISITO 5 e 8: Agendamentos passados que ainda estão pendentes de conclusão
+  const agendamentosPendentesRevisao = React.useMemo(() => {
+    const today = todayLocalStr();
+    const nowTime = new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+    const PENDENTE_STATUSES = new Set([
+      "confirmado",
+      "aguardando",
+      "confirmado_chegada",
+      "apto_atendimento",
+      "chamado",
+      "em_atendimento",
+      "aguardando_triagem",
+      "aguardando_atendimento",
+      "aguardando_enfermagem",
+      "triagem_concluida",
+      "apto_agendamento",
+      "pendente"
+    ]);
+
+    return agendamentos.filter((a) => {
+      // Recorte temporal: mês atual e passados (até hoje que já passou o horário)
+      const currentMonth = new Date().getMonth();
+      const currentYear = new Date().getFullYear();
+      const agDate = new Date(a.data + "T12:00:00");
+      const isThisMonthOrPast =
+        agDate.getFullYear() < currentYear || (agDate.getFullYear() === currentYear && agDate.getMonth() <= currentMonth);
+
+      if (!isThisMonthOrPast) return false;
+
+      // Somente passado ou hoje com horário já transcorrido
+      if (a.data > today) return false;
+      if (a.data === today && a.hora >= nowTime) return false;
+
+      // Se for profissional, vê apenas as suas pendências
+      if (isProfissional && user?.id && a.profissionalId !== user.id) return false;
+      
+      // Master vê todas da unidade (respeitando a isolamento de unidade)
+      if (user?.unidadeId && user?.usuario !== 'admin.sms' && a.unidadeId !== user.unidadeId) return false;
+
+      return PENDENTE_STATUSES.has(a.status);
+    });
+  }, [agendamentos, user, isProfissional, nowTick]); // nowTick for time updates
+
+  const [revisaoDialogOpen, setRevisaoDialogOpen] = useState(false);
+
 
   const blockedForDate = React.useMemo(() => {
     return bloqueios.filter((b) => selectedDate >= b.dataInicio && selectedDate <= b.dataFim && b.diaInteiro);
@@ -972,6 +1022,12 @@ const Agenda: React.FC = () => {
   const handleStatusChange = async (agId: string, newStatus: string) => {
     const ag = agendamentos.find((a) => a.id === agId);
     if (!ag) return;
+
+    // REQUISITO 3: Validação de permissão do profissional
+    if (isProfissional && !isMaster && ag.profissionalId !== user?.id) {
+      toast.error("Você só pode registrar falta em pacientes vinculados à sua agenda.");
+      return;
+    }
 
     // Intercept "falta" — open modal with justification
     if (newStatus === "falta") {
@@ -2169,7 +2225,36 @@ const Agenda: React.FC = () => {
             </Card>
           )}
 
+          {/* REQUISITO 5 e 9: Alerta de pendências de agenda */}
+          {agendamentosPendentesRevisao.length > 0 && (
+            <Card className="shadow-card border-0 bg-warning/10 ring-1 ring-warning/30 animate-pulse">
+              <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="bg-warning/20 p-2 rounded-full">
+                    <Bell className="w-5 h-5 text-warning" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-warning-foreground">Pendências de agenda</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Existem {agendamentosPendentesRevisao.length} pacientes do período que ainda estão sem conclusão. 
+                      Revise para marcar falta ou concluir.
+                    </p>
+                  </div>
+                </div>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="w-full sm:w-auto border-warning/50 text-warning-foreground hover:bg-warning/20"
+                  onClick={() => setRevisaoDialogOpen(true)}
+                >
+                  Ver pendências
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
           <div className="space-y-2">
+
             {filtered.length === 0 ? (
               <Card className="shadow-card border-0">
                 <CardContent className="p-8 text-center">
@@ -2204,6 +2289,8 @@ const Agenda: React.FC = () => {
                 const paciente = pacientes.find((p) => p.id === ag.pacienteId);
                 const lastAppt = lastProntuarios[ag.pacienteId];
                 const ehPendenteOnline = ag.origem === "online" && ag.status === "pendente";
+                const isPendenteRevisao = agendamentosPendentesRevisao.some(p => p.id === ag.id);
+
                 const anexoUrl = (ag as any).attachment_url || ag.attachmentUrl;
 
                 const typeColorBar: Record<string, string> = {
@@ -2307,6 +2394,12 @@ const Agenda: React.FC = () => {
                         >
                           {statusLabels[ag.status] || ag.status}
                         </span>
+                        {isPendenteRevisao && (
+                          <span className="text-xs px-2 py-0.5 rounded-full font-bold bg-warning/20 text-warning-foreground flex items-center gap-1 animate-pulse">
+                            <Bell className="w-3 h-3" /> Revisão Pendente
+                          </span>
+                        )}
+
                         {(() => {
                           const risco = triageMap[ag.id]?.risco;
                           if (!risco) return null;
@@ -2403,7 +2496,21 @@ const Agenda: React.FC = () => {
                               <XCircle className="w-3.5 h-3.5" />
                             </Button>
                           </>
-                        )}
+                            )}
+                            {isProfissional &&
+                              !["falta", "cancelado", "concluido"].includes(ag.status) &&
+                              (ag.profissionalId === user?.id || isMaster) && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-8 px-3 text-xs border-destructive/50 text-destructive hover:bg-destructive/10"
+                                  onClick={() => handleStatusChange(ag.id, "falta")}
+                                  title="Marcar Falta"
+                                >
+                                  <XCircle className="w-3.5 h-3.5 mr-1" /> Faltou
+                                </Button>
+                              )}
+
 
                         {isProfissional && (
                           <>
@@ -2589,6 +2696,36 @@ const Agenda: React.FC = () => {
               })
             )}
           </div>
+
+          {/* REQUISITO 11: Legendas da agenda */}
+          <div className="flex flex-wrap gap-x-6 gap-y-3 mt-6 p-4 bg-muted/20 rounded-xl border border-border/50">
+            <h4 className="text-[10px] font-bold text-muted-foreground w-full mb-1 uppercase tracking-widest">Legenda de Status</h4>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <div className="w-2.5 h-2.5 rounded-full bg-success/20 ring-1 ring-success/40" />
+              Confirmado
+            </div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/20 ring-1 ring-emerald-500/40" />
+              Chegou
+            </div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <div className="w-2.5 h-2.5 rounded-full bg-primary/20 ring-1 ring-primary/40" />
+              Em Atendimento
+            </div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <div className="w-2.5 h-2.5 rounded-full bg-info/20 ring-1 ring-info/40" />
+              Concluído
+            </div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <div className="w-2.5 h-2.5 rounded-full bg-destructive/20 ring-1 ring-destructive/40" />
+              Faltou
+            </div>
+            <div className="flex items-center gap-2 text-xs text-warning-foreground font-semibold">
+              <div className="w-2.5 h-2.5 rounded-full bg-warning/20 ring-1 ring-warning/40 animate-pulse" />
+              Pendente de Revisão
+            </div>
+          </div>
+
         </>
       )}
 
@@ -2992,7 +3129,79 @@ const Agenda: React.FC = () => {
         agendamento={conferenciaModal.agendamentoInfo}
         onConfirm={conferenciaModal.onConfirm}
       />
+      {/* REQUISITO 9 e 10: Modal de Revisão de Pendências */}
+      <Dialog open={revisaoDialogOpen} onOpenChange={setRevisaoDialogOpen}>
+        <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-display flex items-center gap-2">
+              <Bell className="w-5 h-5 text-warning" />
+              Pendências de agenda
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-muted-foreground">
+              Revise os agendamentos abaixo que não foram concluídos corretamente. 
+              Você pode marcar falta ou abrir o atendimento para finalizar o prontuário.
+            </p>
+            
+            <div className="space-y-6">
+              {Object.entries(
+                agendamentosPendentesRevisao.reduce((acc, ag) => {
+                  const date = ag.data;
+                  if (!acc[date]) acc[date] = [];
+                  acc[date].push(ag);
+                  return acc;
+                }, {} as Record<string, typeof agendamentos>)
+              )
+              .sort(([dateA], [dateB]) => dateB.localeCompare(dateA))
+              .map(([date, items]) => (
+                <div key={date} className="space-y-2">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                    <CalendarIcon className="w-3 h-3" />
+                    {new Date(date + "T12:00:00").toLocaleDateString("pt-BR", { day: '2-digit', month: 'long' })}
+                  </h3>
+                  <div className="grid gap-2">
+                    {items.sort((a, b) => a.hora.localeCompare(b.hora)).map(ag => (
+                      <div key={ag.id} className="flex items-center justify-between p-3 rounded-lg border bg-muted/30 gap-3">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold truncate">{ag.pacienteNome}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {ag.hora} • {ag.profissionalNome} • <span className={cn(statusBadgeClass[ag.status], "bg-transparent p-0")}>{statusLabels[ag.status] || ag.status}</span>
+                          </p>
+                        </div>
+                        <div className="flex gap-1 shrink-0">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2 text-[10px] border-destructive/50 text-destructive hover:bg-destructive/10"
+                            onClick={() => {
+                              setFaltaTarget(ag);
+                            }}
+                          >
+                            <X className="w-3 h-3 mr-1" /> Faltou
+                          </Button>
+                          <Button
+                            size="sm"
+                            className="h-7 px-2 text-[10px] bg-primary text-primary-foreground"
+                            onClick={() => {
+                              handleIniciarAtendimento(ag);
+                              setRevisaoDialogOpen(false);
+                            }}
+                          >
+                            <Play className="w-3 h-3 mr-1" /> Resolver
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
+
   );
 };
 
