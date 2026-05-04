@@ -228,8 +228,8 @@ const PortalPaciente: React.FC = () => {
               <button onClick={() => { setRecoveryStep('none'); setRecErro(''); }} className="inline-flex items-center text-sm opacity-70 hover:opacity-100 mb-4">
                 <ArrowLeft className="w-4 h-4 mr-1" />Voltar ao login
               </button>
-              <h1 className="text-2xl md:text-3xl font-bold font-display">Recuperar Senha</h1>
-              <p className="opacity-80 mt-1">Portal do Paciente — SMS Oriximiná</p>
+              <h1 className="text-2xl md:text-3xl font-bold font-display">{config?.linha1 || 'Recuperar Senha'}</h1>
+              <p className="opacity-80 mt-1">{config?.linha2 || 'Portal do Paciente — SMS Oriximiná'}</p>
             </div>
           </div>
           <div className="container mx-auto px-4 py-8 max-w-md">
