@@ -14,6 +14,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Search, Plus, Pencil, Trash2, Loader2, Pill, FlaskConical, Eye, Download, Upload, RotateCcw, Archive, Tag, Sparkles, FolderOpen } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
+import { useConfiguracao } from '@/hooks/useConfiguracao';
 import { auditService } from '@/services/auditService';
 import { RENAME_MEDICATIONS } from '@/data/seedRenameMedications';
 import { EXAMES_PADRAO } from '@/data/seedExamesPadrao';
@@ -120,22 +121,25 @@ const ConfigMedicamentosExames: React.FC = () => {
   const [newExam, setNewExam] = useState(blankExam);
   const [prescricaoConfig, setPrescricaoConfig] = useState<Record<string, boolean>>({});
 
+  const { atualizarConfiguracao, configuracoes, loading: hookLoading } = useConfiguracao();
+
   const loadData = useCallback(async () => {
     setLoading(true);
-    const [medsRes, examsRes, cfgRes] = await Promise.all([
+    const [medsRes, examsRes] = await Promise.all([
       supabase.from('medications').select('*').order('classe_terapeutica').order('nome'),
       supabase.from('exam_types').select('*').order('categoria').order('nome'),
-      supabase.from('system_config').select('configuracoes').eq('id', 'default').maybeSingle(),
     ]);
     if (medsRes.data) setMeds(medsRes.data as any);
     if (examsRes.data) setExams(examsRes.data as any);
-    const cfg = cfgRes.data?.configuracoes as any;
-    if (cfg?.[CONFIG_KEY]) setPrescricaoConfig(cfg[CONFIG_KEY]);
+    
+    const cfg = configuracoes[CONFIG_KEY];
+    if (cfg) setPrescricaoConfig(cfg);
     else setPrescricaoConfig({ medicina: true, odontologia: true });
+    
     setLoading(false);
-  }, []);
+  }, [configuracoes]);
 
-  useEffect(() => { loadData(); }, [loadData]);
+  useEffect(() => { if (!hookLoading) loadData(); }, [loadData, hookLoading]);
 
   /* ============================================================
      SEED — Carregar base padrão (RENAME / Exames padrão)
