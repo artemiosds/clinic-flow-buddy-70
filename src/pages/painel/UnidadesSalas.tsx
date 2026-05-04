@@ -22,6 +22,7 @@ const UnidadesSalas: React.FC = () => {
   const [editRoomId, setEditRoomId] = useState<string | null>(null);
   const [unitForm, setUnitForm] = useState({ nome: '', nomeExibicao: '', endereco: '', telefone: '', whatsapp: '' });
   const [roomForm, setRoomForm] = useState({ nome: '', unidadeId: '' });
+  const [saving, setSaving] = useState(false);
 
   const openNewUnit = () => { setEditUnitId(null); setUnitForm({ nome: '', nomeExibicao: '', endereco: '', telefone: '', whatsapp: '' }); setCustomData({}); setUnitDialog(true); };
   const openEditUnit = (u: typeof unidades[0]) => { setEditUnitId(u.id); setUnitForm({ nome: u.nome, nomeExibicao: u.nomeExibicao || '', endereco: u.endereco, telefone: u.telefone, whatsapp: u.whatsapp }); setCustomData({}); setUnitDialog(true); };
