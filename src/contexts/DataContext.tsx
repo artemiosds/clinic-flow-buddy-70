@@ -167,6 +167,7 @@ interface DataContextType {
   refreshDisponibilidades: () => Promise<void>;
   refreshAgendamentos: () => Promise<void>;
   refreshPacientes: () => Promise<void>;
+  searchPacientes: (query: string) => Promise<Paciente[]>;
   refreshFila: () => Promise<void>;
   refreshBloqueios: () => Promise<void>;
   logAction: (input: {
