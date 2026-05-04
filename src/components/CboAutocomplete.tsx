@@ -69,7 +69,7 @@ const CboAutocomplete: React.FC<CboAutocompleteProps> = ({
       try {
         let q = (supabase as any)
           .from('cbo_codigos')
-          .select('codigo, descricao, profissoes_relacionadas')
+          .select('codigo, descricao')
           .eq('ativo', true)
           .order('descricao', { ascending: true })
           .limit(50);
