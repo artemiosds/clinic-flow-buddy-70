@@ -486,3 +486,19 @@ select:focus-visible,
   font-size: 12px;
   color: #1e40af;
 }
+
+/* ─── CUSTOM UTILITIES ───────────────────────────────────────── */
+
+a[href*="lovable.app"], 
+iframe[src*="lovable.app"], 
+a[href*="lovable.dev"], 
+iframe[src*="lovable.dev"],
+div[style*="Edit with Lovable"],
+.lovable-badge {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  position: absolute !important;
+  z-index: -9999 !important;
+}
