@@ -61,6 +61,7 @@ import { useSoapCustomOptions } from "@/hooks/useSoapCustomOptions";
 import { Stamp } from "lucide-react";
 import { getSoapValidationError, normalizeSoapPayload, treatmentService } from "@/services/treatmentService";
 import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
+import { TIPO_REGISTRO_LABELS } from "@/utils/labels";
 
 const PTS_SPECIALTIES = [
   'Fisioterapia', 'Fonoaudiologia', 'Psicologia', 'Terapia Ocupacional',
