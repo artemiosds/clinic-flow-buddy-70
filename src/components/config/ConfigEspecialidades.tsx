@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
 import { Plus, Pencil, Trash2, Loader2, ChevronUp, ChevronDown, Eye, Copy, GripVertical, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
+import { TIPO_REGISTRO_LABELS } from '@/utils/labels';
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors,
   type DragEndEvent,
