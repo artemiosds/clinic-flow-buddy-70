@@ -92,7 +92,9 @@ const statusLabels: Record<string, string> = {
   apto_atendimento: "Apto p/ Atendimento", // NOVO
   aguardando_multiprofissional: "Aguard. Multiprofissional",
   indeferido: "Indeferido",
+  pendente_revisao: "Pendente de Revisão",
 };
+
 
 const statusBadgeClass: Record<string, string> = {
   pendente: "bg-warning/10 text-warning",
