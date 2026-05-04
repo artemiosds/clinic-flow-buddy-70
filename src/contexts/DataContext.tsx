@@ -502,7 +502,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           isAutista: !!p.is_autista,
         })),
       );
-    } catch (err) {
+    }
+  } catch (err) {
       console.error("Error loading pacientes:", err);
     }
   }, []);
