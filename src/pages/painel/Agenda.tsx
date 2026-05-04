@@ -113,7 +113,9 @@ const statusBadgeClass: Record<string, string> = {
   apto_atendimento: "bg-green-500/10 text-green-600", // NOVO
   aguardando_multiprofissional: "bg-purple-500/10 text-purple-600",
   indeferido: "bg-destructive/10 text-destructive",
+  pendente_revisao: "bg-warning/10 text-warning ring-1 ring-warning/30",
 };
+
 
 const tipoBadge: Record<string, { label: string; class: string; icon: string }> = {
   Consulta: { label: "1ª Consulta", class: "bg-success/15 text-success border border-success/30", icon: "🟢" },
