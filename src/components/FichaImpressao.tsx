@@ -382,18 +382,10 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
     };
 
     const valVital = (v: any) => {
-      if (!v || v === '—' || v === 'undefined' || v === 'null') return '________';
-      return String(v).trim();
+      return '________';
     };
 
-    const evolucaoHTML = data.evoluciones.length > 0
-      ? data.evoluciones.map(evo => `
-        <div class="evo-item">
-          <div class="evo-meta">${formatarData(evo.data)} &mdash; ${val(evo.profissional)}</div>
-          <div class="evo-text">${val(evo.observacao)}</div>
-        </div>
-      `).join('')
-      : '';
+    const evolucaoHTML = '';
 
     const linhasVazias = (titulo: string, numLinhas: number = 3) => `
       <div class="bloco">
