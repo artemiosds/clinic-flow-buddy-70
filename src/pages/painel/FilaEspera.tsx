@@ -1603,7 +1603,8 @@ const FilaEspera: React.FC = () => {
                 Cadastrar Paciente e Adicionar à Fila
               </Button>
             ) : (
-              <Button onClick={handleSave} className="w-full gradient-primary text-primary-foreground">
+              <Button onClick={handleSave} disabled={saving} className="w-full gradient-primary text-primary-foreground">
+                {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                 {editId ? "Atualizar" : "Adicionar"}
               </Button>
             )}
