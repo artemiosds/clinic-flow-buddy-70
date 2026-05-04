@@ -29,7 +29,7 @@ export interface SistemaConfig {
 const DEFAULT: SistemaConfig = {
   instituicao: {
     nome: 'Secretaria Municipal de Saúde de Oriximiná',
-    cer: 'Centro Especializado em Reabilitação Nível II',
+    cer: 'CAPS II',
     cnpj: '', endereco: '', telefone: '', email: '', logoUrl: '',
   },
   notificacoes: {
@@ -46,7 +46,7 @@ const DEFAULT: SistemaConfig = {
 };
 
 const SECTIONS = [
-  { id: 'instituicao', label: 'Instituição', kw: ['nome', 'cnpj', 'logo', 'endereco', 'telefone', 'email', 'cer'] },
+  { id: 'instituicao', label: 'Instituição', kw: ['nome', 'cnpj', 'logo', 'endereco', 'telefone', 'email', 'caps'] },
   { id: 'notificacoes', label: 'Notificações', kw: ['notificacao', 'canal', 'whatsapp', 'email', 'chegada', 'triagem', 'pts', 'ciclo', 'resumo'] },
   { id: 'backup', label: 'Backup', kw: ['backup', 'exportar', 'json', 'csv', 'pdf', 'restaurar', 'dados'] },
   { id: 'aparencia', label: 'Aparência', kw: ['tema', 'cor', 'fonte', 'aparencia', 'claro', 'escuro'] },

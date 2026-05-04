@@ -518,7 +518,7 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = "co
         <div class="campo"><b>Vínculo / Parentesco</b><span>${val(p.parentesco, "—")}</span></div>
       </div>
       <div class="grid-3" style="margin-top:4px">
-        <div class="campo"><b>Unidade Vinculada</b><span>${val(p.unidade_vinculada, "CER II")}</span></div>
+        <div class="campo"><b>Unidade Vinculada</b><span>${val(p.unidade_vinculada, "CAPS II")}</span></div>
         <div class="campo"><b>UBS de Origem</b><span>${val(p.ubs_origem, "—")}</span></div>
         <div class="campo"><b>Tipo Encaminhamento</b><span>${val(p.tipo_encaminhamento, "—")}</span></div>
       </div>
@@ -604,7 +604,7 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = "co
   </div>
 
   <div class="rodape">
-    Impresso via Lovable Cloud &mdash; CER II Oriximiná &mdash; ${dataAtual} ${horaAtual} &mdash; ${somentePessoais ? "Ficha Cadastral Simplificada" : "Ficha de Atendimento Completa"}
+    Impresso via Lovable Cloud &mdash; CAPS II Oriximiná &mdash; ${dataAtual} ${horaAtual} &mdash; ${somentePessoais ? "Ficha Cadastral Simplificada" : "Ficha de Atendimento Completa"}
   </div>
 
 </body>
@@ -660,7 +660,7 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = "co
               {config?.linha1 || "Prefeitura Municipal de Oriximiná"}
             </h2>
             <p className="text-[11px] font-bold text-muted-foreground uppercase">
-              {config?.linha2 || "Centro Especializado em Reabilitação II (CER II)"}
+              {config?.linha2 || "CAPS II"}
             </p>
           </div>
           <img src={config?.logoDireita || logoCapsFallback} alt="Logo" className="w-12 h-12 object-contain" />
@@ -779,7 +779,7 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = "co
               </p>
               <p>
                 <span className="text-[9px] font-bold uppercase text-slate-400">Unidade Vinculada:</span>{" "}
-                {data.paciente.unidade_vinculada || "CER II"}
+                {data.paciente.unidade_vinculada || "CAPS II"}
               </p>
             </div>
           </div>
