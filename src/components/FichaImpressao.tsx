@@ -353,13 +353,36 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
     const now = new Date();
     const dataAtual = formatarData(now.toISOString());
     const horaAtual = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-    const idade = calcIdade(data.paciente.data_nascimento);
+    const p = data.paciente;
+    const idade = calcIdade(p.data_nascimento);
+
+    const getRacaLabel = (val?: string) => {
+      const options: Record<string, string> = {
+        branca: 'Branca', preta: 'Preta', parda: 'Parda',
+        amarela: 'Amarela', indigena: 'Indígena', nao_declarado: 'Não declarado'
+      };
+      return options[val || ''] || 'Não declarado';
+    };
+
+    const getSexoLabel = (val?: string) => {
+      const s = String(val || '').toUpperCase();
+      if (s === 'M' || s === 'MASCULINO') return 'Masculino';
+      if (s === 'F' || s === 'FEMININO') return 'Feminino';
+      if (s === 'I' || s === 'IGNORADO') return 'Ignorado';
+      return 'Não informado';
+    };
+
+    const val = (value: any, fallback = '—') => {
+      if (value === undefined || value === null || value === '') return fallback;
+      if (typeof value === 'boolean') return value ? 'Sim' : 'Não';
+      return String(value).trim() || fallback;
+    };
 
     const evolucaoHTML = data.evoluciones.length > 0
       ? data.evoluciones.map(evo => `
         <div class="evo-item">
-          <div class="evo-meta">${formatarData(evo.data)} &mdash; ${v(evo.profissional) || '—'}</div>
-          <div class="evo-text">${v(evo.observacao) || '—'}</div>
+          <div class="evo-meta">${formatarData(evo.data)} &mdash; ${val(evo.profissional)}</div>
+          <div class="evo-text">${val(evo.observacao)}</div>
         </div>
       `).join('')
       : Array.from({ length: 8 }, () => '<div class="evo-line"></div>').join('');
@@ -368,7 +391,7 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Ficha CER II - ${v(data.paciente.nome_completo)}</title>
+  <title>Ficha Cadastral - ${val(p.nome_completo)}</title>
   <style>${PRINT_CSS}</style>
 </head>
 <body>
@@ -376,140 +399,140 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
   <!-- CABEÇALHO -->
   <div class="header">
     <div class="header-logo">
-      <img src="${logoLeft}" alt="Logo SMS Oriximiná" />
+      <img src="${logoLeft}" alt="Logo SMS" />
     </div>
     <div class="header-center">
       <h1>Secretaria Municipal de Saúde de Oriximiná</h1>
       <h2>Centro Especializado em Reabilitação Nível II &mdash; CER II</h2>
-      <div class="ficha-tipo">${somentePessoais ? 'Ficha Cadastral do Paciente' : 'Ficha de Atendimento / Prontuário'}</div>
+      <div class="ficha-tipo">FICHA CADASTRAL DO PACIENTE</div>
     </div>
     <div class="header-logo">
-      <img src="${logoRight}" alt="Logo CER II" style="max-height:54px;max-width:100px;object-fit:contain;" />
+      <img src="${logoRight}" alt="Logo CER II" />
     </div>
     <div class="header-right">
       <div><b>Data:</b> ${dataAtual}</div>
       <div><b>Hora:</b> ${horaAtual}</div>
-      <div><b>Prontuário:</b> ${v(data.dadosClinicos.numero_prontuario) || '____________'}</div>
+      <div><b>Prontuário:</b> ${val(data.dadosClinicos.numero_prontuario, 'NOVO')}</div>
     </div>
   </div>
 
-  <!-- DADOS DO PACIENTE -->
+  <!-- SEÇÃO 1: IDENTIFICAÇÃO -->
   <div class="bloco">
-    <div class="bloco-titulo">Identificação do Paciente</div>
+    <div class="bloco-titulo">
+      <span>1. Identificação do Paciente</span>
+      ${p.menor_idade ? '<span class="badge-menor">Paciente Menor de Idade</span>' : ''}
+    </div>
     <div class="bloco-body">
-      <div class="campo campo-full" style="margin-bottom:4px"><b>Nome Completo:</b> <span style="font-size:12px;font-weight:700">${v(data.paciente.nome_completo) || '—'}</span></div>
-      <div class="grid-3">
-        <div class="campo"><b>CPF:</b> <span>${v(data.paciente.cpf) || '—'}</span></div>
-        <div class="campo"><b>CNS:</b> <span>${v(data.paciente.cns) || '—'}</span></div>
-        <div class="campo"><b>Data Nasc.:</b> <span>${formatarData(data.paciente.data_nascimento)}</span></div>
-      </div>
-      <div class="grid-4">
-        <div class="campo"><b>Idade:</b> <span>${idade}</span></div>
-        <div class="campo"><b>Sexo:</b> <span>${v(data.paciente.sexo) || '—'}</span></div>
-        <div class="campo"><b>Telefone:</b> <span>${v(data.paciente.telefone) || '—'}</span></div>
-        <div class="campo"><b>Responsável:</b> <span>${v(data.paciente.responsavel) || v(data.paciente.nome_mae) || '—'}</span></div>
-      </div>
       <div class="grid-2">
-        <div class="campo"><b>Endereço:</b> <span>${v(data.paciente.endereco) || '—'}</span></div>
-        <div class="campo"><b>Unidade de Origem:</b> <span>${v(data.dadosClinicos.unidade_origem) || '—'}</span></div>
+        <div class="campo campo-full"><b>Nome Completo</b><span style="font-size:12px; font-weight:700">${val(p.nome_completo, 'Não informado')}</span></div>
+        <div class="campo"><b>Nome da Mãe</b><span>${val(p.nome_mae, 'Não informado')}</span></div>
+        <div class="campo"><b>Naturalidade / UF</b><span>${val(p.naturalidade)} / ${val(p.naturalidade_uf, '—')}</span></div>
+      </div>
+      <div class="grid-5" style="margin-top:4px">
+        <div class="campo"><b>Data de Nasc.</b><span>${formatarData(p.data_nascimento)}</span></div>
+        <div class="campo"><b>Idade</b><span>${idade}</span></div>
+        <div class="campo"><b>Sexo</b><span>${getSexoLabel(p.sexo)}</span></div>
+        <div class="campo"><b>CPF</b><span>${val(p.cpf, 'Não informado')}</span></div>
+        <div class="campo"><b>CNS (Cartão SUS)</b><span>${val(p.cns, 'Não informado')}</span></div>
+      </div>
+      <div class="grid-3" style="margin-top:4px">
+        <div class="campo"><b>Nacionalidade</b><span>${val(p.nacionalidade, 'Brasileira')}</span></div>
+        <div class="campo"><b>Raça / Cor (IBGE)</b><span>${getRacaLabel(p.raca_cor)}</span></div>
+        <div class="campo"><b>Situação de Rua?</b><span>${p.situacao_rua ? 'Sim' : 'Não'}</span></div>
       </div>
     </div>
   </div>
 
-  <!-- ATENDIMENTO -->
+  <!-- SEÇÃO 2: ENDEREÇO -->
   <div class="bloco">
-    <div class="bloco-titulo">Dados do Atendimento</div>
+    <div class="bloco-titulo">2. Endereço e Localização</div>
     <div class="bloco-body">
-      <div class="grid-4">
-        <div class="campo"><b>Tipo:</b> <span>${somentePessoais ? '_______________' : (v(data.dadosClinicos.tipo_atendimento) || '—')}</span></div>
-        <div class="campo"><b>CID:</b> <span>${somentePessoais ? '_______________' : (v(data.dadosClinicos.cid) || '—')}</span></div>
-        <div class="campo"><b>Profissional:</b> <span>${somentePessoais ? '_______________' : (v(data.profissional.nome) || '—')}</span></div>
-        <div class="campo"><b>Especialidade:</b> <span>${somentePessoais ? '_______________' : (v(data.dadosClinicos.especialidade) || v(data.profissional.cargo) || '—')}</span></div>
+      <div class="grid-address">
+        <div class="campo"><b>Tipo de Logradouro / Logradouro</b><span>${val(p.tipo_logradouro)} ${val(p.logradouro, 'Não informado')}</span></div>
+        <div class="campo"><b>Número</b><span>${val(p.numero, 'S/N')}</span></div>
+        <div class="campo"><b>Complemento</b><span>${val(p.complemento, '—')}</span></div>
       </div>
-      <div class="campo"><b>Encaminhamento:</b> <span>${somentePessoais ? '_______________' : (v(data.dadosClinicos.encaminhamento) || '—')}</span></div>
+      <div class="grid-3" style="margin-top:4px">
+        <div class="campo"><b>Bairro</b><span>${val(p.bairro, 'Não informado')}</span></div>
+        <div class="campo"><b>Município de Residência</b><span>${val(p.municipio, 'Oriximiná')}</span></div>
+        <div class="campo"><b>UF / CEP</b><span>${val(p.uf, 'PA')} / ${val(p.cep, '—')}</span></div>
+      </div>
+      ${p.endereco_legado ? `<div class="campo" style="margin-top:4px; border-top:1px dashed #e2e8f0; padding-top:2px"><b>Endereço Completo (Referência)</b><span>${p.endereco_legado}</span></div>` : ''}
     </div>
   </div>
 
-  <!-- TRIAGEM / SINAIS VITAIS -->
+  <!-- SEÇÃO 3: CONTATO -->
   <div class="bloco">
-    <div class="bloco-titulo">Triagem / Sinais Vitais</div>
+    <div class="bloco-titulo">3. Informações de Contato</div>
+    <div class="bloco-body">
+      <div class="grid-3">
+        <div class="campo"><b>Telefone Principal</b><span>${val(p.telefone, 'Não informado')}</span></div>
+        <div class="campo"><b>Telefone Secundário</b><span>${val(p.telefone_secundario, '—')}</span></div>
+        <div class="campo"><b>E-mail</b><span>${val(p.email, '—')}</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SEÇÃO 4: COMPLEMENTARES / RESPONSÁVEL -->
+  <div class="bloco">
+    <div class="bloco-titulo">4. Dados Complementares / Responsável</div>
+    <div class="bloco-body">
+      <div class="grid-2">
+        <div class="campo"><b>Nome do Responsável</b><span>${val(p.nome_responsavel, 'O próprio')}</span></div>
+        <div class="campo"><b>CPF do Responsável</b><span>${val(p.cpf_responsavel, '—')}</span></div>
+        <div class="campo"><b>Vínculo / Parentesco</b><span>${val(p.parentesco, '—')}</span></div>
+        <div class="campo"><b>Unidade Vinculada</b><span>${val(p.unidade_vinculada, 'CER II')}</span></div>
+      </div>
+      <div class="campo" style="margin-top:4px"><b>Observações Cadastrais</b><span>${val(p.observacoes, 'Nenhuma observação registrada.')}</span></div>
+    </div>
+  </div>
+
+  ${!somentePessoais ? `
+  <!-- SEÇÃO 5: DADOS CLÍNICOS (Somente na versão completa) -->
+  <div class="bloco">
+    <div class="bloco-titulo">5. Triagem e Sinais Vitais</div>
     <div class="bloco-body">
       <table class="vitais-table">
-        <tbody>
-          <tr>
-            <td><b>PA</b><span>${somentePessoais ? '___' : (v(data.sinaisVitais.pressao_arterial) || '___')}</span></td>
-            <td><b>FC</b><span>${somentePessoais ? '___' : (v(data.sinaisVitais.frequencia_cardiaca) ? v(data.sinaisVitais.frequencia_cardiaca) + ' bpm' : '___')}</span></td>
-            <td><b>FR</b><span>${somentePessoais ? '___' : (v(data.sinaisVitais.frequencia_respiratoria) || '___')}</span></td>
-            <td><b>Temp</b><span>${somentePessoais ? '___' : (v(data.sinaisVitais.temperatura) ? v(data.sinaisVitais.temperatura) + ' °C' : '___')}</span></td>
-          </tr>
-          <tr>
-            <td><b>SpO₂</b><span>${somentePessoais ? '___' : (v(data.sinaisVitais.saturacao) ? v(data.sinaisVitais.saturacao) + ' %' : '___')}</span></td>
-            <td><b>Peso</b><span>${somentePessoais ? '___' : (v(data.sinaisVitais.peso) ? v(data.sinaisVitais.peso) + ' kg' : '___')}</span></td>
-            <td><b>Altura</b><span>${somentePessoais ? '___' : (v(data.sinaisVitais.altura) ? v(data.sinaisVitais.altura) + ' m' : '___')}</span></td>
-            <td><b>Glicemia</b><span>${somentePessoais ? '___' : (v(data.sinaisVitais.glicemia) ? v(data.sinaisVitais.glicemia) + ' mg/dL' : '___')}</span></td>
-          </tr>
-        </tbody>
+        <tr>
+          <td><b>PA (Pressão)</b><span>${val(data.sinaisVitais.pressao_arterial)}</span></td>
+          <td><b>FC (BPM)</b><span>${val(data.sinaisVitais.frequencia_cardiaca)}</span></td>
+          <td><b>Temp (°C)</b><span>${val(data.sinaisVitais.temperatura)}</span></td>
+          <td><b>SpO2 (%)</b><span>${val(data.sinaisVitais.saturacao)}</span></td>
+          <td><b>Peso (kg)</b><span>${val(data.sinaisVitais.peso)}</span></td>
+          <td><b>Altura (m)</b><span>${val(data.sinaisVitais.altura)}</span></td>
+          <td><b>Glicemia</b><span>${val(data.sinaisVitais.glicemia)}</span></td>
+          <td><b>FR (resp)</b><span>${val(data.sinaisVitais.frequencia_respiratoria)}</span></td>
+        </tr>
       </table>
     </div>
   </div>
 
-  <!-- QUEIXA PRINCIPAL -->
   <div class="bloco">
-    <div class="bloco-titulo">Queixa Principal</div>
+    <div class="bloco-titulo">6. Evoluções Recentes</div>
     <div class="bloco-body">
-      <div class="evo-area" style="min-height:60px">
-        <div class="evo-line"></div>
-        <div class="evo-line"></div>
-        <div class="evo-line"></div>
-      </div>
+      ${evolucaoHTML}
     </div>
   </div>
-
-  <!-- EVOLUÇÃO CLÍNICA -->
-  <div class="bloco">
-    <div class="bloco-titulo">Evolução Clínica</div>
-    <div class="bloco-body">
-      <div class="evo-area">
-        ${somentePessoais ? Array.from({ length: 8 }, () => '<div class="evo-line"></div>').join('') : evolucaoHTML}
-      </div>
-    </div>
-  </div>
-
-  <!-- CONDUTA -->
-  <div class="bloco">
-    <div class="bloco-titulo">Conduta / Prescrição</div>
-    <div class="bloco-body">
-      <div class="conduta-campo"><b>Diagnóstico:</b></div>
-      <div class="conduta-linha"></div>
-      <div class="conduta-campo"><b>Medicação / Prescrição:</b></div>
-      <div class="conduta-linha"></div>
-      <div class="conduta-campo"><b>Procedimentos:</b></div>
-      <div class="conduta-linha"></div>
-      <div class="conduta-campo"><b>Retorno:</b></div>
-      <div class="conduta-linha"></div>
-    </div>
-  </div>
+  ` : ''}
 
   <!-- ASSINATURA -->
   <div class="assinatura-area">
-    <div class="assinatura-data">
-      <div>Oriximiná &mdash; PA, ____/____/________</div>
-    </div>
+    <div class="data-local">Oriximiná &mdash; PA, ____/____/________</div>
     <div class="assinatura-bloco">
       <div class="assinatura-traco"></div>
-      <div class="assinatura-nome">${v(data.profissional.nome) || 'Profissional Responsável'}</div>
-      <p class="assinatura-label">${v(data.profissional.registro) || 'Registro Profissional'}</p>
+      <div class="assinatura-nome">${val(data.profissional.nome, 'PROFISSIONAL RESPONSÁVEL')}</div>
+      <div class="assinatura-label">${val(data.profissional.cargo)} &mdash; ${val(data.profissional.registro)}</div>
     </div>
   </div>
 
-  <!-- RODAPÉ -->
   <div class="rodape">
-    SMS Oriximiná &mdash; CER II &mdash; Documento impresso em ${dataAtual} às ${horaAtual} &mdash; ${somentePessoais ? 'Ficha Cadastral' : 'Via do Prontuário'}
+    Impresso via Lovable Cloud &mdash; CER II Oriximiná &mdash; ${dataAtual} ${horaAtual} &mdash; ${somentePessoais ? 'Ficha Cadastral Simplificada' : 'Ficha de Atendimento Completa'}
   </div>
 
 </body>
 </html>`;
   }, [data, somentePessoais]);
+
 
   const handlePrint = useCallback(() => {
     const html = buildHTML();
