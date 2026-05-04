@@ -117,6 +117,7 @@ const Pacientes: React.FC = () => {
     const t = window.setTimeout(() => {
       setDebouncedSearch(search);
       setVisibleCount(PAGE_SIZE); // reset pagination on search
+      setPage(0); // reset server-side pagination on search
     }, 300);
     return () => window.clearTimeout(t);
   }, [search]);
