@@ -91,7 +91,7 @@ export function formatCarimboBlock(carimbo: CarimboData | null): string {
         <div class="carimbo-info">${carimbo.conselho} / ${carimbo.numero_registro}-${carimbo.uf}</div>
         <div class="carimbo-info">${carimbo.especialidade}</div>
         ${carimbo.cargo ? `<div class="carimbo-info">${carimbo.cargo}</div>` : ''}
-        <div style="font-size:9px;color:#64748b;">CER II — Oriximiná/PA</div>
+        <div style="font-size:9px;color:#64748b;">CAPS II — Oriximiná/PA</div>
       </div>`;
   }
 

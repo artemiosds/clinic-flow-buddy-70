@@ -14,7 +14,7 @@ import { Download, FileText, Filter, Clock, Users, CalendarDays, TrendingUp, Ale
 import { supabase } from '@/integrations/supabase/client';
 import { openPrintDocument } from '@/lib/printLayout';
 import logoSmsFallback from '@/assets/logo-sms-oriximina.jpeg';
-import logoCerFallback from '@/assets/logo-cer-ii.png';
+import logoCapsFallback from '@/assets/logo-caps-ii.png';
 import { useUnidadeFilter } from '@/hooks/useUnidadeFilter';
 import { ChartCard } from '@/components/ChartCard';
 import { useRealtimeSubscription } from '@/hooks/useRealtimeSubscription';
@@ -1098,7 +1098,7 @@ ${dataRows}
       <div class="subtitle">CENTRO ESPECIALIZADO EM REABILITAÇÃO NÍVEL II</div>
       <div class="doc-title">Mapa de Atendimentos Concluídos</div>
     </div>
-    <img src="${logoUrlRight}" alt="Logo CER II" style="max-height:48px;max-width:90px;object-fit:contain;" />
+    <img src="${logoUrlRight}" alt="Logo CAPS II" style="max-height:48px;max-width:90px;object-fit:contain;" />
     <div class="emit-date">Data de emissão:<br/>${now}</div>
   </div>
   <div class="periodo">Período: ${periodo}</div>
@@ -1501,7 +1501,7 @@ table{width:100%;border-collapse:collapse;margin-bottom:10px;}
 th,td{border:1px solid #ccc;padding:4px 6px;text-align:left;font-size:9px;}
 th{background:#f1f5f9;font-weight:600;}
 @media print{body{padding:6px;}.no-print{display:none!important;}}</style></head><body>
-<div class="header"><img src="${logoUrl}" alt="Logo SMS"/><div style="flex:1;text-align:center;"><h1>SECRETARIA MUNICIPAL DE SAÚDE DE ORIXIMINÁ</h1><div class="sub">CENTRO ESPECIALIZADO EM REABILITAÇÃO NÍVEL II</div><div style="font-weight:700;margin-top:4px;text-transform:uppercase;">Relatório de Produtividade por Profissional</div></div><img src="${logoUrlRight}" alt="Logo CER II"/><div style="margin-left:12px;font-size:8px;text-align:right;">Data: ${now}<br/>Período: ${periodo}</div></div>
+<div class="header"><img src="${logoUrl}" alt="Logo SMS"/><div style="flex:1;text-align:center;"><h1>SECRETARIA MUNICIPAL DE SAÚDE DE ORIXIMINÁ</h1><div class="sub">CAPS II</div><div style="font-weight:700;margin-top:4px;text-transform:uppercase;">Relatório de Produtividade por Profissional</div></div><img src="${logoUrlRight}" alt="Logo CAPS II"/><div style="margin-left:12px;font-size:8px;text-align:right;">Data: ${now}<br/>Período: ${periodo}</div></div>
 <table><thead><tr><th>Profissional</th><th>Perfil</th><th>Unidade</th><th>Total</th><th>Concluídos</th><th>Faltas</th><th>Cancelados</th><th>Remarcados</th><th>Retornos</th><th>Tempo Médio</th><th>Taxa Conclusão</th><th>Taxa Retorno</th></tr></thead><tbody>${prodRows}${totalRow}</tbody></table>
 </body></html>`);
                     printWindow.document.close();
@@ -2356,7 +2356,7 @@ table{width:100%;border-collapse:collapse;margin-bottom:10px;}
 th,td{border:1px solid #ccc;padding:4px 6px;text-align:left;font-size:8px;}
 th{background:#f1f5f9;font-weight:600;}
 @media print{body{padding:6px;}.no-print{display:none!important;}}</style></head><body>
-<div class="header"><img src="${logoUrl}" alt="Logo SMS"/><div style="flex:1;text-align:center;"><h1>SECRETARIA MUNICIPAL DE SAÚDE DE ORIXIMINÁ</h1><div class="sub">CENTRO ESPECIALIZADO EM REABILITAÇÃO NÍVEL II</div><div style="font-weight:700;margin-top:4px;text-transform:uppercase;">Mapa de Atendimentos Concluídos</div></div><img src="${logoUrlRight}" alt="Logo CER II"/><div style="margin-left:12px;font-size:8px;text-align:right;">Data: ${now}<br/>Período: ${periodo}</div></div>
+<div class="header"><img src="${logoUrl}" alt="Logo SMS"/><div style="flex:1;text-align:center;"><h1>SECRETARIA MUNICIPAL DE SAÚDE DE ORIXIMINÁ</h1><div class="sub">CAPS II</div><div style="font-weight:700;margin-top:4px;text-transform:uppercase;">Mapa de Atendimentos Concluídos</div></div><img src="${logoUrlRight}" alt="Logo CAPS II"/><div style="margin-left:12px;font-size:8px;text-align:right;">Data: ${now}<br/>Período: ${periodo}</div></div>
 <table><thead><tr><th style="width:30px;text-align:center">Nº</th><th>Paciente</th><th>Dt Nasc</th><th>CPF</th><th>Endereço</th><th>CNS</th><th>Telefone</th><th>Profissional</th><th>Especialidade</th><th>Proc. SIGTAP</th><th>CID</th></tr></thead><tbody>${tableRows}</tbody>
 <tfoot><tr><td colspan="11" style="text-align:right;font-weight:600;padding:8px;">Total: ${mapaData.length} atendimentos</td></tr></tfoot></table>
 </body></html>`);

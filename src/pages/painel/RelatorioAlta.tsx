@@ -53,7 +53,7 @@ const MOTIVOS_ALTA = [
 ];
 
 const ENCAMINHAMENTOS = [
-  "APS/UBS", "CAPS", "NASF/eMulti", "Outro CER", "Hospital", "Serviço Social", "Escola", "Outro"
+  "APS/UBS", "CAPS", "NASF/eMulti", "Outro CAPS", "Hospital", "Serviço Social", "Escola", "Outro"
 ];
 
 const NIVEIS_INDEPENDENCIA = [
@@ -466,7 +466,7 @@ const RelatorioAlta: React.FC = () => {
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <FileText className="w-6 h-6 text-primary" />
-            Relatório de Alta — CER II
+            Relatório de Alta — CAPS II
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             Selecione o tipo de relatório que deseja gerar

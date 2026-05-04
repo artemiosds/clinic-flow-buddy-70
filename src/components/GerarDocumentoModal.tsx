@@ -118,7 +118,7 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
       return `<div class="carimbo-digital" style="display:inline-block;border:1px solid #1e293b;border-radius:6px;padding:8px 14px;text-align:center;font-size:12px;line-height:1.4;">
         <div style="font-weight:700;">${nome}</div>
         ${consName ? `<div>${consName} ${consNum}${consUf ? '/' + consUf : ''}</div>` : ''}
-        <div style="font-size:10px;color:#64748b;">${unidade || 'CER II — Oriximiná/PA'}</div>
+        <div style="font-size:10px;color:#64748b;">${unidade || 'CAPS II — Oriximiná/PA'}</div>
       </div>`;
     }
     if (carimbo.tipo === 'imagem' && carimbo.imagem_url) {
@@ -129,7 +129,7 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
       <div>${carimbo.conselho} ${carimbo.numero_registro}${carimbo.uf ? '-' + carimbo.uf : ''}</div>
       ${carimbo.especialidade ? `<div>${carimbo.especialidade}</div>` : ''}
       ${carimbo.cargo ? `<div>${carimbo.cargo}</div>` : ''}
-      <div style="font-size:10px;color:#64748b;">CER II — Oriximiná/PA</div>
+      <div style="font-size:10px;color:#64748b;">CAPS II — Oriximiná/PA</div>
     </div>`;
   })();
 
@@ -144,7 +144,7 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
       .replace(/\{\{profissional\}\}/g, profissional?.nome || '—')
       .replace(/\{\{cid\}\}/g, paciente?.cid || '—')
       .replace(/\{\{especialidade\}\}/g, paciente?.especialidade_destino || '—')
-      .replace(/\{\{unidade\}\}/g, unidade || 'CER II Oriximiná')
+      .replace(/\{\{unidade\}\}/g, unidade || 'CAPS II Oriximiná')
       .replace(/\{\{data_hoje\}\}/g, hoje);
 
     // Extended variables from campos (datas yyyy-mm-dd → dd/mm/yyyy)
@@ -213,8 +213,8 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
   };
 
   // Templates dinâmicos para Declaração de Comparecimento
-  const DECL_COMPARECEU_HTML = `<p style='text-align: justify;'>Declaramos, para os devidos fins, que a paciente <strong>{{nome_paciente}}</strong>, CPF nº <strong>{{cpf}}</strong>, inscrita no CNS sob o nº <strong>{{cns}}</strong>, encontra-se em acompanhamento no Centro de Especialidades em Reabilitação — CER II. A referida paciente <strong>COMPARECEU</strong> a esta unidade na data de <strong>{{data_atendimento}}</strong>, no período das <strong>{{horario_entrada}}</strong> às <strong>{{horario_saida}}</strong>. O comparecimento deu-se para fins de: <strong>{{finalidade}}</strong>.</p><p style='text-align: justify;'>Expedimos a presente declaração para fins de justificativa junto às instituições que se fizerem necessárias.</p>`;
-  const DECL_FALTOU_HTML = `<p style='text-align: justify;'>Declaramos, para os devidos fins, que a paciente <strong>{{nome_paciente}}</strong>, CPF nº <strong>{{cpf}}</strong>, inscrita no CNS sob o nº <strong>{{cns}}</strong>, encontra-se em acompanhamento no Centro de Especialidades em Reabilitação — CER II.</p><p style='text-align: justify;'>A referida paciente esteve <strong>AUSENTE</strong> ao atendimento agendado para a data de <strong>{{data_falta}}</strong>, sob responsabilidade do(a) profissional <strong>{{profissional_agendado}}</strong>.</p><p style='text-align: justify;'>A ausência deveu-se a motivo justificado: <strong>{{motivo_falta}}</strong>, impossibilitando seu comparecimento na data supracitada. Expedimos a presente declaração para fins de justificativa junto às instituições que se fizerem necessárias.</p>`;
+  const DECL_COMPARECEU_HTML = `<p style='text-align: justify;'>Declaramos, para os devidos fins, que a paciente <strong>{{nome_paciente}}</strong>, CPF nº <strong>{{cpf}}</strong>, inscrita no CNS sob o nº <strong>{{cns}}</strong>, encontra-se em acompanhamento no CAPS II. A referida paciente <strong>COMPARECEU</strong> a esta unidade na data de <strong>{{data_atendimento}}</strong>, no período das <strong>{{horario_entrada}}</strong> às <strong>{{horario_saida}}</strong>. O comparecimento deu-se para fins de: <strong>{{finalidade}}</strong>.</p><p style='text-align: justify;'>Expedimos a presente declaração para fins de justificativa junto às instituições que se fizerem necessárias.</p>`;
+  const DECL_FALTOU_HTML = `<p style='text-align: justify;'>Declaramos, para os devidos fins, que a paciente <strong>{{nome_paciente}}</strong>, CPF nº <strong>{{cpf}}</strong>, inscrita no CNS sob o nº <strong>{{cns}}</strong>, encontra-se em acompanhamento no CAPS II.</p><p style='text-align: justify;'>A referida paciente esteve <strong>AUSENTE</strong> ao atendimento agendado para a data de <strong>{{data_falta}}</strong>, sob responsabilidade do(a) profissional <strong>{{profissional_agendado}}</strong>.</p><p style='text-align: justify;'>A ausência deveu-se a motivo justificado: <strong>{{motivo_falta}}</strong>, impossibilitando seu comparecimento na data supracitada. Expedimos a presente declaração para fins de justificativa junto às instituições que se fizerem necessárias.</p>`;
 
   // Update conteudo when campos change
   useEffect(() => {
@@ -311,7 +311,7 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
           observacao: campos.observacoes || '',
           gerado_por: user?.nome || '',
           gerado_por_perfil: user?.role || '',
-          unidade: unidade || 'CER II Oriximiná',
+          unidade: unidade || 'CAPS II Oriximiná',
           tipo_documento: selected.tipo,
         });
         if (!result.success) {

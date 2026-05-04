@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Printer } from "lucide-react";
 import { loadDocumentConfig, type DocumentConfig } from "@/lib/printLayout";
 import logoSmsFallback from "@/assets/logo-sms-oriximina.jpeg";
-import logoCerFallback from "@/assets/logo-cer-ii.png";
+import logoCapsFallback from "@/assets/logo-caps-ii.png";
 
 interface FichaData {
   paciente: {
@@ -360,7 +360,7 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = "co
 
   const buildHTML = useCallback(() => {
     const logoLeft = config?.logoEsquerda || resolveLogoUrl(logoSmsFallback);
-    const logoRight = config?.logoDireita || resolveLogoUrl(logoCerFallback);
+    const logoRight = config?.logoDireita || resolveLogoUrl(logoCapsFallback);
     const linha1 = config?.linha1 || "Secretaria Municipal de Saúde de Oriximiná";
     const linha2 = config?.linha2 || "CAPS II";
 
@@ -442,7 +442,7 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = "co
       <div class="ficha-tipo">${somentePessoais ? "FICHA CADASTRAL SIMPLIFICADA" : "FICHA DE ATENDIMENTO COMPLETA"}</div>
     </div>
     <div class="header-logo">
-      <img src="${logoRight}" alt="Logo CER II" />
+      <img src="${logoRight}" alt="Logo CAPS II" />
     </div>
     <div class="header-right">
       <div><b>Data:</b> ${dataAtual}</div>
