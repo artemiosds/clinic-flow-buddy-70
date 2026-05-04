@@ -95,6 +95,7 @@ const FichaPacienteCabecalho: React.FC<FichaPacienteCabecalhoProps> = ({
   const [editData, setEditData] = useState({
     nome: "",
     data_nascimento: "",
+    sexo: "",
     cpf: "",
     cns: "",
     cid: "",
