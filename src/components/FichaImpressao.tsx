@@ -648,12 +648,12 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
     <div className="flex flex-col items-center gap-6 py-4">
       <div className="w-full border rounded-lg bg-white p-6 shadow-sm max-h-[70vh] overflow-y-auto">
         <div className="flex items-center gap-4 mb-4 border-b-2 border-primary/20 pb-4">
-          <img src={logoSmsFallback} alt="Logo SMS" className="w-12 h-12 object-contain" />
+          <img src={config?.logoEsquerda || logoSmsFallback} alt="Logo" className="w-12 h-12 object-contain" />
           <div className="flex-1 text-center">
-            <h2 className="text-sm font-bold uppercase tracking-tight text-primary">Prefeitura Municipal de Oriximiná</h2>
-            <p className="text-[11px] font-bold text-muted-foreground uppercase">Centro Especializado em Reabilitação II (CER II)</p>
+            <h2 className="text-sm font-bold uppercase tracking-tight text-primary">{config?.linha1 || 'Prefeitura Municipal de Oriximiná'}</h2>
+            <p className="text-[11px] font-bold text-muted-foreground uppercase">{config?.linha2 || 'Centro Especializado em Reabilitação II (CER II)'}</p>
           </div>
-          <img src={logoCerFallback} alt="Logo CER II" className="w-12 h-12 object-contain" />
+          <img src={config?.logoDireita || logoCerFallback} alt="Logo" className="w-12 h-12 object-contain" />
         </div>
 
         <div className="bg-primary/5 rounded px-3 py-1.5 mb-4 text-center">
