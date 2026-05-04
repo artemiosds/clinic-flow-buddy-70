@@ -1534,7 +1534,16 @@ const Agenda: React.FC = () => {
       criadoEm: new Date().toISOString(),
       criadoPor: user.id,
     };
-    await addAgendamento(agData);
+    setAgendamentoSaving(true);
+    const toastId = toast.loading("Agendando retorno...");
+    try {
+      await addAgendamento(agData);
+      toast.success("Retorno agendado com sucesso!", { id: toastId });
+    } catch (err) {
+      toast.error("Erro ao agendar retorno.", { id: toastId });
+    } finally {
+      setAgendamentoSaving(false);
+    }
     await logAction({
       acao: "agendar_retorno",
       entidade: "agendamento",
