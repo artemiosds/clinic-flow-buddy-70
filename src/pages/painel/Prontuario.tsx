@@ -112,11 +112,11 @@ interface ProcedimentoDB {
 }
 
 const TIPOS_REGISTRO = [
-  { value: 'avaliacao_inicial', label: '🟢 Avaliação Inicial' },
-  { value: 'retorno', label: '🔵 Retorno' },
-  { value: 'sessao', label: '🟡 Sessão' },
-  { value: 'urgencia', label: '🔴 Urgência' },
-  { value: 'procedimento', label: '🟣 Procedimento' },
+  { value: 'avaliacao_inicial', label: `🟢 ${TIPO_REGISTRO_LABELS.avaliacao_inicial}` },
+  { value: 'retorno', label: `🔵 ${TIPO_REGISTRO_LABELS.retorno}` },
+  { value: 'sessao', label: `🟡 ${TIPO_REGISTRO_LABELS.sessao}` },
+  { value: 'urgencia', label: `🔴 ${TIPO_REGISTRO_LABELS.urgencia}` },
+  { value: 'procedimento', label: `🟣 ${TIPO_REGISTRO_LABELS.procedimento}` },
   { value: 'consulta', label: 'Consulta (legado)' },
   { value: 'reavaliacao', label: 'Reavaliação (legado)' },
   { value: 'avaliacao_enfermagem', label: 'Avaliação de Enfermagem (legado)' },
