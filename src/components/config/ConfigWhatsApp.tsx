@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
+import { useConfiguracao } from '@/hooks/useConfiguracao';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -79,6 +80,7 @@ const ConfigWhatsApp: React.FC = () => {
 
   const isGlobalAdmin = user?.usuario === 'admin.sms';
   const userUnitId = user?.unidadeId || '';
+  const { atualizarConfiguracao, configuracoes, loading: hookLoading } = useConfiguracao(userUnitId);
 
   // Evolution API config
   const [evolutionConfig, setEvolutionConfig] = useState({
@@ -86,7 +88,6 @@ const ConfigWhatsApp: React.FC = () => {
     evolution_base_url: 'https://api.agendamento-saude-sms-oriximina.site',
     evolution_api_key: '', evolution_instance_name: '',
   });
-  const [evolutionConfigId, setEvolutionConfigId] = useState<string | null>(null);
   const [evolutionInstances, setEvolutionInstances] = useState<{ instanceName: string; state: string }[]>([]);
   const [evolutionLoading, setEvolutionLoading] = useState(true);
   const [evolutionSaving, setEvolutionSaving] = useState(false);
@@ -104,6 +105,47 @@ const ConfigWhatsApp: React.FC = () => {
   const [horasLembrete1, setHorasLembrete1] = useState(24);
   const [horasLembrete2, setHorasLembrete2] = useState(2);
 
+  useEffect(() => {
+    if (!hookLoading) {
+      const clinicaCfg = configuracoes['config_clinica'];
+      if (clinicaCfg) {
+        setEvolutionConfig({
+          nome_clinica: clinicaCfg.nome_clinica || '',
+          logo_url: clinicaCfg.logo_url || '',
+          telefone: clinicaCfg.telefone || '',
+          evolution_base_url: clinicaCfg.evolution_base_url || 'https://api.agendamento-saude-sms-oriximina.site',
+          evolution_api_key: clinicaCfg.evolution_api_key || '',
+          evolution_instance_name: clinicaCfg.evolution_instance_name || '',
+        });
+      }
+      const waCfg = configuracoes['config_whatsapp_reminders'];
+      if (waCfg) {
+        setHorasLembrete1(waCfg.horas_lembrete_1 || 24);
+        setHorasLembrete2(waCfg.horas_lembrete_2 || 2);
+      }
+      setEvolutionLoading(false);
+    }
+  }, [hookLoading, configuracoes]);
+
+  // Check connection whenever config is loaded or changed
+  useEffect(() => {
+    if (evolutionConfig.evolution_instance_name && evolutionConfig.evolution_api_key) {
+      const check = async () => {
+        try {
+          const resp = await fetch(
+            `${evolutionConfig.evolution_base_url}/instance/connectionState/${evolutionConfig.evolution_instance_name}`,
+            { headers: { apikey: evolutionConfig.evolution_api_key } }
+          );
+          if (resp.ok) {
+            const state = await resp.json();
+            setEvolutionStatus(state?.instance?.state === 'open' ? 'connected' : 'disconnected');
+          } else { setEvolutionStatus('error'); }
+        } catch { setEvolutionStatus('error'); }
+      };
+      check();
+    }
+  }, [evolutionConfig.evolution_instance_name, evolutionConfig.evolution_api_key, evolutionConfig.evolution_base_url]);
+
   // Logs
   const [logs, setLogs] = useState<NotifLog[]>([]);
   const [logsLoading, setLogsLoading] = useState(false);
@@ -115,60 +157,27 @@ const ConfigWhatsApp: React.FC = () => {
   // Active tab
   const [activeSubTab, setActiveSubTab] = useState('conexao');
 
-  // Load Evolution config
+  // Load Instances only
   useEffect(() => {
-    (async () => {
-      try {
-        const { data } = await supabase.from('clinica_config').select('*').limit(1).maybeSingle();
-        if (data) {
-          setEvolutionConfigId(data.id);
-          setEvolutionConfig({
-            nome_clinica: data.nome_clinica || '',
-            logo_url: data.logo_url || '',
-            telefone: data.telefone || '',
-            evolution_base_url: data.evolution_base_url || 'https://api.agendamento-saude-sms-oriximina.site',
-            evolution_api_key: data.evolution_api_key || '',
-            evolution_instance_name: data.evolution_instance_name || '',
+    if (evolutionConfig.evolution_api_key) {
+      (async () => {
+        try {
+          const resp = await fetch(`${evolutionConfig.evolution_base_url}/instance/fetchInstances`, {
+            headers: { apikey: evolutionConfig.evolution_api_key },
           });
-          if (data.evolution_instance_name && data.evolution_api_key) {
-            try {
-              const resp = await fetch(
-                `${data.evolution_base_url}/instance/connectionState/${data.evolution_instance_name}`,
-                { headers: { apikey: data.evolution_api_key } }
-              );
-              if (resp.ok) {
-                const state = await resp.json();
-                setEvolutionStatus(state?.instance?.state === 'open' ? 'connected' : 'disconnected');
-              } else { setEvolutionStatus('error'); }
-            } catch { setEvolutionStatus('error'); }
-          }
-          try {
-            const resp = await fetch(`${data?.evolution_base_url || evolutionConfig.evolution_base_url}/instance/fetchInstances`, {
-              headers: { apikey: data?.evolution_api_key || evolutionConfig.evolution_api_key },
-            });
-            if (resp.ok) {
-              const instances = await resp.json();
-              if (Array.isArray(instances)) {
-                setEvolutionInstances(instances.map((i: any) => ({
-                  instanceName: i.instance?.instanceName || i.instanceName || '',
-                  state: i.instance?.state || i.state || 'unknown',
-                })).filter((i: any) => i.instanceName));
-              }
+          if (resp.ok) {
+            const instances = await resp.json();
+            if (Array.isArray(instances)) {
+              setEvolutionInstances(instances.map((i: any) => ({
+                instanceName: i.instance?.instanceName || i.instanceName || '',
+                state: i.instance?.state || i.state || 'unknown',
+              })).filter((i: any) => i.instanceName));
             }
-          } catch {}
-        }
-
-        // Load reminder hours from system_config
-        const { data: sysData } = await supabase.from('system_config').select('configuracoes').eq('id', 'config_whatsapp').maybeSingle();
-        if (sysData?.configuracoes) {
-          const cfg = sysData.configuracoes as any;
-          if (cfg.horas_lembrete_1) setHorasLembrete1(cfg.horas_lembrete_1);
-          if (cfg.horas_lembrete_2) setHorasLembrete2(cfg.horas_lembrete_2);
-        }
-      } catch {}
-      setEvolutionLoading(false);
-    })();
-  }, []);
+          }
+        } catch {}
+      })();
+    }
+  }, [evolutionConfig.evolution_api_key, evolutionConfig.evolution_base_url]);
 
   // Load templates
   const loadTemplates = useCallback(async () => {
@@ -246,12 +255,7 @@ const ConfigWhatsApp: React.FC = () => {
   const saveEvolutionConfig = async () => {
     setEvolutionSaving(true);
     try {
-      if (evolutionConfigId) {
-        await supabase.from('clinica_config').update({ ...evolutionConfig, updated_at: new Date().toISOString() }).eq('id', evolutionConfigId);
-      } else {
-        const { data } = await supabase.from('clinica_config').insert(evolutionConfig).select('id').single();
-        if (data) setEvolutionConfigId(data.id);
-      }
+      await atualizarConfiguracao('config_clinica', evolutionConfig, { auditAcao: 'ALTERAR_CONFIG_CLINICA' });
       toast.success('Configurações salvas!');
     } catch (err: any) { toast.error(`Erro: ${err.message}`); }
     setEvolutionSaving(false);
@@ -325,11 +329,10 @@ const ConfigWhatsApp: React.FC = () => {
   // Save reminder config
   const saveReminderConfig = async () => {
     try {
-      await supabase.from('system_config').upsert({
-        id: 'config_whatsapp',
-        configuracoes: { horas_lembrete_1: horasLembrete1, horas_lembrete_2: horasLembrete2 } as any,
-        updated_at: new Date().toISOString(),
-      });
+      await atualizarConfiguracao('config_whatsapp_reminders', { 
+        horas_lembrete_1: horasLembrete1, 
+        horas_lembrete_2: horasLembrete2 
+      }, { auditAcao: 'ALTERAR_CONFIG_WHATSAPP_TEMPO' });
       toast.success('Configurações de tempo salvas!');
     } catch (err: any) { toast.error(`Erro: ${err.message}`); }
   };
