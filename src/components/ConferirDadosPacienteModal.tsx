@@ -162,7 +162,9 @@ export function ConferirDadosPacienteModal({
         // Endereço: prioriza campos estruturados (logradouro), fallback p/ coluna legada (endereco)
         endereco: cd.logradouro || data.endereco || "",
         municipio: data.municipio || "",
-        sexo: cd.sexo || "",
+        sexo: (cd.sexo === "masculino" || cd.sexo === "M") ? "M" : 
+              (cd.sexo === "feminino" || cd.sexo === "F") ? "F" : 
+              (cd.sexo === "ignorado" || cd.sexo === "I") ? "I" : "",
         raca_cor: cd.racaCor || cd.raca_cor || "",
         etnia: cd.etnia || "",
         etnia_outra: cd.etniaOutra || "",
