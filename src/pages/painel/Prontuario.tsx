@@ -2083,11 +2083,11 @@ const ProntuarioPage: React.FC = () => {
                 procedimento: 'bg-purple-500/5 border-purple-500/20',
               };
               const TIPO_EMOJI: Record<string, string> = {
-                avaliacao_inicial: '🟢 Avaliação Inicial',
-                retorno: '🔵 Retorno',
-                sessao: '🟡 Sessão',
-                urgencia: '🔴 Urgência',
-                procedimento: '🟣 Procedimento',
+                avaliacao_inicial: `🟢 ${TIPO_REGISTRO_LABELS.avaliacao_inicial}`,
+                retorno: `🔵 ${TIPO_REGISTRO_LABELS.retorno}`,
+                sessao: `🟡 ${TIPO_REGISTRO_LABELS.sessao}`,
+                urgencia: `🔴 ${TIPO_REGISTRO_LABELS.urgencia}`,
+                procedimento: `🟣 ${TIPO_REGISTRO_LABELS.procedimento}`,
               };
               const colorClass = TIPO_COLORS[form.tipo_registro] || 'bg-muted/30 border-border';
               const tipoTitle = TIPO_EMOJI[form.tipo_registro] || form.tipo_registro;
