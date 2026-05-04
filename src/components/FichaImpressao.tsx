@@ -385,7 +385,25 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
           <div class="evo-text">${val(evo.observacao)}</div>
         </div>
       `).join('')
-      : Array.from({ length: 8 }, () => '<div class="evo-line"></div>').join('');
+      : '';
+
+    const linhasVazias = (titulo: string, numLinhas: number = 3) => `
+      <div class="bloco">
+        <div class="bloco-titulo">${titulo}</div>
+        <div class="bloco-body">
+          ${Array.from({ length: numLinhas }, () => '<div class="evo-line"></div>').join('')}
+        </div>
+      </div>
+    `;
+
+    const blocoCurto = (titulo: string) => `
+      <div class="bloco">
+        <div class="bloco-titulo">${titulo}</div>
+        <div class="bloco-body">
+          <div class="evo-line"></div>
+        </div>
+      </div>
+    `;
 
     return `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -488,31 +506,47 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
   </div>
 
   ${!somentePessoais ? `
-  <!-- SEÇÃO 5: DADOS CLÍNICOS (Somente na versão completa) -->
+  <!-- SEÇÃO 5: TRIAGEM E SINAIS VITAIS -->
   <div class="bloco">
-    <div class="bloco-titulo">5. Triagem e Sinais Vitais</div>
+    <div class="bloco-titulo">5. Triagem / Sinais Vitais</div>
     <div class="bloco-body">
       <table class="vitais-table">
         <tr>
           <td><b>PA (Pressão)</b><span>${val(data.sinaisVitais.pressao_arterial)}</span></td>
           <td><b>FC (BPM)</b><span>${val(data.sinaisVitais.frequencia_cardiaca)}</span></td>
+          <td><b>FR (resp)</b><span>${val(data.sinaisVitais.frequencia_respiratoria)}</span></td>
           <td><b>Temp (°C)</b><span>${val(data.sinaisVitais.temperatura)}</span></td>
+        </tr>
+        <tr>
           <td><b>SpO2 (%)</b><span>${val(data.sinaisVitais.saturacao)}</span></td>
           <td><b>Peso (kg)</b><span>${val(data.sinaisVitais.peso)}</span></td>
           <td><b>Altura (m)</b><span>${val(data.sinaisVitais.altura)}</span></td>
           <td><b>Glicemia</b><span>${val(data.sinaisVitais.glicemia)}</span></td>
-          <td><b>FR (resp)</b><span>${val(data.sinaisVitais.frequencia_respiratoria)}</span></td>
         </tr>
       </table>
     </div>
   </div>
 
+  <!-- SEÇÃO 6: CAMPOS CLÍNICOS -->
+  ${linhasVazias('6. Queixa Principal', 2)}
+  
   <div class="bloco">
-    <div class="bloco-titulo">6. Evoluções Recentes</div>
+    <div class="bloco-titulo">7. Evolução Clínica</div>
     <div class="bloco-body">
       ${evolucaoHTML}
+      ${Array.from({ length: 6 }, () => '<div class="evo-line"></div>').join('')}
     </div>
   </div>
+
+  ${linhasVazias('8. Conduta / Prescrição', 4)}
+  
+  <div class="grid-2">
+    ${blocoCurto('9. Diagnóstico')}
+    ${blocoCurto('10. Retorno')}
+  </div>
+
+  ${linhasVazias('11. Medicação / Prescrição', 4)}
+  ${linhasVazias('12. Procedimentos', 3)}
   ` : ''}
 
   <!-- ASSINATURA -->
@@ -637,9 +671,29 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
             </div>
           </div>
           
-          <p className="text-[10px] text-center text-slate-400 italic">
-            O layout final impresso será formatado em padrão A4 profissional.
-          </p>
+          {/* Sinais Vitais e Clínicos (Preview) */}
+          {!somentePessoais && (
+            <>
+              <div className="border border-slate-200 rounded p-3">
+                <h3 className="text-[10px] font-bold uppercase text-primary mb-2 border-b border-slate-100 pb-1">5. Sinais Vitais</h3>
+                <div className="grid grid-cols-4 gap-2">
+                  <p><span className="text-[9px] font-bold uppercase text-slate-400">PA:</span> {data.sinaisVitais.pressao_arterial || '—'}</p>
+                  <p><span className="text-[9px] font-bold uppercase text-slate-400">FC:</span> {data.sinaisVitais.frequencia_cardiaca || '—'}</p>
+                  <p><span className="text-[9px] font-bold uppercase text-slate-400">FR:</span> {data.sinaisVitais.frequencia_respiratoria || '—'}</p>
+                  <p><span className="text-[9px] font-bold uppercase text-slate-400">Temp:</span> {data.sinaisVitais.temperatura || '—'}</p>
+                  <p><span className="text-[9px] font-bold uppercase text-slate-400">SpO2:</span> {data.sinaisVitais.saturacao || '—'}</p>
+                  <p><span className="text-[9px] font-bold uppercase text-slate-400">Peso:</span> {data.sinaisVitais.peso || '—'}</p>
+                  <p><span className="text-[9px] font-bold uppercase text-slate-400">Altura:</span> {data.sinaisVitais.altura || '—'}</p>
+                  <p><span className="text-[9px] font-bold uppercase text-slate-400">Glicemia:</span> {data.sinaisVitais.glicemia || '—'}</p>
+                </div>
+              </div>
+              <div className="border border-slate-200 rounded p-3 bg-slate-50/50">
+                <p className="text-[9px] text-center text-slate-500 uppercase font-bold">
+                  Campos clínicos (Queixa, Evolução, Conduta, etc.) inclusos na versão impressa completa.
+                </p>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
