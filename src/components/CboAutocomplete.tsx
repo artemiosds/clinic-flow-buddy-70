@@ -107,6 +107,7 @@ const CboAutocomplete: React.FC<CboAutocompleteProps> = ({
     lastSuggestedFor.current = prof;
 
     (async () => {
+      const { data } = await (supabase as any)
         .from('cbo_codigos')
         .select('codigo, descricao')
         .eq('ativo', true)
@@ -115,15 +116,7 @@ const CboAutocomplete: React.FC<CboAutocompleteProps> = ({
       if (data && data.length > 0) {
         setSuggestion(data[0] as CboRow);
       } else {
-        // Try a softer match by ilike on descricao
-        const { data: data2 } = await (supabase as any)
-          .from('cbo_codigos')
-          .select('codigo, descricao, profissoes_relacionadas')
-          .eq('ativo', true)
-          .ilike('descricao', `%${prof}%`)
-          .limit(1);
-        if (data2 && data2.length > 0) setSuggestion(data2[0] as CboRow);
-        else setSuggestion(null);
+        setSuggestion(null);
       }
     })();
   }, [profissaoSugestao, value?.codigo]);
