@@ -724,7 +724,7 @@ const Pacientes: React.FC = () => {
     const today = new Date().toISOString().split("T")[0];
     const dadosClinicosPromise = supabase
       .from("agendamentos")
-      .select("id, tipo, data, unidade_id, profissional_id, encaminhamento")
+      .select("id, tipo, data, unidade_id, profissional_id")
       .eq("paciente_id", pacienteId)
       .order("data", { ascending: false })
       .limit(20)
@@ -743,9 +743,10 @@ const Pacientes: React.FC = () => {
           unidade_atendimento: unidade?.nome || "",
           data_atendimento: lastAg?.data || "",
           especialidade: prof?.cargo || "",
-          encaminhamento: lastAg?.encaminhamento || "",
+          encaminhamento: "",
         };
       });
+
 
     // C) SINAIS VITAIS — último registro de triagem
     const sinaisVitaisPromise = (supabase as any)
