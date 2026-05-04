@@ -91,46 +91,39 @@ const DEFAULT: FluxoConfig = {
 };
 
 const ConfigFluxoAtendimento: React.FC = () => {
-  const { funcionarios } = useData();
   const { user } = useAuth();
+  const { atualizarConfiguracao, configuracoes, loading: hookLoading } = useConfiguracao(user?.unidadeId);
   const [config, setConfig] = useState<FluxoConfig>(DEFAULT);
   const [loading, setLoading] = useState(true);
   const [triageEnabled, setTriageEnabled] = useState(false);
   const [triageLoading, setTriageLoading] = useState(true);
-  const [triageSettingId, setTriageSettingId] = useState<string | null>(null);
 
   // Turno editing
   const [editingTurno, setEditingTurno] = useState<TurnoDefinition | null>(null);
   const [newTurno, setNewTurno] = useState<{ nome: string; horaInicio: string; horaFim: string }>({ nome: '', horaInicio: '08:00', horaFim: '12:00' });
   const [showNewTurno, setShowNewTurno] = useState(false);
 
-  const loadConfig = useCallback(async () => {
-    const [cfgRes, triageRes] = await Promise.all([
-      supabase.from('system_config').select('configuracoes').eq('id', 'default').maybeSingle(),
-      supabase.from('triage_settings').select('*').is('profissional_id', null).maybeSingle(),
-    ]);
-    const cfg = cfgRes.data?.configuracoes as any;
-    if (cfg?.[CONFIG_KEY]) {
-      const saved = cfg[CONFIG_KEY];
-      setConfig({ ...DEFAULT, ...saved, turnos: saved.turnos || DEFAULT.turnos });
+  useEffect(() => {
+    if (!hookLoading) {
+      const saved = configuracoes[CONFIG_KEY];
+      if (saved) {
+        setConfig({ ...DEFAULT, ...saved, turnos: saved.turnos || DEFAULT.turnos });
+      }
+      setTriageEnabled(configuracoes['config_triagem_enabled'] ?? false);
+      setTriageLoading(false);
+      setLoading(false);
     }
-    if (triageRes.data) { setTriageEnabled(triageRes.data.enabled ?? false); setTriageSettingId(triageRes.data.id); }
-    setTriageLoading(false);
-    setLoading(false);
-  }, []);
-
-  useEffect(() => { loadConfig(); }, [loadConfig]);
+  }, [hookLoading, configuracoes]);
 
   const save = async (updated: FluxoConfig) => {
-    const { data: existing } = await supabase.from('system_config').select('configuracoes').eq('id', 'default').maybeSingle();
-    const existingConfig = (existing?.configuracoes as any) || {};
-    await supabase.from('system_config').upsert({
-      id: 'default',
-      configuracoes: { ...existingConfig, [CONFIG_KEY]: updated },
-      updated_at: new Date().toISOString(),
-    });
+    await atualizarConfiguracao(CONFIG_KEY, updated, { auditAcao: 'ALTERAR_CONFIG_FLUXO' });
     setConfig(updated);
-    toast.success('Configuração salva');
+  };
+
+  const handleToggleTriage = async (v: boolean) => {
+    setTriageEnabled(v);
+    await atualizarConfiguracao('config_triagem_enabled', v, { auditAcao: 'ALTERAR_CONFIG_TRIAGEM' });
+    toast.success(v ? 'Triagem habilitada' : 'Triagem desabilitada');
   };
 
   const handleAddTurno = () => {
@@ -187,16 +180,7 @@ const ConfigFluxoAtendimento: React.FC = () => {
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold font-display text-foreground">Triagem</h3>
             {triageLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : (
-              <Switch checked={triageEnabled} onCheckedChange={async v => {
-                setTriageEnabled(v);
-                if (triageSettingId) {
-                  await supabase.from('triage_settings').update({ enabled: v }).eq('id', triageSettingId);
-                } else {
-                  const { data } = await supabase.from('triage_settings').insert({ enabled: v }).select('id').single();
-                  if (data) setTriageSettingId(data.id);
-                }
-                toast.success(v ? 'Triagem habilitada' : 'Triagem desabilitada');
-              }} />
+              <Switch checked={triageEnabled} onCheckedChange={handleToggleTriage} />
             )}
           </div>
           <div className="space-y-2">
