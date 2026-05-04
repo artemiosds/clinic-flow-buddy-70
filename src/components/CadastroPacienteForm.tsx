@@ -9,7 +9,8 @@ import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { User, MapPin, Phone, FileHeart, Upload, Loader2, Building2, Stethoscope, Loader, CheckCircle2 } from "lucide-react";
+import { User, MapPin, Phone, FileHeart, Upload, Loader2, Building2, Stethoscope, Loader, CheckCircle2, FileText, Paperclip } from "lucide-react";
+import PacienteDocumentos from "./PacienteDocumentos";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { applyPhoneMask, formatPhoneForDisplay } from "@/lib/phoneUtils";
@@ -239,24 +240,6 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
     }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { toast.error("Arquivo máximo: 5MB"); return; }
-    setUploading(true);
-    try {
-      const ext = file.name.split(".").pop();
-      const path = `documentos/${Date.now()}.${ext}`;
-      const { error } = await supabase.storage.from("sms").upload(path, file);
-      if (error) throw error;
-      set("documentoUrl", path);
-      toast.success("Documento enviado!");
-    } catch {
-      toast.error("Erro ao enviar documento.");
-    } finally {
-      setUploading(false);
-    }
-  };
 
   const toggleEquipamento = (eq: string) => {
     const current = form.equipamentos;

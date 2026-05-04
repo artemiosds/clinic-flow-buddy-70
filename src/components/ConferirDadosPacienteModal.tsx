@@ -7,7 +7,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertTriangle, CheckCircle2, Save, User, MapPin, Phone, Globe, Calendar, Stethoscope } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Save, User, MapPin, Phone, Globe, Calendar, Stethoscope, FileText, Paperclip } from "lucide-react";
+import PacienteDocumentos from "./PacienteDocumentos";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import LogradouroDneAutocomplete from "@/components/LogradouroDneAutocomplete";
@@ -530,6 +531,14 @@ export function ConferirDadosPacienteModal({
                   {renderFieldText("Telefone secundário", "telefone_secundario", "tel", "(00) 00000-0000", "tel")}
                   {renderFieldText("E-mail", "email", "email", "email@exemplo.com", "email")}
                 </div>
+              </div>
+
+              {/* Documentos */}
+              <div className="pt-2">
+                <div className="flex items-center gap-2 text-sm font-semibold text-foreground border-b pb-1.5 mb-3">
+                  <Paperclip className="w-4 h-4 text-primary" />Documentos e Anexos do Paciente
+                </div>
+                <PacienteDocumentos pacienteId={pacienteId} unidadeId={paciente?.unidade_id} />
               </div>
 
               {/* Botão salvar (quando houver alterações) */}
