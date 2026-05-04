@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, Trash2, Loader2, Pencil, Clock } from 'lucide-react';
 import ConfiguracaoTriagem from '@/components/ConfiguracaoTriagem';
 import { toast } from 'sonner';
+import { TIPO_REGISTRO_LABELS } from '@/utils/labels';
 
 const CONFIG_KEY = 'config_fluxo_atendimento';
 
