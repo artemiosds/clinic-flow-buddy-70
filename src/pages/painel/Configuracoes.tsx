@@ -3,6 +3,7 @@ import { useData } from '@/contexts/DataContext';
 import GerenciarProcedimentos from '@/components/GerenciarProcedimentos';
 import VincularSigtapProcedimentos from '@/components/VincularSigtapProcedimentos';
 import SigtapSyncPanel from '@/components/SigtapSyncPanel';
+import { useConfiguracao } from '@/hooks/useConfiguracao';
 import ConfiguracaoTriagem from '@/components/ConfiguracaoTriagem';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -61,78 +62,34 @@ const TABS = [
 type TabId = typeof TABS[number]['id'];
 
 const Configuracoes: React.FC = () => {
-  const { configuracoes, updateConfiguracoes, unidades, funcionarios } = useData();
   const { user } = useAuth();
-  const { whatsapp, filaEspera, templates, webhook } = configuracoes;
+  const { unidades, funcionarios } = useData();
+  const { atualizarConfiguracao, configuracoes, loading: hookLoading } = useConfiguracao(user?.unidadeId);
   
   const [searchParams, setSearchParams] = useSearchParams();
-  const [webhookUrl, setWebhookUrl] = useState(webhook.url);
-  const [webhookEditing, setWebhookEditing] = useState(!webhook.url);
-  const [webhookTesting, setWebhookTesting] = useState(false);
-  const [gmailTesting, setGmailTesting] = useState(false);
-  const [gmailStatus, setGmailStatus] = useState<'idle' | 'conectado' | 'erro_autenticacao' | 'erro_conexao' | 'erro_envio' | 'nao_configurado'>('idle');
-  const [gmailMessage, setGmailMessage] = useState('');
-  const { testGmail } = useWebhookNotify();
-  const [triageEnabled, setTriageEnabled] = useState(false);
-  const [triageLoading, setTriageLoading] = useState(true);
-  const [triageSettingId, setTriageSettingId] = useState<string | null>(null);
-
   const [activeTab, setActiveTab] = useState<TabId>('prontuario');
 
-  const [reativarProfId, setReativarProfId] = useState('');
-  const [reativarAgendamentos, setReativarAgendamentos] = useState<any[]>([]);
-  const [reativarAgId, setReativarAgId] = useState('');
-  const [reativarLoading, setReativarLoading] = useState(false);
-  const [reativarProfSearch, setReativarProfSearch] = useState('');
-  const [reativarBuscando, setReativarBuscando] = useState(false);
-  const [reativarPacienteSearch, setReativarPacienteSearch] = useState('');
-
-  const [transferAgId, setTransferAgId] = useState('');
-  const [transferNovoProfId, setTransferNovoProfId] = useState('');
-  const [transferMotivo, setTransferMotivo] = useState('');
-  const [transferLoading, setTransferLoading] = useState(false);
-  const [transferAgendamentos, setTransferAgendamentos] = useState<any[]>([]);
-  const [transferProfOrigem, setTransferProfOrigem] = useState('');
-  const [transferBuscando, setTransferBuscando] = useState(false);
-
-  const [agOnline, setAgOnline] = useState({
-    habilitado: false,
-    antecedencia_minima_dias: 1,
-    antecedencia_maxima_dias: 30,
-    limite_por_dia_profissional: 5,
-    mensagem_confirmacao: 'Seu agendamento foi confirmado com sucesso!',
-    exigir_confirmacao_sms: false,
-    profissionais_bloqueados: [] as string[],
-  });
-  const [agOnlineLoading, setAgOnlineLoading] = useState(true);
-  const [agOnlineSaving, setAgOnlineSaving] = useState(false);
-
-  const [cancelConfig, setCancelConfig] = useState({
-    prazo_minimo_horas: 24,
-    limite_cancelamentos_mes: 3,
-    dias_bloqueio_apos_limite: 7,
-    motivos: ['Compromisso pessoal', 'Problema de saúde', 'Falta de transporte', 'Horário incompatível', 'Outro'] as string[],
-    notificar_profissional: true,
-    liberar_vaga_automaticamente: true,
-  });
-  const [cancelLoading, setCancelLoading] = useState(true);
-  const [cancelSaving, setCancelSaving] = useState(false);
-  const [novoMotivo, setNovoMotivo] = useState('');
-
+  // Evolution API config (from centralized store)
   const [evolutionConfig, setEvolutionConfig] = useState({
-    nome_clinica: '',
-    logo_url: '',
-    telefone: '',
+    nome_clinica: '', logo_url: '', telefone: '',
     evolution_base_url: 'https://api.agendamento-saude-sms-oriximina.site',
-    evolution_api_key: 'ee602586e9594a126109ceae5759d19c',
-    evolution_instance_name: '',
+    evolution_api_key: '', evolution_instance_name: '',
   });
-  const [evolutionConfigId, setEvolutionConfigId] = useState<string | null>(null);
   const [evolutionInstances, setEvolutionInstances] = useState<{ instanceName: string; state: string }[]>([]);
   const [evolutionLoading, setEvolutionLoading] = useState(true);
   const [evolutionSaving, setEvolutionSaving] = useState(false);
-  const [evolutionTesting, setEvolutionTesting] = useState(false);
   const [evolutionStatus, setEvolutionStatus] = useState<'idle' | 'connected' | 'disconnected' | 'error'>('idle');
+
+  // Load from centralized store
+  useEffect(() => {
+    if (!hookLoading) {
+      const clinicaCfg = configuracoes['config_clinica'];
+      if (clinicaCfg) {
+        setEvolutionConfig(prev => ({ ...prev, ...clinicaCfg }));
+      }
+      setEvolutionLoading(false);
+    }
+  }, [hookLoading, configuracoes]);
 
   const isMaster = user?.role === 'master';
   const _isGlobalMaster = user?.usuario === 'admin.sms';
@@ -383,21 +340,7 @@ const Configuracoes: React.FC = () => {
   const saveEvolutionConfig = async () => {
     setEvolutionSaving(true);
     try {
-      if (evolutionConfigId) {
-        const { error } = await supabase
-          .from('clinica_config')
-          .update({ ...evolutionConfig, updated_at: new Date().toISOString() })
-          .eq('id', evolutionConfigId);
-        if (error) throw error;
-      } else {
-        const { data, error } = await supabase
-          .from('clinica_config')
-          .insert(evolutionConfig)
-          .select('id')
-          .single();
-        if (error) throw error;
-        if (data) setEvolutionConfigId(data.id);
-      }
+      await atualizarConfiguracao('config_clinica', evolutionConfig, { auditAcao: 'ALTERAR_CONFIG_CLINICA' });
       toast.success('Configurações da Evolution API salvas!');
     } catch (err: any) {
       toast.error(`Erro: ${err.message}`);
