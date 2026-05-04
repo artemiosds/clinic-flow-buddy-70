@@ -21,11 +21,11 @@ import ConstrutorProntuarioModal from '@/components/ConstrutorProntuarioModal';
 const CONFIG_KEY = 'config_prontuario_tipos';
 
 const TIPOS_PRONTUARIO = [
-  { key: 'primeira_consulta', label: 'Avaliação Inicial', color: 'bg-success/10 text-success' },
-  { key: 'retorno', label: 'Retorno', color: 'bg-info/10 text-info' },
-  { key: 'sessao', label: 'Sessão', color: 'bg-warning/10 text-warning' },
-  { key: 'urgencia', label: 'Urgência', color: 'bg-destructive/10 text-destructive' },
-  { key: 'procedimento', label: 'Procedimento', color: 'bg-accent text-accent-foreground' },
+  { key: 'primeira_consulta', label: TIPO_REGISTRO_LABELS.avaliacao_inicial, color: 'bg-success/10 text-success' },
+  { key: 'retorno', label: TIPO_REGISTRO_LABELS.retorno, color: 'bg-info/10 text-info' },
+  { key: 'sessao', label: TIPO_REGISTRO_LABELS.sessao, color: 'bg-warning/10 text-warning' },
+  { key: 'urgencia', label: TIPO_REGISTRO_LABELS.urgencia, color: 'bg-destructive/10 text-destructive' },
+  { key: 'procedimento', label: TIPO_REGISTRO_LABELS.procedimento, color: 'bg-accent text-accent-foreground' },
 ];
 
 const CAMPOS_FIXOS = [
