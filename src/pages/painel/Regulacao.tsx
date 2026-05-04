@@ -462,7 +462,7 @@ const Regulacao: React.FC = () => {
       <Dialog open={showEvaluation} onOpenChange={setShowEvaluation}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Avaliação Inicial — {selectedRegForEval?.name}</DialogTitle>
+            <DialogTitle>{TIPO_REGISTRO_LABELS.avaliacao_inicial} — {selectedRegForEval?.name}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <div className="p-3 bg-muted/30 rounded-lg text-sm space-y-1">
