@@ -13,6 +13,8 @@ import { validatePacienteFields } from '@/lib/validation';
 import { supabase } from '@/integrations/supabase/client';
 import type { DayInfo } from '@/components/CalendarioDisponibilidade';
 import { addDaysToDateStr, isoDayOfWeek, localDateStr, nowMinutesInBrazil, todayLocalStr } from '@/lib/utils';
+import { loadDocumentConfig, type DocumentConfig } from '@/lib/printLayout';
+import logoSmsFallback from "@/assets/logo-sms.jpeg";
 
 const applyDateMask = (value: string): string => {
   const digits = value.replace(/\D/g, '');
