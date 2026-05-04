@@ -108,8 +108,10 @@ const Pacientes: React.FC = () => {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
-  const PAGE_SIZE = 50;
+  const [page, setPage] = useState(0);
+  const PAGE_SIZE = 20;
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const t = window.setTimeout(() => {
