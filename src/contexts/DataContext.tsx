@@ -1966,6 +1966,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     refreshFila,
     refreshBloqueios,
     logAction,
+    searchPacientes,
   };
 
   const contextValue = useMemo(
