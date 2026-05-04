@@ -431,11 +431,11 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
   <!-- CABEÇALHO -->
   <div class="header">
     <div class="header-logo">
-      <img src="${logoLeft}" alt="Logo SMS" />
+      <img src="${logoLeft}" alt="Logo" />
     </div>
     <div class="header-center">
-      <h1>Secretaria Municipal de Saúde de Oriximiná</h1>
-      <h2>Centro Especializado em Reabilitação Nível II &mdash; CER II</h2>
+      <h1>${linha1}</h1>
+      <h2>${linha2}</h2>
       <div class="ficha-tipo">${somentePessoais ? 'FICHA CADASTRAL SIMPLIFICADA' : 'FICHA DE ATENDIMENTO COMPLETA'}</div>
     </div>
     <div class="header-logo">
