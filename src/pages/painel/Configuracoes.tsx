@@ -123,6 +123,7 @@ const Configuracoes: React.FC = () => {
   const [evolutionInstances, setEvolutionInstances] = useState<{ instanceName: string; state: string }[]>([]);
   const [evolutionLoading, setEvolutionLoading] = useState(true);
   const [evolutionSaving, setEvolutionSaving] = useState(false);
+  const [evolutionTesting, setEvolutionTesting] = useState(false);
   const [evolutionStatus, setEvolutionStatus] = useState<'idle' | 'connected' | 'disconnected' | 'error'>('idle');
 
   const [triageEnabled, setTriageEnabled] = useState(false);
@@ -318,6 +319,36 @@ const Configuracoes: React.FC = () => {
     } finally {
       setEvolutionSaving(false);
     }
+  };
+
+  const saveAgOnline = async () => {
+    setAgOnlineSaving(true);
+    try {
+      await atualizarConfiguracao('config_agendamento_online', agOnline, { auditAcao: 'ALTERAR_CONFIG_AG_ONLINE' });
+      toast.success('Configurações de agendamento online salvas!');
+    } catch (err: any) {
+      toast.error(`Erro: ${err.message}`);
+    } finally {
+      setAgOnlineSaving(false);
+    }
+  };
+
+  const saveCancelConfig = async () => {
+    setCancelSaving(true);
+    try {
+      await atualizarConfiguracao('config_cancelamentos', cancelConfig, { auditAcao: 'ALTERAR_CONFIG_CANCELAMENTOS' });
+      toast.success('Regras de cancelamento salvas!');
+    } catch (err: any) {
+      toast.error(`Erro: ${err.message}`);
+    } finally {
+      setCancelSaving(false);
+    }
+  };
+
+  const handleToggleTriage = async (v: boolean) => {
+    setTriageEnabled(v);
+    await atualizarConfiguracao('config_triagem_enabled', v, { auditAcao: 'ALTERAR_CONFIG_TRIAGEM' });
+    toast.success(v ? 'Triagem habilitada' : 'Triagem desabilitada');
   };
 
   const testEvolutionWhatsApp = async () => {
