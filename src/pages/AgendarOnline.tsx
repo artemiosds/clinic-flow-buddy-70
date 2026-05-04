@@ -481,8 +481,8 @@ const AgendarOnline: React.FC = () => {
           <Link to="/" className="inline-flex items-center text-sm opacity-70 hover:opacity-100 mb-4">
             <ArrowLeft className="w-4 h-4 mr-1" />Voltar
           </Link>
-          <h1 className="text-2xl md:text-3xl font-bold font-display">Agendar Consulta Online</h1>
-          <p className="opacity-80 mt-1">SMS Oriximiná — Agendamento Público</p>
+          <h1 className="text-2xl md:text-3xl font-bold font-display">{docConfig?.linha1 || 'Agendar Consulta Online'}</h1>
+          <p className="opacity-80 mt-1">{docConfig?.linha2 || 'SMS Oriximiná — Agendamento Público'}</p>
         </div>
       </div>
 
