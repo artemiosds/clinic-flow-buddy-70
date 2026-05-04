@@ -484,8 +484,8 @@ export function ConferirDadosPacienteModal({
                   <div className="space-y-1.5 sm:col-span-2">
                     <Label className="text-xs text-muted-foreground">Tipo de logradouro (DNE)</Label>
                     <LogradouroDneAutocomplete
-                      value={form.tipo_logradouro_dne}
-                      codigo={form.tipo_logradouro_codigo}
+                      value={form.tipo_logradouro_dne || ""}
+                      codigo={form.tipo_logradouro_codigo || ""}
                       onChange={(descricao, codigo) => {
                         setForm((p: any) => ({
                           ...p,
@@ -497,10 +497,22 @@ export function ConferirDadosPacienteModal({
                     />
                   </div>
                   {renderFieldText("Logradouro", "endereco")}
-                  {renderFieldText("Número", "numero", "text", undefined, "numeric")}
+                  {renderFieldText("Número", "numero", "text", "Nº", "numeric")}
                   {renderFieldText("Complemento", "complemento")}
                   {renderFieldText("Bairro", "bairro")}
-                  {renderFieldSelect("Município", "municipio", MUNICIPIOS.map((m) => ({ value: m, label: m })))}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">Município de residência</Label>
+                    <Select value={form.municipio || ""} onValueChange={(v) => updateField("municipio", v)}>
+                      <SelectTrigger className="h-11 sm:h-10 text-base sm:text-sm">
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {MUNICIPIOS.map((m) => (
+                          <SelectItem key={m} value={m}>{m}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   {renderFieldSelect("UF", "uf", UFS.map((u) => ({ value: u, label: u })))}
                   {renderFieldText("CEP", "cep", "text", "00000-000", "numeric")}
                 </div>
