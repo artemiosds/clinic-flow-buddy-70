@@ -376,12 +376,17 @@ const Pacientes: React.FC = () => {
       if (editId) {
         // Close dialog immediately (optimistic)
         setDialogOpen(false);
-        setSaving(false);
-        Promise.resolve(supabase.from("pacientes").update(dbFields).eq("id", editId))
-          .then(({ error }) => { if (error) console.error("Erro ao atualizar paciente:", error); })
-          .catch((err) => console.error("Erro ao atualizar paciente:", err))
-          .finally(() => refreshPacientes());
-        toast.success("Paciente atualizado!");
+        const { error } = await supabase.from("pacientes").update(dbFields).eq("id", editId);
+        
+        if (error) {
+          console.error("Erro ao atualizar paciente:", error);
+          toast.error("Erro ao atualizar paciente.", { id: toastId });
+          setSaving(false);
+          return;
+        }
+
+        await refreshPacientes();
+        toast.success("Paciente atualizado!", { id: toastId });
       } else {
         // === DUPLICATE DETECTION ===
         const duplicateChecks: string[] = [];
