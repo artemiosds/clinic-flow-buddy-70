@@ -1023,6 +1023,12 @@ const Agenda: React.FC = () => {
     const ag = agendamentos.find((a) => a.id === agId);
     if (!ag) return;
 
+    // REQUISITO 3: Validação de permissão do profissional
+    if (isProfissional && !isMaster && ag.profissionalId !== user?.id) {
+      toast.error("Você só pode registrar falta em pacientes vinculados à sua agenda.");
+      return;
+    }
+
     // Intercept "falta" — open modal with justification
     if (newStatus === "falta") {
       setFaltaTarget(ag);
