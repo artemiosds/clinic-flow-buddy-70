@@ -2227,7 +2227,7 @@ const Agenda: React.FC = () => {
 
           {/* REQUISITO 5 e 9: Alerta de pendências de agenda */}
           {agendamentosPendentesRevisao.length > 0 && (
-            <Card className="shadow-card border-0 bg-warning/10 ring-1 ring-warning/30 animate-pulse-gentle">
+            <Card className="shadow-card border-0 bg-warning/10 ring-1 ring-warning/30 animate-pulse">
               <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <div className="bg-warning/20 p-2 rounded-full">
