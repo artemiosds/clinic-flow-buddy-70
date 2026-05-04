@@ -702,12 +702,29 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
               <p><span className="text-[9px] font-bold uppercase text-slate-400">Email:</span> {data.paciente.email || '—'}</p>
             </div>
           </div>
+
+          {/* Dados Complementares */}
+          <div className="border border-slate-200 rounded p-3">
+            <h3 className="text-[10px] font-bold uppercase text-primary mb-2 border-b border-slate-100 pb-1">4. Dados Complementares</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
+              <p><span className="text-[9px] font-bold uppercase text-slate-400">Responsável:</span> {data.paciente.nome_responsavel || 'O próprio'}</p>
+              <p><span className="text-[9px] font-bold uppercase text-slate-400">Unidade Vinculada:</span> {data.paciente.unidade_vinculada || 'CER II'}</p>
+            </div>
+          </div>
           
-          {/* Sinais Vitais e Clínicos (Preview) */}
+          {/* Seção Clínica (Preview) */}
           {!somentePessoais && (
             <>
               <div className="border border-slate-200 rounded p-3">
-                <h3 className="text-[10px] font-bold uppercase text-primary mb-2 border-b border-slate-100 pb-1">5. Sinais Vitais</h3>
+                <h3 className="text-[10px] font-bold uppercase text-primary mb-2 border-b border-slate-100 pb-1">5. Dados do Atendimento</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  <p><span className="text-[9px] font-bold uppercase text-slate-400">Unidade:</span> {data.dadosClinicos.unidade_atendimento || '—'}</p>
+                  <p><span className="text-[9px] font-bold uppercase text-slate-400">Tipo:</span> {data.dadosClinicos.tipo_atendimento || '—'}</p>
+                </div>
+              </div>
+
+              <div className="border border-slate-200 rounded p-3">
+                <h3 className="text-[10px] font-bold uppercase text-primary mb-2 border-b border-slate-100 pb-1">6. Triagem / Sinais Vitais</h3>
                 <div className="grid grid-cols-4 gap-2">
                   <p><span className="text-[9px] font-bold uppercase text-slate-400">PA:</span> {data.sinaisVitais.pressao_arterial || '—'}</p>
                   <p><span className="text-[9px] font-bold uppercase text-slate-400">FC:</span> {data.sinaisVitais.frequencia_cardiaca || '—'}</p>
@@ -719,9 +736,10 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
                   <p><span className="text-[9px] font-bold uppercase text-slate-400">Glicemia:</span> {data.sinaisVitais.glicemia || '—'}</p>
                 </div>
               </div>
+
               <div className="border border-slate-200 rounded p-3 bg-slate-50/50">
                 <p className="text-[9px] text-center text-slate-500 uppercase font-bold">
-                  Campos clínicos (Queixa, Evolução, Conduta, etc.) inclusos na versão impressa completa.
+                  Campos clínicos de 7 a 13 (Queixa, Evolução, Conduta, etc.) disponíveis na versão impressa.
                 </p>
               </div>
             </>
