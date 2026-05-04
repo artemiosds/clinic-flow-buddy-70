@@ -1095,7 +1095,7 @@ ${dataRows}
     <img src="${logoUrl}" alt="Logo SMS" />
     <div class="header-text">
       <h1>SECRETARIA MUNICIPAL DE SAÚDE DE ORIXIMINÁ</h1>
-      <div class="subtitle">CENTRO ESPECIALIZADO EM REABILITAÇÃO NÍVEL II</div>
+      <div class="subtitle">CAPS II</div>
       <div class="doc-title">Mapa de Atendimentos Concluídos</div>
     </div>
     <img src="${logoUrlRight}" alt="Logo CAPS II" style="max-height:48px;max-width:90px;object-fit:contain;" />
