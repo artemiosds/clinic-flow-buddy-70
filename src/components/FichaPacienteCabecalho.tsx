@@ -149,6 +149,9 @@ const FichaPacienteCabecalho: React.FC<FichaPacienteCabecalhoProps> = ({
     setEditData({
       nome: paciente.nome || "",
       data_nascimento: paciente.data_nascimento || "",
+      sexo: (cd.sexo === "masculino" || cd.sexo === "M") ? "M" : 
+            (cd.sexo === "feminino" || cd.sexo === "F") ? "F" : 
+            (cd.sexo === "ignorado" || cd.sexo === "I") ? "I" : "",
       cpf: paciente.cpf || "",
       cns: paciente.cns || "",
       cid: paciente.cid || "",
