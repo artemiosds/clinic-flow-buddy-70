@@ -379,8 +379,6 @@ const Pacientes: React.FC = () => {
       email: form.email,
       endereco: form.endereco,
       descricao_clinica: form.descricaoClinica || form.diagnosticoResumido,
-      cid: form.cid,
-      especialidade_destino: form.especialidadeDestino,
       municipio: form.municipio,
       menor_idade: form.menorIdade,
       nome_responsavel: form.nomeResponsavel,
@@ -407,7 +405,12 @@ const Pacientes: React.FC = () => {
       is_gestante: form.isGestante,
       is_pne: form.isPne,
       is_autista: form.isAutista,
-      custom_data: form.customData || {},
+      custom_data: {
+        ...(form.customData || {}),
+        logradouro: form.endereco,
+        cid: form.cid,
+        especialidade_destino: form.especialidadeDestino,
+      },
     };
 
     try {

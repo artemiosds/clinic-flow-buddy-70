@@ -226,6 +226,7 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
         onChange({
           ...form,
           municipio: municipioMatch || form.municipio,
+          endereco: data.logradouro ? sanitizeUpper(data.logradouro) : form.endereco,
           customData: update,
         });
         toast.success("Endereço preenchido pelo CEP");
