@@ -179,7 +179,7 @@ const UnidadesSalas: React.FC = () => {
                 <SelectContent>{unidades.map(u => <SelectItem key={u.id} value={u.id}>{u.nome}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <Button onClick={handleSaveRoom} className="w-full gradient-primary text-primary-foreground">{editRoomId ? 'Salvar' : 'Criar'}</Button>
+            <Button onClick={handleSaveRoom} disabled={saving} className="w-full gradient-primary text-primary-foreground">{editRoomId ? 'Salvar' : 'Criar'}</Button>
           </div>
         </DialogContent>
       </Dialog>
