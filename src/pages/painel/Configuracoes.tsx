@@ -64,8 +64,18 @@ type TabId = typeof TABS[number]['id'];
 const Configuracoes: React.FC = () => {
   const { user } = useAuth();
   const { unidades, funcionarios, configuracoes: dataConfiguracoes, updateConfiguracoes } = useData();
-  const { whatsapp, filaEspera } = dataConfiguracoes;
+  const { whatsapp, filaEspera, templates, webhook } = dataConfiguracoes;
   const { atualizarConfiguracao, configuracoes, loading: hookLoading } = useConfiguracao(user?.unidadeId);
+  const { testGmail } = useWebhookNotify();
+  
+  // Webhook + Gmail (legacy unidades tab)
+  const [webhookUrl, setWebhookUrl] = useState(webhook?.url || '');
+  const [webhookEditing, setWebhookEditing] = useState(!webhook?.url);
+  const [webhookTesting, setWebhookTesting] = useState(false);
+  const [gmailTesting, setGmailTesting] = useState(false);
+  const [gmailStatus, setGmailStatus] = useState<'idle' | 'conectado' | 'erro_autenticacao' | 'erro_conexao' | 'erro_envio' | 'nao_configurado'>('idle');
+  const [gmailMessage, setGmailMessage] = useState('');
+  const [triageSettingId, setTriageSettingId] = useState<string | null>(null);
   
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<TabId>('prontuario');
@@ -331,27 +341,8 @@ const Configuracoes: React.FC = () => {
     }
   };
 
-  const testEvolutionWhatsApp = async () => {
-    setEvolutionTesting(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('send-whatsapp-evolution', {
-        body: { tipo: 'teste', telefone_teste: evolutionConfig.telefone || user?.email },
-      });
-      if (error) throw error;
-      if (data?.success) {
-        toast.success('Mensagem de teste enviada com sucesso!');
-        setEvolutionStatus('connected');
-      } else {
-        toast.error(data?.error || 'Erro ao enviar teste');
-        setEvolutionStatus('error');
-      }
-    } catch (err: any) {
-      toast.error(`Erro: ${err.message}`);
-      setEvolutionStatus('error');
-    } finally {
-      setEvolutionTesting(false);
-    }
-  };
+
+
 
   const checkEvolutionConnection = async () => {
     if (!evolutionConfig.evolution_instance_name || !evolutionConfig.evolution_api_key) {
