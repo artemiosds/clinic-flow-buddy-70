@@ -163,7 +163,7 @@ const UnidadesSalas: React.FC = () => {
                 onChange={(field, value) => setCustomData(prev => ({ ...prev, [field]: value }))}
               />
             )}
-            <Button onClick={handleSaveUnit} className="w-full gradient-primary text-primary-foreground">{editUnitId ? 'Salvar' : 'Criar'}</Button>
+            <Button onClick={handleSaveUnit} disabled={saving} className="w-full gradient-primary text-primary-foreground">{editUnitId ? 'Salvar' : 'Criar'}</Button>
           </div>
         </DialogContent>
       </Dialog>
