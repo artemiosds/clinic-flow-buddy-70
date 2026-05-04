@@ -78,6 +78,12 @@ const PainelLayout: React.FC = () => {
   const location = useLocation();
   
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [config, setConfig] = useState<DocumentConfig | null>(null);
+
+  useEffect(() => {
+    loadDocumentConfig().then(setConfig);
+  }, []);
+
   const { pendingCount: externosPendentes } = useEncaminhamentosExternosRealtime();
 
   const isMaster = user?.role?.toLowerCase().trim() === 'master';
