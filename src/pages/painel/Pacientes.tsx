@@ -41,12 +41,47 @@ import "@/styles/ficha-impressao.css";
 
 interface FichaDados {
   paciente: {
+    // Identificação
     nome_completo: string;
+    nome_mae: string;
+    data_nascimento: string;
+    sexo?: string;
     cpf: string;
     cns: string;
-    data_nascimento: string;
-    nome_mae: string;
+    naturalidade?: string;
+    naturalidade_uf?: string;
+    nacionalidade?: string;
+    raca_cor?: string;
+    situacao_rua?: boolean;
+    menor_idade?: boolean;
+    nome_responsavel?: string;
+    cpf_responsavel?: string;
+    
+    // Endereço
+    cep?: string;
+    tipo_logradouro?: string;
+    logradouro?: string;
+    numero?: string;
+    complemento?: string;
+    bairro?: string;
+    municipio?: string;
+    uf?: string;
+    endereco_legado?: string;
+
+    // Contato
     telefone: string;
+    telefone_secundario?: string;
+    email?: string;
+
+    // Complementares
+    parentesco?: string;
+    observacoes?: string;
+    ubs_origem?: string;
+    profissional_solicitante?: string;
+    tipo_encaminhamento?: string;
+    especialidade_destino?: string;
+    unidade_vinculada?: string;
+    origem_cadastro?: string;
   };
   dadosClinicos: {
     numero_prontuario: string;
@@ -55,6 +90,8 @@ interface FichaDados {
     unidade_origem: string;
     unidade_atendimento: string;
     data_atendimento: string;
+    especialidade?: string;
+    encaminhamento?: string;
   };
   sinaisVitais: {
     pressao_arterial: string;
@@ -63,6 +100,8 @@ interface FichaDados {
     saturacao: string;
     peso: string;
     altura: string;
+    glicemia?: string;
+    frequencia_respiratoria?: string;
   };
   profissional: {
     nome: string;
@@ -75,6 +114,7 @@ interface FichaDados {
     profissional: string;
   }>;
 }
+
 
 const Pacientes: React.FC = () => {
   const navigate = useNavigate();
