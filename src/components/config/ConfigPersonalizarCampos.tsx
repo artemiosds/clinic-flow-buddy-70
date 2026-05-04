@@ -13,13 +13,12 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useData } from '@/contexts/DataContext';
+import { useConfiguracao } from '@/hooks/useConfiguracao';
 import {
-  useCustomFields,
   CustomFieldDef,
   CustomFieldType,
   ScreenKey,
   SCREEN_LABELS,
-  ScreenConfig,
   NATIVE_FIELDS,
 } from '@/hooks/useCustomFields';
 import {
