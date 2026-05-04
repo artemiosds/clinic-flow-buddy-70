@@ -37,10 +37,10 @@ const STATUS_OPTIONS = [
 
 const TIPOS_ATENDIMENTO = [
   { value: "rotina", label: "Rotina" },
-  { value: "retorno", label: "Retorno" },
-  { value: "avaliacao_inicial", label: "Avaliação Inicial" },
+  { value: "retorno", label: TIPO_REGISTRO_LABELS.retorno },
+  { value: "avaliacao_inicial", label: TIPO_REGISTRO_LABELS.avaliacao_inicial },
   { value: "procedimentos", label: "Procedimentos" },
-  { value: "urgencia", label: "Urgência" },
+  { value: "urgencia", label: TIPO_REGISTRO_LABELS.urgencia },
   { value: "internacao", label: "Internação" },
   { value: "pos_operatorio", label: "Pós-operatório" },
 ];
