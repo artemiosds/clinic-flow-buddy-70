@@ -138,6 +138,39 @@ const Pacientes: React.FC = () => {
   const [filterFila, setFilterFila] = useState("all");
   const [sortBy, setSortBy] = useState("nome");
 
+  const { data: paginatedData, isLoading: isLoadingServer } = useQuery({
+    queryKey: ['pacientes-paginated', page, debouncedSearch, user?.unidadeId, sortBy],
+    queryFn: async () => {
+      let query = supabase
+        .from("pacientes")
+        .select("*", { count: "exact" });
+
+      if (debouncedSearch) {
+        const q = debouncedSearch.trim();
+        query = query.or(`nome.ilike.%${q}%,cpf.ilike.%${q}%,telefone.ilike.%${q}%,cns.ilike.%${q}%`);
+      }
+
+      if (user?.unidadeId && user?.usuario !== 'admin.sms') {
+        query = query.eq('unidade_id', user.unidadeId);
+      }
+
+      if (sortBy === "nome") {
+        query = query.order("nome", { ascending: true });
+      } else {
+        query = query.order("criado_em", { ascending: false });
+      }
+
+      const from = page * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+      const { data, count, error } = await query.range(from, to);
+      if (error) throw error;
+      return { data: data as any[], count };
+    },
+  });
+
+  const serverPacientes = paginatedData?.data || [];
+  const totalCount = paginatedData?.count || 0;
+
   // Reset pagination when filter/sort changes
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
