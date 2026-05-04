@@ -11,7 +11,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
-import { openPrintDocument } from '@/lib/printLayout';
+import { openPrintDocument, loadDocumentConfig, type DocumentConfig } from '@/lib/printLayout';
+import logoSmsFallback from "@/assets/logo-sms.jpeg";
 
 interface PacienteData {
   id: string;
