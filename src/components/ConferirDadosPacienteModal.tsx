@@ -148,6 +148,7 @@ export function ConferirDadosPacienteModal({
       if (error) throw error;
       if (!data) throw new Error("Paciente não encontrado");
       console.log("[ConferirDados] Dados carregados com sucesso");
+      
       const cd = data.custom_data || {};
       setPaciente(data);
       setForm({
@@ -156,9 +157,9 @@ export function ConferirDadosPacienteModal({
         data_nascimento: data.data_nascimento || "",
         cpf: data.cpf || "",
         cns: maskCns(data.cns || ""),
-        telefone: data.telefone || "",
+        telefone: formatPhoneForDisplay(data.telefone || ""),
         email: data.email || "",
-        // Endereço: prioriza cd.logradouro (estruturado da página Pacientes), fallback p/ coluna legada
+        // Endereço: prioriza campos estruturados (logradouro), fallback p/ coluna legada (endereco)
         endereco: cd.logradouro || data.endereco || "",
         municipio: data.municipio || "",
         sexo: cd.sexo || "",
@@ -167,7 +168,6 @@ export function ConferirDadosPacienteModal({
         etnia_outra: cd.etniaOutra || "",
         nacionalidade: cd.nacionalidade || "brasileiro",
         pais_nascimento: cd.paisNascimento || "",
-        // Tipo logradouro: lê chave canônica do Pacientes (tipoLogradouro) com fallbacks
         tipo_logradouro_dne: cd.tipoLogradouro || cd.tipoLogradouroDne || cd.tipo_logradouro_dne || "",
         tipo_logradouro_codigo: cd.tipoLogradouroCodigo || cd.tipo_logradouro_codigo || "",
         numero: cd.numero || "",
@@ -220,55 +220,56 @@ export function ConferirDadosPacienteModal({
     if (!paciente) return false;
     setSaving(true);
     try {
+      const { normalizePhone } = await import("@/lib/phoneUtils");
+      const normalizedTelefone = normalizePhone(form.telefone) || "";
+      const normalizedTelefoneSec = normalizePhone(form.telefone_secundario) || "";
+
       const oldCd = paciente.custom_data || {};
       const customData = {
         ...oldCd,
         sexo: form.sexo,
-        // Persistir Raça/Cor em ambas as chaves (compat com BPA)
         racaCor: form.raca_cor,
         raca_cor: form.raca_cor,
         etnia: form.etnia,
         etniaOutra: form.etnia_outra,
         nacionalidade: form.nacionalidade,
         paisNascimento: form.pais_nascimento,
-        // Tipo de logradouro: chave canônica usada pela página Pacientes (tipoLogradouro)
-        // + chave legacy (tipoLogradouroDne) para compat
         tipoLogradouro: form.tipo_logradouro_dne,
         tipoLogradouroDne: form.tipo_logradouro_dne,
         tipoLogradouroCodigo: form.tipo_logradouro_codigo,
-        // Endereço estruturado (mesmas chaves do CadastroPacienteForm)
-        logradouro: form.endereco,
+        logradouro: form.endereco, // 'endereco' no formulário mapeia para 'logradouro' no banco estruturado
         numero: form.numero,
         complemento: form.complemento,
         bairro: form.bairro,
         uf: form.uf,
         cep: form.cep,
-        telefoneSecundario: form.telefone_secundario,
-        // Naturalidade (município de nascimento, IBGE)
+        telefoneSecundario: normalizedTelefoneSec,
         naturalidade: form.naturalidade,
         naturalidadeUf: form.naturalidade_uf,
         naturalidadeCodigoIbge: form.naturalidade_codigo_ibge,
         data_ultima_validacao_cadastro: new Date().toISOString(),
       };
+
       const updatePayload: any = {
         nome: form.nome,
         nome_mae: form.nome_mae,
         data_nascimento: form.data_nascimento || null,
         cpf: form.cpf,
         cns: (form.cns || "").replace(/\D/g, "").slice(0, 15),
-        telefone: form.telefone,
+        telefone: normalizedTelefone,
         email: form.email,
-        endereco: form.endereco, // mantém coluna legada sincronizada
+        endereco: form.endereco, // mantém coluna legada sincronizada com o logradouro
         municipio: form.municipio,
         custom_data: customData,
       };
+
       const { error } = await (supabase as any)
         .from("pacientes")
         .update(updatePayload)
         .eq("id", paciente.id);
       if (error) throw error;
 
-      // Auditoria (best-effort, não bloqueia)
+      // Auditoria
       try {
         const { auditService } = await import("@/services/auditService");
         await auditService.log({
@@ -283,8 +284,6 @@ export function ConferirDadosPacienteModal({
 
       setPaciente({ ...paciente, ...updatePayload });
       setDirty(false);
-      // CRÍTICO: invalidar caches + recarregar contexto global para refletir
-      // imediatamente em Paciente, Agenda, Prontuário, Tratamento, PTS, Triagem, BPA.
       queryClient.invalidateQueries({ queryKey: queryKeys.pacientes.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.pacientes.detail(paciente.id) });
       queryClient.invalidateQueries({ queryKey: queryKeys.agendamentos.all });
