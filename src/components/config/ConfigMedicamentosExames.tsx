@@ -368,6 +368,12 @@ const ConfigMedicamentosExames: React.FC = () => {
     toast.success('Medicamento atualizado');
   };
 
+  const togglePrescricaoProfissao = async (key: string, v: boolean) => {
+    const next = { ...prescricaoConfig, [key]: v };
+    setPrescricaoConfig(next);
+    await atualizarConfiguracao(CONFIG_KEY, next, { auditAcao: 'ALTERAR_CONFIG_PRESCRICAO' });
+  };
+
   const saveEditExam = async () => {
     if (!editExam) return;
     const { error } = await supabase.from('exam_types').update({
