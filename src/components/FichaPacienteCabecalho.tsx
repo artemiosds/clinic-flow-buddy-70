@@ -418,6 +418,19 @@ const FichaPacienteCabecalho: React.FC<FichaPacienteCabecalhoProps> = ({
                   <Input type="date" value={editData.data_nascimento} onChange={e => setEditData(d => ({ ...d, data_nascimento: e.target.value }))} className="mt-1" />
                 </div>
                 <div>
+                  <Label className="text-xs font-medium text-muted-foreground">Sexo</Label>
+                  <Select value={editData.sexo} onValueChange={v => setEditData(d => ({ ...d, sexo: v }))}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="M">Masculino</SelectItem>
+                      <SelectItem value="F">Feminino</SelectItem>
+                      <SelectItem value="I">Ignorado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="hidden sm:block">
                   <Label className="text-xs font-medium text-muted-foreground flex items-center gap-1">Idade <Lock className="w-3 h-3" /></Label>
                   <Input value={calcularIdade(editData.data_nascimento)} disabled className="opacity-50 mt-1" />
                 </div>
