@@ -312,6 +312,7 @@ const Agenda: React.FC = () => {
     observacoes: string;
   } | null>(null);
   const [statusUpdating, setStatusUpdating] = useState(false);
+  const [agendamentoSaving, setAgendamentoSaving] = useState(false);
   const canEdit = can('agenda', 'can_edit');
 
   // ── Modal de conferência de dados (Novo Agendamento + Confirmar Chegada) ──
