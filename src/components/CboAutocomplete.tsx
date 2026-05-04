@@ -239,7 +239,7 @@ const CboAutocomplete: React.FC<CboAutocompleteProps> = ({
       )}
 
       {hasError && (
-        <p className="text-xs text-destructive">CBO é obrigatório para profissionais.</p>
+        <p className="text-xs text-destructive">CBO é obrigatório para este perfil.</p>
       )}
     </div>
   );
