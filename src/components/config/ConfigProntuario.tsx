@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Lock, Plus, Trash2, GripVertical, Pencil, AlertTriangle, Loader2, ChevronDown, ChevronUp, FileText, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { TIPO_REGISTRO_LABELS } from '@/utils/labels';
 import { useConfiguracao } from '@/hooks/useConfiguracao';
 import EditorProntuarioConfig from '@/components/EditorProntuarioConfig';
 import ConstrutorProntuarioModal from '@/components/ConstrutorProntuarioModal';
