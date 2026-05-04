@@ -2522,10 +2522,10 @@ const Agenda: React.FC = () => {
                               variant="outline"
                               className={cn("h-8 px-2 text-xs", ag.status === sa.key && sa.color)}
                               onClick={() => handleStatusChange(ag.id, sa.key)}
-                              disabled={ag.status === sa.key}
+                              disabled={ag.status === sa.key || statusUpdating}
                               title={sa.label}
                             >
-                              <sa.icon className="w-3.5 h-3.5" />
+                              {statusUpdating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <sa.icon className="w-3.5 h-3.5" />}
                             </Button>
                           ))}
                         {!isProfissional && ag.status !== "cancelado" && ag.status !== "concluido" && !ehPendenteOnline && (
