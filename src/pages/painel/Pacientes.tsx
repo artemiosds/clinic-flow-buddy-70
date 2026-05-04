@@ -325,6 +325,9 @@ const Pacientes: React.FC = () => {
     }
     setErrors({});
     setSaving(true);
+    
+    // Feedback visual imediato
+    const toastId = toast.loading(editId ? "Atualizando paciente..." : "Cadastrando paciente...");
 
     const normalizedPhone = normalizePhone(rawPhone!) || "";
 
