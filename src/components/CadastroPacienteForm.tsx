@@ -346,16 +346,25 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
               )}
 
               {!H("sexo") && (
-              <div>
-                <Label>{L("sexo", "Sexo")}</Label>
-                <Select value={cd.sexo || ""} onValueChange={(v) => setCustom("sexo", v)}>
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="masculino">Masculino</SelectItem>
-                    <SelectItem value="feminino">Feminino</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                <div>
+                  <Label>{L("sexo", "Sexo")}</Label>
+                  <Select 
+                    value={
+                      cd.sexo === "masculino" || cd.sexo === "M" ? "M" : 
+                      cd.sexo === "feminino" || cd.sexo === "F" ? "F" : 
+                      cd.sexo === "ignorado" || cd.sexo === "I" ? "I" : 
+                      ""
+                    } 
+                    onValueChange={(v) => setCustom("sexo", v)}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="M">Masculino</SelectItem>
+                      <SelectItem value="F">Feminino</SelectItem>
+                      <SelectItem value="I">Ignorado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               )}
 
               {!H("cpf") && (
