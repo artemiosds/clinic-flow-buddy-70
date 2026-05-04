@@ -2215,7 +2215,36 @@ const Agenda: React.FC = () => {
             </Card>
           )}
 
+          {/* REQUISITO 5 e 9: Alerta de pendências de agenda */}
+          {agendamentosPendentesRevisao.length > 0 && (
+            <Card className="shadow-card border-0 bg-warning/10 ring-1 ring-warning/30 animate-pulse-gentle">
+              <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="bg-warning/20 p-2 rounded-full">
+                    <Bell className="w-5 h-5 text-warning" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-warning-foreground">Pendências de agenda</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Existem {agendamentosPendentesRevisao.length} pacientes do período que ainda estão sem conclusão. 
+                      Revise para marcar falta ou concluir.
+                    </p>
+                  </div>
+                </div>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="w-full sm:w-auto border-warning/50 text-warning-foreground hover:bg-warning/20"
+                  onClick={() => setRevisaoDialogOpen(true)}
+                >
+                  Ver pendências
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
           <div className="space-y-2">
+
             {filtered.length === 0 ? (
               <Card className="shadow-card border-0">
                 <CardContent className="p-8 text-center">
