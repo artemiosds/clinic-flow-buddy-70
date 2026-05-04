@@ -514,14 +514,7 @@ const ConfigMedicamentosExames: React.FC = () => {
 
   const savePrescricaoConfig = async (updated: Record<string, boolean>) => {
     setPrescricaoConfig(updated);
-    const { data: existing } = await supabase.from('system_config').select('configuracoes').eq('id', 'default').maybeSingle();
-    const existingConfig = (existing?.configuracoes as any) || {};
-    await supabase.from('system_config').upsert({
-      id: 'default',
-      configuracoes: { ...existingConfig, [CONFIG_KEY]: updated },
-      updated_at: new Date().toISOString(),
-    });
-    toast.success('Permissões de prescrição salvas');
+    await atualizarConfiguracao(CONFIG_KEY, updated, { auditAcao: 'ALTERAR_CONFIG_PRESCRICAO' });
   };
 
   /* ============================================================
