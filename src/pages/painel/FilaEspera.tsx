@@ -46,6 +46,7 @@ import {
   Search,
   CalendarClock,
   TriangleAlert,
+  Loader2,
 } from "lucide-react";
 import ContactActionButton from "@/components/ContactActionButton";
 import DetalheDrawer, {
