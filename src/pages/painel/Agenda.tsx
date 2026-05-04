@@ -2449,7 +2449,21 @@ const Agenda: React.FC = () => {
                               <XCircle className="w-3.5 h-3.5" />
                             </Button>
                           </>
-                        )}
+                            )}
+                            {isProfissional &&
+                              !["falta", "cancelado", "concluido"].includes(ag.status) &&
+                              (ag.profissionalId === user?.id || isMaster) && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-8 px-3 text-xs border-destructive/50 text-destructive hover:bg-destructive/10"
+                                  onClick={() => handleStatusChange(ag.id, "falta")}
+                                  title="Marcar Falta"
+                                >
+                                  <XCircle className="w-3.5 h-3.5 mr-1" /> Faltou
+                                </Button>
+                              )}
+
 
                         {isProfissional && (
                           <>
