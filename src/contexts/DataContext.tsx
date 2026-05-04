@@ -1919,8 +1919,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const stableFunctions = useRef({
     addAgendamento,
-...
-    logAction,
     searchPacientes,
   });
   stableFunctions.current = {
