@@ -208,6 +208,7 @@ const FichaPacienteCabecalho: React.FC<FichaPacienteCabecalhoProps> = ({
         ...prevCustom,
         contato_emergencia_nome: editData.contato_emergencia_nome.trim(),
         contato_emergencia_telefone: editData.contato_emergencia_telefone.trim(),
+        sexo: editData.sexo,
       };
 
       const { error } = await supabase.from("pacientes").update({
