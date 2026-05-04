@@ -186,7 +186,7 @@ const PRINT_CSS = `
 
   /* ===== SECTIONS ===== */
   .bloco {
-    margin-top: 10px;
+    margin-top: 8px;
     border: 1px solid #cbd5e1;
     border-radius: 4px;
     overflow: hidden;
@@ -205,7 +205,7 @@ const PRINT_CSS = `
     justify-content: space-between;
   }
   .bloco-body {
-    padding: 8px 10px;
+    padding: 6px 10px;
   }
 
   /* ===== GRID LAYOUTS ===== */
@@ -259,7 +259,7 @@ const PRINT_CSS = `
     border: 1px solid #e2e8f0;
     padding: 5px 8px;
     text-align: center;
-    width: 12.5%;
+    width: 25%; /* Ajustado para 4 colunas */
   }
   .vitais-table td b {
     display: block;
@@ -291,7 +291,7 @@ const PRINT_CSS = `
 
   /* ===== SIGNATURE ===== */
   .assinatura-area {
-    margin-top: 30px;
+    margin-top: 25px;
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
@@ -341,6 +341,7 @@ const PRINT_CSS = `
     .header { border-bottom-width: 3px; }
     .bloco-titulo { background: #f8fafc !important; -webkit-print-color-adjust: exact; }
     .header-center .ficha-tipo { background: #0c4a6e !important; -webkit-print-color-adjust: exact; }
+    .evo-line { border-bottom-color: #cbd5e1 !important; }
   }
 `;
 
