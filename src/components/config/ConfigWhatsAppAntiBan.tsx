@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
+import { useConfiguracao } from '@/hooks/useConfiguracao';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -80,6 +81,8 @@ const ConfigWhatsAppAntiBan: React.FC = () => {
   const editableUnits = isGlobalAdmin ? unidades : unidades.filter(u => u.id === userUnitId);
   const [selectedUnit, setSelectedUnit] = useState<string>(userUnitId || editableUnits[0]?.id || '');
 
+  const { atualizarConfiguracao, configuracoes, loading: hookLoading } = useConfiguracao(selectedUnit);
+
   const [cfg, setCfg] = useState<UnitCfg>(DEFAULT);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -103,20 +106,17 @@ const ConfigWhatsAppAntiBan: React.FC = () => {
   }>>([]);
   const [pendenciasLoading, setPendenciasLoading] = useState(false);
 
-  const load = useCallback(async () => {
-    if (!selectedUnit) return;
-    setLoading(true);
-    const { data } = await supabase
-      .from('whatsapp_config')
-      .select('*')
-      .eq('unidade_id', selectedUnit)
-      .maybeSingle();
-    if (data) setCfg(data as any);
-    else setCfg({ ...DEFAULT, unidade_id: selectedUnit });
-    setLoading(false);
-  }, [selectedUnit]);
-
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    if (!hookLoading) {
+      const waCfg = configuracoes['config_whatsapp_antiban'];
+      if (waCfg) {
+        setCfg(waCfg as any);
+      } else {
+        setCfg({ ...DEFAULT, unidade_id: selectedUnit });
+      }
+      setLoading(false);
+    }
+  }, [hookLoading, configuracoes, selectedUnit]);
 
   const loadQueue = useCallback(async () => {
     setQueueLoading(true);
@@ -192,37 +192,18 @@ const ConfigWhatsAppAntiBan: React.FC = () => {
 
   useEffect(() => { loadPendenciasCadastro(); }, [loadPendenciasCadastro]);
 
-  // Realtime: assina mudanças na config da unidade selecionada para
-  // sincronizar o estado entre múltiplas estações instantaneamente.
-  useEffect(() => {
-    if (!selectedUnit) return;
-    const channel = supabase
-      .channel(`anti_ban_cfg_${selectedUnit}`)
-      .on(
-        'postgres_changes' as any,
-        { event: '*', schema: 'public', table: 'whatsapp_config', filter: `unidade_id=eq.${selectedUnit}` },
-        (payload: any) => {
-          const next = payload.new;
-          if (next) setCfg(prev => ({ ...prev, ...next }));
-        },
-      )
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [selectedUnit]);
+  // Centralized realtime is handled by useConfiguracao hook.
 
   /** Persiste APENAS o campo whatsapp_ativo (toggle imediato, sem clicar Salvar). */
   const persistAtivo = async (novoValor: boolean) => {
     setTogglingActive(true);
     try {
-      const payload = { ...cfg, unidade_id: selectedUnit, whatsapp_ativo: novoValor };
-      delete (payload as any).id;
-      delete (payload as any).created_at;
-      delete (payload as any).updated_at;
-      const { error } = await supabase
-        .from('whatsapp_config')
-        .upsert(payload, { onConflict: 'unidade_id' });
-      if (error) throw error;
-      setCfg(p => ({ ...p, whatsapp_ativo: novoValor }));
+      const newCfg = { ...cfg, whatsapp_ativo: novoValor };
+      await atualizarConfiguracao('config_whatsapp_antiban', newCfg, { 
+        auditAcao: novoValor ? 'ATIVAR_WHATSAPP_UNIDADE' : 'DESATIVAR_WHATSAPP_UNIDADE',
+        silent: true 
+      });
+      setCfg(newCfg);
       toast.success(novoValor
         ? '✅ WhatsApp reativado — automações voltarão a funcionar'
         : '🔕 WhatsApp pausado — nenhum envio será processado');
@@ -273,16 +254,8 @@ const ConfigWhatsAppAntiBan: React.FC = () => {
     if (!selectedUnit) { toast.error('Selecione uma unidade'); return; }
     setSaving(true);
     try {
-      const payload = { ...cfg, unidade_id: selectedUnit };
-      delete (payload as any).id;
-      delete (payload as any).created_at;
-      delete (payload as any).updated_at;
-      const { error } = await supabase
-        .from('whatsapp_config')
-        .upsert(payload, { onConflict: 'unidade_id' });
-      if (error) throw error;
+      await atualizarConfiguracao('config_whatsapp_antiban', cfg, { auditAcao: 'ALTERAR_CONFIG_ANTIBAN' });
       toast.success('Configuração anti-ban salva!');
-      load();
     } catch (e: any) {
       toast.error(`Erro: ${e.message}`);
     }

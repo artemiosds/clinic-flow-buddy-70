@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
+import { useConfiguracao } from '@/hooks/useConfiguracao';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -232,64 +233,14 @@ const emptyScreenConfig = (): ScreenConfig => ({
 });
 
 export function useCustomFields(screen?: ScreenKey, unidadeId?: string) {
-  const [config, setConfig] = useState<CustomFieldsConfig>({});
-  const [loading, setLoading] = useState(true);
-
-  const fetchConfig = useCallback(async () => {
-    try {
-      const { data } = await supabase
-        .from('system_config')
-        .select('configuracoes')
-        .eq('id', CONFIG_ID)
-        .maybeSingle();
-
-      if (data?.configuracoes) {
-        setConfig(data.configuracoes as unknown as CustomFieldsConfig);
-      }
-    } catch {
-      // silent
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchConfig();
-  }, [fetchConfig]);
-
-  // Realtime — refetch whenever the row changes anywhere in the system
-  useEffect(() => {
-    const channel = supabase
-      .channel('custom-fields-config')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'system_config', filter: `id=eq.${CONFIG_ID}` },
-        () => fetchConfig(),
-      )
-      .subscribe();
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [fetchConfig]);
-
-  const saveConfig = useCallback(async (newConfig: CustomFieldsConfig) => {
-    setConfig(newConfig);
-    try {
-      const { error } = await supabase.from('system_config').upsert({
-        id: CONFIG_ID,
-        configuracoes: newConfig as any,
-        updated_at: new Date().toISOString(),
-      });
-      if (error) throw error;
-    } catch (err: any) {
-      toast.error(`Erro ao salvar campos: ${err.message}`);
-    }
-  }, []);
+  const { configuracoes, loading, atualizarConfiguracao } = useConfiguracao();
+  
+  const allConfig = (configuracoes[CONFIG_ID] || {}) as CustomFieldsConfig;
 
   // Resolved config for screen+unit (merges global with unit-specific)
   const getScreenConfig = useCallback(
     (s: ScreenKey, uid?: string): ScreenConfig => {
-      const screenData = config[s];
+      const screenData = allConfig[s];
       if (!screenData) return emptyScreenConfig();
 
       const globalCfg = screenData['__global__'] || emptyScreenConfig();
@@ -305,28 +256,28 @@ export function useCustomFields(screen?: ScreenKey, unidadeId?: string) {
         orderedNames: unitCfg.orderedNames?.length ? unitCfg.orderedNames : globalCfg.orderedNames,
       };
     },
-    [config],
+    [allConfig],
   );
 
   const getRawScreenConfig = useCallback(
     (s: ScreenKey, uid: string): ScreenConfig => {
-      return config[s]?.[uid] || emptyScreenConfig();
+      return allConfig[s]?.[uid] || emptyScreenConfig();
     },
-    [config],
+    [allConfig],
   );
 
   const updateScreenConfig = useCallback(
     async (s: ScreenKey, uid: string, screenCfg: ScreenConfig) => {
       const newConfig = {
-        ...config,
+        ...allConfig,
         [s]: {
-          ...config[s],
+          ...allConfig[s],
           [uid]: screenCfg,
         },
       };
-      await saveConfig(newConfig);
+      await atualizarConfiguracao(CONFIG_ID, newConfig, { silent: true, auditAcao: 'ALTERAR_CAMPOS_CUSTOM' });
     },
-    [config, saveConfig],
+    [allConfig, atualizarConfiguracao],
   );
 
   const resolved = screen ? getScreenConfig(screen, unidadeId) : emptyScreenConfig();
@@ -352,7 +303,7 @@ export function useCustomFields(screen?: ScreenKey, unidadeId?: string) {
   );
 
   return {
-    config,
+    config: allConfig,
     loading,
     resolved,
     getScreenConfig,
@@ -360,6 +311,6 @@ export function useCustomFields(screen?: ScreenKey, unidadeId?: string) {
     updateScreenConfig,
     getNativeLabel,
     isNativeHidden,
-    refetch: fetchConfig,
+    refetch: () => Promise.resolve(), // hook now handles its own sync via useConfiguracao
   };
 }

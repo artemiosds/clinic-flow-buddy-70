@@ -343,7 +343,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loadConfiguracoes = useCallback(async () => {
     try {
       const { data, error } = await supabase.from("system_config").select("configuracoes").eq("id", "default").maybeSingle();
-      if (data && !error) setConfiguracoes(safeConfigMerge(data.configuracoes as Record<string, unknown>));
+      if (data && !error) {
+        const fullConfig = data.configuracoes as Record<string, any>;
+        // legacy compat: some values might be top-level or in subkeys
+        setConfiguracoes(safeConfigMerge(fullConfig));
+      }
     } catch (err) {
       console.error("Error loading configs:", err);
     }

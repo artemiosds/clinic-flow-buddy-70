@@ -13,13 +13,12 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useData } from '@/contexts/DataContext';
+import { useConfiguracao } from '@/hooks/useConfiguracao';
 import {
-  useCustomFields,
   CustomFieldDef,
   CustomFieldType,
   ScreenKey,
   SCREEN_LABELS,
-  ScreenConfig,
   NATIVE_FIELDS,
 } from '@/hooks/useCustomFields';
 import {
@@ -176,13 +175,22 @@ const SortableItem: React.FC<SortableItemProps> = ({
 // -------- Main component --------
 const ConfigPersonalizarCampos: React.FC = () => {
   const { unidades } = useData();
-  const { getRawScreenConfig, updateScreenConfig, loading } = useCustomFields();
-
   const [selectedScreen, setSelectedScreen] = useState<ScreenKey>('paciente');
   const [selectedUnit, setSelectedUnit] = useState<string>('__global__');
-  const [screenConfig, setScreenConfig] = useState<ScreenConfig>({
-    fields: [], hiddenNative: [], labelOverrides: {}, orderedNames: [],
-  });
+
+  const { atualizarConfiguracao, configuracoes, loading: hookLoading } = useConfiguracao();
+
+  const screenConfig = useMemo(() => {
+    const all = (configuracoes['custom_fields_config'] || {}) as Record<string, any>;
+    return (all[selectedScreen]?.[selectedUnit] || {
+      fields: [], hiddenNative: [], labelOverrides: {}, orderedNames: [],
+    }) as {
+      fields: CustomFieldDef[];
+      hiddenNative: string[];
+      labelOverrides: Record<string, string>;
+      orderedNames?: string[];
+    };
+  }, [configuracoes, selectedScreen, selectedUnit]);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingField, setEditingField] = useState<CustomFieldDef | null>(null);
@@ -198,17 +206,14 @@ const ConfigPersonalizarCampos: React.FC = () => {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
-  useEffect(() => {
-    if (!loading) {
-      setScreenConfig(getRawScreenConfig(selectedScreen, selectedUnit));
-    }
-  }, [selectedScreen, selectedUnit, loading, getRawScreenConfig]);
-
-  const save = useCallback(async (cfg: ScreenConfig) => {
-    setScreenConfig(cfg);
-    await updateScreenConfig(selectedScreen, selectedUnit, cfg);
+  const save = useCallback(async (newScreenCfg: any) => {
+    const all = { ...(configuracoes['custom_fields_config'] || {}) } as Record<string, any>;
+    if (!all[selectedScreen]) all[selectedScreen] = {};
+    all[selectedScreen][selectedUnit] = newScreenCfg;
+    
+    await atualizarConfiguracao('custom_fields_config', all, { auditAcao: 'ALTERAR_CAMPOS_CUSTOM' });
     toast.success('Configuração salva');
-  }, [selectedScreen, selectedUnit, updateScreenConfig]);
+  }, [selectedScreen, selectedUnit, configuracoes, atualizarConfiguracao]);
 
   // Build unified ordered list — uses orderedNames if present, otherwise [natives..., customs by ordem]
   const unifiedRows: UnifiedRow[] = useMemo(() => {

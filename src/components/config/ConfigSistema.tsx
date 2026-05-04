@@ -54,7 +54,7 @@ const SECTIONS = [
 ];
 
 const ConfigSistema: React.FC = () => {
-  const { atualizarConfiguracao, syncPendingDrafts } = useConfiguracao();
+  const { atualizarConfiguracao, configuracoes, loading: hookLoading } = useConfiguracao();
   const [config, setConfig] = useState<SistemaConfig>(DEFAULT);
   const [savedConfig, setSavedConfig] = useState<SistemaConfig>(DEFAULT);
   const [loading, setLoading] = useState(true);
@@ -62,25 +62,21 @@ const ConfigSistema: React.FC = () => {
   const autoSaveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /* ---------- carregar ---------- */
-  const loadConfig = useCallback(async () => {
-    const { data } = await supabase.from('system_config').select('configuracoes').eq('id', 'default').maybeSingle();
-    const cfg = data?.configuracoes as any;
-    if (cfg?.[CONFIG_KEY]) {
-      const merged = {
-        ...DEFAULT,
-        ...cfg[CONFIG_KEY],
-        backup: { ...DEFAULT.backup, ...(cfg[CONFIG_KEY].backup || {}) },
-      };
-      setConfig(merged);
-      setSavedConfig(merged);
-    }
-    setLoading(false);
-  }, []);
-
   useEffect(() => {
-    loadConfig();
-    syncPendingDrafts();
-  }, [loadConfig, syncPendingDrafts]);
+    if (!hookLoading) {
+      const cfg = configuracoes[CONFIG_KEY];
+      if (cfg) {
+        const merged = {
+          ...DEFAULT,
+          ...cfg,
+          backup: { ...DEFAULT.backup, ...(cfg.backup || {}) },
+        };
+        setConfig(merged);
+        setSavedConfig(merged);
+      }
+      setLoading(false);
+    }
+  }, [hookLoading, configuracoes]);
 
   /* ---------- detectar mudanças ---------- */
   const isDirty = useMemo(

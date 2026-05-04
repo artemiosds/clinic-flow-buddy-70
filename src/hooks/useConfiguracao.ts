@@ -1,12 +1,11 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useData } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { auditService } from '@/services/auditService';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-/* ---------- Zod schemas for critical config sections ---------- */
+/* ---------- Zod schemas for configuration sections ---------- */
 
 const urlSchema = z.string().url('URL inválida').or(z.literal(''));
 
@@ -35,11 +34,16 @@ const sistemaConfigSchema = z.object({
   }).optional(),
 }).passthrough();
 
+const SCHEMAS: Record<string, z.ZodType<any>> = {
+  config_sistema: sistemaConfigSchema,
+};
+
 const DRAFT_KEY = 'config_draft_pending';
 
 interface PendingDraft {
   key: string;
   value: unknown;
+  unidadeId?: string;
   timestamp: number;
 }
 
@@ -48,17 +52,60 @@ interface PendingDraft {
  * - Validação Zod
  * - Atualização otimista
  * - Auditoria automática
- * - Fallback offline (localStorage draft)
+ * - Realtime Sync
+ * - Suporte a unidade-específica (ID unit:{uuid})
  */
-export function useConfiguracao() {
-  const { configuracoes, updateConfiguracoes } = useData();
+export function useConfiguracao(unidadeId?: string) {
   const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [configuracoes, setConfiguracoes] = useState<Record<string, any>>({});
   const savingRef = useRef(false);
+  
+  const configRowId = unidadeId ? `unit:${unidadeId}` : 'default';
 
-  /** Validate a config section using Zod (only config_sistema for now) */
+  const fetchConfig = useCallback(async () => {
+    try {
+      const { data } = await supabase
+        .from('system_config')
+        .select('configuracoes')
+        .eq('id', configRowId)
+        .maybeSingle();
+      
+      if (data?.configuracoes) {
+        setConfiguracoes(data.configuracoes as Record<string, any>);
+      }
+    } catch (err) {
+      console.error('Fetch config error:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [configRowId]);
+
+  useEffect(() => {
+    fetchConfig();
+    
+    // Realtime subscription for this specific config row
+    const channel = supabase
+      .channel(`rt:system_config:${configRowId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'system_config', filter: `id=eq.${configRowId}` },
+        (payload: any) => {
+          if (payload.new && payload.new.configuracoes) {
+            setConfiguracoes(payload.new.configuracoes);
+          }
+        }
+      )
+      .subscribe();
+      
+    return () => { supabase.removeChannel(channel); };
+  }, [configRowId, fetchConfig]);
+
+  /** Validate a config section using Zod */
   const validate = useCallback((key: string, value: unknown): string | null => {
-    if (key === 'config_sistema') {
-      const result = sistemaConfigSchema.safeParse(value);
+    const schema = SCHEMAS[key];
+    if (schema) {
+      const result = schema.safeParse(value);
       if (!result.success) {
         return result.error.issues.map(i => i.message).join('; ');
       }
@@ -70,53 +117,37 @@ export function useConfiguracao() {
   const atualizarConfiguracao = useCallback(
     async (key: string, value: unknown, options?: { silent?: boolean; auditAcao?: string }) => {
       if (savingRef.current) return;
-      savingRef.current = true;
-
+      
       // 1. Validate
       const err = validate(key, value);
       if (err) {
         toast.error(`Validação falhou: ${err}`);
-        savingRef.current = false;
         return;
       }
 
-      // 2. Capture old value for audit
-      let oldValue: unknown = null;
+      savingRef.current = true;
+      const oldValue = configuracoes[key] ?? null;
+      const newConfig = { ...configuracoes, [key]: value };
+
+      // 2. Optimistic UI update
+      setConfiguracoes(newConfig);
 
       try {
-        // 3. Read current row
-        const { data: existing } = await supabase
-          .from('system_config')
-          .select('configuracoes')
-          .eq('id', 'default')
-          .maybeSingle();
-
-        const existingConfig = (existing?.configuracoes as Record<string, unknown>) || {};
-        oldValue = existingConfig[key] ?? null;
-
-        const newConfig = { ...existingConfig, [key]: value };
-
-        // 4. Optimistic UI update
-        // (DataContext will pick it up via realtime too, but we set it eagerly)
-
-        // 5. Persist
+        // 3. Persist
         const { error } = await supabase.from('system_config').upsert({
-          id: 'default',
+          id: configRowId,
           configuracoes: newConfig as any,
           updated_at: new Date().toISOString(),
         });
 
         if (error) throw error;
 
-        // 6. Clear any pending draft
-        try { localStorage.removeItem(DRAFT_KEY); } catch {}
-
-        // 7. Audit log (non-blocking)
+        // 4. Audit log (non-blocking)
         if (user) {
           auditService.log({
             acao: options?.auditAcao || `ALTERAR_CONFIG_${key.toUpperCase()}`,
             entidade: 'system_config',
-            entidadeId: 'default',
+            entidadeId: configRowId,
             modulo: 'configuracoes',
             user: { id: user.id, nome: user.nome, role: user.role, unidadeId: user.unidadeId },
             oldValue: oldValue ? { [key]: oldValue } : undefined,
@@ -126,47 +157,23 @@ export function useConfiguracao() {
 
         if (!options?.silent) toast.success('Configuração salva com sucesso');
       } catch (networkErr) {
-        // 8. Offline fallback — save draft to localStorage
-        try {
-          const draft: PendingDraft = { key, value: value as any, timestamp: Date.now() };
-          localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
-        } catch {}
-
-        toast.error('Erro ao salvar. Rascunho salvo localmente — será sincronizado automaticamente.');
+        // 5. Rollback on error
+        setConfiguracoes(configuracoes);
+        toast.error('Erro ao salvar configuração.');
         console.error('Config save error:', networkErr);
       } finally {
         savingRef.current = false;
       }
     },
-    [user, validate],
+    [user, validate, configRowId, configuracoes],
   );
-
-  /** Sync any pending drafts saved during offline periods */
-  const syncPendingDrafts = useCallback(async () => {
-    try {
-      const raw = localStorage.getItem(DRAFT_KEY);
-      if (!raw) return;
-
-      const draft: PendingDraft = JSON.parse(raw);
-      // Only sync drafts less than 24h old
-      if (Date.now() - draft.timestamp > 86_400_000) {
-        localStorage.removeItem(DRAFT_KEY);
-        return;
-      }
-
-      toast.info('Sincronizando configuração pendente...');
-      await atualizarConfiguracao(draft.key, draft.value, { silent: true, auditAcao: 'SYNC_CONFIG_OFFLINE' });
-      toast.success('Configuração pendente sincronizada');
-    } catch {
-      // silently fail — will retry next time
-    }
-  }, [atualizarConfiguracao]);
 
   return {
     configuracoes,
+    loading,
     atualizarConfiguracao,
-    syncPendingDrafts,
     validate,
     isMaster: user?.role === 'master',
+    refetch: fetchConfig
   };
 }

@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Lock, Plus, Trash2, GripVertical, Pencil, AlertTriangle, Loader2, ChevronDown, ChevronUp, FileText, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { useConfiguracao } from '@/hooks/useConfiguracao';
 import EditorProntuarioConfig from '@/components/EditorProntuarioConfig';
 import ConstrutorProntuarioModal from '@/components/ConstrutorProntuarioModal';
 
@@ -113,6 +114,7 @@ const FIELD_TYPES = [
 const TIPOS_COM_OPCOES = ['select', 'checkbox'];
 
 const ConfigProntuario: React.FC = () => {
+  const { atualizarConfiguracao, configuracoes, loading: hookLoading } = useConfiguracao();
   const [config, setConfig] = useState<ProntuarioConfig>(DEFAULT_CONFIG);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -170,18 +172,15 @@ const ConfigProntuario: React.FC = () => {
     setEditFieldDialog(null);
   };
 
-  const loadConfig = useCallback(async () => {
-    try {
-      const { data } = await supabase.from('system_config').select('configuracoes').eq('id', 'default').maybeSingle();
-      const cfg = data?.configuracoes as any;
-      if (cfg?.[CONFIG_KEY]) {
-        setConfig({ ...DEFAULT_CONFIG, ...cfg[CONFIG_KEY] });
+  useEffect(() => {
+    if (!hookLoading) {
+      const cfg = configuracoes[CONFIG_KEY];
+      if (cfg) {
+        setConfig({ ...DEFAULT_CONFIG, ...cfg });
       }
-    } catch { /* use defaults */ }
-    setLoading(false);
-  }, []);
-
-  useEffect(() => { loadConfig(); }, [loadConfig]);
+      setLoading(false);
+    }
+  }, [hookLoading, configuracoes]);
 
   const saveConfig = async (updated: ProntuarioConfig) => {
     // 🛡️ Retrocompatibilidade: garante que campos fixos / slugs imutáveis nunca sejam alterados
@@ -204,25 +203,13 @@ const ConfigProntuario: React.FC = () => {
       }),
     };
 
-    // ⚡ Atualização otimista — UI reflete imediatamente, sem esperar o round-trip
-    const previous = config;
-    setConfig(safeUpdated);
+    // ⚡ Centralized update
     setSaving(true);
-
     try {
-      const { data: existing } = await supabase.from('system_config').select('configuracoes').eq('id', 'default').maybeSingle();
-      const existingConfig = (existing?.configuracoes as any) || {};
-      const { error } = await supabase.from('system_config').upsert({
-        id: 'default',
-        configuracoes: { ...existingConfig, [CONFIG_KEY]: safeUpdated },
-        updated_at: new Date().toISOString(),
-      });
-      if (error) throw error;
-      toast.success('Configuração salva');
+      await atualizarConfiguracao(CONFIG_KEY, safeUpdated, { auditAcao: 'ALTERAR_CONFIG_PRONTUARIO' });
+      setConfig(safeUpdated);
     } catch {
-      // 🔄 Rollback em caso de falha de rede
-      setConfig(previous);
-      toast.error('Erro ao salvar — alterações revertidas');
+      toast.error('Erro ao salvar');
     }
     setSaving(false);
   };
