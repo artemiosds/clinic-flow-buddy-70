@@ -186,7 +186,7 @@ const PRINT_CSS = `
 
   /* ===== SECTIONS ===== */
   .bloco {
-    margin-top: 10px;
+    margin-top: 8px;
     border: 1px solid #cbd5e1;
     border-radius: 4px;
     overflow: hidden;
@@ -205,7 +205,7 @@ const PRINT_CSS = `
     justify-content: space-between;
   }
   .bloco-body {
-    padding: 8px 10px;
+    padding: 6px 10px;
   }
 
   /* ===== GRID LAYOUTS ===== */
@@ -259,7 +259,7 @@ const PRINT_CSS = `
     border: 1px solid #e2e8f0;
     padding: 5px 8px;
     text-align: center;
-    width: 12.5%;
+    width: 25%; /* Ajustado para 4 colunas */
   }
   .vitais-table td b {
     display: block;
@@ -291,7 +291,7 @@ const PRINT_CSS = `
 
   /* ===== SIGNATURE ===== */
   .assinatura-area {
-    margin-top: 30px;
+    margin-top: 25px;
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
@@ -341,6 +341,7 @@ const PRINT_CSS = `
     .header { border-bottom-width: 3px; }
     .bloco-titulo { background: #f8fafc !important; -webkit-print-color-adjust: exact; }
     .header-center .ficha-tipo { background: #0c4a6e !important; -webkit-print-color-adjust: exact; }
+    .evo-line { border-bottom-color: #cbd5e1 !important; }
   }
 `;
 
@@ -354,6 +355,8 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
     const dataAtual = formatarData(now.toISOString());
     const horaAtual = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
     const p = data.paciente;
+    const dc = data.dadosClinicos;
+    const sv = data.sinaisVitais;
     const idade = calcIdade(p.data_nascimento);
 
     const getRacaLabel = (val?: string) => {
@@ -376,6 +379,11 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
       if (value === undefined || value === null || value === '') return fallback;
       if (typeof value === 'boolean') return value ? 'Sim' : 'Não';
       return String(value).trim() || fallback;
+    };
+
+    const valVital = (v: any) => {
+      if (!v || v === '—' || v === 'undefined' || v === 'null') return '________';
+      return String(v).trim();
     };
 
     const evolucaoHTML = data.evoluciones.length > 0
@@ -422,7 +430,7 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
     <div class="header-center">
       <h1>Secretaria Municipal de Saúde de Oriximiná</h1>
       <h2>Centro Especializado em Reabilitação Nível II &mdash; CER II</h2>
-      <div class="ficha-tipo">FICHA CADASTRAL DO PACIENTE</div>
+      <div class="ficha-tipo">${somentePessoais ? 'FICHA CADASTRAL SIMPLIFICADA' : 'FICHA DE ATENDIMENTO COMPLETA'}</div>
     </div>
     <div class="header-logo">
       <img src="${logoRight}" alt="Logo CER II" />
@@ -430,7 +438,7 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
     <div class="header-right">
       <div><b>Data:</b> ${dataAtual}</div>
       <div><b>Hora:</b> ${horaAtual}</div>
-      <div><b>Prontuário:</b> ${val(data.dadosClinicos.numero_prontuario, 'NOVO')}</div>
+      <div><b>Prontuário:</b> ${val(dc.numero_prontuario, 'NOVO')}</div>
     </div>
   </div>
 
@@ -491,62 +499,86 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
     </div>
   </div>
 
-  <!-- SEÇÃO 4: COMPLEMENTARES / RESPONSÁVEL -->
+  <!-- SEÇÃO 4: DADOS COMPLEMENTARES -->
   <div class="bloco">
     <div class="bloco-titulo">4. Dados Complementares / Responsável</div>
     <div class="bloco-body">
-      <div class="grid-2">
+      <div class="grid-3">
         <div class="campo"><b>Nome do Responsável</b><span>${val(p.nome_responsavel, 'O próprio')}</span></div>
         <div class="campo"><b>CPF do Responsável</b><span>${val(p.cpf_responsavel, '—')}</span></div>
         <div class="campo"><b>Vínculo / Parentesco</b><span>${val(p.parentesco, '—')}</span></div>
+      </div>
+      <div class="grid-3" style="margin-top:4px">
         <div class="campo"><b>Unidade Vinculada</b><span>${val(p.unidade_vinculada, 'CER II')}</span></div>
+        <div class="campo"><b>UBS de Origem</b><span>${val(p.ubs_origem, '—')}</span></div>
+        <div class="campo"><b>Tipo Encaminhamento</b><span>${val(p.tipo_encaminhamento, '—')}</span></div>
+      </div>
+      <div class="grid-2" style="margin-top:4px">
+        <div class="campo"><b>Profissional Solicitante</b><span>${val(p.profissional_solicitante, '—')}</span></div>
+        <div class="campo"><b>Especialidade Destino</b><span>${val(p.especialidade_destino, '—')}</span></div>
       </div>
       <div class="campo" style="margin-top:4px"><b>Observações Cadastrais</b><span>${val(p.observacoes, 'Nenhuma observação registrada.')}</span></div>
     </div>
   </div>
 
   ${!somentePessoais ? `
-  <!-- SEÇÃO 5: TRIAGEM E SINAIS VITAIS -->
+  <!-- SEÇÃO 5: DADOS DO ATENDIMENTO -->
   <div class="bloco">
-    <div class="bloco-titulo">5. Triagem / Sinais Vitais</div>
+    <div class="bloco-titulo">5. Dados do Atendimento</div>
+    <div class="bloco-body">
+      <div class="grid-3">
+        <div class="campo"><b>Unidade de Atendimento</b><span>${val(dc.unidade_atendimento, 'CER II')}</span></div>
+        <div class="campo"><b>Tipo de Atendimento</b><span>${val(dc.tipo_atendimento, '—')}</span></div>
+        <div class="campo"><b>Especialidade</b><span>${val(dc.especialidade, '—')}</span></div>
+      </div>
+      <div class="grid-2" style="margin-top:4px">
+        <div class="campo"><b>Unidade de Origem</b><span>${val(dc.unidade_origem, '—')}</span></div>
+        <div class="campo"><b>CID / Diagnóstico</b><span>${val(dc.cid, '—')}</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SEÇÃO 6: TRIAGEM E SINAIS VITAIS -->
+  <div class="bloco">
+    <div class="bloco-titulo">6. Triagem / Sinais Vitais</div>
     <div class="bloco-body">
       <table class="vitais-table">
         <tr>
-          <td><b>PA (Pressão)</b><span>${val(data.sinaisVitais.pressao_arterial)}</span></td>
-          <td><b>FC (BPM)</b><span>${val(data.sinaisVitais.frequencia_cardiaca)}</span></td>
-          <td><b>FR (resp)</b><span>${val(data.sinaisVitais.frequencia_respiratoria)}</span></td>
-          <td><b>Temp (°C)</b><span>${val(data.sinaisVitais.temperatura)}</span></td>
+          <td><b>PA (Pressão)</b><span>${valVital(sv.pressao_arterial)}</span></td>
+          <td><b>FC (BPM)</b><span>${valVital(sv.frequencia_cardiaca)}</span></td>
+          <td><b>FR (resp)</b><span>${valVital(sv.frequencia_respiratoria)}</span></td>
+          <td><b>Temp (°C)</b><span>${valVital(sv.temperatura)}</span></td>
         </tr>
         <tr>
-          <td><b>SpO2 (%)</b><span>${val(data.sinaisVitais.saturacao)}</span></td>
-          <td><b>Peso (kg)</b><span>${val(data.sinaisVitais.peso)}</span></td>
-          <td><b>Altura (m)</b><span>${val(data.sinaisVitais.altura)}</span></td>
-          <td><b>Glicemia</b><span>${val(data.sinaisVitais.glicemia)}</span></td>
+          <td><b>SpO2 (%)</b><span>${valVital(sv.saturacao)}</span></td>
+          <td><b>Peso (kg)</b><span>${valVital(sv.peso)}</span></td>
+          <td><b>Altura (m)</b><span>${valVital(sv.altura)}</span></td>
+          <td><b>Glicemia</b><span>${valVital(sv.glicemia)}</span></td>
         </tr>
       </table>
     </div>
   </div>
 
-  <!-- SEÇÃO 6: CAMPOS CLÍNICOS -->
-  ${linhasVazias('6. Queixa Principal', 2)}
+  <!-- CAMPOS CLÍNICOS -->
+  ${linhasVazias('7. Queixa Principal', 2)}
   
   <div class="bloco">
-    <div class="bloco-titulo">7. Evolução Clínica</div>
+    <div class="bloco-titulo">8. Evolução Clínica</div>
     <div class="bloco-body">
       ${evolucaoHTML}
       ${Array.from({ length: 6 }, () => '<div class="evo-line"></div>').join('')}
     </div>
   </div>
 
-  ${linhasVazias('8. Conduta / Prescrição', 4)}
+  ${linhasVazias('9. Conduta / Prescrição', 4)}
   
   <div class="grid-2">
-    ${blocoCurto('9. Diagnóstico')}
-    ${blocoCurto('10. Retorno')}
+    ${blocoCurto('10. Diagnóstico')}
+    ${blocoCurto('11. Retorno')}
   </div>
 
-  ${linhasVazias('11. Medicação / Prescrição', 4)}
-  ${linhasVazias('12. Procedimentos', 3)}
+  ${linhasVazias('12. Medicação / Prescrição', 4)}
+  ${linhasVazias('13. Procedimentos', 3)}
   ` : ''}
 
   <!-- ASSINATURA -->
@@ -670,12 +702,29 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
               <p><span className="text-[9px] font-bold uppercase text-slate-400">Email:</span> {data.paciente.email || '—'}</p>
             </div>
           </div>
+
+          {/* Dados Complementares */}
+          <div className="border border-slate-200 rounded p-3">
+            <h3 className="text-[10px] font-bold uppercase text-primary mb-2 border-b border-slate-100 pb-1">4. Dados Complementares</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
+              <p><span className="text-[9px] font-bold uppercase text-slate-400">Responsável:</span> {data.paciente.nome_responsavel || 'O próprio'}</p>
+              <p><span className="text-[9px] font-bold uppercase text-slate-400">Unidade Vinculada:</span> {data.paciente.unidade_vinculada || 'CER II'}</p>
+            </div>
+          </div>
           
-          {/* Sinais Vitais e Clínicos (Preview) */}
+          {/* Seção Clínica (Preview) */}
           {!somentePessoais && (
             <>
               <div className="border border-slate-200 rounded p-3">
-                <h3 className="text-[10px] font-bold uppercase text-primary mb-2 border-b border-slate-100 pb-1">5. Sinais Vitais</h3>
+                <h3 className="text-[10px] font-bold uppercase text-primary mb-2 border-b border-slate-100 pb-1">5. Dados do Atendimento</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  <p><span className="text-[9px] font-bold uppercase text-slate-400">Unidade:</span> {data.dadosClinicos.unidade_atendimento || '—'}</p>
+                  <p><span className="text-[9px] font-bold uppercase text-slate-400">Tipo:</span> {data.dadosClinicos.tipo_atendimento || '—'}</p>
+                </div>
+              </div>
+
+              <div className="border border-slate-200 rounded p-3">
+                <h3 className="text-[10px] font-bold uppercase text-primary mb-2 border-b border-slate-100 pb-1">6. Triagem / Sinais Vitais</h3>
                 <div className="grid grid-cols-4 gap-2">
                   <p><span className="text-[9px] font-bold uppercase text-slate-400">PA:</span> {data.sinaisVitais.pressao_arterial || '—'}</p>
                   <p><span className="text-[9px] font-bold uppercase text-slate-400">FC:</span> {data.sinaisVitais.frequencia_cardiaca || '—'}</p>
@@ -687,9 +736,10 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
                   <p><span className="text-[9px] font-bold uppercase text-slate-400">Glicemia:</span> {data.sinaisVitais.glicemia || '—'}</p>
                 </div>
               </div>
+
               <div className="border border-slate-200 rounded p-3 bg-slate-50/50">
                 <p className="text-[9px] text-center text-slate-500 uppercase font-bold">
-                  Campos clínicos (Queixa, Evolução, Conduta, etc.) inclusos na versão impressa completa.
+                  Campos clínicos de 7 a 13 (Queixa, Evolução, Conduta, etc.) disponíveis na versão impressa.
                 </p>
               </div>
             </>
