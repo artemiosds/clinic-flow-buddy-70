@@ -123,13 +123,13 @@ const resolveLogoUrl = (src: string): string => {
 
 const PRINT_CSS = `
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  @page { size: A4 portrait; margin: 10mm 12mm 14mm 12mm; }
+  @page { size: A4 portrait; margin: 10mm 12mm 10mm 12mm; }
   body {
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 11px;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 10.5px;
     color: #1a1a1a;
-    line-height: 1.45;
-    padding: 0;
+    line-height: 1.4;
+    background: #fff;
     width: 100%;
   }
 
@@ -137,26 +137,24 @@ const PRINT_CSS = `
   .header {
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding-bottom: 8px;
-    margin-bottom: 6px;
-    border-bottom: 3px solid #0c4a6e;
+    gap: 15px;
+    padding-bottom: 10px;
+    margin-bottom: 12px;
+    border-bottom: 2px solid #0c4a6e;
   }
   .header-logo img {
-    width: 54px;
-    height: 54px;
-    object-fit: cover;
-    border-radius: 6px;
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
   }
   .header-center {
     flex: 1;
     text-align: center;
   }
   .header-center h1 {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 0.8px;
     color: #0c4a6e;
     margin: 0;
   }
@@ -165,132 +163,135 @@ const PRINT_CSS = `
     font-weight: 700;
     text-transform: uppercase;
     color: #334155;
-    margin: 2px 0 0;
+    margin: 2px 0;
   }
   .header-center .ficha-tipo {
-    font-size: 10px;
-    font-weight: 600;
+    font-size: 11px;
+    font-weight: 800;
     text-transform: uppercase;
-    color: #64748b;
-    letter-spacing: 0.5px;
-    margin-top: 2px;
+    background: #0c4a6e;
+    color: #fff;
+    display: inline-block;
+    padding: 2px 15px;
+    border-radius: 4px;
+    margin-top: 4px;
   }
   .header-right {
     text-align: right;
     font-size: 10px;
     color: #475569;
-    line-height: 1.7;
-    min-width: 130px;
+    min-width: 140px;
   }
-  .header-right b { color: #1e293b; }
+  .header-right b { color: #0c4a6e; }
 
   /* ===== SECTIONS ===== */
   .bloco {
-    margin-top: 7px;
-    border: 1px solid #94a3b8;
+    margin-top: 10px;
+    border: 1px solid #cbd5e1;
     border-radius: 4px;
     overflow: hidden;
     page-break-inside: avoid;
   }
   .bloco-titulo {
-    font-size: 10px;
-    font-weight: 700;
+    font-size: 9.5px;
+    font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 0.6px;
-    background: linear-gradient(135deg, #0c4a6e, #0369a1);
-    color: #fff;
-    padding: 5px 12px;
-    margin: 0;
+    letter-spacing: 0.5px;
+    background: #f1f5f9;
+    color: #0c4a6e;
+    padding: 4px 10px;
+    border-bottom: 1px solid #cbd5e1;
+    display: flex;
+    justify-content: space-between;
   }
   .bloco-body {
-    padding: 8px 12px;
+    padding: 8px 10px;
   }
 
-  /* ===== FIELD GRIDS ===== */
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 18px; }
-  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 3px 14px; }
-  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px 10px; }
+  /* ===== GRID LAYOUTS ===== */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 15px; }
+  .grid-3 { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 4px 15px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px 12px; }
+  .grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px 10px; }
+  .grid-mixed { display: grid; grid-template-columns: 2fr 1fr 1.5fr; gap: 4px 15px; }
+  .grid-address { display: grid; grid-template-columns: 3fr 1fr 1.5fr; gap: 4px 15px; }
 
-  .campo { margin-bottom: 2px; font-size: 11px; }
+  .campo { margin-bottom: 1px; }
   .campo b {
-    font-size: 8.5px;
+    font-size: 8px;
     text-transform: uppercase;
-    color: #475569;
+    color: #64748b;
     font-weight: 700;
-    letter-spacing: 0.2px;
-    margin-right: 4px;
+    display: block;
+    margin-bottom: 1px;
   }
-  .campo span { color: #0f172a; font-weight: 500; }
+  .campo span {
+    color: #0f172a;
+    font-weight: 600;
+    font-size: 10.5px;
+    display: block;
+    min-height: 14px;
+  }
+  .campo-inline { display: flex; align-items: baseline; gap: 4px; }
+  .campo-inline b { display: inline; margin-bottom: 0; }
+  .campo-inline span { display: inline; }
   .campo-full { grid-column: 1 / -1; }
+
+  /* ===== SPECIAL ELEMENTS ===== */
+  .badge-menor {
+    background: #fee2e2;
+    color: #991b1b;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 8px;
+    font-weight: 800;
+    text-transform: uppercase;
+    margin-left: 8px;
+  }
 
   /* ===== VITALS TABLE ===== */
   .vitais-table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 4px;
+    margin-top: 2px;
   }
   .vitais-table td {
-    border: 1px solid #cbd5e1;
-    padding: 6px 10px;
-    font-size: 11px;
+    border: 1px solid #e2e8f0;
+    padding: 5px 8px;
     text-align: center;
-    background: #f8fafc;
+    width: 12.5%;
   }
   .vitais-table td b {
     display: block;
-    font-size: 8px;
+    font-size: 7.5px;
     text-transform: uppercase;
     color: #64748b;
     font-weight: 700;
-    margin-bottom: 2px;
+    margin-bottom: 1px;
   }
   .vitais-table td span {
-    font-weight: 600;
-    color: #0f172a;
-    font-size: 12px;
-  }
-
-  /* ===== EVOLUTION LINES ===== */
-  .evo-area {
-    min-height: 180px;
-    position: relative;
-  }
-  .evo-line {
-    border-bottom: 1px solid #cbd5e1;
-    height: 26px;
-    line-height: 26px;
-    padding: 0 4px;
+    font-weight: 700;
+    color: #0c4a6e;
     font-size: 11px;
   }
-  .evo-line:nth-child(odd) { background: #fafbfc; }
 
+  /* ===== EVOLUTION AREAS ===== */
   .evo-item {
-    border-bottom: 1px solid #e2e8f0;
-    padding: 6px 4px;
+    border-bottom: 1px solid #f1f5f9;
+    padding: 6px 0;
   }
   .evo-item:last-child { border-bottom: none; }
-  .evo-meta { font-size: 9px; color: #64748b; font-weight: 600; }
-  .evo-text { font-size: 11px; margin-top: 3px; color: #1e293b; line-height: 1.5; }
+  .evo-meta { font-size: 8.5px; color: #64748b; font-weight: 700; margin-bottom: 2px; }
+  .evo-text { font-size: 10px; color: #1e293b; line-height: 1.4; white-space: pre-wrap; }
 
-  /* ===== CONDUTA ===== */
-  .conduta-campo {
-    margin-bottom: 3px;
-  }
-  .conduta-campo b {
-    font-size: 9px;
-    text-transform: uppercase;
-    color: #475569;
-    font-weight: 700;
-  }
-  .conduta-linha {
-    border-bottom: 1px solid #cbd5e1;
-    min-height: 24px;
-    margin-bottom: 8px;
+  .evo-line {
+    border-bottom: 1px solid #e2e8f0;
+    height: 22px;
   }
 
   /* ===== SIGNATURE ===== */
   .assinatura-area {
-    margin-top: 28px;
+    margin-top: 30px;
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
@@ -298,47 +299,51 @@ const PRINT_CSS = `
   }
   .assinatura-bloco {
     text-align: center;
-    width: 240px;
+    width: 250px;
   }
   .assinatura-traco {
-    border-top: 1px solid #1e293b;
-    padding-top: 24px;
-  }
-  .assinatura-label {
-    font-size: 9px;
-    color: #64748b;
-    margin: 2px 0 0;
+    border-top: 1px solid #334155;
+    margin-bottom: 4px;
   }
   .assinatura-nome {
     font-size: 10px;
-    font-weight: 600;
-    color: #1e293b;
+    font-weight: 700;
+    color: #0f172a;
+    text-transform: uppercase;
+  }
+  .assinatura-label {
+    font-size: 8.5px;
+    color: #64748b;
   }
 
-  .assinatura-data {
-    text-align: left;
+  .data-local {
     font-size: 10px;
     color: #475569;
   }
-  .assinatura-data b { color: #1e293b; }
 
   /* ===== FOOTER ===== */
   .rodape {
-    margin-top: 14px;
-    padding-top: 5px;
-    border-top: 1px solid #cbd5e1;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 5px 12mm;
+    border-top: 1px solid #e2e8f0;
     text-align: center;
     font-size: 8px;
     color: #94a3b8;
-    letter-spacing: 0.3px;
+    background: #fff;
   }
 
   @media print {
-    body { padding: 0; }
-    .bloco { break-inside: avoid; }
-    .assinatura-area { break-inside: avoid; }
+    body { padding-bottom: 40px; }
+    .bloco { break-inside: avoid; border-color: #94a3b8; }
+    .header { border-bottom-width: 3px; }
+    .bloco-titulo { background: #f8fafc !important; -webkit-print-color-adjust: exact; }
+    .header-center .ficha-tipo { background: #0c4a6e !important; -webkit-print-color-adjust: exact; }
   }
 `;
+
 
 export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'completa', onPrintComplete }) => {
   const somentePessoais = mode === 'dados_pessoais';
