@@ -63,13 +63,58 @@ type TabId = typeof TABS[number]['id'];
 
 const Configuracoes: React.FC = () => {
   const { user } = useAuth();
-  const { unidades, funcionarios } = useData();
+  const { unidades, funcionarios, configuracoes: dataConfiguracoes, updateConfiguracoes } = useData();
+  const { whatsapp, filaEspera } = dataConfiguracoes;
   const { atualizarConfiguracao, configuracoes, loading: hookLoading } = useConfiguracao(user?.unidadeId);
   
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<TabId>('prontuario');
 
-  // Evolution API config (from centralized store)
+  // Reativar Atendimento
+  const [reativarProfId, setReativarProfId] = useState('');
+  const [reativarAgendamentos, setReativarAgendamentos] = useState<any[]>([]);
+  const [reativarAgId, setReativarAgId] = useState('');
+  const [reativarLoading, setReativarLoading] = useState(false);
+  const [reativarProfSearch, setReativarProfSearch] = useState('');
+  const [reativarBuscando, setReativarBuscando] = useState(false);
+  const [reativarPacienteSearch, setReativarPacienteSearch] = useState('');
+
+  // Transferência
+  const [transferAgId, setTransferAgId] = useState('');
+  const [transferNovoProfId, setTransferNovoProfId] = useState('');
+  const [transferMotivo, setTransferMotivo] = useState('');
+  const [transferLoading, setTransferLoading] = useState(false);
+  const [transferAgendamentos, setTransferAgendamentos] = useState<any[]>([]);
+  const [transferProfOrigem, setTransferProfOrigem] = useState('');
+  const [transferBuscando, setTransferBuscando] = useState(false);
+
+  // Agendamento Online
+  const [agOnline, setAgOnline] = useState({
+    habilitado: false,
+    antecedencia_minima_dias: 1,
+    antecedencia_maxima_dias: 30,
+    limite_por_dia_profissional: 5,
+    mensagem_confirmacao: 'Seu agendamento foi confirmado com sucesso!',
+    exigir_confirmacao_sms: false,
+    profissionais_bloqueados: [] as string[],
+  });
+  const [agOnlineLoading, setAgOnlineLoading] = useState(true);
+  const [agOnlineSaving, setAgOnlineSaving] = useState(false);
+
+  // Cancelamentos
+  const [cancelConfig, setCancelConfig] = useState({
+    prazo_minimo_horas: 24,
+    limite_cancelamentos_mes: 3,
+    dias_bloqueio_apos_limite: 7,
+    motivos: ['Compromisso pessoal', 'Problema de saúde', 'Falta de transporte', 'Horário incompatível', 'Outro'] as string[],
+    notificar_profissional: true,
+    liberar_vaga_automaticamente: true,
+  });
+  const [cancelLoading, setCancelLoading] = useState(true);
+  const [cancelSaving, setCancelSaving] = useState(false);
+  const [novoMotivo, setNovoMotivo] = useState('');
+
+  // Evolution API
   const [evolutionConfig, setEvolutionConfig] = useState({
     nome_clinica: '', logo_url: '', telefone: '',
     evolution_base_url: 'https://api.agendamento-saude-sms-oriximina.site',
@@ -80,16 +125,30 @@ const Configuracoes: React.FC = () => {
   const [evolutionSaving, setEvolutionSaving] = useState(false);
   const [evolutionStatus, setEvolutionStatus] = useState<'idle' | 'connected' | 'disconnected' | 'error'>('idle');
 
+  const [triageEnabled, setTriageEnabled] = useState(false);
+  const [triageLoading, setTriageLoading] = useState(true);
+
   // Load from centralized store
   useEffect(() => {
     if (!hookLoading) {
       const clinicaCfg = configuracoes['config_clinica'];
-      if (clinicaCfg) {
-        setEvolutionConfig(prev => ({ ...prev, ...clinicaCfg }));
-      }
+      if (clinicaCfg) setEvolutionConfig(prev => ({ ...prev, ...clinicaCfg }));
+      
+      const onlineCfg = configuracoes['config_agendamento_online'];
+      if (onlineCfg) setAgOnline(prev => ({ ...prev, ...onlineCfg }));
+      
+      const cancelCfg = configuracoes['config_cancelamentos'];
+      if (cancelCfg) setCancelConfig(prev => ({ ...prev, ...cancelCfg }));
+
+      setTriageEnabled(configuracoes['config_triagem_enabled'] ?? false);
+      
       setEvolutionLoading(false);
+      setAgOnlineLoading(false);
+      setCancelLoading(false);
+      setTriageLoading(false);
     }
   }, [hookLoading, configuracoes]);
+
 
   const isMaster = user?.role === 'master';
   const _isGlobalMaster = user?.usuario === 'admin.sms';
@@ -197,61 +256,10 @@ const Configuracoes: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const unitId = user?.unidadeId || '';
-        const { data } = await supabase
-          .from('triage_settings')
-          .select('*')
-          .or(`unidade_id.eq.${unitId},unidade_id.is.null`)
-          .order('unidade_id', { ascending: false, nullsFirst: false })
-          .limit(1)
-          .maybeSingle();
-        if (data) {
-          setTriageEnabled(data.enabled || false);
-          setTriageSettingId(data.id);
-        }
-      } catch { }
-      setTriageLoading(false);
-    })();
-  }, [user?.unidadeId]);
-
-
-  useEffect(() => {
-    if (!isMaster) return;
-    (async () => {
-      try {
-        const { data } = await supabase
-          .from('system_config')
-          .select('id, configuracoes')
-          .in('id', ['config_agendamento_online', 'config_cancelamentos']);
-        if (data) {
-          for (const row of data) {
-            const cfg = row.configuracoes as any;
-            if (row.id === 'config_agendamento_online' && cfg) {
-              setAgOnline(prev => ({ ...prev, ...cfg }));
-            }
-            if (row.id === 'config_cancelamentos' && cfg) {
-              setCancelConfig(prev => ({ ...prev, ...cfg }));
-            }
-          }
-        }
-      } catch { }
-      setAgOnlineLoading(false);
-      setCancelLoading(false);
-    })();
-  }, [isMaster]);
-
   const saveAgOnline = async () => {
     setAgOnlineSaving(true);
     try {
-      const { error } = await supabase.from('system_config').upsert({
-        id: 'config_agendamento_online',
-        configuracoes: agOnline as any,
-        updated_at: new Date().toISOString(),
-      });
-      if (error) throw error;
+      await atualizarConfiguracao('config_agendamento_online', agOnline, { auditAcao: 'ALTERAR_CONFIG_AG_ONLINE' });
       toast.success('Configurações de agendamento online salvas!');
     } catch (err: any) {
       toast.error(`Erro: ${err.message}`);
@@ -263,12 +271,7 @@ const Configuracoes: React.FC = () => {
   const saveCancelConfig = async () => {
     setCancelSaving(true);
     try {
-      const { error } = await supabase.from('system_config').upsert({
-        id: 'config_cancelamentos',
-        configuracoes: cancelConfig as any,
-        updated_at: new Date().toISOString(),
-      });
-      if (error) throw error;
+      await atualizarConfiguracao('config_cancelamentos', cancelConfig, { auditAcao: 'ALTERAR_CONFIG_CANCELAMENTOS' });
       toast.success('Regras de cancelamento salvas!');
     } catch (err: any) {
       toast.error(`Erro: ${err.message}`);
@@ -277,65 +280,33 @@ const Configuracoes: React.FC = () => {
     }
   };
 
+  const handleToggleTriage = async (v: boolean) => {
+    setTriageEnabled(v);
+    await atualizarConfiguracao('config_triagem_enabled', v, { auditAcao: 'ALTERAR_CONFIG_TRIAGEM' });
+    toast.success(v ? 'Triagem habilitada' : 'Triagem desabilitada');
+  };
 
+  // Evolution instances loading logic
   useEffect(() => {
-    if (!isMaster) { setEvolutionLoading(false); return; }
-    (async () => {
-      try {
-        const { data } = await supabase
-          .from('clinica_config')
-          .select('*')
-          .limit(1)
-          .maybeSingle();
-        if (data) {
-          setEvolutionConfigId(data.id);
-          setEvolutionConfig({
-            nome_clinica: data.nome_clinica || '',
-            logo_url: data.logo_url || '',
-            telefone: data.telefone || '',
-            evolution_base_url: data.evolution_base_url || 'https://api.agendamento-saude-sms-oriximina.site',
-            evolution_api_key: data.evolution_api_key || '',
-            evolution_instance_name: data.evolution_instance_name || '',
-          });
-          if (data.evolution_instance_name && data.evolution_api_key) {
-            try {
-              const resp = await fetch(
-                `${data.evolution_base_url}/instance/connectionState/${data.evolution_instance_name}`,
-                { headers: { apikey: data.evolution_api_key } }
-              );
-              if (resp.ok) {
-                const state = await resp.json();
-                setEvolutionStatus(state?.instance?.state === 'open' ? 'connected' : 'disconnected');
-              } else {
-                setEvolutionStatus('error');
-              }
-            } catch {
-              setEvolutionStatus('error');
-            }
-          }
-        }
+    if (evolutionConfig.evolution_api_key) {
+      (async () => {
         try {
-          const baseUrl = data?.evolution_base_url || evolutionConfig.evolution_base_url;
-          const apiKey = data?.evolution_api_key || evolutionConfig.evolution_api_key;
-          if (apiKey) {
-            const resp = await fetch(`${baseUrl}/instance/fetchInstances`, {
-              headers: { apikey: apiKey },
-            });
-            if (resp.ok) {
-              const instances = await resp.json();
-              if (Array.isArray(instances)) {
-                setEvolutionInstances(instances.map((i: any) => ({
-                  instanceName: i.instance?.instanceName || i.instanceName || '',
-                  state: i.instance?.state || i.state || 'unknown',
-                })).filter((i: any) => i.instanceName));
-              }
+          const resp = await fetch(`${evolutionConfig.evolution_base_url}/instance/fetchInstances`, {
+            headers: { apikey: evolutionConfig.evolution_api_key },
+          });
+          if (resp.ok) {
+            const instances = await resp.json();
+            if (Array.isArray(instances)) {
+              setEvolutionInstances(instances.map((i: any) => ({
+                instanceName: i.instance?.instanceName || i.instanceName || '',
+                state: i.instance?.state || i.state || 'unknown',
+              })).filter((i: any) => i.instanceName));
             }
           }
         } catch { }
-      } catch { }
-      setEvolutionLoading(false);
-    })();
-  }, [isMaster]);
+      })();
+    }
+  }, [evolutionConfig.evolution_api_key, evolutionConfig.evolution_base_url]);
 
   const saveEvolutionConfig = async () => {
     setEvolutionSaving(true);
