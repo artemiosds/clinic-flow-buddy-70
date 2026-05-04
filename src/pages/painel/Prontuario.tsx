@@ -1139,9 +1139,9 @@ const ProntuarioPage: React.FC = () => {
         session_id: currentSessionForRegistration?.id || null,
       });
       if (form.tipo_registro === 'sessao' && !editId) {
-        toast.error(err?.message?.startsWith('Preencha') ? err.message : '❌ Erro ao registrar sessão. Tente novamente.');
+        toast.error(err?.message?.startsWith('Preencha') ? err.message : '❌ Erro ao registrar sessão. Tente novamente.', { id: toastId });
       } else {
-        toast.error("Erro ao salvar: " + (err?.message || "erro desconhecido"));
+        toast.error("Erro ao salvar: " + (err?.message || "erro desconhecido"), { id: toastId });
       }
       return false;
     } finally {
