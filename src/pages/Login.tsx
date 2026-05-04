@@ -21,6 +21,12 @@ const Login: React.FC = () => {
   const [showSenha, setShowSenha] = useState(false);
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
+  const [config, setConfig] = useState<DocumentConfig | null>(null);
+
+  useEffect(() => {
+    loadDocumentConfig().then(setConfig);
+  }, []);
+
   const { login } = useAuth();
   const navigate = useNavigate();
 
