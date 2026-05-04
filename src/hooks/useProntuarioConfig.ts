@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { TIPO_REGISTRO_LABELS } from '@/utils/labels';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 export interface BlocoConfig {
