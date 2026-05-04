@@ -464,24 +464,23 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loadPacientes = useCallback(async () => {
     try {
-      // ALL staff see ALL patients regardless of unit — critical for cross-unit workflows
-      // Recursive pagination to handle >1000 patients
-      const PAGE = 1000;
+      // PERF: Only load the most recent 200 patients to keep the initial load fast.
+      // Searching will happen server-side for older records.
       const columns =
         "id,nome,cpf,cns,nome_mae,telefone,data_nascimento,email,endereco,observacoes,descricao_clinica,cid,criado_em,is_gestante,is_pne,is_autista,unidade_id";
-      let allData: any[] = [];
-      let from = 0;
-      while (true) {
-        const { data, error } = await supabase
-          .from("pacientes" as any)
-          .select(columns)
-          .order("criado_em", { ascending: false })
-          .range(from, from + PAGE - 1);
-        if (error) {
-          console.error("Error loading pacientes:", error);
-          break;
-        }
-        if (!data || data.length === 0) break;
+      
+      const { data, error } = await supabase
+        .from("pacientes" as any)
+        .select(columns)
+        .order("criado_em", { ascending: false })
+        .limit(200);
+
+      if (error) {
+        console.error("Error loading pacientes:", error);
+        return;
+      }
+      
+      if (data) {
         allData = allData.concat(data);
         if (data.length < PAGE) break;
         from += PAGE;
