@@ -48,16 +48,23 @@ const UnidadesSalas: React.FC = () => {
     }
   };
 
-  const handleSaveRoom = () => {
-    if (!roomForm.nome || !roomForm.unidadeId) return;
-    if (editRoomId) {
-      updateSala(editRoomId, roomForm);
-      toast.success('Sala atualizada!');
-    } else {
-      addSala({ id: `s${Date.now()}`, nome: roomForm.nome, unidadeId: roomForm.unidadeId, ativo: true });
-      toast.success('Sala criada!');
+  const handleSaveRoom = async () => {
+    if (!roomForm.nome || !roomForm.unidadeId || saving) return;
+    setSaving(true);
+    try {
+      if (editRoomId) {
+        await updateSala(editRoomId, roomForm);
+        toast.success('Sala atualizada!');
+      } else {
+        await addSala({ id: `s${Date.now()}`, nome: roomForm.nome, unidadeId: roomForm.unidadeId, ativo: true });
+        toast.success('Sala criada!');
+      }
+      setRoomDialog(false);
+    } catch (err) {
+      toast.error('Erro ao salvar sala.');
+    } finally {
+      setSaving(false);
     }
-    setRoomDialog(false);
   };
 
   return (
