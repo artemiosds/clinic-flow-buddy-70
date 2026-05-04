@@ -76,7 +76,7 @@ const ModalVerEncaminhamento: React.FC<Props> = ({ open, onOpenChange, encaminha
           <div className="border rounded-lg p-5 bg-white">
             <div className="text-center mb-3">
               <h3 className="font-bold text-sm uppercase text-primary">Secretaria Municipal de Saúde de Oriximiná</h3>
-              <p className="text-xs text-muted-foreground">CER II — Centro Especializado em Reabilitação</p>
+              <p className="text-xs text-muted-foreground">CAPS II</p>
               <p className="text-xs font-semibold mt-1 uppercase">{encaminhamento.tipo_documento || 'Encaminhamento'}</p>
               <p className="text-xs text-muted-foreground">{dataFormatada}</p>
             </div>

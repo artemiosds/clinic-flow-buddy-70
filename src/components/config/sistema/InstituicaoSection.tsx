@@ -111,7 +111,7 @@ export const InstituicaoSection: React.FC<Props> = ({ value, onChange }) => {
               <Input value={value.nome} onChange={e => onChange({ ...value, nome: e.target.value })} maxLength={300} />
             </FieldWithStatus>
 
-            <FieldWithStatus label="Nome do CER" valid={true} optional>
+            <FieldWithStatus label="Nome do CAPS" valid={true} optional>
               <Input value={value.cer} onChange={e => onChange({ ...value, cer: e.target.value })} maxLength={300} />
             </FieldWithStatus>
 

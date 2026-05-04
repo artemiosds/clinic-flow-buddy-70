@@ -260,7 +260,7 @@ const Regulacao: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl font-bold text-foreground">Regulação CER</h1>
+          <h1 className="text-xl font-bold text-foreground">Regulação CAPS</h1>
           <p className="text-sm text-muted-foreground">Fluxo de entrada e avaliação de pacientes</p>
         </div>
         <Button onClick={() => setShowNewReg(true)} size="sm">

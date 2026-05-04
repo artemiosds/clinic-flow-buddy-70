@@ -194,7 +194,7 @@ const CarimboConfig: React.FC = () => {
                 <div className="text-muted-foreground text-xs">{carimbo.conselho} / {carimbo.numero_registro}-{carimbo.uf}</div>
                 <div className="text-muted-foreground text-xs">{carimbo.especialidade}</div>
                 {carimbo.cargo && <div className="text-muted-foreground text-xs">{carimbo.cargo}</div>}
-                <div className="text-muted-foreground text-[10px]">CER II — Oriximiná/PA</div>
+                <div className="text-muted-foreground text-[10px]">CAPS II — Oriximiná/PA</div>
               </div>
             </div>
           </div>

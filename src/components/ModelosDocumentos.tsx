@@ -76,7 +76,7 @@ const substituirVariaveis = (conteudo: string): string => {
     .replace(/\{\{profissional\}\}/g, 'Dr. Maria Santos')
     .replace(/\{\{cid\}\}/g, 'F84.0')
     .replace(/\{\{especialidade\}\}/g, 'Fisioterapia')
-    .replace(/\{\{unidade\}\}/g, 'CER II Oriximiná')
+    .replace(/\{\{unidade\}\}/g, 'CAPS II Oriximiná')
     .replace(/\{\{data_hoje\}\}/g, hoje)
     .replace(/\{\{dias_afastamento\}\}/g, '3')
     .replace(/\{\{data_inicio\}\}/g, hoje)
@@ -418,7 +418,7 @@ const ModelosDocumentos: React.FC = () => {
                   <Input
                     value={current.nome}
                     onChange={e => setCurrent({ ...current, nome: e.target.value })}
-                    placeholder="Ex: Atestado padrão CER II"
+                    placeholder="Ex: Atestado padrão CAPS II"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -540,7 +540,7 @@ const ModelosDocumentos: React.FC = () => {
           <div className="border rounded-lg p-6 bg-white text-foreground">
             <div className="text-center mb-4">
               <h3 className="font-bold text-sm uppercase text-primary">Secretaria Municipal de Saúde de Oriximiná</h3>
-              <p className="text-xs text-muted-foreground">CER II — Sistema de Gestão em Saúde</p>
+              <p className="text-xs text-muted-foreground">CAPS II — Sistema de Gestão em Saúde</p>
             </div>
             <Separator className="mb-4" />
             <div className="text-sm leading-relaxed" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(previewHtml) }} />

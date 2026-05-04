@@ -203,7 +203,7 @@ const PrescricaoMedicamentos: React.FC<PrescricaoMedicamentosProps> = ({
 </style></head><body>
 <div class="header">
   <h1>Secretaria Municipal de Saúde de Oriximiná</h1>
-  <h2>Centro Especializado em Reabilitação Nível II</h2>
+  <h2>CAPS II</h2>
   <h3>Receituário Médico</h3>
 </div>
 <div class="info">

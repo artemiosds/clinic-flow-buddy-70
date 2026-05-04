@@ -20,7 +20,7 @@ function getSystemTheme(): 'light' | 'dark' {
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setThemeState] = useState<Theme>(() => {
     try {
-      return (localStorage.getItem('cer-theme') as Theme) || 'system';
+      return (localStorage.getItem('caps-theme') as Theme) || 'system';
     } catch {
       return 'system';
     }
@@ -32,7 +32,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const root = document.documentElement;
     root.classList.remove('light', 'dark');
     root.classList.add(resolved);
-    localStorage.setItem('cer-theme', theme);
+    localStorage.setItem('caps-theme', theme);
   }, [theme, resolved]);
 
   // Listen for system preference changes

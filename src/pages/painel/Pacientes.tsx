@@ -631,7 +631,7 @@ const Pacientes: React.FC = () => {
         email: filaPaciente.email,
         data_consulta: new Date().toISOString().split("T")[0],
         hora_consulta: new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
-        unidade: unidade?.nome || "",
+        unidade: unidade?.nome || "CAPS II",
         profissional: prof?.nome || "",
         tipo_atendimento: "Fila de Espera",
         status_agendamento: "aguardando",
@@ -712,7 +712,7 @@ const Pacientes: React.FC = () => {
       profissional_solicitante: pacienteData.profissional_solicitante || "",
       tipo_encaminhamento: pacienteData.tipo_encaminhamento || "",
       especialidade_destino: pacienteData.especialidade_destino || "",
-      unidade_vinculada: unidade?.nome || "CER II",
+      unidade_vinculada: unidade?.nome || "CAPS II",
       origem_cadastro: (pacienteData as any).origem_cadastro || "Manual",
     };
 
@@ -722,7 +722,7 @@ const Pacientes: React.FC = () => {
       cid: "",
       tipo_atendimento: "",
       unidade_origem: "",
-      unidade_atendimento: unidade?.nome || "CER II",
+      unidade_atendimento: unidade?.nome || "CAPS II",
       data_atendimento: "",
       especialidade: "",
       encaminhamento: "",

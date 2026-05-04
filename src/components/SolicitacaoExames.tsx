@@ -210,7 +210,7 @@ const SolicitacaoExames: React.FC<SolicitacaoExamesProps> = ({
 </style></head><body>
 <div class="header">
   <h1>Secretaria Municipal de Saúde de Oriximiná</h1>
-  <h2>Centro Especializado em Reabilitação Nível II</h2>
+  <h2>CAPS II</h2>
   <h3>Solicitação de Exames</h3>
 </div>
 <div class="info">

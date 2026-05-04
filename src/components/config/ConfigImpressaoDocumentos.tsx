@@ -403,7 +403,7 @@ const ConfigImpressaoDocumentos: React.FC = () => {
                 <LogoUploadCard
                   side="direita"
                   title="Logo Direita"
-                  subtitle="Ex: CER II"
+                  subtitle="Ex: CAPS II"
                   url={config.cabecalho.logoDireita}
                   uploading={uploadingRight}
                   onUpload={(f) => uploadLogo(f, "direita")}
