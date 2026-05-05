@@ -30,8 +30,11 @@ Deno.serve(async (req) => {
   );
 
   const ip = req.headers.get('x-forwarded-for') ?? '';
-  const tokenIn = req.headers.get('x-integration-token') ?? '';
-  const systemId = req.headers.get('x-system-id') ?? '';
+    const authHeader = req.headers.get('Authorization');
+    const systemIdHeader = req.headers.get('X-System-Identifier');
+    
+    const tokenIn = authHeader?.startsWith('Bearer ') ? authHeader.replace('Bearer ', '') : (req.headers.get('x-integration-token') ?? '');
+    const systemId = systemIdHeader ?? (req.headers.get('x-system-id') ?? '');
 
   try {
     if (!tokenIn || !systemId) {
