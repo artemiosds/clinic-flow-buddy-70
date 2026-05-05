@@ -723,7 +723,7 @@ const ConfigSistemasIntegrados: React.FC = () => {
                       type={showOutToken ? 'text' : 'password'}
                       value={form.token_saida}
                       onChange={e => setForm({ ...form, token_saida: e.target.value })}
-                      placeholder="Cole o token gerado pelo outro sistema"
+                      placeholder="Cole o token de entrada do outro sistema"
                     />
                     <button
                       type="button"
@@ -734,7 +734,7 @@ const ConfigSistemasIntegrados: React.FC = () => {
                     </button>
                   </div>
                   <p className="text-[11px] text-muted-foreground mt-1 leading-tight">
-                    Cole aqui o token de entrada configurado no outro sistema. Este token será enviado por este sistema ao chamar o sistema externo.
+                    Cole aqui o Token de ENTRADA gerado no outro sistema. Este token será usado para enviar dados para ele.
                   </p>
                 </div>
                 <div>
@@ -751,9 +751,10 @@ const ConfigSistemasIntegrados: React.FC = () => {
                         const token = generateSecureToken();
                         setForm({ ...form, token_entrada_plain: token });
                         setShowInToken(true);
+                        toast.info("Token de entrada gerado! Copie agora e cole no outro sistema como Token de SAÍDA.");
                       }}
                     >
-                      <Key className="w-3 h-3 mr-1" /> Gerar token seguro
+                      <Key className="w-3 h-3 mr-1" /> Gerar token de entrada
                     </Button>
                   </Label>
                   <div className="flex gap-2">
@@ -762,7 +763,7 @@ const ConfigSistemasIntegrados: React.FC = () => {
                         type={showInToken ? 'text' : 'password'}
                         value={form.token_entrada_plain}
                         onChange={e => setForm({ ...form, token_entrada_plain: e.target.value })}
-                        placeholder={form.id ? '(deixe vazio para manter)' : 'Crie um token forte'}
+                        placeholder={form.id ? '(deixe vazio para manter)' : 'Gere um token forte'}
                       />
                       <button
                         type="button"
@@ -782,7 +783,7 @@ const ConfigSistemasIntegrados: React.FC = () => {
                           navigator.clipboard.writeText(form.token_entrada_plain);
                           setTokenCopiado(true);
                           setTimeout(() => setTokenCopiado(false), 2000);
-                          toast.success('Token copiado! Cadastre-o como Token de Saída no outro sistema.');
+                          toast.success('Token copiado! Cadastre-o como Token de SAÍDA no outro sistema.');
                         }}
                       >
                         {tokenCopiado ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
@@ -790,8 +791,8 @@ const ConfigSistemasIntegrados: React.FC = () => {
                     )}
                   </div>
                   <p className="text-[11px] text-muted-foreground mt-1 leading-tight">
-                    Crie um token forte e compartilhe com o outro sistema. O outro sistema deve cadastrar este token como token de saída. 
-                    <span className="text-amber-600 block mt-0.5">Salvo apenas como hash. Copie agora, pois não poderá ser visto depois.</span>
+                    Gere um token neste sistema e copie para o outro sistema usar como Token de SAÍDA.
+                    <span className="text-amber-600 block mt-0.5">Salvo apenas como hash. Copie agora, pois não poderá ser visto depois de salvar.</span>
                   </p>
                 </div>
               </div>
