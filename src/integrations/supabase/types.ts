@@ -169,12 +169,16 @@ export type Database = {
           exigir_paciente: boolean | null
           exigir_profissional: boolean | null
           id: string
+          notificar_email: boolean | null
           organizacao_nome: string | null
           pasta_padrao_id: string | null
           permitir_envio_massa: boolean | null
           provider: string
           salvar_copia_local: boolean | null
+          status_conexao: string | null
           token_api: string | null
+          ultimo_erro: string | null
+          ultimo_teste_em: string | null
           unidade_id: string | null
           updated_at: string | null
           updated_by: string | null
@@ -194,12 +198,16 @@ export type Database = {
           exigir_paciente?: boolean | null
           exigir_profissional?: boolean | null
           id?: string
+          notificar_email?: boolean | null
           organizacao_nome?: string | null
           pasta_padrao_id?: string | null
           permitir_envio_massa?: boolean | null
           provider?: string
           salvar_copia_local?: boolean | null
+          status_conexao?: string | null
           token_api?: string | null
+          ultimo_erro?: string | null
+          ultimo_teste_em?: string | null
           unidade_id?: string | null
           updated_at?: string | null
           updated_by?: string | null
@@ -219,12 +227,16 @@ export type Database = {
           exigir_paciente?: boolean | null
           exigir_profissional?: boolean | null
           id?: string
+          notificar_email?: boolean | null
           organizacao_nome?: string | null
           pasta_padrao_id?: string | null
           permitir_envio_massa?: boolean | null
           provider?: string
           salvar_copia_local?: boolean | null
+          status_conexao?: string | null
           token_api?: string | null
+          ultimo_erro?: string | null
+          ultimo_teste_em?: string | null
           unidade_id?: string | null
           updated_at?: string | null
           updated_by?: string | null
@@ -3892,6 +3904,19 @@ export type Database = {
         Args: {
           p_form_slug: string
           p_profissional_id?: string
+          p_unidade_id?: string
+        }
+        Returns: Json
+      }
+      salvar_configuracao_autentique: {
+        Args: {
+          p_ambiente: string
+          p_ativo: boolean
+          p_baixar_assinado_automaticamente: boolean
+          p_enviar_email: boolean
+          p_exigir_profissional: boolean
+          p_organizacao_nome: string
+          p_token_api: string
           p_unidade_id?: string
         }
         Returns: Json
