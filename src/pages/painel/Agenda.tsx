@@ -70,6 +70,7 @@ import { AgendaNotificacaoIndividual, AgendaNotificacoesMassa } from "@/componen
 import { RegistrarFaltaModal } from "@/components/RegistrarFaltaModal";
 import { ConferirDadosPacienteModal } from "@/components/ConferirDadosPacienteModal";
 import PacienteDocumentos from "@/components/PacienteDocumentos";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 const statusActions = [
   { key: "confirmado_chegada", label: "Confirmar Chegada", icon: LogIn, color: "bg-success text-success-foreground" },
