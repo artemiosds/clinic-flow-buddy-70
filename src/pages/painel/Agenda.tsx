@@ -3119,6 +3119,15 @@ const Agenda: React.FC = () => {
                     </Secao>
                   );
                 })()}
+                {detalheAg.status === "falta" && (
+                  <Secao titulo="Anexos da Falta">
+                    <PacienteDocumentos 
+                      pacienteId={detalheAg.pacienteId} 
+                      agendamentoId={detalheAg.id} 
+                      unidadeId={detalheAg.unidadeId}
+                    />
+                  </Secao>
+                )}
                 {detalheAg.observacoes && (
                   <Secao titulo="Observações">
                     <p className="text-sm text-foreground whitespace-pre-wrap">{detalheAg.observacoes}</p>
