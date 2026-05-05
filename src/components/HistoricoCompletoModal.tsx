@@ -44,6 +44,8 @@ interface FullEvent {
   sessionInfo?: string;
   procedimentos?: string;
   status?: string;
+  faltaJustificativa?: any;
+  rawAgendamento?: any;
   rawProntuario?: any;
 }
 
