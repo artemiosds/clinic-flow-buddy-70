@@ -454,23 +454,35 @@ const ConfigSistemasIntegrados: React.FC = () => {
                   <TableCell className="max-w-[220px] truncate text-xs text-muted-foreground" title={s.url_base}>{s.url_base}</TableCell>
                   <TableCell>
                     <div className="flex flex-col gap-1">
-                      {s.permite_enviar && <Badge variant="outline" className="w-fit text-xs">Enviar</Badge>}
-                      {s.permite_receber && <Badge variant="outline" className="w-fit text-xs">Receber</Badge>}
+                      {s.permite_enviar && <Badge variant="outline" className="w-fit text-[10px] h-4">Pode Enviar</Badge>}
+                      {s.permite_receber && <Badge variant="outline" className="w-fit text-[10px] h-4">Pode Receber</Badge>}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-1 text-[10px]">
+                        <span className="text-muted-foreground">SAÍDA:</span>
+                        {s.token_saida ? <Badge variant="secondary" className="px-1 py-0 h-3 text-[9px] bg-emerald-50 text-emerald-700">OK</Badge> : <Badge variant="secondary" className="px-1 py-0 h-3 text-[9px] bg-red-50 text-red-700">Falta</Badge>}
+                      </div>
+                      <div className="flex items-center gap-1 text-[10px]">
+                        <span className="text-muted-foreground">ENTRADA:</span>
+                        {s.token_entrada_hash ? <Badge variant="secondary" className="px-1 py-0 h-3 text-[9px] bg-emerald-50 text-emerald-700">OK</Badge> : <Badge variant="secondary" className="px-1 py-0 h-3 text-[9px] bg-red-50 text-red-700">Falta</Badge>}
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell>
                     {s.ativo ? (
-                      <Badge className="bg-emerald-500/10 text-emerald-700 border-emerald-500/30">
+                      <Badge className="bg-emerald-500/10 text-emerald-700 border-emerald-500/30 text-[10px] h-5">
                         <CheckCircle2 className="w-3 h-3 mr-1" /> Ativo
                       </Badge>
                     ) : (
-                      <Badge variant="outline" className="text-muted-foreground">
+                      <Badge variant="outline" className="text-muted-foreground text-[10px] h-5">
                         <XCircle className="w-3 h-3 mr-1" /> Inativo
                       </Badge>
                     )}
                   </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {s.ultima_sincronizacao ? new Date(s.ultima_sincronizacao).toLocaleString('pt-BR') : '—'}
+                  <TableCell className="text-[10px] text-muted-foreground leading-tight">
+                    {s.ultima_sincronizacao ? new Date(s.ultima_sincronizacao).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—'}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
