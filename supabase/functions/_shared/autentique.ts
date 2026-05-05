@@ -45,14 +45,32 @@ export async function callAutentique(query: string, variables: any, token: strin
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
+      'Authorization': `Bearer ${token.trim()}`,
     },
     body: JSON.stringify({ query, variables }),
   });
 
-  const result = await response.json();
-  if (result.errors) {
-    throw new Error(result.errors[0].message);
+  if (response.status === 401 || response.status === 403) {
+    throw new Error('TOKEN_INVALID');
   }
+
+  if (response.status === 429) {
+    throw new Error('RATE_LIMITED');
+  }
+
+  if (!response.ok) {
+    throw new Error(`HTTP_ERROR_${response.status}`);
+  }
+
+  const result = await response.json();
+  
+  if (result.errors) {
+    const errorMsg = result.errors[0]?.message || 'Erro desconhecido na API GraphQL';
+    const err = new Error(errorMsg);
+    (err as any).code = 'GRAPHQL_ERROR';
+    (err as any).errors = result.errors;
+    throw err;
+  }
+
   return result.data;
 }

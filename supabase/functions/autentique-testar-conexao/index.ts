@@ -58,26 +58,51 @@ Deno.serve(async (req) => {
     }
 
     // 4. BUSCAR PAYLOAD
-    const { token, ambiente, saveStatus } = await req.json();
+    const { token: tokenInput, ambiente, saveStatus } = await req.json();
 
-    if (!token) {
-      return new Response(JSON.stringify({ 
-        ok: false, 
-        message: 'Token Autentique não configurado.', 
-        code: 'TOKEN_NOT_CONFIGURED' 
-      }), {
-        status: 200, // Retorno 200 para erro controlado no teste
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+    let token = tokenInput;
+    
+    // Se o token vier vazio ou mascarado (com bolinhas), tenta pegar o real do banco
+    const isMasked = !token || token.includes('•') || token.includes('*');
+    
+    if (isMasked) {
+      const { data: config, error: configError } = await supabase
+        .from('assinatura_eletronica_config')
+        .select('token_api')
+        .eq('provider', 'autentique')
+        .maybeSingle();
+      
+      if (configError || !config?.token_api) {
+        return new Response(JSON.stringify({ 
+          ok: false, 
+          message: 'Token Autentique não configurado ou não encontrado no banco.', 
+          code: 'TOKEN_NOT_CONFIGURED' 
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      token = config.token_api;
     }
 
-    // 5. CHAMADA PARA API AUTENTIQUE
+    // Logs seguros (conforme solicitado no item 3)
+    console.log('Iniciando teste de conexão Autentique:', {
+      token_configurado: !!token,
+      token_length: token?.length || 0,
+      token_was_masked: isMasked,
+      endpoint: 'https://api.autentique.com.br/v2/graphql',
+      saveStatus
+    });
+
+    // 5. CHAMADA PARA API AUTENTIQUE (GraphQL v2)
     const query = `
       query {
-        viewer {
+        me {
+          id
           name
           email
           organization {
+            id
             name
           }
         }
@@ -87,11 +112,17 @@ Deno.serve(async (req) => {
     let autentiqueData;
     try {
       autentiqueData = await callAutentique(query, {}, token);
-    } catch (autentiqueErr: any) {
-      console.error('Erro na API Autentique:', autentiqueErr.message);
+    } catch (err: any) {
+      const errorCode = err.message === 'TOKEN_INVALID' ? 'TOKEN_INVALID' : 
+                        err.message === 'RATE_LIMITED' ? 'RATE_LIMITED' :
+                        err.code === 'GRAPHQL_ERROR' ? 'GRAPHQL_ERROR' : 'ENDPOINT_UNAVAILABLE';
       
-      const isAuthError = autentiqueErr.message.toLowerCase().includes('unauthorized') || 
-                         autentiqueErr.message.toLowerCase().includes('token');
+      let friendlyMessage = 'Não foi possível conectar ao Autentique no momento.';
+      if (errorCode === 'TOKEN_INVALID') friendlyMessage = 'Token Autentique inválido, expirado ou sem permissão.';
+      if (errorCode === 'RATE_LIMITED') friendlyMessage = 'Limite de requisições da API Autentique atingido. Aguarde alguns instantes.';
+      if (errorCode === 'GRAPHQL_ERROR') friendlyMessage = `Autentique respondeu erro GraphQL: ${err.message}`;
+
+      console.error(`Erro no teste Autentique [${errorCode}]:`, err.message);
       
       // 6. ATUALIZAR STATUS NO BANCO EM CASO DE ERRO
       if (saveStatus) {
@@ -100,18 +131,22 @@ Deno.serve(async (req) => {
           .update({ 
             status_conexao: 'erro',
             ultimo_teste_em: new Date().toISOString(),
-            ultimo_erro: autentiqueErr.message
+            ultimo_erro: err.message
           })
           .eq('provider', 'autentique');
       }
 
       return new Response(JSON.stringify({ 
         ok: false, 
-        message: isAuthError ? 'Token Autentique inválido ou sem permissão.' : 'Não foi possível conectar ao Autentique no momento.', 
-        code: isAuthError ? 'TOKEN_INVALID' : 'AUTENTIQUE_UNAVAILABLE',
-        technical_error: autentiqueErr.message
+        message: friendlyMessage, 
+        code: errorCode,
+        debug: {
+          stage: 'autentique_api',
+          technical_error: err.message,
+          graphql_errors: err.code === 'GRAPHQL_ERROR'
+        }
       }), {
-        status: 200, // Retorno 200 para erro controlado
+        status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -124,14 +159,18 @@ Deno.serve(async (req) => {
           status_conexao: 'sucesso',
           ultimo_teste_em: new Date().toISOString(),
           ultimo_erro: null,
-          organizacao_nome: autentiqueData.viewer?.organization?.name || 'N/A'
+          organizacao_nome: autentiqueData.me?.organization?.name || 'N/A'
         })
         .eq('provider', 'autentique');
     }
 
     return new Response(JSON.stringify({ 
       ok: true, 
-      viewer: autentiqueData.viewer,
+      account: {
+        name: autentiqueData.me?.name,
+        email: autentiqueData.me?.email,
+        organization: autentiqueData.me?.organization?.name
+      },
       message: 'Conectado ao Autentique com sucesso.',
       code: 'CONNECTED',
       tested_at: new Date().toISOString()
@@ -145,9 +184,9 @@ Deno.serve(async (req) => {
     
     return new Response(JSON.stringify({ 
       ok: false, 
-      error: 'internal_error', 
+      code: 'INTERNAL_ERROR', 
       message: 'Erro interno inesperado na função de teste.',
-      technical_error: err.message
+      debug: { technical_error: err.message }
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

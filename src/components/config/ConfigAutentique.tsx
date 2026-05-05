@@ -60,11 +60,16 @@ const ConfigAutentique: React.FC = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
+      // Se o token estiver mascarado, não enviamos para não sobrescrever o real no banco
+      const tokenParaSalvar = (config.token_api?.includes('•') || config.token_api?.includes('*')) 
+        ? null 
+        : config.token_api;
+
       // Usar RPC para salvar com segurança e contornar problemas de RLS/token
       const { data, error } = await supabase.rpc('salvar_configuracao_autentique', {
         p_ativo: config.ativo,
         p_ambiente: config.ambiente,
-        p_token_api: config.token_api,
+        p_token_api: tokenParaSalvar,
         p_organizacao_nome: config.organizacao_nome,
         p_enviar_email: config.enviar_email,
         p_exigir_profissional: config.exigir_profissional,
@@ -99,26 +104,43 @@ const ConfigAutentique: React.FC = () => {
       });
 
       if (error) throw error;
+      
       if (data.ok) {
-        toast.success(`Conectado com sucesso! Organização: ${data.viewer?.organization?.name || 'N/A'}`);
-        if (data.viewer?.organization?.name && !config.organizacao_nome) {
-          setConfig((prev: any) => ({ ...prev, organizacao_nome: data.viewer.organization.name }));
+        const orgName = data.account?.organization || 'N/A';
+        toast.success(`Conectado com sucesso! Organização: ${orgName}`);
+        
+        if (orgName !== 'N/A' && !config.organizacao_nome) {
+          setConfig((prev: any) => ({ ...prev, organizacao_nome: orgName }));
         }
-        loadConfig(); // Recarregar para ver status atualizado
+        loadConfig(); // Recarregar para ver status atualizado no banco
       } else {
         // Se a função retornou 200 mas com ok: false (erro controlado)
-        toast.error('Falha na conexão: ' + (data.message || 'Erro desconhecido'));
+        const errorMsg = data.message || 'Erro desconhecido na integração';
+        toast.error('Falha na conexão: ' + errorMsg);
+        
+        if (data.code === 'TOKEN_INVALID' || data.code === 'TOKEN_NOT_CONFIGURED') {
+          console.warn('Problema com o token Autentique:', data.code);
+        }
+        
         loadConfig(); // Recarregar para ver status de erro no banco
       }
     } catch (e: any) {
       console.error('Erro no teste de conexão Autentique:', e);
       
-      // Tentar extrair mensagem do JSON se for um erro de função com corpo
-      let errorMsg = 'Falha ao comunicar com o servidor';
+      let errorMsg = 'Não foi possível conectar ao Autentique no momento.';
+      
+      // Tentar extrair mensagem do JSON da Edge Function se disponível
       if (e.context?.json) {
         errorMsg = e.context.json.message || errorMsg;
       } else if (e.message) {
-        errorMsg = e.message;
+        // Tratar erro de timeout ou rede
+        if (e.message.includes('timeout')) {
+          errorMsg = 'A requisição demorou muito. Verifique sua conexão.';
+        } else if (e.message.includes('fetch')) {
+          errorMsg = 'Não foi possível acessar o endpoint oficial do Autentique.';
+        } else {
+          errorMsg = e.message;
+        }
       }
       
       toast.error('Erro no teste: ' + errorMsg);
