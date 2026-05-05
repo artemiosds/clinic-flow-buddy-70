@@ -670,23 +670,53 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
           )}
         </div>
 
-        <DialogFooter className="gap-2 flex-wrap">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Fechar</Button>
-          {selected && (
-            <>
+        <DialogFooter className="gap-2 flex-wrap items-center sm:justify-between w-full">
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>Fechar</Button>
+            {selected && !savedDocId && (
               <Button variant="secondary" onClick={handleSaveDraft} disabled={salvando} className="gap-1.5">
                 <Save className="w-4 h-4" /> Salvar Rascunho
               </Button>
-              <Button
-                onClick={handleSignAndFinalize}
-                disabled={salvando || (isEncaminhamento && !profDestinoId)}
-                className="gap-1.5"
-              >
-                {salvando ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
-                Assinar e Finalizar
-              </Button>
-            </>
-          )}
+            )}
+          </div>
+          
+          <div className="flex gap-2 items-center">
+            {selected && (
+              <>
+                {!savedDocId ? (
+                  <Button
+                    onClick={handleSignAndFinalize}
+                    disabled={salvando || (isEncaminhamento && !profDestinoId)}
+                    className="gap-1.5"
+                  >
+                    {salvando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Printer className="w-4 h-4" />}
+                    Imprimir e Finalizar
+                  </Button>
+                ) : (
+                  <div className="flex items-center gap-3 bg-muted/50 p-1 px-2 rounded-lg border border-primary/20">
+                    <span className="text-[10px] font-bold text-primary uppercase">Assinatura:</span>
+                    <AutentiqueSignatureActions 
+                      documentoId={savedDocId}
+                      paciente={paciente}
+                      profissional={profissional || user}
+                      unidadeId={unidade}
+                      titulo={`${selected.nome} - ${paciente?.nome}`}
+                    />
+                    <Separator orientation="vertical" className="h-6" />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleSignAndFinalize}
+                      disabled={salvando}
+                      className="gap-1.5 h-8 text-[11px]"
+                    >
+                      <Printer className="w-3.5 h-3.5" /> Finalizar s/ Digital
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
