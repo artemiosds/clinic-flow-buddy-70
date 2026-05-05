@@ -48,7 +48,10 @@ import {
   Search,
   Pencil,
   Loader2,
+  FilterX,
+  Filter,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import DetalheDrawer, { Secao, Campo, StatusBadge, calcularIdade, formatarData } from "@/components/DetalheDrawer";
 import ContactActionButton from "@/components/ContactActionButton";
 import { addDaysToDateStr, cn, isoDayOfWeek, nowMinutesInBrazil, todayLocalStr } from "@/lib/utils";
@@ -96,6 +99,33 @@ const statusLabels: Record<string, string> = {
   pendente_revisao: "Pendente de Revisão",
 };
 
+
+const STATUS_GROUPS: Record<string, string[]> = {
+  confirmado: ["confirmado", "confirmada", "agendado"],
+  apto_atendimento: ["apto_atendimento", "apto", "aguardando_profissional", "triagem_concluida"],
+  em_atendimento: ["em_atendimento"],
+  concluido: ["concluido", "finalizado", "atendido", "prontuario_finalizado"],
+  falta: ["falta", "faltou"],
+  cancelado: ["cancelado", "cancelada"],
+  confirmado_chegada: ["confirmado_chegada"],
+  aguardando_triagem: ["aguardando_triagem"],
+  triagem_concluida: ["triagem_concluida"],
+  pendente: ["pendente"],
+};
+
+const STATUS_GROUP_LABELS: Record<string, string> = {
+  all: "Todos",
+  confirmado: "Confirmado",
+  apto_atendimento: "Apto para Atendimento",
+  em_atendimento: "Em Atendimento",
+  concluido: "Concluído",
+  falta: "Faltou",
+  cancelado: "Cancelado",
+  confirmado_chegada: "Chegada Confirmada",
+  aguardando_triagem: "Aguardando Triagem",
+  triagem_concluida: "Triagem Concluída",
+  pendente: "Pendente",
+};
 
 const statusBadgeClass: Record<string, string> = {
   pendente: "bg-warning/10 text-warning",
@@ -178,6 +208,7 @@ const Agenda: React.FC = () => {
   }, []);
   const [filterUnit, setFilterUnit] = useState("all");
   const [filterProf, setFilterProf] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [retornoDialogOpen, setRetornoDialogOpen] = useState(false);
   const [retornoAg, setRetornoAg] = useState<{ pacienteId: string; pacienteNome: string } | null>(null);
@@ -483,6 +514,40 @@ const Agenda: React.FC = () => {
     return profissionais.filter((p) => p.unidadeId === filterUnit || !p.unidadeId);
   }, [profissionais, filterUnit]);
 
+  const baseAgendamentos = useMemo(() => {
+    return agendamentos.filter((a) => {
+      if (a.data !== selectedDate) return false;
+      if (filterUnit !== "all" && a.unidadeId !== filterUnit) return false;
+      if (filterProf !== "all" && a.profissionalId !== filterProf) return false;
+      
+      if (isProfissional && user) {
+        if (a.profissionalId !== user.id) return false;
+      }
+      if (user?.unidadeId && user?.usuario !== 'admin.sms' && a.unidadeId !== user.unidadeId) return false;
+
+      if (debouncedSearch) {
+        const pac = pacientes.find((p) => p.id === a.pacienteId);
+        const nome = resolvePaciente(a.pacienteId, a.pacienteNome).toLowerCase();
+        const cpf = pac?.cpf?.toLowerCase() || "";
+        const cns = pac?.cns?.toLowerCase() || "";
+        if (!nome.includes(debouncedSearch) && !cpf.includes(debouncedSearch) && !cns.includes(debouncedSearch)) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [agendamentos, selectedDate, filterUnit, filterProf, isProfissional, user, debouncedSearch, pacientes, resolvePaciente]);
+
+  const statusCounts = useMemo(() => {
+    const counts: Record<string, number> = { all: baseAgendamentos.length };
+    Object.keys(STATUS_GROUPS).forEach(key => {
+      const group = STATUS_GROUPS[key];
+      counts[key] = baseAgendamentos.filter(a => group.includes(a.status)).length;
+    });
+    return counts;
+  }, [baseAgendamentos]);
+
   const filtered = useMemo(() => {
     // Statuses that indicate the patient is physically present
     const CHECKED_IN_STATUSES = new Set([
@@ -490,9 +555,6 @@ const Agenda: React.FC = () => {
       "em_atendimento", "aguardando_enfermagem", "apto_atendimento",
     ]);
 
-    // Dynamic priority from triage (Manchester):
-    //  1=Vermelho (Emergência), 2=Laranja (Muito Urgente),
-    //  3=Amarelo (Urgente), 4=Verde (Pouco Urgente), 6=Azul (Não Urgente)
     const RISCO_PRIO: Record<string, number> = {
       vermelho: 1, laranja: 2, amarelo: 3, verde: 4, azul: 6,
     };
@@ -509,22 +571,8 @@ const Agenda: React.FC = () => {
       return age;
     };
 
-    // Shift: morning (<12:00) vs afternoon (>=12:00)
     const getShift = (hora: string): number => hora < "12:00" ? 0 : 1;
 
-    /**
-     * Unified priority hierarchy (lower = higher priority):
-     *  1 = Risco Vermelho — Emergência (dynamic)
-     *  2 = Risco Laranja  — Muito Urgente (dynamic)
-     *  3 = Risco Amarelo  — Urgente (dynamic)
-     *  4 = Risco Verde    — Pouco Urgente (dynamic)
-     *  5 = Fixed: Gestante / PNE / Autista
-     *  6 = Fixed: Idoso (≥60) OR Risco Azul (dynamic, Não Urgente)
-     *  7 = Fixed: Criança (0-12)
-     *  8 = Normal (no priority)
-     * 50 = Not checked in (before triage/dynamic, use fixed priority)
-     * 99 = Concluded
-     */
     const getFixedPrio = (pac: (typeof pacientes)[0] | undefined, age: number): number => {
       if (!pac) return 8;
       if ((pac as any).isGestante || (pac as any).isPne || (pac as any).isAutista) return 5;
@@ -536,47 +584,32 @@ const Agenda: React.FC = () => {
     const getPrioLevel = (ag: (typeof agendamentos)[0]): number => {
       const st = ag.status as string;
       if (st === "concluido") return 99;
-
       const pac = pacientes.find((p) => p.id === ag.pacienteId);
       const age = pac ? calcAge(pac.dataNascimento) : 0;
       const fixedPrio = getFixedPrio(pac, age);
-
-      // Not checked in — use fixed priority but put in 50+ range
-      // so they stay below all checked-in patients
       if (!CHECKED_IN_STATUSES.has(st)) {
-        // Return 50 + a sub-priority so fixed priority still orders within unchecked group
         return 50 + Math.min(fixedPrio, 8);
       }
-
-      // Patient is present — check triage data (dynamic priority)
       const triage = triageMap[ag.id];
       const risco = triage?.risco || "";
-
       if (risco && RISCO_PRIO[risco] !== undefined) {
-        const dynamicPrio = RISCO_PRIO[risco];
-        // Dynamic beats fixed. But for verde(4)/azul(6), if fixed is better, use fixed
-        return Math.min(dynamicPrio, fixedPrio);
+        return Math.min(RISCO_PRIO[risco], fixedPrio);
       }
-
-      // No triage classification — use fixed priority
       return fixedPrio;
     };
 
-    const visiveis = agendamentos.filter((a) => {
-      if (a.data !== selectedDate) return false;
-      if (filterUnit !== "all" && a.unidadeId !== filterUnit) return false;
-      if (filterProf !== "all" && a.profissionalId !== filterProf) return false;
-      if (isProfissional && user) {
-        if (a.profissionalId !== user.id) return false;
+    const visiveis = baseAgendamentos.filter((a) => {
+      if (filterStatus !== "all") {
+        const group = STATUS_GROUPS[filterStatus];
+        if (group) {
+          if (!group.includes(a.status)) return false;
+        } else if (a.status !== filterStatus) {
+          return false;
+        }
       }
-      // Universal unit isolation: any user with unidadeId only sees their unit (except admin.sms)
-      if (user?.unidadeId && user?.usuario !== 'admin.sms' && a.unidadeId !== user.unidadeId) return false;
       return true;
     });
 
-    // Earliest scheduled afternoon (>=12:00) appointment time of the day,
-    // expressed in minutes-from-midnight. If no afternoon appointment exists,
-    // the threshold is null and the morning block stays on top all day.
     const tardeStartMin: number | null = (() => {
       let min: number | null = null;
       for (const a of visiveis) {
@@ -591,59 +624,32 @@ const Agenda: React.FC = () => {
 
     const isToday = selectedDate === todayLocalStr();
     const nowMin = nowMinutesInBrazil();
-    // Flip blocks only on TODAY and only once the clock reaches the actual
-    // start time of the first afternoon appointment.
     const afternoonOnTop = isToday && tardeStartMin !== null && nowMin >= tardeStartMin;
 
-    const base = visiveis
-      .sort((a, b) => {
-        // 1. Separate by shift. The afternoon block only rises to the top
-        // once the current local time reaches the EARLIEST scheduled
-        // afternoon appointment of the day (e.g. 13:30 if that's the first
-        // afternoon slot). Internal order of each group is preserved.
-        const shiftA = getShift(a.hora);
-        const shiftB = getShift(b.hora);
+    return [...visiveis].sort((a, b) => {
+      const shiftA = getShift(a.hora);
+      const shiftB = getShift(b.hora);
+      const prioA = getPrioLevel(a);
+      const prioB = getPrioLevel(b);
+      const isConcA = prioA === 99;
+      const isConcB = prioB === 99;
+      const isAptoA = (a.status as string) === "apto_atendimento";
+      const isAptoB = (b.status as string) === "apto_atendimento";
 
-        // Concluded items go to the end of their own shift
-        const prioA = getPrioLevel(a);
-        const prioB = getPrioLevel(b);
-        const isConcA = prioA === 99;
-        const isConcB = prioB === 99;
+      if (shiftA !== shiftB) {
+        return afternoonOnTop ? shiftB - shiftA : shiftA - shiftB;
+      }
+      if (isAptoA !== isAptoB) return isAptoA ? -1 : 1;
+      if (isConcA !== isConcB) return isConcA ? 1 : -1;
+      if (prioA !== prioB) return prioA - prioB;
 
-        // "Apto p/ Atendimento" boost: dentro do mesmo turno, esses pacientes
-        // sobem para o topo do grupo, mantendo a ordenação interna por
-        // classificação de risco / idade / horário.
-        const isAptoA = (a.status as string) === "apto_atendimento";
-        const isAptoB = (b.status as string) === "apto_atendimento";
-
-        // Sort: shift first (flipped once afternoon turn started), then
-        // apto_atendimento on top of its shift, then non-concluded before
-        // concluded, then priority, then time.
-        if (shiftA !== shiftB) {
-          return afternoonOnTop ? shiftB - shiftA : shiftA - shiftB;
-        }
-        if (isAptoA !== isAptoB) return isAptoA ? -1 : 1;
-        if (isConcA !== isConcB) return isConcA ? 1 : -1;
-        if (prioA !== prioB) return prioA - prioB;
-
-        // Same priority — earlier check-in first; for non-checked-in use scheduled time
-        const isCheckedA = prioA < 50;
-        const isCheckedB = prioB < 50;
-        const ha = isCheckedA ? (arrivalMap[a.id] || a.horaChegada || a.hora) : a.hora;
-        const hb = isCheckedB ? (arrivalMap[b.id] || b.horaChegada || b.hora) : b.hora;
-        return ha.localeCompare(hb);
-      });
-
-    if (!debouncedSearch) return base;
-
-    return base.filter((a) => {
-      const pac = pacientes.find((p) => p.id === a.pacienteId);
-      const nome = resolvePaciente(a.pacienteId, a.pacienteNome).toLowerCase();
-      const cpf = pac?.cpf?.toLowerCase() || "";
-      const cns = pac?.cns?.toLowerCase() || "";
-      return nome.includes(debouncedSearch) || cpf.includes(debouncedSearch) || cns.includes(debouncedSearch);
+      const isCheckedA = prioA < 50;
+      const isCheckedB = prioB < 50;
+      const ha = isCheckedA ? (arrivalMap[a.id] || a.horaChegada || a.hora) : a.hora;
+      const hb = isCheckedB ? (arrivalMap[b.id] || b.horaChegada || b.hora) : b.hora;
+      return ha.localeCompare(hb);
     });
-  }, [agendamentos, selectedDate, filterUnit, filterProf, isProfissional, user, debouncedSearch, pacientes, triageMap, arrivalMap, nowTick]);
+  }, [baseAgendamentos, filterStatus, selectedDate, triageMap, arrivalMap, nowTick, pacientes]);
 
   const filteredPacienteKey = React.useMemo(
     () => [...new Set(filtered.map((f) => f.pacienteId))].sort().join(","),
@@ -2190,6 +2196,22 @@ const Agenda: React.FC = () => {
                 </SelectContent>
               </Select>
             )}
+            
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-full sm:w-52">
+                <Filter className="w-4 h-4 mr-2 text-muted-foreground" />
+                <SelectValue placeholder="Situação" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos Status</SelectItem>
+                {Object.entries(STATUS_GROUP_LABELS).filter(([k]) => k !== 'all').map(([key, label]) => (
+                  <SelectItem key={key} value={key}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
             {/* BUSCA na agenda */}
             <div className="relative w-full sm:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -2200,7 +2222,71 @@ const Agenda: React.FC = () => {
                 className="pl-9 h-9"
               />
             </div>
+
+            {(filterUnit !== "all" || filterProf !== "all" || filterStatus !== "all" || searchTerm) && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => {
+                  setFilterUnit("all");
+                  setFilterProf("all");
+                  setFilterStatus("all");
+                  setSearchTerm("");
+                }}
+                className="h-9 px-2 text-muted-foreground hover:text-foreground"
+              >
+                <FilterX className="w-4 h-4 mr-1" />
+                Limpar
+              </Button>
+            )}
           </div>
+
+          {/* CHIPS de Status Rápidos */}
+          <div className="flex flex-wrap gap-2 mb-2">
+            <button
+              onClick={() => setFilterStatus("all")}
+              className={cn(
+                "px-3 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1.5 border",
+                filterStatus === "all" 
+                  ? "bg-primary text-primary-foreground border-primary" 
+                  : "bg-background text-muted-foreground border-border hover:bg-muted"
+              )}
+            >
+              Todos
+              <Badge variant="secondary" className="px-1 h-4 min-w-[1.25rem] text-[10px] bg-white/20 text-inherit border-none">
+                {statusCounts.all || 0}
+              </Badge>
+            </button>
+            {Object.entries(STATUS_GROUP_LABELS).filter(([k]) => k !== 'all').map(([key, label]) => {
+              const count = statusCounts[key] || 0;
+              if (count === 0 && filterStatus !== key) return null; // Hide empty groups unless selected
+
+              return (
+                <button
+                  key={key}
+                  onClick={() => setFilterStatus(key)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1.5 border",
+                    filterStatus === key 
+                      ? "bg-primary text-primary-foreground border-primary shadow-sm" 
+                      : "bg-background text-muted-foreground border-border hover:bg-muted"
+                  )}
+                >
+                  {label}
+                  <Badge 
+                    variant="secondary" 
+                    className={cn(
+                      "px-1 h-4 min-w-[1.25rem] text-[10px] border-none",
+                      filterStatus === key ? "bg-white/20 text-white" : "bg-muted-foreground/10 text-muted-foreground"
+                    )}
+                  >
+                    {count}
+                  </Badge>
+                </button>
+              );
+            })}
+          </div>
+
 
           {/* Slot availability summary for selected professional */}
           {filterProf !== "all" && (
