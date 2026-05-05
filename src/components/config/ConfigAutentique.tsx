@@ -265,7 +265,19 @@ const ConfigAutentique: React.FC = () => {
                   <p className="text-[10px] text-blue-700 leading-relaxed">
                     A URL de Webhook deve ser configurada no painel do Autentique para receber atualizações automáticas de status.
                     <br/><br/>
-                    <strong>URL:</strong> {window.location.origin}/functions/v1/autentique-webhook
+                    <strong>URL:</strong> {`${window.location.origin}/functions/v1/autentique-webhook`}
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-6 w-6 ml-1 inline-flex" 
+                      onClick={() => {
+                        const url = `${window.location.origin}/functions/v1/autentique-webhook`;
+                        navigator.clipboard.writeText(url);
+                        toast.success('URL copiada!');
+                      }}
+                    >
+                      <Save className="h-3 w-3" />
+                    </Button>
                   </p>
                 </div>
               </CardContent>
