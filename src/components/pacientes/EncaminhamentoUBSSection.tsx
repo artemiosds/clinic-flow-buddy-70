@@ -17,17 +17,9 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import EspecialidadeCombobox from "@/components/EspecialidadeCombobox";
 
 const BUCKET = "paciente-documentos";
-
-const ESPECIALIDADES_DESTINO = [
-  { value: "fisioterapia", label: "Fisioterapia" },
-  { value: "fonoaudiologia", label: "Fonoaudiologia" },
-  { value: "nutricao", label: "Nutrição" },
-  { value: "psicologia", label: "Psicologia" },
-  { value: "terapia_ocupacional", label: "Terapia Ocupacional" },
-  { value: "outros", label: "Outros" },
-];
 
 const UBS_LIST = [
   "UBS Dr. Lauro Corrêa Pinto", "UBS Penta", "UBS Corino Guerreiro",
@@ -296,7 +288,7 @@ const EncaminhamentoUBSSection: React.FC<EncaminhamentoUBSSectionProps> = ({
             <div class="grid">
               <div>
                 <div class="label">Especialidade Destino</div>
-                <div class="value">${ESPECIALIDADES_DESTINO.find(e => e.value === enc.especialidade_destino)?.label || enc.especialidade_destino}</div>
+                <div class="value">${enc.especialidade_destino}</div>
               </div>
               <div>
                 <div class="label">UBS Origem</div>
@@ -379,19 +371,11 @@ const EncaminhamentoUBSSection: React.FC<EncaminhamentoUBSSectionProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Especialidade Destino *</Label>
-                <Select 
+                <EspecialidadeCombobox 
                   value={formData.especialidade_destino} 
-                  onValueChange={(v) => setFormData(prev => ({ ...prev, especialidade_destino: v }))}
-                >
-                  <SelectTrigger className="bg-background">
-                    <SelectValue placeholder="Selecione a especialidade" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ESPECIALIDADES_DESTINO.map((e) => (
-                      <SelectItem key={e.value} value={e.value}>{e.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onChange={(v) => setFormData(prev => ({ ...prev, especialidade_destino: v }))}
+                  unidadeId={unidadeId}
+                />
               </div>
 
               <div className="space-y-2">
@@ -529,7 +513,7 @@ const EncaminhamentoUBSSection: React.FC<EncaminhamentoUBSSectionProps> = ({
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-base text-foreground">
-                      {ESPECIALIDADES_DESTINO.find(e => e.value === enc.especialidade_destino)?.label || enc.especialidade_destino}
+                      {enc.especialidade_destino}
                     </span>
                     {getStatusBadge(enc.status)}
                   </div>
