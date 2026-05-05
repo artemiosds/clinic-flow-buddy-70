@@ -2222,7 +2222,71 @@ const Agenda: React.FC = () => {
                 className="pl-9 h-9"
               />
             </div>
+
+            {(filterUnit !== "all" || filterProf !== "all" || filterStatus !== "all" || searchTerm) && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => {
+                  setFilterUnit("all");
+                  setFilterProf("all");
+                  setFilterStatus("all");
+                  setSearchTerm("");
+                }}
+                className="h-9 px-2 text-muted-foreground hover:text-foreground"
+              >
+                <FilterX className="w-4 h-4 mr-1" />
+                Limpar
+              </Button>
+            )}
           </div>
+
+          {/* CHIPS de Status Rápidos */}
+          <div className="flex flex-wrap gap-2 mb-2">
+            <button
+              onClick={() => setFilterStatus("all")}
+              className={cn(
+                "px-3 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1.5 border",
+                filterStatus === "all" 
+                  ? "bg-primary text-primary-foreground border-primary" 
+                  : "bg-background text-muted-foreground border-border hover:bg-muted"
+              )}
+            >
+              Todos
+              <Badge variant="secondary" className="px-1 h-4 min-w-[1.25rem] text-[10px] bg-white/20 text-inherit border-none">
+                {statusCounts.all || 0}
+              </Badge>
+            </button>
+            {Object.entries(STATUS_GROUP_LABELS).filter(([k]) => k !== 'all').map(([key, label]) => {
+              const count = statusCounts[key] || 0;
+              if (count === 0 && filterStatus !== key) return null; // Hide empty groups unless selected
+
+              return (
+                <button
+                  key={key}
+                  onClick={() => setFilterStatus(key)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1.5 border",
+                    filterStatus === key 
+                      ? "bg-primary text-primary-foreground border-primary shadow-sm" 
+                      : "bg-background text-muted-foreground border-border hover:bg-muted"
+                  )}
+                >
+                  {label}
+                  <Badge 
+                    variant="secondary" 
+                    className={cn(
+                      "px-1 h-4 min-w-[1.25rem] text-[10px] border-none",
+                      filterStatus === key ? "bg-white/20 text-white" : "bg-muted-foreground/10 text-muted-foreground"
+                    )}
+                  >
+                    {count}
+                  </Badge>
+                </button>
+              );
+            })}
+          </div>
+
 
           {/* Slot availability summary for selected professional */}
           {filterProf !== "all" && (
