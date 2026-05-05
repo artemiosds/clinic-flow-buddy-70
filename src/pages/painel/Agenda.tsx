@@ -1766,10 +1766,9 @@ const Agenda: React.FC = () => {
         title="Agenda"
         subtitle={isProfissional ? "Pacientes confirmados para seus atendimentos." : "Gestão centralizada de horários e compromissos clínicos."}
         actions={
-
+          <div className="flex flex-wrap gap-2">
             {!isProfissional && (
               <>
-                {/* Botão de disparo em massa — apenas MASTER e RECEPCAO */}
                 {(user?.role === "master" || user?.role === "recepcao") && (
                   <AgendaNotificacoesMassa
                     agendamentos={agendamentos}
@@ -1780,7 +1779,6 @@ const Agenda: React.FC = () => {
                     userUsuario={user?.usuario || ""}
                   />
                 )}
-                {/* NOVO: botão Pendentes Online com badge */}
                 {canAprovar && agendamentosPendentesOnline.length > 0 && (
                   <Button
                     variant={abaAtiva === "pendentes" ? "default" : "outline"}
@@ -1806,9 +1804,12 @@ const Agenda: React.FC = () => {
                       <Plus className="w-4 h-4 mr-2" /> Novo Agendamento
                     </Button>
                   </DialogTrigger>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle className="font-display">Novo Agendamento</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
 
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
                   <DialogTitle className="font-display">Novo Agendamento</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
