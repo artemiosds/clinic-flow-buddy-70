@@ -3091,38 +3091,42 @@ const Tratamentos: React.FC = () => {
   }
 
   return (
-    <div className="space-y-4 animate-fade-in">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold font-display text-foreground">Gestão de Tratamentos</h1>
-          <p className="text-muted-foreground text-sm">{filteredCycles.length} ciclo(s) de tratamento</p>
-        </div>
-        {(isProfissional || canManageFull) && (
-          <Button
-            onClick={() => {
-              const userIsProf = profissionais.some((p) => p.id === user?.id);
-              setNewCycle({
-                patient_id: "",
-                professional_id: userIsProf ? user?.id || "" : "",
-                unit_id: user?.unidadeId || "",
-                specialty: user?.profissao || "",
-                treatment_type: "",
-                total_sessions: 0,
-                frequency: "1x_semana",
-                start_date: new Date().toISOString().split("T")[0],
-                clinical_notes: "",
-                pts_id: "",
-                weekdays: [],
-                duration_months: 3,
-              });
-              setCreateOpen(true);
-            }}
-            className="gradient-primary text-primary-foreground"
-          >
-            <Plus className="w-4 h-4 mr-2" /> Novo Ciclo
-          </Button>
-        )}
-      </div>
+    <div className="space-y-6 animate-fade-in">
+      <PageHeader
+        title="Gestão de Tratamentos"
+        subtitle={`${filteredCycles.length} ciclo(s) de tratamento ativos.`}
+        actions={
+          <div className="flex flex-wrap gap-2">
+            {(isProfissional || canManageFull) && (
+              <Button
+                size="sm"
+                onClick={() => {
+                  const userIsProf = profissionais.some((p) => p.id === user?.id);
+                  setNewCycle({
+                    patient_id: "",
+                    professional_id: userIsProf ? user?.id || "" : "",
+                    unit_id: user?.unidadeId || "",
+                    specialty: user?.profissao || "",
+                    treatment_type: "",
+                    total_sessions: 0,
+                    frequency: "1x_semana",
+                    start_date: new Date().toISOString().split("T")[0],
+                    clinical_notes: "",
+                    pts_id: "",
+                    weekdays: [],
+                    duration_months: 3,
+                  });
+                  setCreateOpen(true);
+                }}
+                className="gradient-primary"
+              >
+                <Plus className="w-4 h-4 mr-2" /> Novo Ciclo
+              </Button>
+            )}
+          </div>
+        }
+      />
+
 
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />

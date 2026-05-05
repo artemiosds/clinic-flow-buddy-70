@@ -1828,36 +1828,36 @@ const ProntuarioPage: React.FC = () => {
                   <FileText className="w-4 h-4 mr-2" />
                   Histórico Completo
                 </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePrintFullHistory(queryPacienteId, queryPacienteNome || "Paciente")}
+                >
+                  <Printer className="w-4 h-4 mr-2" />
+                  Imprimir
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setDocModalOpen(true)}
+                >
+                  <Stamp className="w-4 h-4 mr-2" />
+                  Documento
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setEncInternoOpen(true)}
+                >
+                  <Send className="w-4 h-4 mr-2" />
+                  Encaminhar
+                </Button>
               </>
             )}
           </div>
         }
       />
 
-              <Button
-                variant="outline"
-                onClick={() => handlePrintFullHistory(queryPacienteId, queryPacienteNome || "Paciente")}
-              >
-                <Printer className="w-4 h-4 mr-2" />
-                Imprimir Histórico Completo
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setDocModalOpen(true)}
-              >
-                <Stamp className="w-4 h-4 mr-2" />
-                Gerar Documento
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setEncInternoOpen(true)}
-              >
-                <Send className="w-4 h-4 mr-2" />
-                Encaminhar Paciente
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setEncExternoOpen(true)}
               >
                 <Send className="w-4 h-4 mr-2" />
                 Encaminhamento Externo
