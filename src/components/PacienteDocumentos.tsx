@@ -44,6 +44,9 @@ interface DocRow {
   storage_path: string;
   uploaded_by_nome: string;
   created_at: string;
+  autentique_id?: string;
+  autentique_status?: string;
+  autentique_url?: string;
 }
 
 interface PacienteDocumentosProps {
