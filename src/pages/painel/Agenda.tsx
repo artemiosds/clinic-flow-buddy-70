@@ -1402,7 +1402,7 @@ const Agenda: React.FC = () => {
     try {
       const { data: linkedSession } = await (supabase as any)
         .from("treatment_sessions")
-        .select("id, cycle_id, status")
+        .select("id, status")
         .eq("appointment_id", ag.id)
         .in("status", ["pendente", "agendada"])
         .maybeSingle();
@@ -1419,6 +1419,7 @@ const Agenda: React.FC = () => {
               documento: dados.documento || null,
               descricao: dados.descricao || null,
               anexo_url: dados.anexoUrl || null,
+              anexo_id: dados.anexoId || null,
               registrado_em: new Date().toISOString(),
               registrado_por: user?.nome || "Sistema",
             }),
