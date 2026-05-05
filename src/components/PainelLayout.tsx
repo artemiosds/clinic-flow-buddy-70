@@ -122,7 +122,30 @@ const PainelLayout: React.FC = () => {
   const location = useLocation();
   
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(() => {
+    const saved = localStorage.getItem('sidebar_expanded_groups');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        return {};
+      }
+    }
+    return {
+      'PRINCIPAL': true,
+      'AGENDA E RECEPÇÃO': true,
+      'ASSISTÊNCIA / CLÍNICA': true,
+      'DOCUMENTOS E ARQUIVO': true,
+      'REGULAÇÃO / ENCAMINHAMENTOS': true,
+      'GESTÃO DA UNIDADE': false,
+      'ADMINISTRAÇÃO': false,
+    };
+  });
   const [config, setConfig] = useState<DocumentConfig | null>(null);
+
+  useEffect(() => {
+    localStorage.setItem('sidebar_expanded_groups', JSON.stringify(expandedGroups));
+  }, [expandedGroups]);
 
   useEffect(() => {
     loadDocumentConfig().then(setConfig);
