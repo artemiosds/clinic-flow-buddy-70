@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import {
   Paperclip, Upload, FileText, Image as ImageIcon, FileType, Trash2, Download, Eye,
-  Loader2, UserCircle, FileCheck2, Search, X
+  Loader2, UserCircle, FileCheck2, Search, X, ShieldCheck, ExternalLink
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
