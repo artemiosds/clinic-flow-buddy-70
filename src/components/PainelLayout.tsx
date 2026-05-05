@@ -157,7 +157,7 @@ const PainelLayout: React.FC = () => {
     navigate('/login');
   };
 
-  const isItemVisible = (item: typeof menuItems[0]): boolean => {
+  const isItemVisible = (item: MenuItem): boolean => {
     // roles_master_only: accessible by any master (global or unit)
     if (item.roles_master_only) return isMaster;
     if (item.hide_from_master && isMaster) return false;
@@ -166,7 +166,12 @@ const PainelLayout: React.FC = () => {
     return can(item.modulo, 'can_view');
   };
 
-  const filteredMenu = menuItems.filter(isItemVisible);
+  const filteredGroups = useMemo(() => {
+    return menuGroups.map(group => ({
+      ...group,
+      items: group.items.filter(isItemVisible)
+    })).filter(group => group.items.length > 0);
+  }, [isMaster, can]);
 
   return (
     <div className="min-h-screen flex bg-background">
