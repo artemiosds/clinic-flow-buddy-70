@@ -17,17 +17,9 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import EspecialidadeCombobox from "@/components/EspecialidadeCombobox";
 
 const BUCKET = "paciente-documentos";
-
-const ESPECIALIDADES_DESTINO = [
-  { value: "fisioterapia", label: "Fisioterapia" },
-  { value: "fonoaudiologia", label: "Fonoaudiologia" },
-  { value: "nutricao", label: "Nutrição" },
-  { value: "psicologia", label: "Psicologia" },
-  { value: "terapia_ocupacional", label: "Terapia Ocupacional" },
-  { value: "outros", label: "Outros" },
-];
 
 const UBS_LIST = [
   "UBS Dr. Lauro Corrêa Pinto", "UBS Penta", "UBS Corino Guerreiro",
