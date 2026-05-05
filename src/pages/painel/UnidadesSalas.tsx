@@ -11,6 +11,8 @@ import { Plus, Building2, DoorOpen, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import CustomFieldsRenderer from '@/components/CustomFieldsRenderer';
 import { useCustomFields } from '@/hooks/useCustomFields';
+import { PageHeader } from '@/components/layout/PageHeader';
+
 
 const UnidadesSalas: React.FC = () => {
   const { unidades, salas, addUnidade, updateUnidade, deleteUnidade, addSala, updateSala, deleteSala } = useData();
@@ -69,10 +71,11 @@ const UnidadesSalas: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-2xl font-bold font-display text-foreground">Unidades e Salas</h1>
-        <p className="text-muted-foreground text-sm">Gerenciar estrutura física</p>
-      </div>
+      <PageHeader
+        title="Unidades e Salas"
+        subtitle="Gerenciamento da estrutura física e capacidade instalada da rede."
+      />
+
 
       {/* Unidades */}
       <div>
