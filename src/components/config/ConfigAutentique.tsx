@@ -163,6 +163,19 @@ const ConfigAutentique: React.FC = () => {
     }
   };
 
+  const handleDownload = async (doc: any) => {
+    if (!doc.storage_path_assinado) return;
+    try {
+      const { data, error } = await supabase.storage
+        .from(doc.storage_bucket || 'documentos')
+        .createSignedUrl(doc.storage_path_assinado, 60);
+      if (error) throw error;
+      window.open(data.signedUrl, '_blank');
+    } catch (e: any) {
+      toast.error('Erro ao baixar: ' + e.message);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
@@ -289,7 +302,7 @@ const ConfigAutentique: React.FC = () => {
                   </div>
                   <div className="p-4 bg-muted/30 rounded-lg border border-muted space-y-3">
                     <p className="text-xs text-muted-foreground leading-relaxed">
-                      Copie esta URL e cadastre no painel do Autentique em <strong>Configurações > Webhooks</strong>. 
+                      Copie esta URL e cadastre no painel do Autentique em <strong>Configurações {'{'}'>'{'}'} Webhooks</strong>. 
                       Assim o sistema receberá atualizações automáticas quando documentos forem assinados.
                     </p>
                     <div className="flex gap-2">
@@ -419,14 +432,14 @@ const ConfigAutentique: React.FC = () => {
                             <td className="p-3 text-right">
                               <div className="flex justify-end gap-1">
                                 {doc.url_autentique && (
-                                  <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                                    <a href={doc.url_autentique} target="_blank" rel="noopener noreferrer" title="Ver no Autentique">
+                                  <Button variant="ghost" size="icon" className="h-8 w-8" asChild title="Ver no Autentique">
+                                    <a href={doc.url_autentique} target="_blank" rel="noopener noreferrer">
                                       <ExternalLink className="h-4 w-4" />
                                     </a>
                                   </Button>
                                 )}
                                 {doc.storage_path_assinado && (
-                                  <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600" title="Baixar PDF Assinado">
+                                  <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600" title="Baixar PDF Assinado" onClick={() => handleDownload(doc)}>
                                     <Download className="h-4 w-4" />
                                   </Button>
                                 )}
