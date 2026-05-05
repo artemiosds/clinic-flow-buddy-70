@@ -2204,34 +2204,66 @@ export type Database = {
       }
       prontuario_procedimentos: {
         Row: {
+          agendamento_id: string | null
+          atualizado_por: string | null
+          cid: string | null
+          codigo_sigtap: string | null
           criado_em: string
+          criado_por: string | null
+          especialidade: string | null
           id: string
+          nome_procedimento: string | null
           observacao: string
+          origem: string | null
+          paciente_id: string | null
           procedimento_id: string
+          profissional_id: string | null
           prontuario_id: string
+          quantidade: number | null
+          unidade_id: string | null
+          updated_at: string | null
         }
         Insert: {
+          agendamento_id?: string | null
+          atualizado_por?: string | null
+          cid?: string | null
+          codigo_sigtap?: string | null
           criado_em?: string
+          criado_por?: string | null
+          especialidade?: string | null
           id?: string
+          nome_procedimento?: string | null
           observacao?: string
+          origem?: string | null
+          paciente_id?: string | null
           procedimento_id: string
+          profissional_id?: string | null
           prontuario_id: string
+          quantidade?: number | null
+          unidade_id?: string | null
+          updated_at?: string | null
         }
         Update: {
+          agendamento_id?: string | null
+          atualizado_por?: string | null
+          cid?: string | null
+          codigo_sigtap?: string | null
           criado_em?: string
+          criado_por?: string | null
+          especialidade?: string | null
           id?: string
+          nome_procedimento?: string | null
           observacao?: string
+          origem?: string | null
+          paciente_id?: string | null
           procedimento_id?: string
+          profissional_id?: string | null
           prontuario_id?: string
+          quantidade?: number | null
+          unidade_id?: string | null
+          updated_at?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "prontuario_procedimentos_procedimento_id_fkey"
-            columns: ["procedimento_id"]
-            isOneToOne: false
-            referencedRelation: "procedimentos"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "prontuario_procedimentos_prontuario_id_fkey"
             columns: ["prontuario_id"]

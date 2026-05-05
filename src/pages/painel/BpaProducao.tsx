@@ -112,14 +112,8 @@ const BpaProducao: React.FC = () => {
       const prontIds = prots.map((p) => p.id);
       const { data: vincs } = await (supabase as any)
         .from('prontuario_procedimentos')
-        .select('prontuario_id, procedimento_id')
+        .select('prontuario_id, procedimento_id, nome_procedimento, codigo_sigtap, cid')
         .in('prontuario_id', prontIds);
-
-      const procIds = [...new Set((vincs || []).map((v: any) => v.procedimento_id))];
-      const { data: procsData } = procIds.length
-        ? await (supabase as any).from('procedimentos').select('id, nome, codigo_sigtap').in('id', procIds)
-        : { data: [] };
-      const procsMap = new Map<string, any>((procsData || []).map((p: any) => [p.id, p]));
 
       const prontMap = new Map<string, ProntuarioRow>(prots.map((p) => [p.id, p]));
 
@@ -128,17 +122,17 @@ const BpaProducao: React.FC = () => {
       (vincs || []).forEach((v: any) => {
         const pront = prontMap.get(v.prontuario_id);
         if (!pront) return;
-        const proc = procsMap.get(v.procedimento_id);
+        
         result.push({
-          key: `${pront.id}_${v.procedimento_id}`,
+          key: `${pront.id}_${v.procedimento_id || v.codigo_sigtap || Math.random()}`,
           prontuario_id: pront.id,
           paciente_id: pront.paciente_id,
           paciente_nome: pront.paciente_nome,
           profissional_id: pront.profissional_id,
           profissional_nome: pront.profissional_nome,
           data: pront.data_atendimento,
-          procedimento_nome: proc?.nome || '—',
-          codigo_sigtap: proc?.codigo_sigtap || '',
+          procedimento_nome: v.nome_procedimento || '—',
+          codigo_sigtap: v.codigo_sigtap || '',
         });
       });
 
