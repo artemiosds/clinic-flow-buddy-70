@@ -1029,56 +1029,58 @@ const FilaEspera: React.FC = () => {
         subtitle={`${aguardandoCount} aguardando • ${chamadoCount} chamados • ${emAtendimentoCount} em atendimento`}
         actions={
           <div className="flex flex-wrap gap-2">
+            {canManage && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setImportForm({
+                      nome: "",
+                      telefone: "",
+                      cpf: "",
+                      cns: "",
+                      nomeMae: "",
+                      email: "",
+                      dataNascimento: "",
+                      unidadeId: "",
+                      profissionalId: "",
+                      tipo: "primeira_consulta",
+                      dataSolicitacaoOriginal: "",
+                      descricaoClinica: "",
+                      cid: "",
+                      observacoes: "",
+                      prioridade: "normal",
+                    } as any);
+                    setImportDup(null);
+                    setImportErrors({});
+                    setImportDialogOpen(true);
+                  }}
+                >
+                  <FileUp className="w-4 h-4 mr-2" />
+                  Importar
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setManualSlot({ data: "", hora: "", profissionalId: "", unidadeId: "" });
+                    setManualCallDialog(true);
+                  }}
+                >
+                  <ArrowRight className="w-4 h-4 mr-2" />
+                  Chamar Próximo
+                </Button>
+                <Button size="sm" onClick={openNew} className="gradient-primary">
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  Adicionar
+                </Button>
+              </>
+            )}
+          </div>
+        }
+      />
 
-        <div className="flex gap-2 flex-wrap">
-          {canManage && (
-            <>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setImportForm({
-                    nome: "",
-                    telefone: "",
-                    cpf: "",
-                    cns: "",
-                    nomeMae: "",
-                    email: "",
-                    dataNascimento: "",
-                    unidadeId: "",
-                    profissionalId: "",
-                    tipo: "primeira_consulta",
-                    dataSolicitacaoOriginal: "",
-                    descricaoClinica: "",
-                    cid: "",
-                    observacoes: "",
-                    prioridade: "normal",
-                  } as any);
-                  setImportDup(null);
-                  setImportErrors({});
-                  setImportDialogOpen(true);
-                }}
-              >
-                <FileUp className="w-4 h-4 mr-2" />
-                Importar Lista Antiga
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setManualSlot({ data: "", hora: "", profissionalId: "", unidadeId: "" });
-                  setManualCallDialog(true);
-                }}
-              >
-                <ArrowRight className="w-4 h-4 mr-2" />
-                Chamar Próximo da Fila
-              </Button>
-              <Button onClick={openNew} className="gradient-primary text-primary-foreground">
-                <UserPlus className="w-4 h-4 mr-2" />
-                Adicionar à Fila
-              </Button>
-            </>
-          )}
-        </div>
-      </div>
 
       {activeQueue.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">

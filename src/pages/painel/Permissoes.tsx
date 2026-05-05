@@ -303,15 +303,18 @@ const Permissoes: React.FC = () => {
   const selectedUser = funcionarios.find((f) => f.id === selectedUserId);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <Shield className="w-6 h-6 text-primary" />
-        <h1 className="text-2xl font-bold">Configuração de Permissões</h1>
-        <Badge variant="outline" className="gap-1 ml-auto">
-          <Radio className="w-3 h-3 animate-pulse text-primary" />
-          Tempo real
-        </Badge>
-      </div>
+    <div className="space-y-6 animate-fade-in">
+      <PageHeader
+        title="Configuração de Permissões"
+        subtitle="Controle de acesso por módulo e unidade de saúde."
+        actions={
+          <Badge variant="outline" className="gap-1 ml-auto">
+            <Radio className="w-3 h-3 animate-pulse text-primary" />
+            Tempo real
+          </Badge>
+        }
+      />
+
 
       {/* Seletor de Unidade */}
       <Card>

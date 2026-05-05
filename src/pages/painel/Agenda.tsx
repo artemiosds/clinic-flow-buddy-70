@@ -1767,45 +1767,46 @@ const Agenda: React.FC = () => {
         subtitle={isProfissional ? "Pacientes confirmados para seus atendimentos." : "Gestão centralizada de horários e compromissos clínicos."}
         actions={
           <div className="flex flex-wrap gap-2">
+            {!isProfissional && (
+              <>
+                {/* Botão de disparo em massa — apenas MASTER e RECEPCAO */}
+                {(user?.role === "master" || user?.role === "recepcao") && (
+                  <AgendaNotificacoesMassa
+                    agendamentos={agendamentos}
+                    pacientes={pacientes}
+                    unidades={unidades}
+                    selectedDate={selectedDate}
+                    userUnidadeId={user?.unidadeId || ""}
+                    userUsuario={user?.usuario || ""}
+                  />
+                )}
+                {/* NOVO: botão Pendentes Online com badge */}
+                {canAprovar && agendamentosPendentesOnline.length > 0 && (
+                  <Button
+                    variant={abaAtiva === "pendentes" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setAbaAtiva(abaAtiva === "pendentes" ? "agenda" : "pendentes")}
+                  >
+                    <Bell className="w-4 h-4 mr-2" />
+                    Pendentes Online
+                    <span className="ml-2 inline-flex items-center justify-center w-5 h-5 text-[10px] font-bold rounded-full bg-destructive text-destructive-foreground">
+                      {agendamentosPendentesOnline.length}
+                    </span>
+                  </Button>
+                )}
+                <Dialog
+                  open={dialogOpen}
+                  onOpenChange={(open) => {
+                    setDialogOpen(open);
+                    if (!open) setPacientesConferidos(new Set());
+                  }}
+                >
+                  <DialogTrigger asChild>
+                    <Button size="sm" className="gradient-primary">
+                      <Plus className="w-4 h-4 mr-2" /> Novo Agendamento
+                    </Button>
+                  </DialogTrigger>
 
-        {!isProfissional && (
-          <div className="flex gap-2 flex-wrap">
-            {/* Botão de disparo em massa — apenas MASTER e RECEPCAO */}
-            {(user?.role === "master" || user?.role === "recepcao") && (
-              <AgendaNotificacoesMassa
-                agendamentos={agendamentos}
-                pacientes={pacientes}
-                unidades={unidades}
-                selectedDate={selectedDate}
-                userUnidadeId={user?.unidadeId || ""}
-                userUsuario={user?.usuario || ""}
-              />
-            )}
-            {/* NOVO: botão Pendentes Online com badge */}
-            {canAprovar && agendamentosPendentesOnline.length > 0 && (
-              <Button
-                variant={abaAtiva === "pendentes" ? "default" : "outline"}
-                onClick={() => setAbaAtiva(abaAtiva === "pendentes" ? "agenda" : "pendentes")}
-              >
-                <Bell className="w-4 h-4 mr-2" />
-                Pendentes Online
-                <span className="ml-2 inline-flex items-center justify-center w-5 h-5 text-xs font-bold rounded-full bg-destructive text-destructive-foreground">
-                  {agendamentosPendentesOnline.length}
-                </span>
-              </Button>
-            )}
-            <Dialog
-              open={dialogOpen}
-              onOpenChange={(open) => {
-                setDialogOpen(open);
-                if (!open) setPacientesConferidos(new Set());
-              }}
-            >
-              <DialogTrigger asChild>
-                <Button className="gradient-primary text-primary-foreground">
-                  <Plus className="w-4 h-4 mr-2" /> Novo Agendamento
-                </Button>
-              </DialogTrigger>
               <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                   <DialogTitle className="font-display">Novo Agendamento</DialogTitle>
@@ -2036,7 +2037,8 @@ const Agenda: React.FC = () => {
             </Dialog>
           </div>
         )}
-      </div>
+      />
+
 
       {/* NOVO: Painel de aprovação */}
       {abaAtiva === "pendentes" && canAprovar && (
