@@ -248,7 +248,13 @@ const PainelLayout: React.FC = () => {
                 
                 <AnimatePresence initial={false}>
                   {isExpanded && (
-                    <div className="space-y-0.5 overflow-hidden">
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2, ease: 'easeInOut' }}
+                      className="space-y-0.5 overflow-hidden"
+                    >
                       {group.items.map(item => {
                         const badge =
                           item.to === '/painel/encaminhamentos-externos' && externosPendentes > 0
