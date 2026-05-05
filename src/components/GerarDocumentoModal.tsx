@@ -18,6 +18,7 @@ import { openPrintDocument, loadDocumentConfig, docHeader, docFooter, buildInsti
 import { salvarEncaminhamento } from '@/services/encaminhamentoService';
 import { generateSignature, formatSignatureBlock, formatCarimboBlock, type CarimboData, type SignatureData } from '@/lib/documentSignature';
 import type { DocumentTemplate } from '@/components/ModelosDocumentos';
+import AutentiqueSignatureActions from '@/components/pacientes/AutentiqueSignatureActions';
 
 interface Props {
   open: boolean;
