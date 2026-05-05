@@ -1049,7 +1049,7 @@ const Agenda: React.FC = () => {
                             <SelectValue placeholder="Selecione" />
                           </SelectTrigger>
                           <SelectContent>
-                            {salasVisiveis.map((s) => (
+                            {salas.filter((s) => !newAg.unidadeId || s.unidadeId === newAg.unidadeId).map((s) => (
                               <SelectItem key={s.id} value={s.id}>
                                 {s.nome}
                               </SelectItem>
