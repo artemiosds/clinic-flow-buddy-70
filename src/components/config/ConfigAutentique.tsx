@@ -60,19 +60,25 @@ const ConfigAutentique: React.FC = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from('assinatura_eletronica_config')
-        .upsert({
-          ...config,
-          provider: 'autentique',
-          updated_at: new Date().toISOString(),
-          updated_by: user?.id
-        });
+      // Usar RPC para salvar com segurança e contornar problemas de RLS/token
+      const { data, error } = await supabase.rpc('salvar_configuracao_autentique', {
+        p_ativo: config.ativo,
+        p_ambiente: config.ambiente,
+        p_token_api: config.token_api,
+        p_organizacao_nome: config.organizacao_nome,
+        p_enviar_email: config.enviar_email,
+        p_exigir_profissional: config.exigir_profissional,
+        p_baixar_assinado_automaticamente: config.baixar_assinado_automaticamente,
+        p_unidade_id: user?.unidadeId || null
+      });
 
       if (error) throw error;
+      
       toast.success('Configurações salvas com sucesso!');
+      loadConfig(); // Recarregar para garantir que os dados estão sincronizados
     } catch (e: any) {
-      toast.error('Erro ao salvar: ' + e.message);
+      console.error('Erro ao salvar config Autentique:', e);
+      toast.error('Erro ao salvar: ' + (e.message || 'Verifique suas permissões'));
     }
     setSaving(false);
   };
@@ -85,7 +91,11 @@ const ConfigAutentique: React.FC = () => {
     setTesting(true);
     try {
       const { data, error } = await supabase.functions.invoke('autentique-testar-conexao', {
-        body: { token: config.token_api, ambiente: config.ambiente }
+        body: { 
+          token: config.token_api, 
+          ambiente: config.ambiente,
+          saveStatus: true // Solicitar que a função salve o status de sucesso
+        }
       });
 
       if (error) throw error;
@@ -94,11 +104,13 @@ const ConfigAutentique: React.FC = () => {
         if (data.viewer?.organization?.name && !config.organizacao_nome) {
           setConfig((prev: any) => ({ ...prev, organizacao_nome: data.viewer.organization.name }));
         }
+        loadConfig(); // Recarregar para ver status atualizado
       } else {
         toast.error('Falha na conexão: ' + data.message);
       }
     } catch (e: any) {
-      toast.error('Erro no teste: ' + e.message);
+      console.error('Erro no teste de conexão Autentique:', e);
+      toast.error('Erro no teste: ' + (e.message || 'Falha ao comunicar com o servidor'));
     }
     setTesting(false);
   };
@@ -124,6 +136,14 @@ const ConfigAutentique: React.FC = () => {
           </div>
         </div>
         <div className="flex gap-2">
+          {config.ultimo_teste_em && (
+            <div className="hidden md:flex flex-col items-end justify-center mr-4 text-[10px] text-muted-foreground leading-tight">
+              <span>Último teste: {new Date(config.ultimo_teste_em).toLocaleString()}</span>
+              <span className={config.status_conexao === 'sucesso' ? 'text-green-600 font-medium' : 'text-amber-600'}>
+                Status: {config.status_conexao === 'sucesso' ? 'Conectado' : 'Pendente/Falha'}
+              </span>
+            </div>
+          )}
           <Button variant="outline" size="sm" onClick={testarConexao} disabled={testing || !config.token_api}>
             {testing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
             Testar Conexão
@@ -176,7 +196,7 @@ const ConfigAutentique: React.FC = () => {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="sandbox">Sandbox (Testes)</SelectItem>
-                        <SelectItem value="production">Produção</SelectItem>
+                        <SelectItem value="producao">Produção</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -204,8 +224,9 @@ const ConfigAutentique: React.FC = () => {
                   </div>
                   <Input 
                     type="password"
-                    placeholder="Cole seu token aqui"
+                    placeholder={config.token_api ? "••••••••••••••••" : "Cole seu token aqui"}
                     value={config.token_api || ''}
+                    autoComplete="off"
                     onChange={(e) => setConfig((prev: any) => ({ ...prev, token_api: e.target.value }))}
                   />
                   <p className="text-[10px] text-muted-foreground">O token é armazenado de forma segura e nunca é exposto no frontend.</p>
@@ -259,7 +280,19 @@ const ConfigAutentique: React.FC = () => {
                   <p className="text-[10px] text-blue-700 leading-relaxed">
                     A URL de Webhook deve ser configurada no painel do Autentique para receber atualizações automáticas de status.
                     <br/><br/>
-                    <strong>URL:</strong> {window.location.origin}/functions/v1/autentique-webhook
+                    <strong>URL:</strong> {`${window.location.origin}/functions/v1/autentique-webhook`}
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-6 w-6 ml-1 inline-flex" 
+                      onClick={() => {
+                        const url = `${window.location.origin}/functions/v1/autentique-webhook`;
+                        navigator.clipboard.writeText(url);
+                        toast.success('URL copiada!');
+                      }}
+                    >
+                      <Save className="h-3 w-3" />
+                    </Button>
                   </p>
                 </div>
               </CardContent>
