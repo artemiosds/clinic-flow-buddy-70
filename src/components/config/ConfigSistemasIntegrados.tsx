@@ -53,6 +53,17 @@ function maskToken(t: string) {
   return `${t.slice(0, 4)}••••${t.slice(-4)}`;
 }
 
+function generateSecureToken(length = 48) {
+  const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
+  let retVal = "";
+  const values = new Uint32Array(length);
+  crypto.getRandomValues(values);
+  for (let i = 0; i < length; i++) {
+    retVal += charset.charAt(values[i] % charset.length);
+  }
+  return retVal;
+}
+
 const ConfigSistemasIntegrados: React.FC = () => {
   const { user } = useAuth();
   const [list, setList] = useState<SistemaIntegrado[]>([]);
