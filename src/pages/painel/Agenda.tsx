@@ -537,7 +537,7 @@ const Agenda: React.FC = () => {
 
       return true;
     });
-  }, [agendamentos, selectedDate, filterUnit, filterProf, isProfissional, user, debouncedSearch, pacientes]);
+  }, [agendamentos, selectedDate, filterUnit, filterProf, isProfissional, user, debouncedSearch, pacientes, resolvePaciente]);
 
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = { all: baseAgendamentos.length };
