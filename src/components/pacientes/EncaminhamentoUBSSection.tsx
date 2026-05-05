@@ -590,7 +590,7 @@ const EncaminhamentoUBSSection: React.FC<EncaminhamentoUBSSectionProps> = ({
                     className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10 hover:border-destructive/30"
                     onClick={async () => {
                       if (!confirm("Remover este encaminhamento do histórico?")) return;
-                      const { error } = await supabase.from("paciente_encaminhamentos").update({ ativo: false }).eq("id", enc.id);
+                      const { error } = await supabase.from("paciente_encaminhamentos").update({ ativo: false } as any).eq("id", enc.id);
                       if (!error) {
                         toast.success("Removido com sucesso");
                         loadHistory();
