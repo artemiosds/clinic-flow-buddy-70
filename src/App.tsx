@@ -86,6 +86,7 @@ const ConfiguracoesAvancadas      = lazyRetry(() => import("./pages/painel/Confi
 const MeuProntuario               = lazyRetry(() => import("./pages/painel/MeuProntuario"));
 const BpaProducao                 = lazyRetry(() => import("./pages/painel/BpaProducao"));
 const AdminCredentials            = lazyRetry(() => import("./pages/painel/AdminCredentials"));
+const ArquivoDigital              = lazyRetry(() => import("./pages/ArquivoDigital"));
 
 const LoginExterno                = lazyRetry(() => import("./pages/LoginExterno"));
 const AgendamentoExterno          = lazyRetry(() => import("./pages/AgendamentoExterno"));
@@ -225,6 +226,7 @@ const App = () => (
                     <Route path="meu-prontuario" element={<ModuleRoute modulo="prontuario"><MeuProntuario /></ModuleRoute>} />
                     <Route path="bpa-producao" element={<ModuleRoute modulo="relatorios"><BpaProducao /></ModuleRoute>} />
                     <Route path="admin-credentials" element={<ModuleRoute modulo="usuarios" masterOnly><AdminCredentials /></ModuleRoute>} />
+                    <Route path="arquivo-digital" element={<ModuleRoute modulo="prontuario"><ArquivoDigital /></ModuleRoute>} />
                   </Route>
 
                   <Route path="*" element={<NotFound />} />

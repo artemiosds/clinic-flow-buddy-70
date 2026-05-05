@@ -35,6 +35,7 @@ const menuItems: {
   { to: '/painel/tratamentos',      label: 'Gestão de Tratamentos',  icon: Activity,           modulo: 'tratamento' },
   
   { to: '/painel/prontuario',       label: 'Prontuário',             icon: Stethoscope,        modulo: 'prontuario' },
+  { to: '/painel/arquivo-digital',  label: 'Arquivo Digital',        icon: History,            modulo: 'prontuario' },
   { to: '/painel/triagem',          label: 'Triagem',                icon: HeartPulse,         modulo: 'triagem' },
   { to: '/painel/historico-triagem', label: 'Histórico Triagem',      icon: History,            modulo: 'triagem' },
   { to: '/painel/enfermagem',       label: 'Avaliação Enfermagem',   icon: Stethoscope,        modulo: 'enfermagem' },
@@ -57,6 +58,7 @@ const menuItems: {
   { to: '/painel/configuracoes-avancadas', label: 'Config. Avançadas', icon: Settings,           modulo: null, roles_master_only: true },
   { to: '/painel/admin-credentials',      label: 'Credenciais Supabase', icon: ShieldCheck,        modulo: null, roles_master_only: true },
 ];
+
 
 const roleLabels: Record<string, string> = {
   master:             'Master',

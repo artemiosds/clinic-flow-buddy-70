@@ -368,6 +368,39 @@ export type Database = {
           },
         ]
       }
+      autentique_webhook_logs: {
+        Row: {
+          created_at: string | null
+          document_id: string | null
+          erro: string | null
+          event_type: string | null
+          id: string
+          payload: Json
+          processado: boolean | null
+          status_code: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          document_id?: string | null
+          erro?: string | null
+          event_type?: string | null
+          id?: string
+          payload: Json
+          processado?: boolean | null
+          status_code?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          document_id?: string | null
+          erro?: string | null
+          event_type?: string | null
+          id?: string
+          payload?: Json
+          processado?: boolean | null
+          status_code?: number | null
+        }
+        Relationships: []
+      }
       bloqueios: {
         Row: {
           criado_em: string | null
@@ -617,9 +650,12 @@ export type Database = {
           erro_mensagem: string | null
           finalizado_em: string | null
           id: string
+          origem: string | null
           paciente_id: string | null
+          paciente_nome: string | null
           payload_resumo: Json | null
           profissional_id: string | null
+          profissional_nome: string | null
           prontuario_id: string | null
           provider: string
           status: string
@@ -630,6 +666,7 @@ export type Database = {
           tipo_documento: string | null
           titulo_documento: string
           unidade_id: string | null
+          unidade_nome: string | null
           updated_at: string | null
           url_autentique: string | null
         }
@@ -644,9 +681,12 @@ export type Database = {
           erro_mensagem?: string | null
           finalizado_em?: string | null
           id?: string
+          origem?: string | null
           paciente_id?: string | null
+          paciente_nome?: string | null
           payload_resumo?: Json | null
           profissional_id?: string | null
+          profissional_nome?: string | null
           prontuario_id?: string | null
           provider?: string
           status?: string
@@ -657,6 +697,7 @@ export type Database = {
           tipo_documento?: string | null
           titulo_documento: string
           unidade_id?: string | null
+          unidade_nome?: string | null
           updated_at?: string | null
           url_autentique?: string | null
         }
@@ -671,9 +712,12 @@ export type Database = {
           erro_mensagem?: string | null
           finalizado_em?: string | null
           id?: string
+          origem?: string | null
           paciente_id?: string | null
+          paciente_nome?: string | null
           payload_resumo?: Json | null
           profissional_id?: string | null
+          profissional_nome?: string | null
           prontuario_id?: string | null
           provider?: string
           status?: string
@@ -684,6 +728,7 @@ export type Database = {
           tipo_documento?: string | null
           titulo_documento?: string
           unidade_id?: string | null
+          unidade_nome?: string | null
           updated_at?: string | null
           url_autentique?: string | null
         }
