@@ -291,7 +291,6 @@ const PortalPaciente: React.FC = () => {
     }
 
     return (
-    return (
       <div className="min-h-screen bg-muted/30 pb-12">
         <div className="gradient-hero text-primary-foreground py-10 md:py-16 mb-8 relative">
           <div className="container mx-auto px-4">
