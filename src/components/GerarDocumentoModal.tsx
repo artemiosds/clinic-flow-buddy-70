@@ -250,11 +250,12 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
   };
 
   const handleSaveDraft = async () => {
-    if (!selected) return;
+    if (!selected) return null;
     setSalvando(true);
+    let newId = null;
     try {
       const body = buildHtmlBody('');
-      await supabase.from('documentos_gerados').insert({
+      const { data, error } = await supabase.from('documentos_gerados').insert({
         paciente_id: paciente?.id || '',
         paciente_nome: paciente?.nome || '',
         profissional_id: profissional?.id || user?.id || '',
@@ -266,12 +267,17 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
         modelo_id: selected.id,
         unidade_id: unidade || '',
         status: 'rascunho',
-      });
+      }).select('id').single();
+
+      if (error) throw error;
+      newId = data.id;
+      setSavedDocId(newId);
       toast.success('📝 Rascunho salvo!');
     } catch (e: any) {
       toast.error('Erro: ' + e.message);
     }
     setSalvando(false);
+    return newId;
   };
 
   const handleSignAndFinalize = async () => {
