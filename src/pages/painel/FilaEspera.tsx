@@ -1,3 +1,4 @@
+import { PageHeader } from '@/components/layout/PageHeader';
 import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { usePacienteNomeResolver } from "@/hooks/usePacienteNomeResolver";
 import { useData } from "@/contexts/DataContext";

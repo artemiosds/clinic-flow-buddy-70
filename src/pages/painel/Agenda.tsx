@@ -226,6 +226,7 @@ const Agenda: React.FC = () => {
   const [cancelTarget, setCancelTarget] = useState<(typeof agendamentos)[0] | null>(null);
   const [cancelMotivo, setCancelMotivo] = useState("");
   const [cancelLoading, setCancelLoading] = useState(false);
+  const [faltaTarget, setFaltaTarget] = useState<(typeof agendamentos)[0] | null>(null);
   const [cancelConfig, setCancelConfig] = useState<{
     prazo_minimo_horas: number;
     limite_cancelamentos_mes: number;
@@ -1048,7 +1049,7 @@ const Agenda: React.FC = () => {
                             <SelectValue placeholder="Selecione" />
                           </SelectTrigger>
                           <SelectContent>
-                            {salasVisiveis.map((s) => (
+                            {salas.map((s) => (
                               <SelectItem key={s.id} value={s.id}>
                                 {s.nome}
                               </SelectItem>

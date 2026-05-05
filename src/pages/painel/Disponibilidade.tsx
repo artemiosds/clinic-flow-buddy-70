@@ -1,3 +1,4 @@
+import { PageHeader } from '@/components/layout/PageHeader';
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useData } from '@/contexts/DataContext';
 import { supabase } from '@/integrations/supabase/client';

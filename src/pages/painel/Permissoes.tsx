@@ -1,3 +1,4 @@
+import { PageHeader } from '@/components/layout/PageHeader';
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { ModuleName, ModulePermission } from "@/contexts/PermissionsContext";
