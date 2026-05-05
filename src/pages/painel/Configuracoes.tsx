@@ -49,6 +49,7 @@ const TABS = [
   { id: 'prontuario', label: 'Prontuário', icon: FileText, globalOnly: false },
   { id: 'medicamentos', label: 'Medicamentos e Exames', icon: Stethoscope, globalOnly: false },
   { id: 'impressao', label: 'Impressão e Documentos', icon: Stamp, globalOnly: false },
+  { id: 'assinatura', label: 'Assinatura Eletrônica', icon: ShieldCheck, globalOnly: false },
   { id: 'especialidades', label: 'Especialidades', icon: ClipboardList, globalOnly: false },
   { id: 'fluxo', label: 'Fluxo de Atendimento', icon: Activity, globalOnly: false },
   { id: 'campos', label: 'Personalizar Campos', icon: SettingsIcon, globalOnly: false },
