@@ -13,15 +13,19 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   ShieldCheck, ExternalLink, RefreshCw, CheckCircle2, XCircle, 
-  Settings, FileText, Info, Loader2, Save, History 
+  Settings, FileText, Info, Loader2, Save, History, Copy, Eye, Download, Search, AlertCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 const ConfigAutentique: React.FC = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [documents, setDocuments] = useState<any[]>([]);
   const [config, setConfig] = useState<any>({
     ativo: false,
     ambiente: 'sandbox',
@@ -34,6 +38,8 @@ const ConfigAutentique: React.FC = () => {
     baixar_assinado_automaticamente: true,
   });
 
+  const webhookUrl = "https://dgebfmohtoszzrmzxefy.supabase.co/functions/v1/autentique-webhook";
+
   useEffect(() => {
     loadConfig();
   }, [user?.unidadeId]);
@@ -41,7 +47,6 @@ const ConfigAutentique: React.FC = () => {
   const loadConfig = async () => {
     setLoading(true);
     try {
-      // Busca config (a view não retorna token, então usamos a tabela se for master)
       const { data, error } = await supabase
         .from('assinatura_eletronica_config')
         .select('*')
@@ -57,15 +62,30 @@ const ConfigAutentique: React.FC = () => {
     setLoading(false);
   };
 
+  const loadHistory = async () => {
+    setHistoryLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('documentos_assinatura_autentique')
+        .select('*')
+        .order('enviado_em', { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+      setDocuments(data || []);
+    } catch (e: any) {
+      toast.error('Erro ao carregar histórico: ' + e.message);
+    }
+    setHistoryLoading(false);
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Se o token estiver mascarado, não enviamos para não sobrescrever o real no banco
       const tokenParaSalvar = (config.token_api?.includes('•') || config.token_api?.includes('*')) 
         ? null 
         : config.token_api;
 
-      // Usar RPC para salvar com segurança e contornar problemas de RLS/token
       const { data, error } = await supabase.rpc('salvar_configuracao_autentique', {
         p_ativo: config.ativo,
         p_ambiente: config.ambiente,
@@ -80,7 +100,7 @@ const ConfigAutentique: React.FC = () => {
       if (error) throw error;
       
       toast.success('Configurações salvas com sucesso!');
-      loadConfig(); // Recarregar para garantir que os dados estão sincronizados
+      loadConfig();
     } catch (e: any) {
       console.error('Erro ao salvar config Autentique:', e);
       toast.error('Erro ao salvar: ' + (e.message || 'Verifique suas permissões'));
@@ -99,7 +119,7 @@ const ConfigAutentique: React.FC = () => {
         body: { 
           token: config.token_api, 
           ambiente: config.ambiente,
-          saveStatus: true // Solicitar que a função salve o status de sucesso
+          saveStatus: true
         }
       });
 
@@ -112,40 +132,35 @@ const ConfigAutentique: React.FC = () => {
         if (orgName !== 'N/A' && !config.organizacao_nome) {
           setConfig((prev: any) => ({ ...prev, organizacao_nome: orgName }));
         }
-        loadConfig(); // Recarregar para ver status atualizado no banco
+        loadConfig();
       } else {
-        // Se a função retornou 200 mas com ok: false (erro controlado)
-        const errorMsg = data.message || 'Erro desconhecido na integração';
-        toast.error('Falha na conexão: ' + errorMsg);
-        
-        if (data.code === 'TOKEN_INVALID' || data.code === 'TOKEN_NOT_CONFIGURED') {
-          console.warn('Problema com o token Autentique:', data.code);
-        }
-        
-        loadConfig(); // Recarregar para ver status de erro no banco
+        toast.error('Falha na conexão: ' + (data.message || 'Erro desconhecido'));
+        loadConfig();
       }
     } catch (e: any) {
-      console.error('Erro no teste de conexão Autentique:', e);
-      
-      let errorMsg = 'Não foi possível conectar ao Autentique no momento.';
-      
-      // Tentar extrair mensagem do JSON da Edge Function se disponível
-      if (e.context?.json) {
-        errorMsg = e.context.json.message || errorMsg;
-      } else if (e.message) {
-        // Tratar erro de timeout ou rede
-        if (e.message.includes('timeout')) {
-          errorMsg = 'A requisição demorou muito. Verifique sua conexão.';
-        } else if (e.message.includes('fetch')) {
-          errorMsg = 'Não foi possível acessar o endpoint oficial do Autentique.';
-        } else {
-          errorMsg = e.message;
-        }
-      }
-      
-      toast.error('Erro no teste: ' + errorMsg);
+      toast.error('Erro no teste: ' + e.message);
     }
     setTesting(false);
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success('Copiado para a área de transferência!');
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'concluido':
+        return <Badge className="bg-green-100 text-green-700 border-green-200">Concluído</Badge>;
+      case 'pendente':
+        return <Badge variant="outline" className="text-amber-600 border-amber-200">Pendente</Badge>;
+      case 'parcialmente_assinado':
+        return <Badge variant="outline" className="text-blue-600 border-blue-200">Parcial</Badge>;
+      case 'recusado':
+        return <Badge variant="destructive">Recusado</Badge>;
+      default:
+        return <Badge variant="secondary">{status}</Badge>;
+    }
   };
 
   if (loading) {
@@ -171,7 +186,7 @@ const ConfigAutentique: React.FC = () => {
         <div className="flex gap-2">
           {config.ultimo_teste_em && (
             <div className="hidden md:flex flex-col items-end justify-center mr-4 text-[10px] text-muted-foreground leading-tight">
-              <span>Último teste: {new Date(config.ultimo_teste_em).toLocaleString()}</span>
+              <span>Último teste: {format(new Date(config.ultimo_teste_em), 'dd/MM HH:mm')}</span>
               <span className={config.status_conexao === 'sucesso' ? 'text-green-600 font-medium' : 'text-amber-600'}>
                 Status: {config.status_conexao === 'sucesso' ? 'Conectado' : 'Pendente/Falha'}
               </span>
@@ -188,7 +203,7 @@ const ConfigAutentique: React.FC = () => {
         </div>
       </div>
 
-      <Tabs defaultValue="settings" className="w-full">
+      <Tabs defaultValue="settings" className="w-full" onValueChange={(v) => v === 'documents' && loadHistory()}>
         <TabsList className="bg-muted/50 p-1">
           <TabsTrigger value="settings" className="gap-2">
             <Settings className="w-4 h-4" /> Configurações
@@ -264,82 +279,166 @@ const ConfigAutentique: React.FC = () => {
                   />
                   <p className="text-[10px] text-muted-foreground">O token é armazenado de forma segura e nunca é exposto no frontend.</p>
                 </div>
-              </CardContent>
-            </Card>
 
-            <Card className="shadow-card border-0">
-              <CardHeader>
-                <CardTitle className="text-lg">Preferências</CardTitle>
-                <CardDescription>Comportamento do fluxo</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
+                <Separator className="my-4" />
+
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label className="text-sm font-semibold">Notificar por E-mail</Label>
-                      <p className="text-[10px] text-muted-foreground">Enviar aviso de assinatura por e-mail</p>
-                    </div>
-                    <Switch 
-                      checked={config.enviar_email} 
-                      onCheckedChange={(v) => setConfig((prev: any) => ({ ...prev, enviar_email: v }))} 
-                    />
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-5 h-5 text-primary" />
+                    <Label className="text-base font-bold">Webhook Autentique</Label>
                   </div>
-                  <Separator />
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label className="text-sm font-semibold">Exigir Profissional</Label>
-                      <p className="text-[10px] text-muted-foreground">Sempre incluir o profissional como signatário</p>
+                  <div className="p-4 bg-muted/30 rounded-lg border border-muted space-y-3">
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Copie esta URL e cadastre no painel do Autentique em <strong>Configurações > Webhooks</strong>. 
+                      Assim o sistema receberá atualizações automáticas quando documentos forem assinados.
+                    </p>
+                    <div className="flex gap-2">
+                      <Input value={webhookUrl} readOnly className="bg-background" />
+                      <Button variant="outline" size="icon" onClick={() => copyToClipboard(webhookUrl)}>
+                        <Copy className="h-4 w-4" />
+                      </Button>
                     </div>
-                    <Switch 
-                      checked={config.exigir_profissional} 
-                      onCheckedChange={(v) => setConfig((prev: any) => ({ ...prev, exigir_profissional: v }))} 
-                    />
                   </div>
-                  <Separator />
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label className="text-sm font-semibold">Download Automático</Label>
-                      <p className="text-[10px] text-muted-foreground">Baixar PDF assinado quando concluído</p>
-                    </div>
-                    <Switch 
-                      checked={config.baixar_assinado_automaticamente} 
-                      onCheckedChange={(v) => setConfig((prev: any) => ({ ...prev, baixar_assinado_automaticamente: v }))} 
-                    />
-                  </div>
-                </div>
-
-                <div className="bg-blue-50 p-3 rounded-lg flex gap-3 items-start">
-                  <Info className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
-                  <p className="text-[10px] text-blue-700 leading-relaxed">
-                    A URL de Webhook deve ser configurada no painel do Autentique para receber atualizações automáticas de status.
-                    <br/><br/>
-                    <strong>URL:</strong> {`${window.location.origin}/functions/v1/autentique-webhook`}
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-6 w-6 ml-1 inline-flex" 
-                      onClick={() => {
-                        const url = `${window.location.origin}/functions/v1/autentique-webhook`;
-                        navigator.clipboard.writeText(url);
-                        toast.success('URL copiada!');
-                      }}
-                    >
-                      <Save className="h-3 w-3" />
-                    </Button>
-                  </p>
                 </div>
               </CardContent>
             </Card>
+
+            <div className="space-y-6">
+              <Card className="shadow-card border-0">
+                <CardHeader>
+                  <CardTitle className="text-lg">Preferências</CardTitle>
+                  <CardDescription>Comportamento do fluxo</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label className="text-sm font-semibold">Notificar por E-mail</Label>
+                        <p className="text-[10px] text-muted-foreground">Enviar aviso de assinatura por e-mail</p>
+                      </div>
+                      <Switch 
+                        checked={config.enviar_email} 
+                        onCheckedChange={(v) => setConfig((prev: any) => ({ ...prev, enviar_email: v }))} 
+                      />
+                    </div>
+                    <Separator />
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label className="text-sm font-semibold">Exigir Profissional</Label>
+                        <p className="text-[10px] text-muted-foreground">Sempre incluir o profissional como signatário</p>
+                      </div>
+                      <Switch 
+                        checked={config.exigir_profissional} 
+                        onCheckedChange={(v) => setConfig((prev: any) => ({ ...prev, exigir_profissional: v }))} 
+                      />
+                    </div>
+                    <Separator />
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label className="text-sm font-semibold">Download Automático</Label>
+                        <p className="text-[10px] text-muted-foreground">Baixar PDF assinado quando concluído</p>
+                      </div>
+                      <Switch 
+                        checked={config.baixar_assinado_automaticamente} 
+                        onCheckedChange={(v) => setConfig((prev: any) => ({ ...prev, baixar_assinado_automaticamente: v }))} 
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-card border-0 bg-primary/5 border-primary/10">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Info className="w-4 h-4 text-primary" /> Ajuda
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    Certifique-se de que o token possui as permissões necessárias para criar documentos e listar informações da conta.
+                    Em caso de problemas, verifique os logs no dashboard do Autentique.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </TabsContent>
 
         <TabsContent value="documents" className="mt-6">
           <Card className="shadow-card border-0">
-            <CardContent className="p-0">
-              <div className="flex items-center justify-center py-20 text-muted-foreground flex-col gap-2">
-                <History className="w-12 h-12 opacity-20" />
-                <p>Nenhum documento enviado recentemente.</p>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+              <div>
+                <CardTitle className="text-lg">Documentos Enviados</CardTitle>
+                <CardDescription>Listagem dos últimos 50 documentos vinculados ao Autentique</CardDescription>
               </div>
+              <Button variant="outline" size="sm" onClick={loadHistory} disabled={historyLoading}>
+                <RefreshCw className={`w-4 h-4 mr-2 ${historyLoading ? 'animate-spin' : ''}`} />
+                Atualizar
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-[500px] w-full">
+                {historyLoading ? (
+                  <div className="flex items-center justify-center py-20">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary/30" />
+                  </div>
+                ) : documents.length === 0 ? (
+                  <div className="flex items-center justify-center py-20 text-muted-foreground flex-col gap-2">
+                    <History className="w-12 h-12 opacity-20" />
+                    <p>Nenhum documento enviado ao Autentique ainda.</p>
+                  </div>
+                ) : (
+                  <div className="rounded-md border">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="bg-muted/50 text-muted-foreground">
+                          <th className="p-3 text-left font-medium">Paciente</th>
+                          <th className="p-3 text-left font-medium">Documento</th>
+                          <th className="p-3 text-left font-medium">Status</th>
+                          <th className="p-3 text-left font-medium">Data Envio</th>
+                          <th className="p-3 text-right font-medium">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {documents.map((doc) => (
+                          <tr key={doc.id} className="hover:bg-muted/30 transition-colors">
+                            <td className="p-3">
+                              <div className="font-medium">{doc.paciente_nome || 'Paciente Não Identificado'}</div>
+                              <div className="text-[10px] text-muted-foreground">ID: {doc.paciente_id}</div>
+                            </td>
+                            <td className="p-3">
+                              <div>{doc.titulo_documento || doc.tipo_documento}</div>
+                              <div className="text-[10px] text-muted-foreground">{doc.profissional_nome && `Por: ${doc.profissional_nome}`}</div>
+                            </td>
+                            <td className="p-3">
+                              {getStatusBadge(doc.status)}
+                            </td>
+                            <td className="p-3 text-muted-foreground">
+                              {doc.enviado_em ? format(new Date(doc.enviado_em), 'dd/MM/yyyy HH:mm') : '-'}
+                            </td>
+                            <td className="p-3 text-right">
+                              <div className="flex justify-end gap-1">
+                                {doc.url_autentique && (
+                                  <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                                    <a href={doc.url_autentique} target="_blank" rel="noopener noreferrer" title="Ver no Autentique">
+                                      <ExternalLink className="h-4 w-4" />
+                                    </a>
+                                  </Button>
+                                )}
+                                {doc.storage_path_assinado && (
+                                  <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600" title="Baixar PDF Assinado">
+                                    <Download className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </ScrollArea>
             </CardContent>
           </Card>
         </TabsContent>
