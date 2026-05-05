@@ -637,20 +637,42 @@ const ProntuarioPage: React.FC = () => {
     }
   };
 
-  // Monta os links procedimento↔prontuário, embarcando os CIDs selecionados em observacao (JSON)
-  const buildProntuarioProcedimentoLinks = (prontuarioId: string) => {
+  // Monta os links procedimento↔prontuário, embarcando os CIDs selecionados e metadados detalhados
+  const buildProntuarioProcedimentoLinks = (prontuarioId: string, customProfId?: string) => {
     return selectedProcIds.map((pid) => {
+      const proc = procedimentos.find((p) => p.id === pid);
       const codigosSelecionados = selectedCidsByProc[pid] || [];
       const cidsCatalogo = cidsByProc[pid] || [];
-      // Resolve descrição a partir do catálogo já carregado (evita CIDs "soltos")
+      
+      // Resolve descrição a partir do catálogo já carregado
       const cidsPayload = codigosSelecionados.map((codigo) => {
         const found = cidsCatalogo.find((c) => c.codigo === codigo);
         return { codigo, descricao: found?.descricao || '' };
       });
+
+      const primaryCid = codigosSelecionados.length > 0 ? codigosSelecionados[0] : null;
+
       const observacao = cidsPayload.length > 0
         ? JSON.stringify({ cids: cidsPayload })
         : '';
-      return { prontuario_id: prontuarioId, procedimento_id: pid, observacao };
+
+      return {
+        prontuario_id: prontuarioId,
+        procedimento_id: pid, // Mantido para compatibilidade (UUID ou código conforme o caso)
+        paciente_id: form.paciente_id || null,
+        agendamento_id: form.agendamento_id || null,
+        profissional_id: customProfId || user?.id || null,
+        unidade_id: user?.unidadeId || null,
+        codigo_sigtap: proc?.id || pid,
+        nome_procedimento: proc?.nome || '',
+        especialidade: proc?.especialidade || '',
+        quantidade: 1,
+        cid: primaryCid,
+        origem: proc?.origem || 'SIGTAP',
+        observacao,
+        criado_por: user?.id,
+        updated_at: new Date().toISOString()
+      };
     });
   };
 
