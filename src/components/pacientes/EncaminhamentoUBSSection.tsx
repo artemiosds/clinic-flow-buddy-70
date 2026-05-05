@@ -288,7 +288,7 @@ const EncaminhamentoUBSSection: React.FC<EncaminhamentoUBSSectionProps> = ({
             <div class="grid">
               <div>
                 <div class="label">Especialidade Destino</div>
-                <div class="value">${ESPECIALIDADES_DESTINO.find(e => e.value === enc.especialidade_destino)?.label || enc.especialidade_destino}</div>
+                <div class="value">${enc.especialidade_destino}</div>
               </div>
               <div>
                 <div class="label">UBS Origem</div>
