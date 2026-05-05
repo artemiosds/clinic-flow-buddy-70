@@ -1459,7 +1459,7 @@ const ProntuarioPage: React.FC = () => {
       if (prontuarioId) {
         await (supabase as any).from("prontuario_procedimentos").delete().eq("prontuario_id", prontuarioId);
         if (selectedProcIds.length > 0) {
-          const links = buildProntuarioProcedimentoLinks(prontuarioId);
+          const links = buildProntuarioProcedimentoLinks(prontuarioId, profIdFin);
           await (supabase as any).from("prontuario_procedimentos").insert(links);
         }
       }
