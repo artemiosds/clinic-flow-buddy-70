@@ -194,7 +194,7 @@ const EncaminhamentoUBSSection: React.FC<EncaminhamentoUBSSectionProps> = ({
             paciente_id: pacienteId,
             unidade_id: unidadeId || user?.unidadeId,
             created_by: user?.id
-          })
+          } as any)
           .select()
           .single();
 
