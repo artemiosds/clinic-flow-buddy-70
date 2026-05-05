@@ -106,11 +106,22 @@ const ConfigAutentique: React.FC = () => {
         }
         loadConfig(); // Recarregar para ver status atualizado
       } else {
-        toast.error('Falha na conexão: ' + data.message);
+        // Se a função retornou 200 mas com ok: false (erro controlado)
+        toast.error('Falha na conexão: ' + (data.message || 'Erro desconhecido'));
+        loadConfig(); // Recarregar para ver status de erro no banco
       }
     } catch (e: any) {
       console.error('Erro no teste de conexão Autentique:', e);
-      toast.error('Erro no teste: ' + (e.message || 'Falha ao comunicar com o servidor'));
+      
+      // Tentar extrair mensagem do JSON se for um erro de função com corpo
+      let errorMsg = 'Falha ao comunicar com o servidor';
+      if (e.context?.json) {
+        errorMsg = e.context.json.message || errorMsg;
+      } else if (e.message) {
+        errorMsg = e.message;
+      }
+      
+      toast.error('Erro no teste: ' + errorMsg);
     }
     setTesting(false);
   };
