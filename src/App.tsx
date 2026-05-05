@@ -86,6 +86,7 @@ const ConfiguracoesAvancadas      = lazyRetry(() => import("./pages/painel/Confi
 const MeuProntuario               = lazyRetry(() => import("./pages/painel/MeuProntuario"));
 const BpaProducao                 = lazyRetry(() => import("./pages/painel/BpaProducao"));
 const AdminCredentials            = lazyRetry(() => import("./pages/painel/AdminCredentials"));
+const ArquivoDigital              = lazyRetry(() => import("./pages/ArquivoDigital"));
 
 const LoginExterno                = lazyRetry(() => import("./pages/LoginExterno"));
 const AgendamentoExterno          = lazyRetry(() => import("./pages/AgendamentoExterno"));
