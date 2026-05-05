@@ -91,7 +91,11 @@ const ConfigAutentique: React.FC = () => {
     setTesting(true);
     try {
       const { data, error } = await supabase.functions.invoke('autentique-testar-conexao', {
-        body: { token: config.token_api, ambiente: config.ambiente }
+        body: { 
+          token: config.token_api, 
+          ambiente: config.ambiente,
+          saveStatus: true // Solicitar que a função salve o status de sucesso
+        }
       });
 
       if (error) throw error;
@@ -100,11 +104,13 @@ const ConfigAutentique: React.FC = () => {
         if (data.viewer?.organization?.name && !config.organizacao_nome) {
           setConfig((prev: any) => ({ ...prev, organizacao_nome: data.viewer.organization.name }));
         }
+        loadConfig(); // Recarregar para ver status atualizado
       } else {
         toast.error('Falha na conexão: ' + data.message);
       }
     } catch (e: any) {
-      toast.error('Erro no teste: ' + e.message);
+      console.error('Erro no teste de conexão Autentique:', e);
+      toast.error('Erro no teste: ' + (e.message || 'Falha ao comunicar com o servidor'));
     }
     setTesting(false);
   };
