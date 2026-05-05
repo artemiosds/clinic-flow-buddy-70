@@ -1852,29 +1852,28 @@ const ProntuarioPage: React.FC = () => {
                   <Send className="w-4 h-4 mr-2" />
                   Encaminhar
                 </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setEncExternoOpen(true)}
+                >
+                  <Send className="w-4 h-4 mr-2" />
+                  Encaminhamento Externo
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => navigate("/painel/prontuario")}>
+                  Ver todos
+                </Button>
               </>
+            )}
+            {canEdit && (
+              <Button onClick={openNew} size="sm" className="gradient-primary text-primary-foreground">
+                <Plus className="w-4 h-4 mr-2" />
+                Novo Prontuário
+              </Button>
             )}
           </div>
         }
       />
-
-              >
-                <Send className="w-4 h-4 mr-2" />
-                Encaminhamento Externo
-              </Button>
-              <Button variant="outline" onClick={() => navigate("/painel/prontuario")}>
-                Ver todos
-              </Button>
-            </>
-          )}
-          {canEdit && (
-            <Button onClick={openNew} className="gradient-primary text-primary-foreground">
-              <Plus className="w-4 h-4 mr-2" />
-              Novo Prontuário
-            </Button>
-          )}
-        </div>
-      </div>
 
       {queryPacienteId && showHistorico && (
         <Card className="shadow-card border-0">
