@@ -79,7 +79,11 @@ Deno.serve(async (req) => {
     }
 
     // Endpoint padrão de health da própria família de funções
-    const target = `${alvoUrl}/functions/v1/integracao-listar-profissionais`;
+    const target = `${alvoUrl}/functions/v1/integracao-testar-conexao`;
+
+    // Busca identificador local para enviar
+    const { data: config } = await supabase.from('clinica_config').select('identificador_local').maybeSingle();
+    const localIdent = config?.identificador_local ?? '';
 
     const t0 = Date.now();
     let httpStatus = 0;
@@ -91,17 +95,26 @@ Deno.serve(async (req) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-integration-token': alvoToken,
-          'x-system-id': alvoIdent,
+          'Authorization': `Bearer ${alvoToken}`,
+          'X-System-Identifier': localIdent,
         },
         body: JSON.stringify({ ping: true }),
       });
       httpStatus = resp.status;
       payload = await resp.json().catch(() => null);
-      okFlag = resp.ok && payload?.ok !== false;
-      mensagem = okFlag ? 'Conexão OK' : (payload?.error ?? `HTTP ${httpStatus}`);
+      
+      if (resp.status === 401) {
+        mensagem = 'Token recusado pelo sistema externo. Verifique se o token de saída deste sistema está cadastrado como token de entrada no sistema externo.';
+      } else if (resp.status === 404) {
+        mensagem = 'Sistema externo não encontrado ou endpoint de integração não configurado.';
+      } else if (resp.status === 403) {
+        mensagem = payload?.message || 'Acesso negado pelo sistema externo.';
+      } else {
+        okFlag = resp.ok && payload?.ok !== false;
+        mensagem = payload?.message || (okFlag ? 'Conexão OK' : (payload?.error ?? `HTTP ${httpStatus}`));
+      }
     } catch (err: any) {
-      mensagem = `Falha de rede: ${err?.message ?? err}`;
+      mensagem = `Falha de rede ou URL inválida: ${err?.message ?? err}`;
     }
     const elapsedMs = Date.now() - t0;
 
