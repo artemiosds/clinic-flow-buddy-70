@@ -23,7 +23,7 @@ import {
   HeartPulse, Shield, Users, Bell, ShieldAlert, RefreshCw,
   ArrowRightLeft, User, Clock, CalendarDays, Info, FileText,
   Globe, Ban, Plus, Trash2, Building2, ClipboardList, Search,
-  Stethoscope, Activity, Monitor
+  Stethoscope, Activity, Monitor, ShieldCheck
 } from 'lucide-react';
 import EditorProntuarioConfig from '@/components/EditorProntuarioConfig';
 import ModelosDocumentos from '@/components/ModelosDocumentos';
@@ -42,6 +42,7 @@ import ConfigSistema from '@/components/config/ConfigSistema';
 import ConfigPersonalizarCampos from '@/components/config/ConfigPersonalizarCampos';
 import ConfigWhatsApp from '@/components/config/ConfigWhatsApp';
 import ConfigSistemasIntegrados from '@/components/config/ConfigSistemasIntegrados';
+import ConfigAutentique from '@/components/config/ConfigAutentique';
 import { Network } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -49,6 +50,7 @@ const TABS = [
   { id: 'prontuario', label: 'Prontuário', icon: FileText, globalOnly: false },
   { id: 'medicamentos', label: 'Medicamentos e Exames', icon: Stethoscope, globalOnly: false },
   { id: 'impressao', label: 'Impressão e Documentos', icon: Stamp, globalOnly: false },
+  { id: 'assinatura', label: 'Assinatura Eletrônica', icon: ShieldCheck, globalOnly: false },
   { id: 'especialidades', label: 'Especialidades', icon: ClipboardList, globalOnly: false },
   { id: 'fluxo', label: 'Fluxo de Atendimento', icon: Activity, globalOnly: false },
   { id: 'campos', label: 'Personalizar Campos', icon: SettingsIcon, globalOnly: false },
@@ -400,6 +402,9 @@ const Configuracoes: React.FC = () => {
             <CarimboConfig />
           </div>
         );
+
+      case 'assinatura':
+        return <ConfigAutentique />;
 
       case 'especialidades':
         return <ConfigEspecialidades />;
