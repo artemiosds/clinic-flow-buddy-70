@@ -48,7 +48,10 @@ import {
   Search,
   Pencil,
   Loader2,
+  FilterX,
+  Filter,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import DetalheDrawer, { Secao, Campo, StatusBadge, calcularIdade, formatarData } from "@/components/DetalheDrawer";
 import ContactActionButton from "@/components/ContactActionButton";
 import { addDaysToDateStr, cn, isoDayOfWeek, nowMinutesInBrazil, todayLocalStr } from "@/lib/utils";
