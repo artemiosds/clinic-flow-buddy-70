@@ -182,7 +182,7 @@ const ConfigAutentique: React.FC = () => {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="sandbox">Sandbox (Testes)</SelectItem>
-                        <SelectItem value="production">Produção</SelectItem>
+                        <SelectItem value="producao">Produção</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
