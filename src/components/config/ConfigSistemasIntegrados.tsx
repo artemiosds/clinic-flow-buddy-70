@@ -78,6 +78,7 @@ const ConfigSistemasIntegrados: React.FC = () => {
   const [identificadorLocalLoaded, setIdentificadorLocalLoaded] = useState('');
   const [savingIdent, setSavingIdent] = useState(false);
   const [clinicaConfigId, setClinicaConfigId] = useState<string | null>(null);
+  const [tokenCopiado, setTokenCopiado] = useState(false);
 
   // Subaba: Logs e Reenvios
   const [activeTab, setActiveTab] = useState<'sistemas' | 'logs' | 'metricas'>('sistemas');
