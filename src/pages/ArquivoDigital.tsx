@@ -13,6 +13,9 @@ import {
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { cn } from '@/lib/utils';
+
 
 const ArquivoDigital: React.FC = () => {
   const { user } = useAuth();
