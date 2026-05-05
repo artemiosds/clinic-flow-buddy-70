@@ -719,7 +719,16 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                   setCustom("_pendingReferrals", newReferrals);
                 }}
               />
-            </div>
+
+            {/* Documentos Gerais do Paciente (Preservado) */}
+            {isEdit && pacienteId && (
+              <div className="space-y-3 border-t pt-4">
+                <div className="flex items-center gap-2 text-sm font-semibold text-primary mb-1">
+                  <FileText className="w-4 h-4" /> Arquivos e Documentos do Paciente
+                </div>
+                <PacienteDocumentos pacienteId={pacienteId} unidadeId={user?.unidadeId} />
+              </div>
+            )}
 
             {/* Clínico */}
             <div className="space-y-3 border-t pt-3">
