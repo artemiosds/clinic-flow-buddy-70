@@ -308,8 +308,12 @@ const Funcionarios: React.FC = () => {
   })();
 
   return (
-    <div className="space-y-4 animate-fade-in">
-      <h1 className="text-2xl font-bold font-display text-foreground">Funcionários</h1>
+    <div className="space-y-6 animate-fade-in">
+      <PageHeader
+        title="Funcionários"
+        subtitle="Gestão de usuários, perfis de acesso e registros profissionais."
+      />
+
 
       <Tabs defaultValue="internos">
         <TabsList className="w-full">

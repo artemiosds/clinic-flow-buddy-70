@@ -469,25 +469,22 @@ const Disponibilidade: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4 animate-fade-in">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold font-display text-foreground">Disponibilidade</h1>
-          <p className="text-muted-foreground text-sm">
-            Configurar horários e vagas dos profissionais
-            {profGroups.length > 0 && ` • ${profGroups.length} profissional(is) com horários`}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={handleRefresh} size="sm">
-            <RefreshCw className="w-4 h-4 mr-2" />Atualizar
-          </Button>
-          <Button onClick={openNew} className="gradient-primary text-primary-foreground">
-            <Plus className="w-4 h-4 mr-2" />Configurar
-          </Button>
-        </div>
-      </div>
+    <div className="space-y-6 animate-fade-in">
+      <PageHeader
+        title="Disponibilidade"
+        subtitle="Configuração de horários, turnos e vagas por profissional."
+        actions={
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={handleRefresh}>
+              <RefreshCw className="w-4 h-4 mr-2" /> Atualizar
+            </Button>
+            <Button size="sm" onClick={openNew} className="gradient-primary">
+              <Plus className="w-4 h-4 mr-2" /> Configurar
+            </Button>
+          </div>
+        }
+      />
+
 
       {/* Search */}
       <div className="relative max-w-md">

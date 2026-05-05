@@ -5,11 +5,15 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/contexts/PermissionsContext";
 import { useWebhookNotify } from "@/hooks/useWebhookNotify";
 import { useEnsurePortalAccess } from "@/hooks/useEnsurePortalAccess";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { TableSkeleton } from "@/components/skeletons";
+import { EmptyState } from "@/components/EmptyState";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -823,32 +827,26 @@ const Pacientes: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4 animate-fade-in">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold font-display text-foreground">Pacientes</h1>
-          <p className="text-muted-foreground text-sm">
-            {visiblePacientes.length} cadastrados
-            {pacientesNaFila.size > 0 && (
-              <span className="ml-2">
-                • <Users className="w-3.5 h-3.5 inline" /> {pacientesNaFila.size} na fila
-              </span>
+    <div className="space-y-6 animate-fade-in">
+      <PageHeader
+        title="Pacientes"
+        subtitle={`${visiblePacientes.length} cadastrados • ${pacientesNaFila.size} aguardando atendimento`}
+        actions={
+          <div className="flex flex-wrap gap-2">
+            {canImportCSV && (
+              <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
+                <FileDown className="w-4 h-4 mr-2" /> Importar CSV
+              </Button>
             )}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          {canImportCSV && (
-            <Button variant="outline" onClick={() => setImportOpen(true)}>
-              <FileDown className="w-4 h-4 mr-2" /> Importar CSV
-            </Button>
-          )}
-          {canCreate && (
-            <Button onClick={openNew} className="gradient-primary text-primary-foreground">
-              <Plus className="w-4 h-4 mr-2" /> Novo Paciente
-            </Button>
-          )}
-        </div>
-      </div>
+            {canCreate && (
+              <Button size="sm" onClick={openNew} className="gradient-primary">
+                <Plus className="w-4 h-4 mr-2" /> Novo Paciente
+              </Button>
+            )}
+          </div>
+        }
+      />
+
 
       {/* Patient create/edit dialog */}
       <Dialog

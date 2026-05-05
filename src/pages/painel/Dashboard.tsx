@@ -3,12 +3,15 @@ import { usePacienteNomeResolver } from '@/hooks/usePacienteNomeResolver';
 import { useData } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
-import { Calendar, Users, Clock, CheckCircle, TrendingUp, XCircle, AlertTriangle, BarChart3 } from 'lucide-react';
+import { Calendar, Users, Clock, CheckCircle, TrendingUp, XCircle, AlertTriangle, BarChart3, ArrowRight } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { DashboardSkeleton } from '@/components/skeletons';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { Button } from '@/components/ui/button';
+
 
 const COLORS = ['hsl(199, 89%, 38%)', 'hsl(168, 60%, 42%)', 'hsl(38, 92%, 50%)', 'hsl(280, 60%, 50%)', 'hsl(0, 72%, 51%)'];
 
@@ -145,11 +148,17 @@ const Dashboard: React.FC = () => {
   if (loading) return <DashboardSkeleton />;
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-2xl font-bold font-display text-foreground">Dashboard Executivo</h1>
-        <p className="text-muted-foreground text-sm">Visão geral e KPIs em tempo real</p>
-      </div>
+    <div className="space-y-8 animate-fade-in">
+      <PageHeader
+        title="Painel de Controle"
+        subtitle={`Bem-vindo, ${user?.nome}. Acompanhe os indicadores da unidade em tempo real.`}
+        actions={
+          <Button variant="outline" size="sm" onClick={() => navigate('/painel/agenda')} className="hidden sm:flex">
+            Ver Agenda Completa <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
+        }
+      />
+
 
       {/* Main KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

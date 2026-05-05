@@ -314,37 +314,50 @@ const PainelLayout: React.FC = () => {
       </aside>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-14 bg-card border-b border-border flex items-center px-4 lg:px-6 shrink-0 sticky top-0 z-30">
+      <div className="flex-1 flex flex-col min-w-0 relative">
+        <header className="h-16 bg-background/80 backdrop-blur-md border-b border-border flex items-center px-4 lg:px-8 shrink-0 sticky top-0 z-30">
           <Button
             variant="ghost"
             size="icon"
-            className="lg:hidden mr-2"
+            className="lg:hidden mr-2 hover:bg-muted"
             onClick={() => setSidebarOpen(true)}
           >
-            <Menu className="w-5 h-5" />
+            <Menu className="w-5 h-5 text-foreground" />
           </Button>
-          <div className="flex-1" />
-          <ThemeToggle />
-          <span className="text-sm text-muted-foreground hidden sm:block ml-2">
-            {user?.setor && `${user.setor} • `}{user?.cargo}
-          </span>
+          
+          <div className="flex-1 min-w-0" />
+          
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            <div className="hidden sm:flex flex-col items-end border-l border-border pl-4 ml-2">
+              <span className="text-xs font-bold text-foreground uppercase tracking-wider leading-none mb-0.5">
+                {user?.cargo || 'Membro'}
+              </span>
+              <span className="text-[10px] text-muted-foreground uppercase tracking-widest leading-none">
+                {user?.setor || 'Unidade Geral'}
+              </span>
+            </div>
+          </div>
         </header>
 
         <WhatsappPausedBanner />
 
-        <main className="flex-1 p-4 lg:p-6 overflow-auto">
-          <Suspense fallback={
-            <div className="flex items-center justify-center py-20">
-              <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
-            </div>
-          }>
-            <Outlet />
-          </Suspense>
+        <main className="flex-1 p-4 lg:p-8 overflow-x-hidden overflow-y-auto bg-background/50">
+          <div className="max-w-[1600px] mx-auto w-full">
+            <Suspense fallback={
+              <div className="flex flex-col items-center justify-center py-32 gap-4">
+                <div className="animate-spin w-10 h-10 border-4 border-primary border-t-transparent rounded-full shadow-sm" />
+                <p className="text-sm font-medium text-muted-foreground animate-pulse">Carregando sistema...</p>
+              </div>
+            }>
+              <Outlet />
+            </Suspense>
+          </div>
         </main>
       </div>
     </div>
   );
 };
+
 
 export default PainelLayout;

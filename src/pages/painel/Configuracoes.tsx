@@ -23,7 +23,7 @@ import {
   HeartPulse, Shield, Users, Bell, ShieldAlert, RefreshCw,
   ArrowRightLeft, User, Clock, CalendarDays, Info, FileText,
   Globe, Ban, Plus, Trash2, Building2, ClipboardList, Search,
-  Stethoscope, Activity, Monitor, ShieldCheck
+  Stethoscope, Activity, Monitor, ShieldCheck, ChevronRight
 } from 'lucide-react';
 import EditorProntuarioConfig from '@/components/EditorProntuarioConfig';
 import ModelosDocumentos from '@/components/ModelosDocumentos';
@@ -45,6 +45,8 @@ import ConfigSistemasIntegrados from '@/components/config/ConfigSistemasIntegrad
 import ConfigAutentique from '@/components/config/ConfigAutentique';
 import { Network } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { PageHeader } from '@/components/layout/PageHeader';
+
 
 const TABS = [
   { id: 'prontuario', label: 'Prontuário', icon: FileText, globalOnly: false },
@@ -968,13 +970,12 @@ const Configuracoes: React.FC = () => {
   };
 
   return (
-    <div className="animate-fade-in">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold font-display text-foreground flex items-center gap-2">
-          <SettingsIcon className="w-6 h-6" /> Configurações do Sistema — Perfil Master
-        </h1>
-        <p className="text-muted-foreground text-sm mt-1">Todas as mudanças têm efeito imediato em todo o sistema.</p>
-      </div>
+    <div className="space-y-6 animate-fade-in">
+      <PageHeader
+        title="Configurações do Sistema"
+        subtitle="Gerencie parâmetros clínicos, administrativos e integrações da unidade."
+      />
+
 
       <div className="flex flex-col lg:flex-row gap-6 min-h-[70vh]">
         <nav className="lg:w-64 shrink-0">

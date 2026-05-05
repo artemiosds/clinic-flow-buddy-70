@@ -1023,64 +1023,64 @@ const FilaEspera: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4 animate-fade-in">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold font-display text-foreground">Fila de Espera</h1>
-          <p className="text-muted-foreground text-sm">
-            {aguardandoCount} aguardando {chamadoCount > 0 && `• ${chamadoCount} chamado(s)`}{" "}
-            {emAtendimentoCount > 0 && `• ${emAtendimentoCount} em atendimento`}
-          </p>
-        </div>
-        <div className="flex gap-2 flex-wrap">
-          {canManage && (
-            <>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setImportForm({
-                    nome: "",
-                    telefone: "",
-                    cpf: "",
-                    cns: "",
-                    nomeMae: "",
-                    email: "",
-                    dataNascimento: "",
-                    unidadeId: "",
-                    profissionalId: "",
-                    tipo: "primeira_consulta",
-                    dataSolicitacaoOriginal: "",
-                    descricaoClinica: "",
-                    cid: "",
-                    observacoes: "",
-                    prioridade: "normal",
-                  } as any);
-                  setImportDup(null);
-                  setImportErrors({});
-                  setImportDialogOpen(true);
-                }}
-              >
-                <FileUp className="w-4 h-4 mr-2" />
-                Importar Lista Antiga
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setManualSlot({ data: "", hora: "", profissionalId: "", unidadeId: "" });
-                  setManualCallDialog(true);
-                }}
-              >
-                <ArrowRight className="w-4 h-4 mr-2" />
-                Chamar Próximo da Fila
-              </Button>
-              <Button onClick={openNew} className="gradient-primary text-primary-foreground">
-                <UserPlus className="w-4 h-4 mr-2" />
-                Adicionar à Fila
-              </Button>
-            </>
-          )}
-        </div>
-      </div>
+    <div className="space-y-6 animate-fade-in">
+      <PageHeader
+        title="Fila de Espera"
+        subtitle={`${aguardandoCount} aguardando • ${chamadoCount} chamados • ${emAtendimentoCount} em atendimento`}
+        actions={
+          <div className="flex flex-wrap gap-2">
+            {canManage && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setImportForm({
+                      nome: "",
+                      telefone: "",
+                      cpf: "",
+                      cns: "",
+                      nomeMae: "",
+                      email: "",
+                      dataNascimento: "",
+                      unidadeId: "",
+                      profissionalId: "",
+                      tipo: "primeira_consulta",
+                      dataSolicitacaoOriginal: "",
+                      descricaoClinica: "",
+                      cid: "",
+                      observacoes: "",
+                      prioridade: "normal",
+                    } as any);
+                    setImportDup(null);
+                    setImportErrors({});
+                    setImportDialogOpen(true);
+                  }}
+                >
+                  <FileUp className="w-4 h-4 mr-2" />
+                  Importar
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setManualSlot({ data: "", hora: "", profissionalId: "", unidadeId: "" });
+                    setManualCallDialog(true);
+                  }}
+                >
+                  <ArrowRight className="w-4 h-4 mr-2" />
+                  Chamar Próximo
+                </Button>
+                <Button size="sm" onClick={openNew} className="gradient-primary">
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  Adicionar
+                </Button>
+              </>
+            )}
+          </div>
+        }
+      />
+
 
       {activeQueue.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
