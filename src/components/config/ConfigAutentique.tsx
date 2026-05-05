@@ -60,11 +60,16 @@ const ConfigAutentique: React.FC = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
+      // Se o token estiver mascarado, não enviamos para não sobrescrever o real no banco
+      const tokenParaSalvar = (config.token_api?.includes('•') || config.token_api?.includes('*')) 
+        ? null 
+        : config.token_api;
+
       // Usar RPC para salvar com segurança e contornar problemas de RLS/token
       const { data, error } = await supabase.rpc('salvar_configuracao_autentique', {
         p_ativo: config.ativo,
         p_ambiente: config.ambiente,
-        p_token_api: config.token_api,
+        p_token_api: tokenParaSalvar,
         p_organizacao_nome: config.organizacao_nome,
         p_enviar_email: config.enviar_email,
         p_exigir_profissional: config.exigir_profissional,
