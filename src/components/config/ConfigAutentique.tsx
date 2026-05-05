@@ -136,6 +136,14 @@ const ConfigAutentique: React.FC = () => {
           </div>
         </div>
         <div className="flex gap-2">
+          {config.ultimo_teste_em && (
+            <div className="hidden md:flex flex-col items-end justify-center mr-4 text-[10px] text-muted-foreground leading-tight">
+              <span>Último teste: {new Date(config.ultimo_teste_em).toLocaleString()}</span>
+              <span className={config.status_conexao === 'sucesso' ? 'text-green-600 font-medium' : 'text-amber-600'}>
+                Status: {config.status_conexao === 'sucesso' ? 'Conectado' : 'Pendente/Falha'}
+              </span>
+            </div>
+          )}
           <Button variant="outline" size="sm" onClick={testarConexao} disabled={testing || !config.token_api}>
             {testing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
             Testar Conexão
