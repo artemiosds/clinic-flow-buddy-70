@@ -226,6 +226,7 @@ const Agenda: React.FC = () => {
   const [cancelTarget, setCancelTarget] = useState<(typeof agendamentos)[0] | null>(null);
   const [cancelMotivo, setCancelMotivo] = useState("");
   const [cancelLoading, setCancelLoading] = useState(false);
+  const [faltaTarget, setFaltaTarget] = useState<(typeof agendamentos)[0] | null>(null);
   const [cancelConfig, setCancelConfig] = useState<{
     prazo_minimo_horas: number;
     limite_cancelamentos_mes: number;
