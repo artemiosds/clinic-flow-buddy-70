@@ -1023,15 +1023,13 @@ const FilaEspera: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4 animate-fade-in">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold font-display text-foreground">Fila de Espera</h1>
-          <p className="text-muted-foreground text-sm">
-            {aguardandoCount} aguardando {chamadoCount > 0 && `• ${chamadoCount} chamado(s)`}{" "}
-            {emAtendimentoCount > 0 && `• ${emAtendimentoCount} em atendimento`}
-          </p>
-        </div>
+    <div className="space-y-6 animate-fade-in">
+      <PageHeader
+        title="Fila de Espera"
+        subtitle={`${aguardandoCount} aguardando • ${chamadoCount} chamados • ${emAtendimentoCount} em atendimento`}
+        actions={
+          <div className="flex flex-wrap gap-2">
+
         <div className="flex gap-2 flex-wrap">
           {canManage && (
             <>

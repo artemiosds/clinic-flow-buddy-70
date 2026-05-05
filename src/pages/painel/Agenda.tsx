@@ -1760,14 +1760,13 @@ const Agenda: React.FC = () => {
   }, [editAg, profissionais, agendamentos, updateAgendamento, logAction, user, refreshAgendamentos]);
 
   return (
-    <div className="space-y-4 animate-fade-in">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold font-display text-foreground">Agenda</h1>
-          <p className="text-muted-foreground text-sm">
-            {isProfissional ? "Pacientes confirmados para atendimento" : "Gerenciar agendamentos"}
-          </p>
-        </div>
+    <div className="space-y-6 animate-fade-in">
+      <PageHeader
+        title="Agenda"
+        subtitle={isProfissional ? "Pacientes confirmados para seus atendimentos." : "Gestão centralizada de horários e compromissos clínicos."}
+        actions={
+          <div className="flex flex-wrap gap-2">
+
         {!isProfissional && (
           <div className="flex gap-2 flex-wrap">
             {/* Botão de disparo em massa — apenas MASTER e RECEPCAO */}
