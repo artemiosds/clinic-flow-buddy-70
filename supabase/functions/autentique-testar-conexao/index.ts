@@ -10,7 +10,25 @@ Deno.serve(async (req) => {
   );
 
   try {
-    const { token, ambiente } = await req.json();
+    // Validar autenticação do usuário
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) throw new Error('Cabeçalho de autorização ausente');
+    
+    const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
+    if (authError || !user) throw new Error('Usuário não autenticado');
+
+    // Verificar se é Master/Admin
+    const { data: funcionario, error: funcError } = await supabase
+      .from('funcionarios')
+      .select('role, cargo')
+      .eq('auth_user_id', user.id)
+      .single();
+
+    if (funcError || !funcionario || (funcionario.role !== 'master' && !funcionario.cargo?.toLowerCase().includes('administrador'))) {
+      throw new Error('Acesso negado. Apenas administradores podem testar conexões.');
+    }
+
+    const { token, ambiente, saveStatus } = await req.json();
 
     if (!token) {
       throw new Error('Token não fornecido');
@@ -31,6 +49,19 @@ Deno.serve(async (req) => {
 
     const data = await callAutentique(query, {}, token);
 
+    // Se solicitado, atualizar o status na tabela
+    if (saveStatus) {
+      await supabase
+        .from('assinatura_eletronica_config')
+        .update({ 
+          status_conexao: 'sucesso',
+          ultimo_teste_em: new Date().toISOString(),
+          ultimo_erro: null,
+          organizacao_nome: data.viewer?.organization?.name || 'N/A'
+        })
+        .eq('provider', 'autentique');
+    }
+
     return new Response(JSON.stringify({ 
       ok: true, 
       viewer: data.viewer,
@@ -41,6 +72,10 @@ Deno.serve(async (req) => {
     });
 
   } catch (err: any) {
+    console.error('Erro no teste de conexão Autentique:', err.message);
+    
+    // Tentar registrar o erro se soubermos qual config falhou (opcional)
+    
     return new Response(JSON.stringify({ 
       ok: false, 
       error: 'auth_error', 
