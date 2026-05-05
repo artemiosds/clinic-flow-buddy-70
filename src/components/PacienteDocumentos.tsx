@@ -69,12 +69,17 @@ const PacienteDocumentos: React.FC<PacienteDocumentosProps> = ({
     if (!pacienteId) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from("paciente_documentos")
         .select("*")
         .eq("paciente_id", pacienteId)
-        .eq("ativo", true)
-        .order("created_at", { ascending: false });
+        .eq("ativo", true);
+      
+      if (agendamentoId) {
+        query = query.eq("agendamento_id", agendamentoId);
+      }
+
+      const { data, error } = await query.order("created_at", { ascending: false });
       
       if (error) throw error;
       setDocs((data || []) as DocRow[]);
@@ -84,7 +89,7 @@ const PacienteDocumentos: React.FC<PacienteDocumentosProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [pacienteId]);
+  }, [pacienteId, agendamentoId]);
 
   useEffect(() => { reload(); }, [reload]);
 
