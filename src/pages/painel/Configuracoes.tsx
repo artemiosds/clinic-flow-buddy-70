@@ -403,6 +403,9 @@ const Configuracoes: React.FC = () => {
           </div>
         );
 
+      case 'assinatura':
+        return <ConfigAutentique />;
+
       case 'especialidades':
         return <ConfigEspecialidades />;
 
