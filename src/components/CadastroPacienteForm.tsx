@@ -720,7 +720,6 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                 }}
               />
             </div>
-            </div>
 
             {/* Clínico */}
             <div className="space-y-3 border-t pt-3">
