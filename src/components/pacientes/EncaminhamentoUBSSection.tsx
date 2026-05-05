@@ -210,7 +210,7 @@ const EncaminhamentoUBSSection: React.FC<EncaminhamentoUBSSectionProps> = ({
               mime_type: a.mime_type,
               tamanho_bytes: a.tamanho_bytes,
               uploaded_by: user?.id
-            })));
+            } as any)));
           
           if (attError) throw attError;
         }
