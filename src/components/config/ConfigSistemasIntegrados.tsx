@@ -434,8 +434,9 @@ const ConfigSistemasIntegrados: React.FC = () => {
                 <TableHead>Identificador</TableHead>
                 <TableHead>URL</TableHead>
                 <TableHead>Permissões</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Última sincronização</TableHead>
+                <TableHead>Tokens</TableHead>
+                <TableHead>Integração</TableHead>
+                <TableHead>Última Sinc.</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
