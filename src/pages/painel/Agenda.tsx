@@ -97,7 +97,19 @@ const statusLabels: Record<string, string> = {
 };
 
 
-const statusBadgeClass: Record<string, string> = {
+const STATUS_GROUPS: Record<string, string[]> = {
+  confirmado: ["confirmado", "confirmada", "agendado"],
+  apto_atendimento: ["apto_atendimento", "apto", "aguardando_profissional", "triagem_concluida"],
+  em_atendimento: ["em_atendimento"],
+  concluido: ["concluido", "finalizado", "atendido", "prontuario_finalizado"],
+  falta: ["falta", "faltou"],
+  cancelado: ["cancelado", "cancelada"],
+  confirmado_chegada: ["confirmado_chegada"],
+  aguardando_triagem: ["aguardando_triagem"],
+  triagem_concluida: ["triagem_concluida"],
+  pendente: ["pendente"],
+};
+
   pendente: "bg-warning/10 text-warning",
   confirmado: "bg-success/10 text-success",
   confirmado_chegada: "bg-emerald-500/10 text-emerald-600",
