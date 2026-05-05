@@ -1232,6 +1232,13 @@ const ProntuarioPage: React.FC = () => {
       if (editIdRef.current) {
         const { error } = await (supabase as any).from('prontuarios').update(record).eq('id', editIdRef.current);
         if (error) throw error;
+        
+        // Sincroniza procedimentos no autosave para evitar perda de dados
+        await (supabase as any).from("prontuario_procedimentos").delete().eq("prontuario_id", editIdRef.current);
+        if (selectedProcIds.length > 0) {
+          const links = buildProntuarioProcedimentoLinks(editIdRef.current, profIdAuto);
+          await (supabase as any).from("prontuario_procedimentos").insert(links);
+        }
       } else {
         const { data: inserted, error } = await (supabase as any)
           .from('prontuarios')
@@ -1242,6 +1249,12 @@ const ProntuarioPage: React.FC = () => {
         if (inserted?.id) {
           setEditId(inserted.id);
           editIdRef.current = inserted.id;
+          
+          // Sincroniza procedimentos para novo prontuário no autosave
+          if (selectedProcIds.length > 0) {
+            const links = buildProntuarioProcedimentoLinks(inserted.id, profIdAuto);
+            await (supabase as any).from("prontuario_procedimentos").insert(links);
+          }
         }
       }
       setAutosaveStatus('saved');
