@@ -55,6 +55,7 @@ const menuItems: {
   { to: '/painel/configuracoes',    label: 'Configurações',          icon: Settings,           modulo: null, roles_master_only: true },
   { to: '/painel/permissoes',       label: 'Permissões',             icon: Lock,               modulo: null, roles_master_only: true },
   { to: '/painel/configuracoes-avancadas', label: 'Config. Avançadas', icon: Settings,           modulo: null, roles_master_only: true },
+  { to: '/painel/admin-credentials',      label: 'Credenciais Supabase', icon: ShieldCheck,        modulo: null, roles_master_only: true },
 ];
 
 const roleLabels: Record<string, string> = {
