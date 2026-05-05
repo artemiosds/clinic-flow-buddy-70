@@ -1,21 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import PainelLayout from '@/components/PainelLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
-  FileText, Search, Filter, RefreshCw, ExternalLink, Download, 
-  Eye, History, AlertCircle, Calendar, User, Building, Info
+  FileText, Search, RefreshCw, ExternalLink, Download, 
+  History, User, Building, Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
 
 const ArquivoDigital: React.FC = () => {
   const { user } = useAuth();
@@ -90,61 +87,61 @@ const ArquivoDigital: React.FC = () => {
   };
 
   return (
-    <PainelLayout>
-      <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center shadow-sm">
-              <FileText className="w-6 h-6 text-primary" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold font-display tracking-tight">Arquivo Digital</h1>
-              <p className="text-muted-foreground text-sm">Central de documentos assinados eletronicamente</p>
-            </div>
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center shadow-sm">
+            <FileText className="w-6 h-6 text-primary" />
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={loadDocuments} disabled={loading}>
-              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-              Atualizar
-            </Button>
+          <div>
+            <h1 className="text-2xl font-bold font-display tracking-tight">Arquivo Digital</h1>
+            <p className="text-muted-foreground text-sm">Central de documentos assinados eletronicamente</p>
           </div>
         </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={loadDocuments} disabled={loading}>
+            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Atualizar
+          </Button>
+        </div>
+      </div>
 
-        <Card className="shadow-card border-0">
-          <CardHeader className="pb-4">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input 
-                  placeholder="Buscar por paciente ou documento..." 
-                  className="pl-9"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && loadDocuments()}
-                />
-              </div>
-              <div className="w-full md:w-48">
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os Status</SelectItem>
-                    <SelectItem value="concluido">Assinados</SelectItem>
-                    <SelectItem value="pendente">Pendentes</SelectItem>
-                    <SelectItem value="parcialmente_assinado">Parciais</SelectItem>
-                    <SelectItem value="recusado">Recusados</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button onClick={loadDocuments}>Filtrar</Button>
+      <Card className="shadow-card border-0">
+        <CardHeader className="pb-4">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input 
+                placeholder="Buscar por paciente ou documento..." 
+                className="pl-9"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && loadDocuments()}
+              />
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="rounded-md border">
+            <div className="w-full md:w-48">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os Status</SelectItem>
+                  <SelectItem value="concluido">Assinados</SelectItem>
+                  <SelectItem value="pendente">Pendentes</SelectItem>
+                  <SelectItem value="parcialmente_assinado">Parciais</SelectItem>
+                  <SelectItem value="recusado">Recusados</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Button onClick={loadDocuments}>Filtrar</Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md border">
+            <ScrollArea className="h-[600px] w-full">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-muted/50 text-muted-foreground border-b">
+                  <tr className="bg-muted/50 text-muted-foreground border-b sticky top-0 z-10">
                     <th className="p-4 text-left font-medium">Paciente / Origem</th>
                     <th className="p-4 text-left font-medium">Documento / Tipo</th>
                     <th className="p-4 text-left font-medium">Profissional / Unidade</th>
@@ -237,11 +234,11 @@ const ArquivoDigital: React.FC = () => {
                   )}
                 </tbody>
               </table>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </PainelLayout>
+            </ScrollArea>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
