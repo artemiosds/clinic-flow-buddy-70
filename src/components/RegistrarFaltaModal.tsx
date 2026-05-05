@@ -34,6 +34,7 @@ interface RegistrarFaltaModalProps {
     tipoFalta: "justificada" | "injustificada";
     documento?: string;
     descricao?: string;
+    anexoId?: string;
     anexoUrl?: string;
   }) => Promise<void>;
 }
@@ -70,11 +71,14 @@ export const RegistrarFaltaModal: React.FC<RegistrarFaltaModalProps> = ({
     setLoading(true);
     try {
       let anexoUrl: string | undefined;
+      let anexoId: string | undefined;
 
       // Upload attachment if provided
       if (anexoFile) {
         const ext = anexoFile.name.split(".").pop() || "jpg";
-        const path = `faltas/${agendamento.id}_${Date.now()}.${ext}`;
+        const fileName = `${agendamento.id}_${Date.now()}.${ext}`;
+        const path = `${agendamento.unidadeId}/${agendamento.pacienteId}/agendamentos/${agendamento.id}/faltas/${fileName}`;
+        
         const { error: uploadError } = await supabase.storage
           .from("sms")
           .upload(path, anexoFile, { upsert: true });
@@ -85,6 +89,35 @@ export const RegistrarFaltaModal: React.FC<RegistrarFaltaModalProps> = ({
         } else {
           const { data: urlData } = supabase.storage.from("sms").getPublicUrl(path);
           anexoUrl = urlData?.publicUrl;
+
+          // Save record in database
+          const { data: userData } = await supabase.auth.getUser();
+          const { data: docRecord, error: dbError } = await supabase
+            .from("paciente_documentos")
+            .insert({
+              paciente_id: agendamento.pacienteId,
+              agendamento_id: agendamento.id,
+              unidade_id: agendamento.unidadeId,
+              nome_arquivo: fileName,
+              nome_original: anexoFile.name,
+              tipo_documento: "justificativa_falta",
+              mime_type: anexoFile.type,
+              tamanho_bytes: anexoFile.size,
+              storage_bucket: "sms",
+              storage_path: path,
+              uploaded_by: userData.user?.id,
+              uploaded_by_nome: userData.user?.user_metadata?.nome || userData.user?.email,
+              ativo: true
+            })
+            .select()
+            .single();
+
+          if (dbError) {
+            console.error("Database record error:", dbError);
+            toast.error("Anexo enviado mas não vinculado. Avise o suporte.");
+          } else {
+            anexoId = docRecord.id;
+          }
         }
       }
 
@@ -94,6 +127,7 @@ export const RegistrarFaltaModal: React.FC<RegistrarFaltaModalProps> = ({
         tipoFalta,
         documento: tipoFalta === "justificada" ? docFinal : undefined,
         descricao: descricao.trim() || undefined,
+        anexoId,
         anexoUrl,
       });
 
