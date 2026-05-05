@@ -611,7 +611,7 @@ const ProntuarioPage: React.FC = () => {
   const loadProntuarioProcedimentos = async (prontuarioId: string) => {
     const { data } = await (supabase as any)
       .from("prontuario_procedimentos")
-      .select("procedimento_id, observacao")
+      .select("*")
       .eq("prontuario_id", prontuarioId);
     if (data) {
       setSelectedProcIds(data.map((d: any) => d.procedimento_id));
