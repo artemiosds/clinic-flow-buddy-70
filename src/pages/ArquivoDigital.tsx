@@ -88,23 +88,17 @@ const ArquivoDigital: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center shadow-sm">
-            <FileText className="w-6 h-6 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold font-display tracking-tight">Arquivo Digital</h1>
-            <p className="text-muted-foreground text-sm">Central de documentos assinados eletronicamente</p>
-          </div>
-        </div>
-        <div className="flex gap-2">
+      <PageHeader
+        title="Arquivo Digital"
+        subtitle="Central de documentos assinados eletronicamente via Autentique"
+        actions={
           <Button variant="outline" size="sm" onClick={loadDocuments} disabled={loading}>
-            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Atualizar
+            <RefreshCw className={cn("w-4 h-4 mr-2", loading && "animate-spin")} />
+            Atualizar Base
           </Button>
-        </div>
-      </div>
+        }
+      />
+
 
       <Card className="shadow-card border-0">
         <CardHeader className="pb-4">

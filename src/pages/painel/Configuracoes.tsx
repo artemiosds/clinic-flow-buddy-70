@@ -23,7 +23,7 @@ import {
   HeartPulse, Shield, Users, Bell, ShieldAlert, RefreshCw,
   ArrowRightLeft, User, Clock, CalendarDays, Info, FileText,
   Globe, Ban, Plus, Trash2, Building2, ClipboardList, Search,
-  Stethoscope, Activity, Monitor, ShieldCheck
+  Stethoscope, Activity, Monitor, ShieldCheck, ChevronRight
 } from 'lucide-react';
 import EditorProntuarioConfig from '@/components/EditorProntuarioConfig';
 import ModelosDocumentos from '@/components/ModelosDocumentos';
@@ -45,6 +45,8 @@ import ConfigSistemasIntegrados from '@/components/config/ConfigSistemasIntegrad
 import ConfigAutentique from '@/components/config/ConfigAutentique';
 import { Network } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { PageHeader } from '@/components/layout/PageHeader';
+
 
 const TABS = [
   { id: 'prontuario', label: 'Prontuário', icon: FileText, globalOnly: false },

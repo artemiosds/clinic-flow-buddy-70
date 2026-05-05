@@ -334,11 +334,11 @@ select:focus-visible,
   box-shadow: 0 0 8px hsl(var(--sidebar-primary) / 0.5);
 }
 
-/* ─── CUSTOM SCROLLBAR ─────────────────────────────────────── */
+/* ─── CUSTOM SCROLLBAR — PROFESSIONAL ──────────────────────── */
 
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
@@ -346,11 +346,36 @@ select:focus-visible,
 ::-webkit-scrollbar-thumb {
   background: hsl(var(--muted-foreground) / 0.15);
   border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
   transition: background 0.2s ease;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--muted-foreground) / 0.3);
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
+
+/* Scroll area refinement */
+[data-radix-scroll-area-viewport] {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.15) transparent;
+}
+
+/* Professional card grouping */
+.dashboard-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
+
+@media (max-width: 640px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
 
 /* ─── TOUCH DEVICE OPTIMIZATIONS ───────────────────────────── */
 

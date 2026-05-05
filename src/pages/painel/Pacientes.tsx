@@ -5,11 +5,15 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/contexts/PermissionsContext";
 import { useWebhookNotify } from "@/hooks/useWebhookNotify";
 import { useEnsurePortalAccess } from "@/hooks/useEnsurePortalAccess";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { TableSkeleton } from "@/components/skeletons";
+import { EmptyState } from "@/components/EmptyState";
+
 import {
   AlertDialog,
   AlertDialogAction,
