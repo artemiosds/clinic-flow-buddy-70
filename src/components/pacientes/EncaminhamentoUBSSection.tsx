@@ -371,19 +371,11 @@ const EncaminhamentoUBSSection: React.FC<EncaminhamentoUBSSectionProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Especialidade Destino *</Label>
-                <Select 
+                <EspecialidadeCombobox 
                   value={formData.especialidade_destino} 
-                  onValueChange={(v) => setFormData(prev => ({ ...prev, especialidade_destino: v }))}
-                >
-                  <SelectTrigger className="bg-background">
-                    <SelectValue placeholder="Selecione a especialidade" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ESPECIALIDADES_DESTINO.map((e) => (
-                      <SelectItem key={e.value} value={e.value}>{e.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onChange={(v) => setFormData(prev => ({ ...prev, especialidade_destino: v }))}
+                  unidadeId={unidadeId}
+                />
               </div>
 
               <div className="space-y-2">
