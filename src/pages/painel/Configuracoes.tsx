@@ -42,6 +42,7 @@ import ConfigSistema from '@/components/config/ConfigSistema';
 import ConfigPersonalizarCampos from '@/components/config/ConfigPersonalizarCampos';
 import ConfigWhatsApp from '@/components/config/ConfigWhatsApp';
 import ConfigSistemasIntegrados from '@/components/config/ConfigSistemasIntegrados';
+import ConfigAutentique from '@/components/config/ConfigAutentique';
 import { Network } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
