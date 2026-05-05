@@ -1812,25 +1812,28 @@ const ProntuarioPage: React.FC = () => {
   const queryPacienteNome = searchParams.get("pacienteNome");
 
   return (
-    <div className="space-y-4 animate-fade-in">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold font-display text-foreground">
-            {queryPacienteId ? `Prontuários — ${queryPacienteNome || "Paciente"}` : "Prontuários"}
-          </h1>
-          <p className="text-muted-foreground text-sm">{filtered.length} registro(s)</p>
-        </div>
-        <div className="flex gap-2 flex-wrap w-full sm:w-auto">
-          {queryPacienteId && (
-            <>
-              <Button variant="outline" onClick={() => setShowHistorico(!showHistorico)}>
-                <Activity className="w-4 h-4 mr-2" />
-                {showHistorico ? "Ocultar" : "Ver"} Histórico
-              </Button>
-              <Button variant="default" onClick={() => setHistoricoCompletoOpen(true)} className="gradient-primary text-primary-foreground">
-                <FileText className="w-4 h-4 mr-2" />
-                Histórico Completo
-              </Button>
+    <div className="space-y-6 animate-fade-in">
+      <PageHeader
+        title={queryPacienteId ? `Prontuários — ${queryPacienteNome || "Paciente"}` : "Prontuários"}
+        subtitle={`${filtered.length} registro(s) no histórico.`}
+        actions={
+          <div className="flex gap-2 flex-wrap w-full sm:w-auto">
+            {queryPacienteId && (
+              <>
+                <Button variant="outline" size="sm" onClick={() => setShowHistorico(!showHistorico)}>
+                  <Activity className="w-4 h-4 mr-2" />
+                  {showHistorico ? "Ocultar" : "Ver"} Resumo
+                </Button>
+                <Button variant="default" size="sm" onClick={() => setHistoricoCompletoOpen(true)} className="gradient-primary">
+                  <FileText className="w-4 h-4 mr-2" />
+                  Histórico Completo
+                </Button>
+              </>
+            )}
+          </div>
+        }
+      />
+
               <Button
                 variant="outline"
                 onClick={() => handlePrintFullHistory(queryPacienteId, queryPacienteNome || "Paciente")}

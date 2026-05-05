@@ -485,15 +485,6 @@ const Disponibilidade: React.FC = () => {
         }
       />
 
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={handleRefresh} size="sm">
-            <RefreshCw className="w-4 h-4 mr-2" />Atualizar
-          </Button>
-          <Button onClick={openNew} className="gradient-primary text-primary-foreground">
-            <Plus className="w-4 h-4 mr-2" />Configurar
-          </Button>
-        </div>
-      </div>
 
       {/* Search */}
       <div className="relative max-w-md">

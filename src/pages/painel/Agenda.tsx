@@ -1766,7 +1766,7 @@ const Agenda: React.FC = () => {
         title="Agenda"
         subtitle={isProfissional ? "Pacientes confirmados para seus atendimentos." : "Gestão centralizada de horários e compromissos clínicos."}
         actions={
-          <div className="flex flex-wrap gap-2">
+
             {!isProfissional && (
               <>
                 {/* Botão de disparo em massa — apenas MASTER e RECEPCAO */}
