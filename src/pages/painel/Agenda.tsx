@@ -1341,6 +1341,7 @@ const Agenda: React.FC = () => {
     tipoFalta: "justificada" | "injustificada";
     documento?: string;
     descricao?: string;
+    anexoId?: string;
     anexoUrl?: string;
   }) => {
     if (!faltaTarget) return;
@@ -1361,8 +1362,41 @@ const Agenda: React.FC = () => {
     ].filter(Boolean).join(" | ");
     const novaObs = `${obsAnterior}\n${detalheFalta}`.trim();
 
-    await updateAgendamento(ag.id, { status: "falta" as any });
-    await (supabase as any).from("agendamentos").update({ observacoes: novaObs }).eq("id", ag.id);
+    await updateAgendamento(ag.id, { 
+      status: "falta" as any, 
+      observacoes: novaObs,
+      custom_data: {
+        ...(ag.custom_data as any || {}),
+        falta: {
+          tipo: dados.tipoFalta,
+          documento: dados.documento,
+          descricao: dados.descricao,
+          anexoId: dados.anexoId,
+          anexoUrl: dados.anexoUrl,
+          registradoEm: new Date().toISOString(),
+          registradoPor: user?.id,
+          registradoPorNome: user?.nome
+        }
+      }
+    } as any);
+    
+    // Also update via direct supabase if updateAgendamento doesn't cover custom_data
+    await supabase.from("agendamentos").update({ 
+      observacoes: novaObs,
+      custom_data: {
+        ...(ag.custom_data as any || {}),
+        falta: {
+          tipo: dados.tipoFalta,
+          documento: dados.documento,
+          descricao: dados.descricao,
+          anexoId: dados.anexoId,
+          anexoUrl: dados.anexoUrl,
+          registradoEm: new Date().toISOString(),
+          registradoPor: user?.id,
+          registradoPorNome: user?.nome
+        }
+      }
+    } as any).eq("id", ag.id);
 
     // Update linked treatment session
     try {
