@@ -230,43 +230,59 @@ const PainelLayout: React.FC = () => {
         )}
 
         <nav className="flex-1 p-3 space-y-4 overflow-y-auto custom-scrollbar">
-          {filteredGroups.map(group => (
-            <div key={group.title} className="space-y-1">
-              <h3 className="px-3 text-[10px] font-bold text-sidebar-foreground/40 tracking-wider uppercase mb-2">
-                {group.title}
-              </h3>
-              <div className="space-y-0.5">
-                {group.items.map(item => {
-                  const badge =
-                    item.to === '/painel/encaminhamentos-externos' && externosPendentes > 0
-                      ? externosPendentes
-                      : 0;
-                  return (
-                    <NavLink
-                      key={item.to}
-                      to={item.to}
-                      end={item.to === '/painel'}
-                      onClick={() => setSidebarOpen(false)}
-                      className={({ isActive }) => cn(
-                        "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative group",
-                        isActive
-                          ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm sidebar-active-glow"
-                          : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                      )}
-                    >
-                      <item.icon className="w-4 h-4 shrink-0" strokeWidth={1.5} />
-                      <span className="flex-1 truncate">{item.label}</span>
-                      {badge > 0 && (
-                        <span className="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-bold rounded-full bg-destructive text-destructive-foreground animate-pulse">
-                          {badge > 99 ? '99+' : badge}
-                        </span>
-                      )}
-                    </NavLink>
-                  );
-                })}
+          {filteredGroups.map(group => {
+            const isExpanded = expandedGroups[group.title] !== false;
+            return (
+              <div key={group.title} className="space-y-1">
+                <button
+                  onClick={() => setExpandedGroups(prev => ({ ...prev, [group.title]: !isExpanded }))}
+                  className="w-full flex items-center justify-between px-3 py-1 text-[10px] font-bold text-sidebar-foreground/40 tracking-wider uppercase hover:text-sidebar-foreground/60 transition-colors group/title"
+                >
+                  <span>{group.title}</span>
+                  {isExpanded ? (
+                    <ChevronDown className="w-3 h-3 opacity-0 group-hover/title:opacity-100 transition-opacity" />
+                  ) : (
+                    <ChevronRight className="w-3 h-3 opacity-100 group-hover/title:opacity-100 transition-opacity" />
+                  )}
+                </button>
+                
+                <AnimatePresence initial={false}>
+                  {isExpanded && (
+                    <div className="space-y-0.5 overflow-hidden">
+                      {group.items.map(item => {
+                        const badge =
+                          item.to === '/painel/encaminhamentos-externos' && externosPendentes > 0
+                            ? externosPendentes
+                            : 0;
+                        return (
+                          <NavLink
+                            key={item.to}
+                            to={item.to}
+                            end={item.to === '/painel'}
+                            onClick={() => setSidebarOpen(false)}
+                            className={({ isActive }) => cn(
+                              "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative group",
+                              isActive
+                                ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm sidebar-active-glow"
+                                : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                            )}
+                          >
+                            <item.icon className="w-4 h-4 shrink-0" strokeWidth={1.5} />
+                            <span className="flex-1 truncate">{item.label}</span>
+                            {badge > 0 && (
+                              <span className="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-bold rounded-full bg-destructive text-destructive-foreground animate-pulse">
+                                {badge > 99 ? '99+' : badge}
+                              </span>
+                            )}
+                          </NavLink>
+                        );
+                      })}
+                    </div>
+                  )}
+                </AnimatePresence>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </nav>
 
         <div className="p-4 border-t border-sidebar-border">
