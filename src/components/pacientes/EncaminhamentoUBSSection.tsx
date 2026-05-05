@@ -134,7 +134,6 @@ const EncaminhamentoUBSSection: React.FC<EncaminhamentoUBSSectionProps> = ({
         continue;
       }
       
-      // If we have a pacienteId, we can upload immediately
       if (pacienteId) {
         setUploading(true);
         try {
@@ -158,10 +157,9 @@ const EncaminhamentoUBSSection: React.FC<EncaminhamentoUBSSectionProps> = ({
           setUploading(false);
         }
       } else {
-        // For new patients, we keep the file object to upload later
         newAttachments.push({
           nome_arquivo: file.name,
-          storage_path: "", // will be set on upload
+          storage_path: "",
           mime_type: file.type,
           tamanho_bytes: file.size,
           file: file
@@ -239,12 +237,10 @@ const EncaminhamentoUBSSection: React.FC<EncaminhamentoUBSSectionProps> = ({
         setSaving(false);
       }
     } else {
-      // For new patients, pass to parent
       if (onReferralsChange) {
         onReferralsChange([{ ...formData, anexos: attachments }]);
         toast.success("Encaminhamento adicionado à fila de cadastro.");
         setShowForm(false);
-        // We don't clear attachments yet because they're not uploaded
       }
     }
   };
@@ -620,4 +616,3 @@ const EncaminhamentoUBSSection: React.FC<EncaminhamentoUBSSectionProps> = ({
 };
 
 export default EncaminhamentoUBSSection;
-```
