@@ -60,19 +60,25 @@ const ConfigAutentique: React.FC = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from('assinatura_eletronica_config')
-        .upsert({
-          ...config,
-          provider: 'autentique',
-          updated_at: new Date().toISOString(),
-          updated_by: user?.id
-        });
+      // Usar RPC para salvar com segurança e contornar problemas de RLS/token
+      const { data, error } = await supabase.rpc('salvar_configuracao_autentique', {
+        p_ativo: config.ativo,
+        p_ambiente: config.ambiente,
+        p_token_api: config.token_api,
+        p_organizacao_nome: config.organizacao_nome,
+        p_enviar_email: config.enviar_email,
+        p_exigir_profissional: config.exigir_profissional,
+        p_baixar_assinado_automaticamente: config.baixar_assinado_automaticamente,
+        p_unidade_id: user?.unidadeId || null
+      });
 
       if (error) throw error;
+      
       toast.success('Configurações salvas com sucesso!');
+      loadConfig(); // Recarregar para garantir que os dados estão sincronizados
     } catch (e: any) {
-      toast.error('Erro ao salvar: ' + e.message);
+      console.error('Erro ao salvar config Autentique:', e);
+      toast.error('Erro ao salvar: ' + (e.message || 'Verifique suas permissões'));
     }
     setSaving(false);
   };
