@@ -23,6 +23,9 @@ import {
   FileText,
   ClipboardList,
   Search,
+  Globe,
+  ArrowRight,
+  Building2,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { loadDocumentConfig, type DocumentConfig } from "@/lib/printLayout";
@@ -146,18 +149,71 @@ const Home: React.FC = () => {
               </Link>
             </motion.div>
 
+            {/* Seção de Acesso Profissional - Separada e Reorganizada */}
             <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 1, delay: 0.5 }}
-              className="mt-8 flex flex-wrap justify-center gap-6 opacity-70 text-sm font-medium"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="mt-16 w-full pt-10 border-t border-white/10"
             >
-              <Link to="/login" className="flex items-center hover:opacity-100 transition-opacity">
-                <Shield className="w-4 h-4 mr-2" /> Painel Interno
-              </Link>
-              <Link to="/externo" className="flex items-center hover:opacity-100 transition-opacity">
-                <UserCheck className="w-4 h-4 mr-2" /> Acesso Externo
-              </Link>
+              <div className="text-center mb-8">
+                <h3 className="text-xl md:text-2xl font-bold text-white mb-2">Área do Profissional</h3>
+                <p className="text-sm text-white/70 max-w-xl mx-auto">
+                  Acesse o ambiente interno do sistema para gerenciamento, atendimento e rotinas administrativas.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl mx-auto">
+                {/* Painel Interno Card */}
+                <Link to="/login" className="group">
+                  <div className="relative overflow-hidden p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md hover:bg-white/10 hover:border-white/20 transition-all duration-300 h-full text-left flex flex-col justify-between">
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform shadow-lg border border-white/10">
+                        <Shield className="w-6 h-6 text-white" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-bold text-white text-lg">Painel Interno</h4>
+                          <span className="text-[10px] font-bold uppercase tracking-wider bg-primary/40 text-white px-2 py-0.5 rounded-full border border-white/10">
+                            Servidores
+                          </span>
+                        </div>
+                        <p className="text-sm text-white/60 mb-4 leading-relaxed">
+                          Uso por profissionais, recepção, coordenação e equipe administrativa da unidade.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center text-sm font-bold text-white group-hover:translate-x-1 transition-transform mt-auto">
+                      Entrar no Sistema <ArrowRight className="w-4 h-4 ml-2 opacity-70" />
+                    </div>
+                  </div>
+                </Link>
+
+                {/* Acesso Externo Card */}
+                <Link to="/externo" className="group">
+                  <div className="relative overflow-hidden p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md hover:bg-white/10 hover:border-white/20 transition-all duration-300 h-full text-left flex flex-col justify-between">
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform shadow-lg border border-white/10">
+                        <Globe className="w-6 h-6 text-white" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-bold text-white text-lg">Acesso Externo</h4>
+                          <span className="text-[10px] font-bold uppercase tracking-wider bg-white/10 text-white px-2 py-0.5 rounded-full border border-white/10">
+                            Autorizado
+                          </span>
+                        </div>
+                        <p className="text-sm text-white/60 mb-4 leading-relaxed">
+                          Uso por perfis externos autorizados, integrações e acessos específicos do portal.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center text-sm font-bold text-white group-hover:translate-x-1 transition-transform mt-auto">
+                      Acessar Portal <ArrowRight className="w-4 h-4 ml-2 opacity-70" />
+                    </div>
+                  </div>
+                </Link>
+              </div>
             </motion.div>
           </div>
         </div>
