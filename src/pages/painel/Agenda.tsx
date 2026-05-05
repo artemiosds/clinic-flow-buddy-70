@@ -66,6 +66,7 @@ import { whatsappService } from "@/services/whatsappService";
 import { AgendaNotificacaoIndividual, AgendaNotificacoesMassa } from "@/components/AgendaNotificacoes";
 import { RegistrarFaltaModal } from "@/components/RegistrarFaltaModal";
 import { ConferirDadosPacienteModal } from "@/components/ConferirDadosPacienteModal";
+import PacienteDocumentos from "@/components/PacienteDocumentos";
 
 const statusActions = [
   { key: "confirmado_chegada", label: "Confirmar Chegada", icon: LogIn, color: "bg-success text-success-foreground" },
@@ -1341,6 +1342,7 @@ const Agenda: React.FC = () => {
     tipoFalta: "justificada" | "injustificada";
     documento?: string;
     descricao?: string;
+    anexoId?: string;
     anexoUrl?: string;
   }) => {
     if (!faltaTarget) return;
@@ -1361,14 +1363,47 @@ const Agenda: React.FC = () => {
     ].filter(Boolean).join(" | ");
     const novaObs = `${obsAnterior}\n${detalheFalta}`.trim();
 
-    await updateAgendamento(ag.id, { status: "falta" as any });
-    await (supabase as any).from("agendamentos").update({ observacoes: novaObs }).eq("id", ag.id);
+    await updateAgendamento(ag.id, { 
+      status: "falta" as any, 
+      observacoes: novaObs,
+      custom_data: {
+        ...(ag.custom_data as any || {}),
+        falta: {
+          tipo: dados.tipoFalta,
+          documento: dados.documento,
+          descricao: dados.descricao,
+          anexoId: dados.anexoId,
+          anexoUrl: dados.anexoUrl,
+          registradoEm: new Date().toISOString(),
+          registradoPor: user?.id,
+          registradoPorNome: user?.nome
+        }
+      }
+    } as any);
+    
+    // Also update via direct supabase if updateAgendamento doesn't cover custom_data
+    await supabase.from("agendamentos").update({ 
+      observacoes: novaObs,
+      custom_data: {
+        ...(ag.custom_data as any || {}),
+        falta: {
+          tipo: dados.tipoFalta,
+          documento: dados.documento,
+          descricao: dados.descricao,
+          anexoId: dados.anexoId,
+          anexoUrl: dados.anexoUrl,
+          registradoEm: new Date().toISOString(),
+          registradoPor: user?.id,
+          registradoPorNome: user?.nome
+        }
+      }
+    } as any).eq("id", ag.id);
 
     // Update linked treatment session
     try {
       const { data: linkedSession } = await (supabase as any)
         .from("treatment_sessions")
-        .select("id, cycle_id, status")
+        .select("id, status")
         .eq("appointment_id", ag.id)
         .in("status", ["pendente", "agendada"])
         .maybeSingle();
@@ -1385,6 +1420,7 @@ const Agenda: React.FC = () => {
               documento: dados.documento || null,
               descricao: dados.descricao || null,
               anexo_url: dados.anexoUrl || null,
+              anexo_id: dados.anexoId || null,
               registrado_em: new Date().toISOString(),
               registrado_por: user?.nome || "Sistema",
             }),
@@ -3056,9 +3092,46 @@ const Agenda: React.FC = () => {
                     </div>
                   </Secao>
                 )}
+                {(() => {
+                  const faltaData = (detalheAg.custom_data as any)?.falta;
+                  if (!faltaData) return null;
+                  return (
+                    <Secao titulo="Justificativa de Falta">
+                      <div className="bg-destructive/5 border border-destructive/20 rounded-lg p-3 space-y-2">
+                        <Campo label="Tipo" valor={faltaData.tipo === 'justificada' ? 'Justificada' : 'Injustificada'} />
+                        {faltaData.documento && <Campo label="Documento" valor={faltaData.documento} />}
+                        {faltaData.descricao && <Campo label="Motivo/Descrição" valor={faltaData.descricao} />}
+                        {faltaData.anexoUrl && (
+                          <div className="flex items-center gap-2 pt-2 border-t border-destructive/10">
+                            <Paperclip className="w-3.5 h-3.5 text-destructive" />
+                            <span className="text-xs flex-1 truncate text-muted-foreground">Documento anexo</span>
+                            <a href={faltaData.anexoUrl} target="_blank" rel="noopener noreferrer">
+                              <Button size="sm" variant="outline" className="h-6 text-[10px] border-destructive/30 text-destructive hover:bg-destructive/10">
+                                <Eye className="w-3 h-3 mr-1" /> Visualizar
+                              </Button>
+                            </a>
+                          </div>
+                        )}
+                        <p className="text-[10px] text-muted-foreground pt-1 italic">
+                          Registrado em {new Date(faltaData.registradoEm).toLocaleString('pt-BR')} 
+                          {faltaData.registradoPorNome ? ` por ${faltaData.registradoPorNome}` : ''}
+                        </p>
+                      </div>
+                    </Secao>
+                  );
+                })()}
+                {detalheAg.status === "falta" && (
+                  <Secao titulo="Anexos da Falta">
+                    <PacienteDocumentos 
+                      pacienteId={detalheAg.pacienteId} 
+                      agendamentoId={detalheAg.id} 
+                      unidadeId={detalheAg.unidadeId}
+                    />
+                  </Secao>
+                )}
                 {detalheAg.observacoes && (
                   <Secao titulo="Observações">
-                    <p className="text-sm text-foreground">{detalheAg.observacoes}</p>
+                    <p className="text-sm text-foreground whitespace-pre-wrap">{detalheAg.observacoes}</p>
                   </Secao>
                 )}
               </>

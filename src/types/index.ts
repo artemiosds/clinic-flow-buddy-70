@@ -166,6 +166,7 @@ export interface Agendamento {
   aprovadoPor?: string;
   aprovadoEm?: string;
   rejeitadoMotivo?: string;
+  custom_data?: any;
 }
 
 export interface FilaEspera {
