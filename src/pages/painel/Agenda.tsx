@@ -110,6 +110,7 @@ const STATUS_GROUPS: Record<string, string[]> = {
   pendente: ["pendente"],
 };
 
+const statusBadgeClass: Record<string, string> = {
   pendente: "bg-warning/10 text-warning",
   confirmado: "bg-success/10 text-success",
   confirmado_chegada: "bg-emerald-500/10 text-emerald-600",
