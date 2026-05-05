@@ -155,6 +155,84 @@ export type Database = {
         }
         Relationships: []
       }
+      assinatura_eletronica_config: {
+        Row: {
+          ambiente: string
+          ativo: boolean | null
+          baixar_assinado_automaticamente: boolean | null
+          created_at: string | null
+          created_by: string | null
+          email_remetente_padrao: string | null
+          enviar_email: boolean | null
+          enviar_whatsapp: boolean | null
+          exigir_master: boolean | null
+          exigir_paciente: boolean | null
+          exigir_profissional: boolean | null
+          id: string
+          organizacao_nome: string | null
+          pasta_padrao_id: string | null
+          permitir_envio_massa: boolean | null
+          provider: string
+          salvar_copia_local: boolean | null
+          token_api: string | null
+          unidade_id: string | null
+          updated_at: string | null
+          updated_by: string | null
+          vincular_paciente: boolean | null
+          webhook_url: string | null
+        }
+        Insert: {
+          ambiente?: string
+          ativo?: boolean | null
+          baixar_assinado_automaticamente?: boolean | null
+          created_at?: string | null
+          created_by?: string | null
+          email_remetente_padrao?: string | null
+          enviar_email?: boolean | null
+          enviar_whatsapp?: boolean | null
+          exigir_master?: boolean | null
+          exigir_paciente?: boolean | null
+          exigir_profissional?: boolean | null
+          id?: string
+          organizacao_nome?: string | null
+          pasta_padrao_id?: string | null
+          permitir_envio_massa?: boolean | null
+          provider?: string
+          salvar_copia_local?: boolean | null
+          token_api?: string | null
+          unidade_id?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+          vincular_paciente?: boolean | null
+          webhook_url?: string | null
+        }
+        Update: {
+          ambiente?: string
+          ativo?: boolean | null
+          baixar_assinado_automaticamente?: boolean | null
+          created_at?: string | null
+          created_by?: string | null
+          email_remetente_padrao?: string | null
+          enviar_email?: boolean | null
+          enviar_whatsapp?: boolean | null
+          exigir_master?: boolean | null
+          exigir_paciente?: boolean | null
+          exigir_profissional?: boolean | null
+          id?: string
+          organizacao_nome?: string | null
+          pasta_padrao_id?: string | null
+          permitir_envio_massa?: boolean | null
+          provider?: string
+          salvar_copia_local?: boolean | null
+          token_api?: string | null
+          unidade_id?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+          vincular_paciente?: boolean | null
+          webhook_url?: string | null
+        }
+        Relationships: []
+      }
       atendimentos: {
         Row: {
           agendamento_id: string
@@ -217,6 +295,66 @@ export type Database = {
           unidade_id?: string
         }
         Relationships: []
+      }
+      autentique_fila_envio: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          documento_assinatura_id: string | null
+          documento_local_id: string | null
+          erro_mensagem: string | null
+          id: string
+          paciente_id: string | null
+          proxima_tentativa_em: string | null
+          status: string | null
+          tentativas: number | null
+          unidade_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          documento_assinatura_id?: string | null
+          documento_local_id?: string | null
+          erro_mensagem?: string | null
+          id?: string
+          paciente_id?: string | null
+          proxima_tentativa_em?: string | null
+          status?: string | null
+          tentativas?: number | null
+          unidade_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          documento_assinatura_id?: string | null
+          documento_local_id?: string | null
+          erro_mensagem?: string | null
+          id?: string
+          paciente_id?: string | null
+          proxima_tentativa_em?: string | null
+          status?: string | null
+          tentativas?: number | null
+          unidade_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "autentique_fila_envio_documento_assinatura_id_fkey"
+            columns: ["documento_assinatura_id"]
+            isOneToOne: false
+            referencedRelation: "documentos_assinatura_autentique"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "autentique_fila_envio_documento_local_id_fkey"
+            columns: ["documento_local_id"]
+            isOneToOne: false
+            referencedRelation: "documentos_gerados"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       bloqueios: {
         Row: {
@@ -454,6 +592,160 @@ export type Database = {
           versoes?: Json
         }
         Relationships: []
+      }
+      documentos_assinatura_autentique: {
+        Row: {
+          agendamento_id: string | null
+          autentique_document_id: string | null
+          cancelado_em: string | null
+          created_at: string | null
+          documento_local_id: string | null
+          enviado_em: string | null
+          enviado_por: string | null
+          erro_mensagem: string | null
+          finalizado_em: string | null
+          id: string
+          paciente_id: string | null
+          payload_resumo: Json | null
+          profissional_id: string | null
+          prontuario_id: string | null
+          provider: string
+          status: string
+          status_detalhado: Json | null
+          storage_bucket: string | null
+          storage_path_assinado: string | null
+          storage_path_original: string | null
+          tipo_documento: string | null
+          titulo_documento: string
+          unidade_id: string | null
+          updated_at: string | null
+          url_autentique: string | null
+        }
+        Insert: {
+          agendamento_id?: string | null
+          autentique_document_id?: string | null
+          cancelado_em?: string | null
+          created_at?: string | null
+          documento_local_id?: string | null
+          enviado_em?: string | null
+          enviado_por?: string | null
+          erro_mensagem?: string | null
+          finalizado_em?: string | null
+          id?: string
+          paciente_id?: string | null
+          payload_resumo?: Json | null
+          profissional_id?: string | null
+          prontuario_id?: string | null
+          provider?: string
+          status?: string
+          status_detalhado?: Json | null
+          storage_bucket?: string | null
+          storage_path_assinado?: string | null
+          storage_path_original?: string | null
+          tipo_documento?: string | null
+          titulo_documento: string
+          unidade_id?: string | null
+          updated_at?: string | null
+          url_autentique?: string | null
+        }
+        Update: {
+          agendamento_id?: string | null
+          autentique_document_id?: string | null
+          cancelado_em?: string | null
+          created_at?: string | null
+          documento_local_id?: string | null
+          enviado_em?: string | null
+          enviado_por?: string | null
+          erro_mensagem?: string | null
+          finalizado_em?: string | null
+          id?: string
+          paciente_id?: string | null
+          payload_resumo?: Json | null
+          profissional_id?: string | null
+          prontuario_id?: string | null
+          provider?: string
+          status?: string
+          status_detalhado?: Json | null
+          storage_bucket?: string | null
+          storage_path_assinado?: string | null
+          storage_path_original?: string | null
+          tipo_documento?: string | null
+          titulo_documento?: string
+          unidade_id?: string | null
+          updated_at?: string | null
+          url_autentique?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documentos_assinatura_autentique_documento_local_id_fkey"
+            columns: ["documento_local_id"]
+            isOneToOne: false
+            referencedRelation: "documentos_gerados"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      documentos_assinatura_signatarios: {
+        Row: {
+          assinado_em: string | null
+          autentique_signer_id: string | null
+          cpf: string | null
+          created_at: string | null
+          documento_assinatura_id: string | null
+          email: string
+          id: string
+          nome: string
+          ordem_assinatura: number | null
+          papel: string | null
+          status: string | null
+          telefone: string | null
+          tipo_signatario: string
+          updated_at: string | null
+          visualizado_em: string | null
+        }
+        Insert: {
+          assinado_em?: string | null
+          autentique_signer_id?: string | null
+          cpf?: string | null
+          created_at?: string | null
+          documento_assinatura_id?: string | null
+          email: string
+          id?: string
+          nome: string
+          ordem_assinatura?: number | null
+          papel?: string | null
+          status?: string | null
+          telefone?: string | null
+          tipo_signatario: string
+          updated_at?: string | null
+          visualizado_em?: string | null
+        }
+        Update: {
+          assinado_em?: string | null
+          autentique_signer_id?: string | null
+          cpf?: string | null
+          created_at?: string | null
+          documento_assinatura_id?: string | null
+          email?: string
+          id?: string
+          nome?: string
+          ordem_assinatura?: number | null
+          papel?: string | null
+          status?: string | null
+          telefone?: string | null
+          tipo_signatario?: string
+          updated_at?: string | null
+          visualizado_em?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documentos_assinatura_signatarios_documento_assinatura_id_fkey"
+            columns: ["documento_assinatura_id"]
+            isOneToOne: false
+            referencedRelation: "documentos_assinatura_autentique"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       documentos_gerados: {
         Row: {
@@ -3458,6 +3750,72 @@ export type Database = {
       }
     }
     Views: {
+      assinatura_eletronica_config_public: {
+        Row: {
+          ambiente: string | null
+          ativo: boolean | null
+          baixar_assinado_automaticamente: boolean | null
+          created_at: string | null
+          email_remetente_padrao: string | null
+          enviar_email: boolean | null
+          enviar_whatsapp: boolean | null
+          exigir_master: boolean | null
+          exigir_paciente: boolean | null
+          exigir_profissional: boolean | null
+          id: string | null
+          organizacao_nome: string | null
+          permitir_envio_massa: boolean | null
+          provider: string | null
+          salvar_copia_local: boolean | null
+          unidade_id: string | null
+          updated_at: string | null
+          vincular_paciente: boolean | null
+          webhook_url: string | null
+        }
+        Insert: {
+          ambiente?: string | null
+          ativo?: boolean | null
+          baixar_assinado_automaticamente?: boolean | null
+          created_at?: string | null
+          email_remetente_padrao?: string | null
+          enviar_email?: boolean | null
+          enviar_whatsapp?: boolean | null
+          exigir_master?: boolean | null
+          exigir_paciente?: boolean | null
+          exigir_profissional?: boolean | null
+          id?: string | null
+          organizacao_nome?: string | null
+          permitir_envio_massa?: boolean | null
+          provider?: string | null
+          salvar_copia_local?: boolean | null
+          unidade_id?: string | null
+          updated_at?: string | null
+          vincular_paciente?: boolean | null
+          webhook_url?: string | null
+        }
+        Update: {
+          ambiente?: string | null
+          ativo?: boolean | null
+          baixar_assinado_automaticamente?: boolean | null
+          created_at?: string | null
+          email_remetente_padrao?: string | null
+          enviar_email?: boolean | null
+          enviar_whatsapp?: boolean | null
+          exigir_master?: boolean | null
+          exigir_paciente?: boolean | null
+          exigir_profissional?: boolean | null
+          id?: string | null
+          organizacao_nome?: string | null
+          permitir_envio_massa?: boolean | null
+          provider?: string | null
+          salvar_copia_local?: boolean | null
+          unidade_id?: string | null
+          updated_at?: string | null
+          vincular_paciente?: boolean | null
+          webhook_url?: string | null
+        }
+        Relationships: []
+      }
       clinica_config_safe: {
         Row: {
           created_at: string | null
