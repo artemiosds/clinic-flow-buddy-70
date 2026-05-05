@@ -1445,6 +1445,121 @@ export type Database = {
           },
         ]
       }
+      paciente_encaminhamento_anexos: {
+        Row: {
+          created_at: string | null
+          encaminhamento_id: string | null
+          id: string
+          mime_type: string | null
+          nome_arquivo: string
+          storage_path: string
+          tamanho_bytes: number | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          encaminhamento_id?: string | null
+          id?: string
+          mime_type?: string | null
+          nome_arquivo: string
+          storage_path: string
+          tamanho_bytes?: number | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          encaminhamento_id?: string | null
+          id?: string
+          mime_type?: string | null
+          nome_arquivo?: string
+          storage_path?: string
+          tamanho_bytes?: number | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "paciente_encaminhamento_anexos_encaminhamento_id_fkey"
+            columns: ["encaminhamento_id"]
+            isOneToOne: false
+            referencedRelation: "paciente_encaminhamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      paciente_encaminhamentos: {
+        Row: {
+          ativo: boolean | null
+          cid: string | null
+          created_at: string | null
+          created_by: string | null
+          data_encaminhamento: string | null
+          diagnostico_resumido: string | null
+          especialidade_destino: string
+          id: string
+          justificativa: string | null
+          paciente_id: string | null
+          profissional_id: string | null
+          profissional_solicitante: string | null
+          status:
+            | Database["public"]["Enums"]["paciente_encaminhamento_status"]
+            | null
+          tipo_encaminhamento: string | null
+          ubs_origem: string | null
+          unidade_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          cid?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          data_encaminhamento?: string | null
+          diagnostico_resumido?: string | null
+          especialidade_destino: string
+          id?: string
+          justificativa?: string | null
+          paciente_id?: string | null
+          profissional_id?: string | null
+          profissional_solicitante?: string | null
+          status?:
+            | Database["public"]["Enums"]["paciente_encaminhamento_status"]
+            | null
+          tipo_encaminhamento?: string | null
+          ubs_origem?: string | null
+          unidade_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          cid?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          data_encaminhamento?: string | null
+          diagnostico_resumido?: string | null
+          especialidade_destino?: string
+          id?: string
+          justificativa?: string | null
+          paciente_id?: string | null
+          profissional_id?: string | null
+          profissional_solicitante?: string | null
+          status?:
+            | Database["public"]["Enums"]["paciente_encaminhamento_status"]
+            | null
+          tipo_encaminhamento?: string | null
+          ubs_origem?: string | null
+          unidade_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "paciente_encaminhamentos_paciente_id_fkey"
+            columns: ["paciente_id"]
+            isOneToOne: false
+            referencedRelation: "pacientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pacientes: {
         Row: {
           auth_user_id: string | null
@@ -3348,7 +3463,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      paciente_encaminhamento_status: "pendente" | "realizado" | "cancelado"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3475,6 +3590,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      paciente_encaminhamento_status: ["pendente", "realizado", "cancelado"],
+    },
   },
 } as const
