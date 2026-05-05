@@ -113,6 +113,20 @@ const STATUS_GROUPS: Record<string, string[]> = {
   pendente: ["pendente"],
 };
 
+const STATUS_GROUP_LABELS: Record<string, string> = {
+  all: "Todos",
+  confirmado: "Confirmado",
+  apto_atendimento: "Apto para Atendimento",
+  em_atendimento: "Em Atendimento",
+  concluido: "Concluído",
+  falta: "Faltou",
+  cancelado: "Cancelado",
+  confirmado_chegada: "Chegada Confirmada",
+  aguardando_triagem: "Aguardando Triagem",
+  triagem_concluida: "Triagem Concluída",
+  pendente: "Pendente",
+};
+
 const statusBadgeClass: Record<string, string> = {
   pendente: "bg-warning/10 text-warning",
   confirmado: "bg-success/10 text-success",
