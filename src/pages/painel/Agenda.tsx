@@ -580,6 +580,17 @@ const Agenda: React.FC = () => {
       if (a.data !== selectedDate) return false;
       if (filterUnit !== "all" && a.unidadeId !== filterUnit) return false;
       if (filterProf !== "all" && a.profissionalId !== filterProf) return false;
+      
+      // Filtro por Status
+      if (filterStatus !== "all") {
+        const group = STATUS_GROUPS[filterStatus];
+        if (group) {
+          if (!group.includes(a.status)) return false;
+        } else if (a.status !== filterStatus) {
+          return false;
+        }
+      }
+
       if (isProfissional && user) {
         if (a.profissionalId !== user.id) return false;
       }
