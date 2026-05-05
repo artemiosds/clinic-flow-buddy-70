@@ -9,7 +9,8 @@ import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { User, MapPin, Phone, FileHeart, Upload, Loader2, Building2, Stethoscope, Loader, CheckCircle2, FileText, Paperclip } from "lucide-react";
+import { User, MapPin, Phone, FileHeart, Upload, Loader2, Building2, Stethoscope, Loader, CheckCircle2, FileText, Paperclip, History } from "lucide-react";
+import EncaminhamentoUBSSection from "./pacientes/EncaminhamentoUBSSection";
 import PacienteDocumentos from "./PacienteDocumentos";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -705,109 +706,29 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
               </p>
             </div>
 
-            {/* Encaminhamento (preservado) */}
+            {/* Encaminhamento (UBS) - NOVO HISTÓRICO ORGANIZADO */}
             <div className="space-y-3 border-t pt-3">
-              <div className="flex items-center gap-2 text-sm font-semibold text-primary">
-                <Building2 className="w-4 h-4" /> Encaminhamento (UBS)
-              </div>
-
-              <div className="p-3 rounded-lg border-2 border-primary/30 bg-primary/5">
-                <Label className="text-base font-semibold text-primary">Especialidade Destino</Label>
-                <p className="text-xs text-muted-foreground mb-2">Define todo o fluxo do paciente no sistema</p>
-                <Select value={form.especialidadeDestino || ""} onValueChange={(v) => set("especialidadeDestino", v)}>
-                  <SelectTrigger className="border-primary/30">
-                    <SelectValue placeholder="Selecione a especialidade" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ESPECIALIDADES_DESTINO.map((e) => (
-                      <SelectItem key={e.value} value={e.value}>{e.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.especialidadeDestino && (
-                  <p className="text-xs text-destructive mt-1">{errors.especialidadeDestino}</p>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
-                  <Label>UBS origem</Label>
-                  <Select value={form.ubsOrigem || ""} onValueChange={(v) => set("ubsOrigem", v)}>
-                    <SelectTrigger><SelectValue placeholder="Selecione a UBS" /></SelectTrigger>
-                    <SelectContent>
-                      {UBS_LIST.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                  {errors.ubsOrigem && <p className="text-xs text-destructive mt-1">{errors.ubsOrigem}</p>}
-                </div>
-                <div>
-                  <Label>Profissional solicitante</Label>
-                  <Input
-                    value={form.profissionalSolicitante}
-                    onChange={(e) => set("profissionalSolicitante", sanitizeUpper(e.target.value))}
-                    placeholder="NOME DO PROFISSIONAL"
-                  />
-                </div>
-                <div>
-                  <Label>Tipo encaminhamento</Label>
-                  <Select value={form.tipoEncaminhamento || ""} onValueChange={(v) => set("tipoEncaminhamento", v)}>
-                    <SelectTrigger><SelectValue placeholder="Tipo" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ubs">UBS</SelectItem>
-                      <SelectItem value="hospital">Hospital</SelectItem>
-                      <SelectItem value="caps">CAPS</SelectItem>
-                      <SelectItem value="espontaneo">Espontâneo</SelectItem>
-                      <SelectItem value="outro">Outro</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>CID-10</Label>
-                  <Input value={form.cid} onChange={(e) => set("cid", e.target.value.toUpperCase())} placeholder="Ex: G80.0" />
-                  {errors.cid && <p className="text-xs text-destructive mt-1">{errors.cid}</p>}
-                </div>
-                <div className="md:col-span-2">
-                  <Label>Diagnóstico resumido</Label>
-                  <Input
-                    value={form.diagnosticoResumido}
-                    onChange={(e) => set("diagnosticoResumido", e.target.value)}
-                    placeholder="Resumo em uma linha"
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <Label>Justificativa</Label>
-                  <Textarea
-                    value={form.justificativa}
-                    onChange={(e) => set("justificativa", e.target.value)}
-                    placeholder="Justificativa clínica para encaminhamento"
-                    className="min-h-[60px]"
-                  />
-                  {errors.justificativa && <p className="text-xs text-destructive mt-1">{errors.justificativa}</p>}
-                </div>
-                <div>
-                  <Label>Data encaminhamento</Label>
-                  <Input
-                    type="date"
-                    value={form.dataEncaminhamento}
-                    onChange={(e) => set("dataEncaminhamento", e.target.value)}
-                  />
-                </div>
-                {isEdit && pacienteId ? (
-                  <div className="md:col-span-2 mt-4">
-                    <div className="flex items-center gap-2 text-sm font-semibold text-primary mb-3">
-                      <FileText className="w-4 h-4" /> Arquivos e Documentos do Paciente
-                    </div>
-                    <PacienteDocumentos pacienteId={pacienteId} unidadeId={user?.unidadeId} />
-                  </div>
-                ) : (
-                  <div className="md:col-span-2 mt-4 p-4 rounded-lg border border-dashed border-muted-foreground/30 bg-muted/10 text-center">
-                    <p className="text-sm text-muted-foreground">
-                      Salve o cadastro do paciente primeiro para habilitar o envio de múltiplos documentos.
-                    </p>
-                  </div>
-                )}
-              </div>
+              <EncaminhamentoUBSSection 
+                pacienteId={pacienteId}
+                pacienteNome={form.nome}
+                unidadeId={user?.unidadeId}
+                onReferralsChange={(newReferrals) => {
+                  // For new patients, we could store these in a hidden field or state
+                  // but for now, the section handles its own internal "pending" logic
+                  // if no patientId is provided.
+                  setCustom("_pendingReferrals", newReferrals);
+                }}
+              />
             </div>
+            {/* Documentos Gerais do Paciente (Preservado) */}
+            {isEdit && pacienteId && (
+              <div className="space-y-3 border-t pt-4">
+                <div className="flex items-center gap-2 text-sm font-semibold text-primary mb-1">
+                  <FileText className="w-4 h-4" /> Arquivos e Documentos do Paciente
+                </div>
+                <PacienteDocumentos pacienteId={pacienteId} unidadeId={user?.unidadeId} />
+              </div>
+            )}
 
             {/* Clínico */}
             <div className="space-y-3 border-t pt-3">

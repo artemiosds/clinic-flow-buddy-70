@@ -525,6 +525,45 @@ const Pacientes: React.FC = () => {
           return;
         }
 
+        // === SALVAR ENCAMINHAMENTOS PENDENTES ===
+        const pendingEnc = dbFields.custom_data?._pendingReferrals;
+        if (pendingEnc && Array.isArray(pendingEnc) && pendingEnc.length > 0) {
+          for (const enc of pendingEnc) {
+            const { anexos, ...encData } = enc;
+            const { data: insertedEnc, error: encErr } = await supabase
+              .from("paciente_encaminhamentos")
+              .insert({
+                ...encData,
+                paciente_id: id,
+                unidade_id: user?.unidadeId,
+                created_by: user?.id,
+              } as any)
+              .select()
+              .single();
+
+            if (!encErr && insertedEnc && anexos && anexos.length > 0) {
+              const BUCKET = "paciente-documentos";
+              for (const a of anexos) {
+                let storagePath = a.storage_path;
+                if (a.file) {
+                  const safeName = a.nome_arquivo.replace(/[^a-zA-Z0-9._-]/g, "_");
+                  storagePath = `encaminhamentos/${id}/${Date.now()}_${safeName}`;
+                  await supabase.storage.from(BUCKET).upload(storagePath, a.file);
+                }
+
+                await supabase.from("paciente_encaminhamento_anexos").insert({
+                  encaminhamento_id: insertedEnc.id,
+                  nome_arquivo: a.nome_arquivo,
+                  storage_path: storagePath,
+                  mime_type: a.mime_type,
+                  tamanho_bytes: a.tamanho_bytes,
+                  uploaded_by: user?.id,
+                } as any);
+              }
+            }
+          }
+        }
+
         // Close dialog
         setDialogOpen(false);
         await refreshPacientes();
