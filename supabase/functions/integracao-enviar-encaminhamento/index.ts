@@ -187,8 +187,8 @@ Deno.serve(async (req) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-integration-token': sis.token_saida ?? '',
-          'x-system-id': localIdent,
+          'Authorization': `Bearer ${sis.token_saida ?? ''}`,
+          'X-System-Identifier': localIdent,
         },
         body: JSON.stringify(remotePayload),
       });
