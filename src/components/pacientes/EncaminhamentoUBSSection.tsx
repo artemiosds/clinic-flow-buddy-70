@@ -513,7 +513,7 @@ const EncaminhamentoUBSSection: React.FC<EncaminhamentoUBSSectionProps> = ({
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-base text-foreground">
-                      {ESPECIALIDADES_DESTINO.find(e => e.value === enc.especialidade_destino)?.label || enc.especialidade_destino}
+                      {enc.especialidade_destino}
                     </span>
                     {getStatusBadge(enc.status)}
                   </div>
