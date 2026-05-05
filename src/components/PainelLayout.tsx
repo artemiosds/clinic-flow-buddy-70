@@ -7,56 +7,97 @@ import {
   LayoutDashboard, Calendar, Users, ClipboardList, FileText,
   Settings, Building2, UserCog, ListOrdered, LogOut, Menu,
   Activity, CalendarClock, Stethoscope, ShieldCheck, HeartPulse,
-  ClipboardList as ClipboardListIcon, BookOpen, Lock, History, Send
+  ClipboardList as ClipboardListIcon, BookOpen, Lock, History, Send,
+  ChevronDown, ChevronRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { cn } from '@/lib/utils';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { loadDocumentConfig, type DocumentConfig } from '@/lib/printLayout';
 import logoSmsFallback from '@/assets/logo-sms.jpeg';
 import WhatsappPausedBanner from '@/components/WhatsappPausedBanner';
 import { useEncaminhamentosExternosRealtime } from '@/hooks/useEncaminhamentosExternosRealtime';
 
 // Mapeamento: cada item do menu exige um módulo + ação do PermissionsContext
-const menuItems: {
+interface MenuItem {
   to: string;
   label: string;
   icon: React.ElementType;
   modulo: ModuleName | null;
   roles_master_only?: boolean;
   hide_from_master?: boolean;
-}[] = [
-  { to: '/painel',                  label: 'Dashboard',              icon: LayoutDashboard,    modulo: null },
-  { to: '/painel/agenda',           label: 'Agenda',                 icon: Calendar,           modulo: 'agenda' },
-  { to: '/painel/fila',             label: 'Fila de Espera',         icon: ListOrdered,        modulo: 'fila' },
-  { to: '/painel/pacientes',        label: 'Pacientes',              icon: Users,              modulo: 'pacientes' },
-  { to: '/painel/atendimentos',     label: 'Atendimentos',           icon: ClipboardList,      modulo: 'atendimento' },
-  { to: '/painel/tratamentos',      label: 'Gestão de Tratamentos',  icon: Activity,           modulo: 'tratamento' },
-  
-  { to: '/painel/prontuario',       label: 'Prontuário',             icon: Stethoscope,        modulo: 'prontuario' },
-  { to: '/painel/arquivo-digital',  label: 'Arquivo Digital',        icon: History,            modulo: 'prontuario' },
-  { to: '/painel/triagem',          label: 'Triagem',                icon: HeartPulse,         modulo: 'triagem' },
-  { to: '/painel/historico-triagem', label: 'Histórico Triagem',      icon: History,            modulo: 'triagem' },
-  { to: '/painel/enfermagem',       label: 'Avaliação Enfermagem',   icon: Stethoscope,        modulo: 'enfermagem' },
-  { to: '/painel/pts',              label: 'PTS',                    icon: FileText,           modulo: 'prontuario' },
-  { to: '/painel/multiprofissional',label: 'Avaliação Multi',        icon: BookOpen,           modulo: 'atendimento' },
-  { to: '/painel/alta',              label: 'Relatório de Alta',      icon: FileText,           modulo: 'prontuario' },
-  { to: '/painel/encaminhamentos',  label: 'Encaminhamentos',        icon: Send,               modulo: 'encaminhamento' },
-  { to: '/painel/encaminhamentos-externos', label: 'Encam. Externos',  icon: Send,               modulo: 'encaminhamento' },
-  { to: '/painel/relatorios',       label: 'Relatórios',             icon: FileText,           modulo: 'relatorios' },
-  { to: '/painel/bpa-producao',     label: 'BPA-Produção',           icon: FileText,           modulo: 'relatorios' },
-  { to: '/painel/funcionarios',     label: 'Funcionários',           icon: UserCog,            modulo: 'usuarios' },
-  
-  { to: '/painel/unidades',         label: 'Unidades/Salas',         icon: Building2,          modulo: 'usuarios' },
-  { to: '/painel/disponibilidade',  label: 'Disponibilidade',        icon: CalendarClock,      modulo: 'usuarios' },
-  { to: '/painel/bloqueios',        label: 'Feriados/Bloqueios',     icon: CalendarClock,      modulo: 'agenda' },
-  { to: '/painel/auditoria',        label: 'Logs & Auditoria',       icon: ShieldCheck,        modulo: 'relatorios' },
-  { to: '/painel/meu-prontuario',   label: 'Meu Prontuário',         icon: Settings,           modulo: 'prontuario', hide_from_master: true },
-  { to: '/painel/configuracoes',    label: 'Configurações',          icon: Settings,           modulo: null, roles_master_only: true },
-  { to: '/painel/permissoes',       label: 'Permissões',             icon: Lock,               modulo: null, roles_master_only: true },
-  { to: '/painel/configuracoes-avancadas', label: 'Config. Avançadas', icon: Settings,           modulo: null, roles_master_only: true },
-  { to: '/painel/admin-credentials',      label: 'Credenciais Supabase', icon: ShieldCheck,        modulo: null, roles_master_only: true },
+}
+
+interface MenuGroup {
+  title: string;
+  items: MenuItem[];
+}
+
+const menuGroups: MenuGroup[] = [
+  {
+    title: 'PRINCIPAL',
+    items: [
+      { to: '/painel', label: 'Dashboard', icon: LayoutDashboard, modulo: null },
+    ]
+  },
+  {
+    title: 'AGENDA E RECEPÇÃO',
+    items: [
+      { to: '/painel/agenda', label: 'Agenda', icon: Calendar, modulo: 'agenda' },
+      { to: '/painel/fila', label: 'Fila de Espera', icon: ListOrdered, modulo: 'fila' },
+      { to: '/painel/pacientes', label: 'Pacientes', icon: Users, modulo: 'pacientes' },
+      { to: '/painel/atendimentos', label: 'Atendimentos', icon: ClipboardList, modulo: 'atendimento' },
+    ]
+  },
+  {
+    title: 'ASSISTÊNCIA / CLÍNICA',
+    items: [
+      { to: '/painel/tratamentos', label: 'Gestão de Tratamentos', icon: Activity, modulo: 'tratamento' },
+      { to: '/painel/prontuario', label: 'Prontuário', icon: Stethoscope, modulo: 'prontuario' },
+      { to: '/painel/triagem', label: 'Triagem', icon: HeartPulse, modulo: 'triagem' },
+      { to: '/painel/historico-triagem', label: 'Histórico Triagem', icon: History, modulo: 'triagem' },
+      { to: '/painel/enfermagem', label: 'Avaliação Enfermagem', icon: Stethoscope, modulo: 'enfermagem' },
+      { to: '/painel/pts', label: 'PTS', icon: FileText, modulo: 'prontuario' },
+      { to: '/painel/multiprofissional', label: 'Avaliação Multi', icon: BookOpen, modulo: 'atendimento' },
+      { to: '/painel/alta', label: 'Relatório de Alta', icon: FileText, modulo: 'prontuario' },
+    ]
+  },
+  {
+    title: 'DOCUMENTOS E ARQUIVO',
+    items: [
+      { to: '/painel/arquivo-digital', label: 'Arquivo Digital', icon: History, modulo: 'prontuario' },
+      { to: '/painel/relatorios', label: 'Relatórios', icon: FileText, modulo: 'relatorios' },
+      { to: '/painel/bpa-producao', label: 'BPA-Produção', icon: FileText, modulo: 'relatorios' },
+    ]
+  },
+  {
+    title: 'REGULAÇÃO / ENCAMINHAMENTOS',
+    items: [
+      { to: '/painel/encaminhamentos', label: 'Encaminhamentos', icon: Send, modulo: 'encaminhamento' },
+      { to: '/painel/encaminhamentos-externos', label: 'Encam. Externos', icon: Send, modulo: 'encaminhamento' },
+    ]
+  },
+  {
+    title: 'GESTÃO DA UNIDADE',
+    items: [
+      { to: '/painel/funcionarios', label: 'Funcionários', icon: UserCog, modulo: 'usuarios' },
+      { to: '/painel/unidades', label: 'Unidades/Salas', icon: Building2, modulo: 'usuarios' },
+      { to: '/painel/disponibilidade', label: 'Disponibilidade', icon: CalendarClock, modulo: 'usuarios' },
+      { to: '/painel/bloqueios', label: 'Feriados/Bloqueios', icon: CalendarClock, modulo: 'agenda' },
+    ]
+  },
+  {
+    title: 'ADMINISTRAÇÃO',
+    items: [
+      { to: '/painel/auditoria', label: 'Logs & Auditoria', icon: ShieldCheck, modulo: 'relatorios' },
+      { to: '/painel/meu-prontuario', label: 'Meu Prontuário', icon: Settings, modulo: 'prontuario', hide_from_master: true },
+      { to: '/painel/configuracoes', label: 'Configurações', icon: Settings, modulo: null, roles_master_only: true },
+      { to: '/painel/permissoes', label: 'Permissões', icon: Lock, modulo: null, roles_master_only: true },
+      { to: '/painel/configuracoes-avancadas', label: 'Config. Avançadas', icon: Settings, modulo: null, roles_master_only: true },
+      { to: '/painel/admin-credentials', label: 'Credenciais Supabase', icon: ShieldCheck, modulo: null, roles_master_only: true },
+    ]
+  }
 ];
 
 
@@ -81,7 +122,30 @@ const PainelLayout: React.FC = () => {
   const location = useLocation();
   
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(() => {
+    const saved = localStorage.getItem('sidebar_expanded_groups');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        return {};
+      }
+    }
+    return {
+      'PRINCIPAL': true,
+      'AGENDA E RECEPÇÃO': true,
+      'ASSISTÊNCIA / CLÍNICA': true,
+      'DOCUMENTOS E ARQUIVO': true,
+      'REGULAÇÃO / ENCAMINHAMENTOS': true,
+      'GESTÃO DA UNIDADE': false,
+      'ADMINISTRAÇÃO': false,
+    };
+  });
   const [config, setConfig] = useState<DocumentConfig | null>(null);
+
+  useEffect(() => {
+    localStorage.setItem('sidebar_expanded_groups', JSON.stringify(expandedGroups));
+  }, [expandedGroups]);
 
   useEffect(() => {
     loadDocumentConfig().then(setConfig);
@@ -116,7 +180,7 @@ const PainelLayout: React.FC = () => {
     navigate('/login');
   };
 
-  const isItemVisible = (item: typeof menuItems[0]): boolean => {
+  const isItemVisible = (item: MenuItem): boolean => {
     // roles_master_only: accessible by any master (global or unit)
     if (item.roles_master_only) return isMaster;
     if (item.hide_from_master && isMaster) return false;
@@ -125,7 +189,12 @@ const PainelLayout: React.FC = () => {
     return can(item.modulo, 'can_view');
   };
 
-  const filteredMenu = menuItems.filter(isItemVisible);
+  const filteredGroups = useMemo(() => {
+    return menuGroups.map(group => ({
+      ...group,
+      items: group.items.filter(isItemVisible)
+    })).filter(group => group.items.length > 0);
+  }, [isMaster, can]);
 
   return (
     <div className="min-h-screen flex bg-background">
@@ -160,33 +229,64 @@ const PainelLayout: React.FC = () => {
           </div>
         )}
 
-        <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
-          {filteredMenu.map(item => {
-            const badge =
-              item.to === '/painel/encaminhamentos-externos' && externosPendentes > 0
-                ? externosPendentes
-                : 0;
+        <nav className="flex-1 p-3 space-y-4 overflow-y-auto">
+          {filteredGroups.map(group => {
+            const isExpanded = expandedGroups[group.title] !== false;
             return (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.to === '/painel'}
-                onClick={() => setSidebarOpen(false)}
-                className={({ isActive }) => cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 relative group",
-                  isActive
-                    ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm sidebar-active-glow"
-                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                )}
-              >
-                <item.icon className="w-4 h-4 shrink-0" strokeWidth={1.5} />
-                <span className="flex-1">{item.label}</span>
-                {badge > 0 && (
-                  <span className="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-bold rounded-full bg-destructive text-destructive-foreground animate-pulse">
-                    {badge > 99 ? '99+' : badge}
-                  </span>
-                )}
-              </NavLink>
+              <div key={group.title} className="space-y-1">
+                <button
+                  onClick={() => setExpandedGroups(prev => ({ ...prev, [group.title]: !isExpanded }))}
+                  className="w-full flex items-center justify-between px-3 py-1 text-[10px] font-bold text-sidebar-foreground/40 tracking-wider uppercase hover:text-sidebar-foreground/60 transition-colors group/title"
+                >
+                  <span>{group.title}</span>
+                  {isExpanded ? (
+                    <ChevronDown className="w-3 h-3 opacity-0 group-hover/title:opacity-100 transition-opacity" />
+                  ) : (
+                    <ChevronRight className="w-3 h-3 opacity-100 group-hover/title:opacity-100 transition-opacity" />
+                  )}
+                </button>
+                
+                <AnimatePresence initial={false}>
+                  {isExpanded && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2, ease: 'easeInOut' }}
+                      className="space-y-0.5 overflow-hidden"
+                    >
+                      {group.items.map(item => {
+                        const badge =
+                          item.to === '/painel/encaminhamentos-externos' && externosPendentes > 0
+                            ? externosPendentes
+                            : 0;
+                        return (
+                          <NavLink
+                            key={item.to}
+                            to={item.to}
+                            end={item.to === '/painel'}
+                            onClick={() => setSidebarOpen(false)}
+                            className={({ isActive }) => cn(
+                              "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative group",
+                              isActive
+                                ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm sidebar-active-glow"
+                                : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                            )}
+                          >
+                            <item.icon className="w-4 h-4 shrink-0" strokeWidth={1.5} />
+                            <span className="flex-1 truncate">{item.label}</span>
+                            {badge > 0 && (
+                              <span className="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-bold rounded-full bg-destructive text-destructive-foreground animate-pulse">
+                                {badge > 99 ? '99+' : badge}
+                              </span>
+                            )}
+                          </NavLink>
+                        );
+                      })}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             );
           })}
         </nav>
