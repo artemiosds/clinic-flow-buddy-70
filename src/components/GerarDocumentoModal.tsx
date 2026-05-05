@@ -54,6 +54,7 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
   const [profDestinoId, setProfDestinoId] = useState('');
   const [salvando, setSalvando] = useState(false);
   const [carimbo, setCarimbo] = useState<CarimboData | null>(null);
+  const [savedDocId, setSavedDocId] = useState<string | null>(null);
 
   // Type-specific fields
   const [campos, setCampos] = useState<Record<string, string>>({});
