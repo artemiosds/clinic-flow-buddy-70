@@ -283,7 +283,7 @@ const PainelLayout: React.FC = () => {
                           </NavLink>
                         );
                       })}
-                    </div>
+                    </motion.div>
                   )}
                 </AnimatePresence>
               </div>
