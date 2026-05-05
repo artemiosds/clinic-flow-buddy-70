@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Network, Plus, Plug, Trash2, Eye, EyeOff, CheckCircle2, XCircle, Loader2, RefreshCcw, ScrollText, BarChart3, Send } from 'lucide-react';
+import { Network, Plus, Plug, Trash2, Eye, EyeOff, CheckCircle2, XCircle, Loader2, RefreshCcw, ScrollText, BarChart3, Send, Key, Copy, Info } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface SistemaIntegrado {
@@ -53,6 +53,17 @@ function maskToken(t: string) {
   return `${t.slice(0, 4)}••••${t.slice(-4)}`;
 }
 
+function generateSecureToken(length = 48) {
+  const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
+  let retVal = "";
+  const values = new Uint32Array(length);
+  crypto.getRandomValues(values);
+  for (let i = 0; i < length; i++) {
+    retVal += charset.charAt(values[i] % charset.length);
+  }
+  return retVal;
+}
+
 const ConfigSistemasIntegrados: React.FC = () => {
   const { user } = useAuth();
   const [list, setList] = useState<SistemaIntegrado[]>([]);
@@ -67,6 +78,7 @@ const ConfigSistemasIntegrados: React.FC = () => {
   const [identificadorLocalLoaded, setIdentificadorLocalLoaded] = useState('');
   const [savingIdent, setSavingIdent] = useState(false);
   const [clinicaConfigId, setClinicaConfigId] = useState<string | null>(null);
+  const [tokenCopiado, setTokenCopiado] = useState(false);
 
   // Subaba: Logs e Reenvios
   const [activeTab, setActiveTab] = useState<'sistemas' | 'logs' | 'metricas'>('sistemas');
@@ -388,6 +400,32 @@ const ConfigSistemasIntegrados: React.FC = () => {
           </div>
         </div>
 
+        <div className="grid md:grid-cols-2 gap-4 mb-4">
+          <div className="rounded-lg border bg-blue-50/50 p-4 border-blue-100">
+            <h4 className="text-sm font-semibold text-blue-900 flex items-center gap-2 mb-2">
+              <Info className="w-4 h-4" /> Como conectar dois sistemas
+            </h4>
+            <div className="space-y-3 text-xs text-blue-800 leading-relaxed">
+              <p>
+                <strong>No Sistema A:</strong> Cadastre o Sistema B. No campo <strong>Token de Saída</strong>, cole o token de entrada gerado no Sistema B. Gere um <strong>Token de Entrada</strong> e copie para o Sistema B.
+              </p>
+              <p>
+                <strong>No Sistema B:</strong> Cadastre o Sistema A. No campo <strong>Token de Saída</strong>, cole o token de entrada gerado no Sistema A. Gere um <strong>Token de Entrada</strong> e copie para o Sistema A.
+              </p>
+            </div>
+          </div>
+          <div className="rounded-lg border bg-amber-50/50 p-4 border-amber-100">
+            <h4 className="text-sm font-semibold text-amber-900 flex items-center gap-2 mb-2">
+              <Key className="w-4 h-4" /> Exemplo Prático
+            </h4>
+            <div className="space-y-2 text-xs text-amber-800 leading-relaxed">
+              <p><strong>Unidade A:</strong> CER II · <strong>Unidade B:</strong> CAPS II</p>
+              <p>No <strong>CER II</strong>: O token de saída deve ser o token de entrada do <strong>CAPS II</strong>.</p>
+              <p>No <strong>CAPS II</strong>: O token de saída deve ser o token de entrada do <strong>CER II</strong>.</p>
+            </div>
+          </div>
+        </div>
+
         <div className="rounded-lg border overflow-hidden">
           <Table>
             <TableHeader>
@@ -396,8 +434,9 @@ const ConfigSistemasIntegrados: React.FC = () => {
                 <TableHead>Identificador</TableHead>
                 <TableHead>URL</TableHead>
                 <TableHead>Permissões</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Última sincronização</TableHead>
+                <TableHead>Tokens</TableHead>
+                <TableHead>Integração</TableHead>
+                <TableHead>Última Sinc.</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
@@ -415,23 +454,35 @@ const ConfigSistemasIntegrados: React.FC = () => {
                   <TableCell className="max-w-[220px] truncate text-xs text-muted-foreground" title={s.url_base}>{s.url_base}</TableCell>
                   <TableCell>
                     <div className="flex flex-col gap-1">
-                      {s.permite_enviar && <Badge variant="outline" className="w-fit text-xs">Enviar</Badge>}
-                      {s.permite_receber && <Badge variant="outline" className="w-fit text-xs">Receber</Badge>}
+                      {s.permite_enviar && <Badge variant="outline" className="w-fit text-[10px] h-4">Pode Enviar</Badge>}
+                      {s.permite_receber && <Badge variant="outline" className="w-fit text-[10px] h-4">Pode Receber</Badge>}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-1 text-[10px]">
+                        <span className="text-muted-foreground">SAÍDA:</span>
+                        {s.token_saida ? <Badge variant="secondary" className="px-1 py-0 h-3 text-[9px] bg-emerald-50 text-emerald-700">OK</Badge> : <Badge variant="secondary" className="px-1 py-0 h-3 text-[9px] bg-red-50 text-red-700">Falta</Badge>}
+                      </div>
+                      <div className="flex items-center gap-1 text-[10px]">
+                        <span className="text-muted-foreground">ENTRADA:</span>
+                        {s.token_entrada_hash ? <Badge variant="secondary" className="px-1 py-0 h-3 text-[9px] bg-emerald-50 text-emerald-700">OK</Badge> : <Badge variant="secondary" className="px-1 py-0 h-3 text-[9px] bg-red-50 text-red-700">Falta</Badge>}
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell>
                     {s.ativo ? (
-                      <Badge className="bg-emerald-500/10 text-emerald-700 border-emerald-500/30">
+                      <Badge className="bg-emerald-500/10 text-emerald-700 border-emerald-500/30 text-[10px] h-5">
                         <CheckCircle2 className="w-3 h-3 mr-1" /> Ativo
                       </Badge>
                     ) : (
-                      <Badge variant="outline" className="text-muted-foreground">
+                      <Badge variant="outline" className="text-muted-foreground text-[10px] h-5">
                         <XCircle className="w-3 h-3 mr-1" /> Inativo
                       </Badge>
                     )}
                   </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {s.ultima_sincronizacao ? new Date(s.ultima_sincronizacao).toLocaleString('pt-BR') : '—'}
+                  <TableCell className="text-[10px] text-muted-foreground leading-tight">
+                    {s.ultima_sincronizacao ? new Date(s.ultima_sincronizacao).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—'}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
@@ -664,7 +715,9 @@ const ConfigSistemasIntegrados: React.FC = () => {
 
               <div className="grid md:grid-cols-2 gap-3">
                 <div>
-                  <Label>Token de SAÍDA (enviar para o outro sistema)</Label>
+                  <Label className="flex items-center gap-1.5">
+                    Token de SAÍDA <Badge variant="outline" className="text-[10px] font-normal px-1 py-0">Enviar</Badge>
+                  </Label>
                   <div className="relative">
                     <Input
                       type={showOutToken ? 'text' : 'password'}
@@ -680,25 +733,66 @@ const ConfigSistemasIntegrados: React.FC = () => {
                       {showOutToken ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
+                  <p className="text-[11px] text-muted-foreground mt-1 leading-tight">
+                    Cole aqui o token de entrada configurado no outro sistema. Este token será enviado por este sistema ao chamar o sistema externo.
+                  </p>
                 </div>
                 <div>
-                  <Label>Token de ENTRADA (que o outro sistema enviará)</Label>
-                  <div className="relative">
-                    <Input
-                      type={showInToken ? 'text' : 'password'}
-                      value={form.token_entrada_plain}
-                      onChange={e => setForm({ ...form, token_entrada_plain: e.target.value })}
-                      placeholder={form.id ? '(deixe vazio para manter o atual)' : 'Defina um token forte e compartilhe com o outro sistema'}
-                    />
-                    <button
-                      type="button"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
-                      onClick={() => setShowInToken(v => !v)}
+                  <Label className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      Token de ENTRADA <Badge variant="outline" className="text-[10px] font-normal px-1 py-0 bg-primary/5">Receber</Badge>
+                    </div>
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 px-2 text-[10px]"
+                      onClick={() => {
+                        const token = generateSecureToken();
+                        setForm({ ...form, token_entrada_plain: token });
+                        setShowInToken(true);
+                      }}
                     >
-                      {showInToken ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
+                      <Key className="w-3 h-3 mr-1" /> Gerar token seguro
+                    </Button>
+                  </Label>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Input
+                        type={showInToken ? 'text' : 'password'}
+                        value={form.token_entrada_plain}
+                        onChange={e => setForm({ ...form, token_entrada_plain: e.target.value })}
+                        placeholder={form.id ? '(deixe vazio para manter)' : 'Crie um token forte'}
+                      />
+                      <button
+                        type="button"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
+                        onClick={() => setShowInToken(v => !v)}
+                      >
+                        {showInToken ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    {form.token_entrada_plain && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        title="Copiar token"
+                        onClick={() => {
+                          navigator.clipboard.writeText(form.token_entrada_plain);
+                          setTokenCopiado(true);
+                          setTimeout(() => setTokenCopiado(false), 2000);
+                          toast.success('Token copiado! Cadastre-o como Token de Saída no outro sistema.');
+                        }}
+                      >
+                        {tokenCopiado ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+                      </Button>
+                    )}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">Salvo apenas como hash. Não poderá ser visualizado depois.</p>
+                  <p className="text-[11px] text-muted-foreground mt-1 leading-tight">
+                    Crie um token forte e compartilhe com o outro sistema. O outro sistema deve cadastrar este token como token de saída. 
+                    <span className="text-amber-600 block mt-0.5">Salvo apenas como hash. Copie agora, pois não poderá ser visto depois.</span>
+                  </p>
                 </div>
               </div>
 
