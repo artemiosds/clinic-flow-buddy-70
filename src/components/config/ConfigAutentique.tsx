@@ -216,8 +216,9 @@ const ConfigAutentique: React.FC = () => {
                   </div>
                   <Input 
                     type="password"
-                    placeholder="Cole seu token aqui"
+                    placeholder={config.token_api ? "••••••••••••••••" : "Cole seu token aqui"}
                     value={config.token_api || ''}
+                    autoComplete="off"
                     onChange={(e) => setConfig((prev: any) => ({ ...prev, token_api: e.target.value }))}
                   />
                   <p className="text-[10px] text-muted-foreground">O token é armazenado de forma segura e nunca é exposto no frontend.</p>
