@@ -5,27 +5,32 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { 
   Plus, History, FileText, Printer, Trash2, Download, Eye, 
   Loader2, Paperclip, Building2, Calendar, User, Search,
   CheckCircle2, Clock, XCircle, ChevronDown, ChevronUp,
-  FileDown, Upload, X
+  FileDown, Upload, X, Stethoscope
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import EspecialidadeCombobox from "@/components/EspecialidadeCombobox";
+import GenericCombobox from "@/components/GenericCombobox";
 
 const BUCKET = "paciente-documentos";
 
-const UBS_LIST = [
+const ORIGEM_LIST = [
   "UBS Dr. Lauro Corrêa Pinto", "UBS Penta", "UBS Corino Guerreiro",
   "UBS Santa Luzia", "UBS Tânia Siqueira da Fonseca", "UBS Antônio Miléo",
   "Hospital Municipal de Oriximiná", "UBS Nossa Sra. das Graças",
   "UBS Fluvial Manoel Andrade", "UBS Ribeirinho", "Hospital Regional Menino Jesus",
+  "CER II", "CAPS II", "CAPS", "Unidade Externa", "Hospital", "UBS", "Outro"
+].sort();
+
+const TIPO_ENCAMINHAMENTO_LIST = [
+  "UBS", "Hospital", "CAPS", "CER", "Espontâneo", "Outro"
 ];
 
 interface Attachment {
@@ -77,7 +82,7 @@ const EncaminhamentoUBSSection: React.FC<EncaminhamentoUBSSectionProps> = ({
     especialidade_destino: "",
     ubs_origem: "",
     profissional_solicitante: "",
-    tipo_encaminhamento: "ubs",
+    tipo_encaminhamento: "",
     cid: "",
     diagnostico_resumido: "",
     justificativa: "",
@@ -213,7 +218,7 @@ const EncaminhamentoUBSSection: React.FC<EncaminhamentoUBSSectionProps> = ({
           especialidade_destino: "",
           ubs_origem: "",
           profissional_solicitante: "",
-          tipo_encaminhamento: "ubs",
+          tipo_encaminhamento: "",
           cid: "",
           diagnostico_resumido: "",
           justificativa: "",
@@ -291,8 +296,12 @@ const EncaminhamentoUBSSection: React.FC<EncaminhamentoUBSSectionProps> = ({
                 <div class="value">${enc.especialidade_destino}</div>
               </div>
               <div>
-                <div class="label">UBS Origem</div>
+                <div class="label">Unidade/Origem</div>
                 <div class="value">${enc.ubs_origem || '—'}</div>
+              </div>
+              <div>
+                <div class="label">Tipo Encaminhamento</div>
+                <div class="value">${enc.tipo_encaminhamento || '—'}</div>
               </div>
               <div>
                 <div class="label">Profissional Solicitante</div>
@@ -370,6 +379,16 @@ const EncaminhamentoUBSSection: React.FC<EncaminhamentoUBSSectionProps> = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
+                <Label>Tipo Encaminhamento</Label>
+                <GenericCombobox 
+                  value={formData.tipo_encaminhamento}
+                  options={TIPO_ENCAMINHAMENTO_LIST}
+                  onChange={(v) => setFormData(prev => ({ ...prev, tipo_encaminhamento: v }))}
+                  placeholder="Selecione o tipo..."
+                />
+              </div>
+
+              <div className="space-y-2">
                 <Label>Especialidade Destino *</Label>
                 <EspecialidadeCombobox 
                   value={formData.especialidade_destino} 
@@ -379,18 +398,13 @@ const EncaminhamentoUBSSection: React.FC<EncaminhamentoUBSSectionProps> = ({
               </div>
 
               <div className="space-y-2">
-                <Label>UBS de Origem</Label>
-                <Select 
-                  value={formData.ubs_origem} 
-                  onValueChange={(v) => setFormData(prev => ({ ...prev, ubs_origem: v }))}
-                >
-                  <SelectTrigger className="bg-background">
-                    <SelectValue placeholder="Selecione a UBS" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {UBS_LIST.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <Label>Unidade/Origem do Encaminhamento</Label>
+                <GenericCombobox 
+                  value={formData.ubs_origem}
+                  options={ORIGEM_LIST}
+                  onChange={(v) => setFormData(prev => ({ ...prev, ubs_origem: v }))}
+                  placeholder="Selecione a origem..."
+                />
               </div>
 
               <div className="space-y-2">
@@ -510,12 +524,17 @@ const EncaminhamentoUBSSection: React.FC<EncaminhamentoUBSSectionProps> = ({
           history.map((enc) => (
             <div key={enc.id} className="group relative rounded-lg border border-border/60 bg-card p-4 transition-all hover:shadow-md hover:border-primary/30">
               <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                <div className="space-y-2">
+                <div className="space-y-2 flex-1">
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-base text-foreground">
                       {enc.especialidade_destino}
                     </span>
                     {getStatusBadge(enc.status)}
+                    {enc.tipo_encaminhamento && (
+                      <Badge variant="outline" className="text-[10px] font-normal">
+                        {enc.tipo_encaminhamento}
+                      </Badge>
+                    )}
                   </div>
                   
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-1 text-xs text-muted-foreground">
@@ -525,7 +544,7 @@ const EncaminhamentoUBSSection: React.FC<EncaminhamentoUBSSectionProps> = ({
                     </div>
                     <div className="flex items-center gap-1.5">
                       <Building2 className="w-3.5 h-3.5" />
-                      {enc.ubs_origem || 'UBS não informada'}
+                      {enc.ubs_origem || 'Origem não informada'}
                     </div>
                     <div className="flex items-center gap-1.5">
                       <User className="w-3.5 h-3.5" />
@@ -535,6 +554,12 @@ const EncaminhamentoUBSSection: React.FC<EncaminhamentoUBSSectionProps> = ({
                       <Search className="w-3.5 h-3.5" />
                       CID-10: {enc.cid || '—'}
                     </div>
+                    {enc.diagnostico_resumido && (
+                      <div className="flex items-center gap-1.5 lg:col-span-2">
+                        <Stethoscope className="w-3.5 h-3.5" />
+                        Diag: {enc.diagnostico_resumido}
+                      </div>
+                    )}
                   </div>
 
                   <div className="mt-2 text-sm text-foreground/80 bg-muted/30 p-2 rounded border-l-2 border-primary/20">
