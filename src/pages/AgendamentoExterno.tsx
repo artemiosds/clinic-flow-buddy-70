@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { LogOut, Search, Plus, CalendarDays, Clock, User, Loader2, CheckCircle, X, Pencil, Building2, AlertCircle, CalendarCheck, BarChart3 } from "lucide-react";
+import { LogOut, Search, Plus, CalendarDays, Clock, User, Loader2, CheckCircle, X, Pencil, Building2, AlertCircle, CalendarCheck, BarChart3, UserCheck } from "lucide-react";
 import { format } from "date-fns";
 import { CalendarioDisponibilidade, type DayInfo } from "@/components/CalendarioDisponibilidade";
 import { todayLocalStr } from "@/lib/utils";
@@ -384,21 +384,21 @@ const AgendamentoExterno: React.FC = () => {
   const selectedProf = availableProfessionals.find(p => p.id === selectedProfissional);
 
   return (
-    <div className="min-h-screen bg-muted/30">
+    <div className="min-h-screen bg-muted/30 pb-12">
       {/* Header */}
-      <header className="border-b bg-card shadow-sm px-4 py-4">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-              <User className="w-5 h-5 text-primary" />
+      <header className="gradient-hero text-primary-foreground py-6 shadow-lg mb-8">
+        <div className="max-w-5xl mx-auto px-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/20">
+              <UserCheck className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-foreground">Olá, {extUser.nome}</h1>
-              <p className="text-xs text-muted-foreground">Portal de Agendamento Externo</p>
+              <h1 className="text-xl font-bold font-display leading-tight">Olá, {extUser.nome}</h1>
+              <p className="text-sm opacity-80">Portal de Agendamento Externo</p>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={handleLogout} className="gap-1.5">
-            <LogOut className="w-4 h-4" /> Sair
+          <Button variant="outline" size="sm" onClick={handleLogout} className="bg-white/10 border-white/30 text-white hover:bg-white/20 transition-all">
+            <LogOut className="w-4 h-4 mr-2" /> Sair
           </Button>
         </div>
       </header>

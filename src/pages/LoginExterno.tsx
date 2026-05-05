@@ -55,10 +55,14 @@ const LoginExterno: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center gradient-hero p-4">
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
-        <Link to="/" className="inline-flex items-center text-sm text-white opacity-70 hover:opacity-100 mb-4">
-          <ArrowLeft className="w-4 h-4 mr-1" /> Voltar
+    <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4 relative overflow-hidden">
+      {/* Background Decor */}
+      <div className="absolute inset-0 gradient-hero opacity-10 pointer-events-none" />
+      
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md relative z-10">
+        <Link to="/" className="inline-flex items-center text-sm font-medium bg-primary/10 text-primary hover:bg-primary/20 px-3 py-1.5 rounded-full transition-colors mb-6 group">
+          <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
+          Voltar para o início
         </Link>
         <Card className="shadow-elevated border-0">
           <CardContent className="p-8">

@@ -291,14 +291,26 @@ const PortalPaciente: React.FC = () => {
     }
 
     return (
-      <div className="min-h-screen bg-background">
-        <div className="gradient-hero text-primary-foreground py-8">
+      <div className="min-h-screen bg-muted/30 pb-12">
+        <div className="gradient-hero text-primary-foreground py-10 md:py-16 mb-8 relative">
           <div className="container mx-auto px-4">
-            <Link to="/" className="inline-flex items-center text-sm opacity-70 hover:opacity-100 mb-4">
-              <ArrowLeft className="w-4 h-4 mr-1" />Voltar
+            <Link to="/" className="inline-flex items-center text-sm font-medium bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-full transition-colors mb-6 backdrop-blur-sm border border-white/10 group">
+              <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
+              Voltar para o início
             </Link>
-            <h1 className="text-2xl md:text-3xl font-bold font-display">{config?.linha1 || 'Portal do Paciente'}</h1>
-            <p className="opacity-80 mt-1">{config?.linha2 || 'SMS Oriximiná — Acesse seus agendamentos'}</p>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="flex items-center gap-4 md:gap-6">
+                <img src={config?.logoEsquerda || logoSmsFallback} alt="Logo" className="w-20 h-20 md:w-24 md:h-24 rounded-2xl object-cover shadow-2xl border-4 border-white/20" />
+                <div>
+                  <h1 className="text-2xl md:text-4xl font-extrabold font-display tracking-tight leading-tight">
+                    {config?.linha1 || 'Portal do Paciente'}
+                  </h1>
+                  <p className="opacity-90 mt-1 font-medium md:text-lg">
+                    {config?.linha2 || 'SMS Oriximiná — Acesse seus agendamentos'}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         <div className="container mx-auto px-4 py-8 max-w-md">
