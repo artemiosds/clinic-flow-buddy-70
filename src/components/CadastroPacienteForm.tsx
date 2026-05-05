@@ -20,15 +20,7 @@ import { useCustomFields } from "@/hooks/useCustomFields";
 import { useAuth } from "@/contexts/AuthContext";
 import LogradouroDneAutocomplete from "@/components/LogradouroDneAutocomplete";
 import MunicipioIbgeCombobox from "@/components/MunicipioIbgeCombobox";
-
-const ESPECIALIDADES_DESTINO = [
-  { value: "fisioterapia", label: "Fisioterapia" },
-  { value: "fonoaudiologia", label: "Fonoaudiologia" },
-  { value: "nutricao", label: "Nutrição" },
-  { value: "psicologia", label: "Psicologia" },
-  { value: "terapia_ocupacional", label: "Terapia Ocupacional" },
-  { value: "outros", label: "Outros" },
-];
+import EspecialidadeCombobox from "@/components/EspecialidadeCombobox";
 
 const MUNICIPIOS = [
   "Oriximiná", "Óbidos", "Terra Santa", "Faro", "Juruti", "Nhamundá",
