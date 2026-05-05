@@ -3091,9 +3091,37 @@ const Agenda: React.FC = () => {
                     </div>
                   </Secao>
                 )}
+                {(() => {
+                  const faltaData = (detalheAg.custom_data as any)?.falta;
+                  if (!faltaData) return null;
+                  return (
+                    <Secao titulo="Justificativa de Falta">
+                      <div className="bg-destructive/5 border border-destructive/20 rounded-lg p-3 space-y-2">
+                        <Campo label="Tipo" valor={faltaData.tipo === 'justificada' ? 'Justificada' : 'Injustificada'} />
+                        {faltaData.documento && <Campo label="Documento" valor={faltaData.documento} />}
+                        {faltaData.descricao && <Campo label="Motivo/Descrição" valor={faltaData.descricao} />}
+                        {faltaData.anexoUrl && (
+                          <div className="flex items-center gap-2 pt-2 border-t border-destructive/10">
+                            <Paperclip className="w-3.5 h-3.5 text-destructive" />
+                            <span className="text-xs flex-1 truncate text-muted-foreground">Documento anexo</span>
+                            <a href={faltaData.anexoUrl} target="_blank" rel="noopener noreferrer">
+                              <Button size="xs" variant="outline" className="h-6 text-[10px] border-destructive/30 text-destructive hover:bg-destructive/10">
+                                <Eye className="w-3 h-3 mr-1" /> Visualizar
+                              </Button>
+                            </a>
+                          </div>
+                        )}
+                        <p className="text-[10px] text-muted-foreground pt-1 italic">
+                          Registrado em {new Date(faltaData.registradoEm).toLocaleString('pt-BR')} 
+                          {faltaData.registradoPorNome ? ` por ${faltaData.registradoPorNome}` : ''}
+                        </p>
+                      </div>
+                    </Secao>
+                  );
+                })()}
                 {detalheAg.observacoes && (
                   <Secao titulo="Observações">
-                    <p className="text-sm text-foreground">{detalheAg.observacoes}</p>
+                    <p className="text-sm text-foreground whitespace-pre-wrap">{detalheAg.observacoes}</p>
                   </Secao>
                 )}
               </>
