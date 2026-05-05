@@ -695,9 +695,9 @@ const ConfigSistemasIntegrados: React.FC = () => {
                   <Input
                     value={form.identificador_sistema}
                     onChange={e => setForm({ ...form, identificador_sistema: e.target.value })}
-                    placeholder="sms-oriximina-caps"
+                    placeholder="cer-ii-oriximina"
                   />
-                  <p className="text-xs text-muted-foreground mt-1">Texto único usado por ambos os sistemas para se identificar.</p>
+                  <p className="text-xs text-muted-foreground mt-1">Use um identificador único e igual nos dois sistemas, como cer-ii-oriximina ou caps-ii-oriximina.</p>
                 </div>
               </div>
 
