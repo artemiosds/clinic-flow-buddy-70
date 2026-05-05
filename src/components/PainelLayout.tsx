@@ -229,7 +229,7 @@ const PainelLayout: React.FC = () => {
           </div>
         )}
 
-        <nav className="flex-1 p-3 space-y-4 overflow-y-auto custom-scrollbar">
+        <nav className="flex-1 p-3 space-y-4 overflow-y-auto">
           {filteredGroups.map(group => {
             const isExpanded = expandedGroups[group.title] !== false;
             return (
