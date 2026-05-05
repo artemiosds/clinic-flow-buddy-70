@@ -400,6 +400,32 @@ const ConfigSistemasIntegrados: React.FC = () => {
           </div>
         </div>
 
+        <div className="grid md:grid-cols-2 gap-4 mb-4">
+          <div className="rounded-lg border bg-blue-50/50 p-4 border-blue-100">
+            <h4 className="text-sm font-semibold text-blue-900 flex items-center gap-2 mb-2">
+              <Info className="w-4 h-4" /> Como conectar dois sistemas
+            </h4>
+            <div className="space-y-3 text-xs text-blue-800 leading-relaxed">
+              <p>
+                <strong>No Sistema A:</strong> Cadastre o Sistema B. No campo <strong>Token de Saída</strong>, cole o token de entrada gerado no Sistema B. Gere um <strong>Token de Entrada</strong> e copie para o Sistema B.
+              </p>
+              <p>
+                <strong>No Sistema B:</strong> Cadastre o Sistema A. No campo <strong>Token de Saída</strong>, cole o token de entrada gerado no Sistema A. Gere um <strong>Token de Entrada</strong> e copie para o Sistema A.
+              </p>
+            </div>
+          </div>
+          <div className="rounded-lg border bg-amber-50/50 p-4 border-amber-100">
+            <h4 className="text-sm font-semibold text-amber-900 flex items-center gap-2 mb-2">
+              <Key className="w-4 h-4" /> Exemplo Prático
+            </h4>
+            <div className="space-y-2 text-xs text-amber-800 leading-relaxed">
+              <p><strong>Unidade A:</strong> CER II · <strong>Unidade B:</strong> CAPS II</p>
+              <p>No <strong>CER II</strong>: O token de saída deve ser o token de entrada do <strong>CAPS II</strong>.</p>
+              <p>No <strong>CAPS II</strong>: O token de saída deve ser o token de entrada do <strong>CER II</strong>.</p>
+            </div>
+          </div>
+        </div>
+
         <div className="rounded-lg border overflow-hidden">
           <Table>
             <TableHeader>
