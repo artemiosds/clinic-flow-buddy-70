@@ -98,7 +98,7 @@ function useFullHistory(pacienteId: string, unidades: { id: string; nome: string
 
       const [prontuariosRes, faltasRes, sessionsRes, dischargesRes, triageRes, funcionariosRes] = await Promise.all([
         (supabase as any).from("prontuarios").select("*").eq("paciente_id", pacienteId).order("data_atendimento", { ascending: false }),
-        supabase.from("agendamentos").select("id, data, hora, profissional_nome, profissional_id, tipo, status, unidade_id").eq("paciente_id", pacienteId).eq("status", "falta").order("data", { ascending: false }),
+        supabase.from("agendamentos").select("id, data, hora, profissional_nome, profissional_id, tipo, status, unidade_id, custom_data").eq("paciente_id", pacienteId).eq("status", "falta").order("data", { ascending: false }),
         (supabase as any).from("treatment_sessions").select("id, cycle_id, session_number, total_sessions, scheduled_date, status, clinical_notes, procedure_done, professional_id").eq("patient_id", pacienteId).neq("status", "agendada").order("scheduled_date", { ascending: false }),
         (supabase as any).from("patient_discharges").select("id, cycle_id, professional_id, discharge_date, reason, final_notes").eq("patient_id", pacienteId),
         (supabase as any).from("triage_records").select("agendamento_id, pressao_arterial, temperatura, frequencia_cardiaca, saturacao_oxigenio, glicemia, peso, altura, imc").eq("agendamento_id", pacienteId).limit(0),
@@ -197,9 +197,11 @@ function useFullHistory(pacienteId: string, unidades: { id: string; nome: string
           professional: a.profissional_nome || "",
           professionalId: a.profissional_id,
           specialty: specialtyMap.get(a.profissional_id) || undefined,
-          summary: "Paciente não compareceu",
+          summary: a.custom_data?.falta?.descricao || "Paciente não compareceu",
           unidade: unidadeMap.get(a.unidade_id),
           status: "falta",
+          faltaJustificativa: a.custom_data?.falta,
+          rawAgendamento: a,
         });
       }
 
@@ -270,6 +272,34 @@ const EventDetail: React.FC<{ event: FullEvent }> = ({ event }) => {
 
   return (
     <div className="mt-3 space-y-3 border-t pt-3 animate-in fade-in-0 slide-in-from-top-1 duration-200">
+      {/* Falta Details */}
+      {event.type === "falta" && event.faltaJustificativa && (
+        <div className="space-y-1.5 p-3 rounded-lg bg-destructive/5 border border-destructive/10">
+          <h5 className="text-[10px] font-bold uppercase tracking-wider text-destructive">Detalhes da Falta</h5>
+          <div className="text-xs">
+            <span className="font-semibold">Tipo:</span> {event.faltaJustificativa.tipo === 'justificada' ? 'Justificada' : 'Injustificada'}
+          </div>
+          {event.faltaJustificativa.documento && (
+            <div className="text-xs">
+              <span className="font-semibold">Documento:</span> {event.faltaJustificativa.documento}
+            </div>
+          )}
+          {event.faltaJustificativa.descricao && (
+            <div className="text-xs italic text-muted-foreground mt-1">
+              "{event.faltaJustificativa.descricao}"
+            </div>
+          )}
+          {event.faltaJustificativa.anexoUrl && (
+            <div className="pt-2">
+              <a href={event.faltaJustificativa.anexoUrl} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}>
+                <Button size="sm" variant="outline" className="h-7 text-[10px] border-destructive/30 text-destructive hover:bg-destructive/10">
+                  <Eye className="w-3 h-3 mr-1" /> Visualizar Documento
+                </Button>
+              </a>
+            </div>
+          )}
+        </div>
+      )}
       {/* SOAP */}
       {hasSOAP && (
         <div className="space-y-1.5">
