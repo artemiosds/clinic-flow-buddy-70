@@ -1421,6 +1421,7 @@ export type Database = {
       }
       paciente_documentos: {
         Row: {
+          agendamento_id: string | null
           ativo: boolean | null
           created_at: string | null
           deleted_at: string | null
@@ -1440,6 +1441,7 @@ export type Database = {
           uploaded_by_nome: string | null
         }
         Insert: {
+          agendamento_id?: string | null
           ativo?: boolean | null
           created_at?: string | null
           deleted_at?: string | null
@@ -1459,6 +1461,7 @@ export type Database = {
           uploaded_by_nome?: string | null
         }
         Update: {
+          agendamento_id?: string | null
           ativo?: boolean | null
           created_at?: string | null
           deleted_at?: string | null
