@@ -20,44 +20,84 @@ import WhatsappPausedBanner from '@/components/WhatsappPausedBanner';
 import { useEncaminhamentosExternosRealtime } from '@/hooks/useEncaminhamentosExternosRealtime';
 
 // Mapeamento: cada item do menu exige um módulo + ação do PermissionsContext
-const menuItems: {
+interface MenuItem {
   to: string;
   label: string;
   icon: React.ElementType;
   modulo: ModuleName | null;
   roles_master_only?: boolean;
   hide_from_master?: boolean;
-}[] = [
-  { to: '/painel',                  label: 'Dashboard',              icon: LayoutDashboard,    modulo: null },
-  { to: '/painel/agenda',           label: 'Agenda',                 icon: Calendar,           modulo: 'agenda' },
-  { to: '/painel/fila',             label: 'Fila de Espera',         icon: ListOrdered,        modulo: 'fila' },
-  { to: '/painel/pacientes',        label: 'Pacientes',              icon: Users,              modulo: 'pacientes' },
-  { to: '/painel/atendimentos',     label: 'Atendimentos',           icon: ClipboardList,      modulo: 'atendimento' },
-  { to: '/painel/tratamentos',      label: 'Gestão de Tratamentos',  icon: Activity,           modulo: 'tratamento' },
-  
-  { to: '/painel/prontuario',       label: 'Prontuário',             icon: Stethoscope,        modulo: 'prontuario' },
-  { to: '/painel/arquivo-digital',  label: 'Arquivo Digital',        icon: History,            modulo: 'prontuario' },
-  { to: '/painel/triagem',          label: 'Triagem',                icon: HeartPulse,         modulo: 'triagem' },
-  { to: '/painel/historico-triagem', label: 'Histórico Triagem',      icon: History,            modulo: 'triagem' },
-  { to: '/painel/enfermagem',       label: 'Avaliação Enfermagem',   icon: Stethoscope,        modulo: 'enfermagem' },
-  { to: '/painel/pts',              label: 'PTS',                    icon: FileText,           modulo: 'prontuario' },
-  { to: '/painel/multiprofissional',label: 'Avaliação Multi',        icon: BookOpen,           modulo: 'atendimento' },
-  { to: '/painel/alta',              label: 'Relatório de Alta',      icon: FileText,           modulo: 'prontuario' },
-  { to: '/painel/encaminhamentos',  label: 'Encaminhamentos',        icon: Send,               modulo: 'encaminhamento' },
-  { to: '/painel/encaminhamentos-externos', label: 'Encam. Externos',  icon: Send,               modulo: 'encaminhamento' },
-  { to: '/painel/relatorios',       label: 'Relatórios',             icon: FileText,           modulo: 'relatorios' },
-  { to: '/painel/bpa-producao',     label: 'BPA-Produção',           icon: FileText,           modulo: 'relatorios' },
-  { to: '/painel/funcionarios',     label: 'Funcionários',           icon: UserCog,            modulo: 'usuarios' },
-  
-  { to: '/painel/unidades',         label: 'Unidades/Salas',         icon: Building2,          modulo: 'usuarios' },
-  { to: '/painel/disponibilidade',  label: 'Disponibilidade',        icon: CalendarClock,      modulo: 'usuarios' },
-  { to: '/painel/bloqueios',        label: 'Feriados/Bloqueios',     icon: CalendarClock,      modulo: 'agenda' },
-  { to: '/painel/auditoria',        label: 'Logs & Auditoria',       icon: ShieldCheck,        modulo: 'relatorios' },
-  { to: '/painel/meu-prontuario',   label: 'Meu Prontuário',         icon: Settings,           modulo: 'prontuario', hide_from_master: true },
-  { to: '/painel/configuracoes',    label: 'Configurações',          icon: Settings,           modulo: null, roles_master_only: true },
-  { to: '/painel/permissoes',       label: 'Permissões',             icon: Lock,               modulo: null, roles_master_only: true },
-  { to: '/painel/configuracoes-avancadas', label: 'Config. Avançadas', icon: Settings,           modulo: null, roles_master_only: true },
-  { to: '/painel/admin-credentials',      label: 'Credenciais Supabase', icon: ShieldCheck,        modulo: null, roles_master_only: true },
+}
+
+interface MenuGroup {
+  title: string;
+  items: MenuItem[];
+}
+
+const menuGroups: MenuGroup[] = [
+  {
+    title: 'PRINCIPAL',
+    items: [
+      { to: '/painel', label: 'Dashboard', icon: LayoutDashboard, modulo: null },
+    ]
+  },
+  {
+    title: 'AGENDA E RECEPÇÃO',
+    items: [
+      { to: '/painel/agenda', label: 'Agenda', icon: Calendar, modulo: 'agenda' },
+      { to: '/painel/fila', label: 'Fila de Espera', icon: ListOrdered, modulo: 'fila' },
+      { to: '/painel/pacientes', label: 'Pacientes', icon: Users, modulo: 'pacientes' },
+      { to: '/painel/atendimentos', label: 'Atendimentos', icon: ClipboardList, modulo: 'atendimento' },
+    ]
+  },
+  {
+    title: 'ASSISTÊNCIA / CLÍNICA',
+    items: [
+      { to: '/painel/tratamentos', label: 'Gestão de Tratamentos', icon: Activity, modulo: 'tratamento' },
+      { to: '/painel/prontuario', label: 'Prontuário', icon: Stethoscope, modulo: 'prontuario' },
+      { to: '/painel/triagem', label: 'Triagem', icon: HeartPulse, modulo: 'triagem' },
+      { to: '/painel/historico-triagem', label: 'Histórico Triagem', icon: History, modulo: 'triagem' },
+      { to: '/painel/enfermagem', label: 'Avaliação Enfermagem', icon: Stethoscope, modulo: 'enfermagem' },
+      { to: '/painel/pts', label: 'PTS', icon: FileText, modulo: 'prontuario' },
+      { to: '/painel/multiprofissional', label: 'Avaliação Multi', icon: BookOpen, modulo: 'atendimento' },
+      { to: '/painel/alta', label: 'Relatório de Alta', icon: FileText, modulo: 'prontuario' },
+    ]
+  },
+  {
+    title: 'DOCUMENTOS E ARQUIVO',
+    items: [
+      { to: '/painel/arquivo-digital', label: 'Arquivo Digital', icon: History, modulo: 'prontuario' },
+      { to: '/painel/relatorios', label: 'Relatórios', icon: FileText, modulo: 'relatorios' },
+      { to: '/painel/bpa-producao', label: 'BPA-Produção', icon: FileText, modulo: 'relatorios' },
+    ]
+  },
+  {
+    title: 'REGULAÇÃO / ENCAMINHAMENTOS',
+    items: [
+      { to: '/painel/encaminhamentos', label: 'Encaminhamentos', icon: Send, modulo: 'encaminhamento' },
+      { to: '/painel/encaminhamentos-externos', label: 'Encam. Externos', icon: Send, modulo: 'encaminhamento' },
+    ]
+  },
+  {
+    title: 'GESTÃO DA UNIDADE',
+    items: [
+      { to: '/painel/funcionarios', label: 'Funcionários', icon: UserCog, modulo: 'usuarios' },
+      { to: '/painel/unidades', label: 'Unidades/Salas', icon: Building2, modulo: 'usuarios' },
+      { to: '/painel/disponibilidade', label: 'Disponibilidade', icon: CalendarClock, modulo: 'usuarios' },
+      { to: '/painel/bloqueios', label: 'Feriados/Bloqueios', icon: CalendarClock, modulo: 'agenda' },
+    ]
+  },
+  {
+    title: 'ADMINISTRAÇÃO',
+    items: [
+      { to: '/painel/auditoria', label: 'Logs & Auditoria', icon: ShieldCheck, modulo: 'relatorios' },
+      { to: '/painel/meu-prontuario', label: 'Meu Prontuário', icon: Settings, modulo: 'prontuario', hide_from_master: true },
+      { to: '/painel/configuracoes', label: 'Configurações', icon: Settings, modulo: null, roles_master_only: true },
+      { to: '/painel/permissoes', label: 'Permissões', icon: Lock, modulo: null, roles_master_only: true },
+      { to: '/painel/configuracoes-avancadas', label: 'Config. Avançadas', icon: Settings, modulo: null, roles_master_only: true },
+      { to: '/painel/admin-credentials', label: 'Credenciais Supabase', icon: ShieldCheck, modulo: null, roles_master_only: true },
+    ]
+  }
 ];
 
 
