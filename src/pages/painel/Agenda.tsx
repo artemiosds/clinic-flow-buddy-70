@@ -3105,7 +3105,7 @@ const Agenda: React.FC = () => {
                             <Paperclip className="w-3.5 h-3.5 text-destructive" />
                             <span className="text-xs flex-1 truncate text-muted-foreground">Documento anexo</span>
                             <a href={faltaData.anexoUrl} target="_blank" rel="noopener noreferrer">
-                              <Button size="xs" variant="outline" className="h-6 text-[10px] border-destructive/30 text-destructive hover:bg-destructive/10">
+                              <Button size="sm" variant="outline" className="h-6 text-[10px] border-destructive/30 text-destructive hover:bg-destructive/10">
                                 <Eye className="w-3 h-3 mr-1" /> Visualizar
                               </Button>
                             </a>
