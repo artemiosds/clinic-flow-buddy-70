@@ -20,6 +20,7 @@ const CATEGORIAS = [
   { value: "exame", label: "Exame", icon: Search, color: "text-violet-600" },
   { value: "laudo", label: "Laudo / Relatório", icon: FileText, color: "text-amber-600" },
   { value: "outro", label: "Outro", icon: FileType, color: "text-slate-600" },
+  { value: "justificativa_falta", label: "Justificativa de Falta", icon: X, color: "text-destructive" },
 ];
 
 const formatBytes = (b: number) => {
@@ -49,10 +50,11 @@ interface PacienteDocumentosProps {
   pacienteId: string;
   unidadeId?: string;
   disabled?: boolean;
+  agendamentoId?: string;
 }
 
 const PacienteDocumentos: React.FC<PacienteDocumentosProps> = ({
-  pacienteId, unidadeId, disabled,
+  pacienteId, unidadeId, disabled, agendamentoId,
 }) => {
   const [docs, setDocs] = useState<DocRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -131,6 +133,7 @@ const PacienteDocumentos: React.FC<PacienteDocumentosProps> = ({
           storage_path: path,
           uploaded_by: user?.id || "",
           uploaded_by_nome: user?.nome || "",
+          agendamento_id: agendamentoId || null,
         });
 
         if (insErr) {
