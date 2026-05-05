@@ -18,14 +18,20 @@ import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import EspecialidadeCombobox from "@/components/EspecialidadeCombobox";
+import GenericCombobox from "@/components/GenericCombobox";
 
 const BUCKET = "paciente-documentos";
 
-const UBS_LIST = [
+const ORIGEM_LIST = [
   "UBS Dr. Lauro Corrêa Pinto", "UBS Penta", "UBS Corino Guerreiro",
   "UBS Santa Luzia", "UBS Tânia Siqueira da Fonseca", "UBS Antônio Miléo",
   "Hospital Municipal de Oriximiná", "UBS Nossa Sra. das Graças",
   "UBS Fluvial Manoel Andrade", "UBS Ribeirinho", "Hospital Regional Menino Jesus",
+  "CER II", "CAPS II", "CAPS", "Unidade Externa", "Hospital", "UBS"
+];
+
+const TIPO_ENCAMINHAMENTO_LIST = [
+  "UBS", "Hospital", "CAPS", "CER", "Espontâneo", "Outro"
 ];
 
 interface Attachment {
