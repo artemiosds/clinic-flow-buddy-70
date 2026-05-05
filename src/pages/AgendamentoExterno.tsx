@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { LogOut, Search, Plus, CalendarDays, Clock, User, Loader2, CheckCircle, X, Pencil, Building2, AlertCircle, CalendarCheck, BarChart3 } from "lucide-react";
+import { LogOut, Search, Plus, CalendarDays, Clock, User, Loader2, CheckCircle, X, Pencil, Building2, AlertCircle, CalendarCheck, BarChart3, UserCheck } from "lucide-react";
 import { format } from "date-fns";
 import { CalendarioDisponibilidade, type DayInfo } from "@/components/CalendarioDisponibilidade";
 import { todayLocalStr } from "@/lib/utils";
