@@ -709,7 +709,7 @@ const ConfigSistemasIntegrados: React.FC = () => {
                   placeholder="https://abcd.supabase.co"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  URL do projeto Supabase do outro sistema. As funções <span className="font-mono">/functions/v1/...</span> são adicionadas automaticamente.
+                  Informe a URL base do projeto/sistema externo. As funções de integração serão chamadas a partir desta URL.
                 </p>
               </div>
 
