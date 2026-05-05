@@ -66,6 +66,7 @@ import { whatsappService } from "@/services/whatsappService";
 import { AgendaNotificacaoIndividual, AgendaNotificacoesMassa } from "@/components/AgendaNotificacoes";
 import { RegistrarFaltaModal } from "@/components/RegistrarFaltaModal";
 import { ConferirDadosPacienteModal } from "@/components/ConferirDadosPacienteModal";
+import PacienteDocumentos from "@/components/PacienteDocumentos";
 
 const statusActions = [
   { key: "confirmado_chegada", label: "Confirmar Chegada", icon: LogIn, color: "bg-success text-success-foreground" },
