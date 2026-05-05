@@ -702,7 +702,9 @@ const ConfigSistemasIntegrados: React.FC = () => {
 
               <div className="grid md:grid-cols-2 gap-3">
                 <div>
-                  <Label>Token de SAÍDA (enviar para o outro sistema)</Label>
+                  <Label className="flex items-center gap-1.5">
+                    Token de SAÍDA <Badge variant="outline" className="text-[10px] font-normal px-1 py-0">Enviar</Badge>
+                  </Label>
                   <div className="relative">
                     <Input
                       type={showOutToken ? 'text' : 'password'}
@@ -718,25 +720,66 @@ const ConfigSistemasIntegrados: React.FC = () => {
                       {showOutToken ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
+                  <p className="text-[11px] text-muted-foreground mt-1 leading-tight">
+                    Cole aqui o token de entrada configurado no outro sistema. Este token será enviado por este sistema ao chamar o sistema externo.
+                  </p>
                 </div>
                 <div>
-                  <Label>Token de ENTRADA (que o outro sistema enviará)</Label>
-                  <div className="relative">
-                    <Input
-                      type={showInToken ? 'text' : 'password'}
-                      value={form.token_entrada_plain}
-                      onChange={e => setForm({ ...form, token_entrada_plain: e.target.value })}
-                      placeholder={form.id ? '(deixe vazio para manter o atual)' : 'Defina um token forte e compartilhe com o outro sistema'}
-                    />
-                    <button
-                      type="button"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
-                      onClick={() => setShowInToken(v => !v)}
+                  <Label className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      Token de ENTRADA <Badge variant="outline" className="text-[10px] font-normal px-1 py-0 bg-primary/5">Receber</Badge>
+                    </div>
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 px-2 text-[10px]"
+                      onClick={() => {
+                        const token = generateSecureToken();
+                        setForm({ ...form, token_entrada_plain: token });
+                        setShowInToken(true);
+                      }}
                     >
-                      {showInToken ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
+                      <Key className="w-3 h-3 mr-1" /> Gerar token seguro
+                    </Button>
+                  </Label>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Input
+                        type={showInToken ? 'text' : 'password'}
+                        value={form.token_entrada_plain}
+                        onChange={e => setForm({ ...form, token_entrada_plain: e.target.value })}
+                        placeholder={form.id ? '(deixe vazio para manter)' : 'Crie um token forte'}
+                      />
+                      <button
+                        type="button"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
+                        onClick={() => setShowInToken(v => !v)}
+                      >
+                        {showInToken ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    {form.token_entrada_plain && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        title="Copiar token"
+                        onClick={() => {
+                          navigator.clipboard.writeText(form.token_entrada_plain);
+                          setTokenCopiado(true);
+                          setTimeout(() => setTokenCopiado(false), 2000);
+                          toast.success('Token copiado! Cadastre-o como Token de Saída no outro sistema.');
+                        }}
+                      >
+                        {tokenCopiado ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+                      </Button>
+                    )}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">Salvo apenas como hash. Não poderá ser visualizado depois.</p>
+                  <p className="text-[11px] text-muted-foreground mt-1 leading-tight">
+                    Crie um token forte e compartilhe com o outro sistema. O outro sistema deve cadastrar este token como token de saída. 
+                    <span className="text-amber-600 block mt-0.5">Salvo apenas como hash. Copie agora, pois não poderá ser visto depois.</span>
+                  </p>
                 </div>
               </div>
 
