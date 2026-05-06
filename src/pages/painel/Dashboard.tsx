@@ -190,9 +190,17 @@ const Dashboard: React.FC = () => {
       {/* Main KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard title="Consultas Hoje" value={todayAg.length} icon={<Calendar className="w-5 h-5 text-primary-foreground" />} color="gradient-primary" onClick={() => navigate('/painel/agenda')} />
-        <StatCard title="Confirmados/Chegou" value={confirmados} icon={<CheckCircle className="w-5 h-5 text-success-foreground" />} color="bg-success" onClick={() => navigate('/painel/agenda')} />
-        <StatCard title="Na Fila" value={aguardando} icon={<Clock className="w-5 h-5 text-warning-foreground" />} color="bg-warning" onClick={() => navigate('/painel/fila')} />
-        <StatCard title="Atendimentos Totais" value={totalAtendimentos} icon={<TrendingUp className="w-5 h-5 text-info-foreground" />} color="bg-info" onClick={() => navigate('/painel/atendimentos')} />
+        <StatCard 
+          title="Pendências Agenda" 
+          value={pendenciasAgenda.length} 
+          icon={<Bell className="w-5 h-5 text-warning-foreground" />} 
+          color="bg-warning" 
+          subtitle="Ações necessárias"
+          onClick={() => navigate('/painel/agenda')} 
+          critical={pendenciasAgenda.length > 0}
+        />
+        <StatCard title="Na Fila" value={aguardando} icon={<Clock className="w-5 h-5 text-info-foreground" />} color="bg-info" onClick={() => navigate('/painel/fila')} />
+        <StatCard title="Atendimentos Totais" value={totalAtendimentos} icon={<TrendingUp className="w-5 h-5 text-success-foreground" />} color="bg-success" onClick={() => navigate('/painel/atendimentos')} />
       </div>
 
       {/* Executive KPIs */}
