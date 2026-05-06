@@ -361,6 +361,7 @@ const BpaProducao: React.FC = () => {
                 const bpaLines: BpaLine[] = linhas.map(l => {
                   const pac = pacMap[l.paciente_id];
                   const prof = profMap[l.profissional_id];
+                  const uni = unidades.find(u => u.id === l.unidade_id);
                   return normalizeBpaData({
                     ...l,
                     paciente_custom: (pac as any)?.custom_data || {},
@@ -369,14 +370,14 @@ const BpaProducao: React.FC = () => {
                     paciente_cns: pac?.cns || '',
                     paciente_cpf: pac?.cpf || '',
                     profissional_custom: (prof as any)?.custom_data || prof,
-                    unidade_custom: (unidades.find(u => u.id === l.unidade_id) as any)?.custom_data || {},
-                    unidade_nome: unidades.find(u => u.id === l.unidade_id)?.nome || '',
+                    unidade_custom: (uni as any)?.custom_data || {},
+                    unidade_nome: uni?.nome || '',
                   });
                 });
                 exportBpaToXlsx(bpaLines, competencia);
                 toast.success('XLSX de conferência gerado com sucesso!');
               }}
-              className="gap-2"
+              className="gap-2 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
               disabled={linhas.length === 0}
             >
               <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
