@@ -1814,6 +1814,7 @@ const Agenda: React.FC = () => {
                                 size="sm" 
                                 className="h-9 gap-2 bg-success text-success-foreground hover:bg-success/90 px-4" 
                                 onClick={() => { handleIniciarAtendimento(ag); setRevisaoDialogOpen(false); }}
+                                disabled={!(["confirmado_chegada", "aguardando_atendimento", "apto_atendimento", "apto", "chegada_confirmada"].includes(ag.status) || (ag.status === "confirmado" && can('agenda', 'confirmar_chegada')))}
                               >
                                 <Play className="w-3.5 h-3.5" />
                                 <span className="text-xs font-bold">Resolver</span>
