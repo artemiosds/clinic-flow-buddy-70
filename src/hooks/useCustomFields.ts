@@ -44,9 +44,9 @@ export const SCREEN_LABELS: Record<ScreenKey, string> = {
   unidade: 'Unidades',
   triagem: 'Triagem',
   prontuario: 'Prontuário',
-  encaminhamento: 'Encaminhamento',
+  encaminhamentos: 'Encaminhamento',
   fila_espera: 'Fila de Espera',
-  atendimento: 'Atendimentos',
+  atendimentos: 'Atendimentos',
 };
 
 // Native fields per screen — exported so config UI and forms share one source of truth.
