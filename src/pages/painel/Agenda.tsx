@@ -345,6 +345,7 @@ const Agenda: React.FC = () => {
       "confirmado",
       "confirmada",
       "agendado",
+      "confirmado_chegada",
       "chegada_confirmada",
       "aguardando_triagem",
       "triagem_concluida",
@@ -366,15 +367,17 @@ const Agenda: React.FC = () => {
       if (a.data === today && a.hora >= nowTime) return false;
       
       // 3. Respeitar permissões de perfil
-      // Profissional vê apenas os seus
+      const isMasterGlobal = user?.role === "master" && user?.usuario === 'admin.sms';
+      const isMasterUnidade = user?.role === "master" && !isMasterGlobal;
+      
+      // Profissional vê apenas os seus vinculados
       if (isProfissional && user?.id && a.profissionalId !== user.id) return false;
       
       // Recepção vê apenas da sua unidade
       if (user?.role === "recepcao" && user?.unidadeId && a.unidadeId !== user.unidadeId) return false;
       
-      // Master de unidade vê apenas da sua unidade (Master global vê tudo)
-      const isMasterUnidade = user?.role === "master" && user?.unidadeId && user?.usuario !== 'admin.sms';
-      if (isMasterUnidade && a.unidadeId !== user.unidadeId) return false;
+      // Master de unidade vê apenas da sua unidade
+      if (isMasterUnidade && user?.unidadeId && a.unidadeId !== user.unidadeId) return false;
 
       // 4. Deve estar em um status de pendência
       return PENDENTE_STATUSES.has(a.status);
