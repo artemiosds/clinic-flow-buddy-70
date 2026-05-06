@@ -14,7 +14,8 @@ import { Button } from "@/components/ui/button";
 import { 
   Loader2, Shield, ShieldCheck, Search, User as UserIcon, Building2, 
   RotateCcw, Radio, LayoutGrid, ClipboardCheck, Settings2, Info,
-  Unlock, Lock as LockIcon, CheckCircle2, XCircle, AlertCircle
+  Unlock, Lock as LockIcon, CheckCircle2, XCircle, AlertCircle,
+  ChevronRight
 } from "lucide-react";
 import { toast } from "sonner";
 import { PERMISSION_REGISTRY } from "@/config/permissionsRegistry";
@@ -27,14 +28,6 @@ const PERFIL_LABELS: Record<string, string> = {
   enfermagem: "ENFERMAGEM",
   profissional: "PROFISSIONAL",
 };
-
-const MODULOS = PERMISSION_REGISTRY.map(m => m.id);
-const MODULO_LABELS = PERMISSION_REGISTRY.reduce((acc, m) => ({ ...acc, [m.id]: m.label }), {} as Record<string, string>);
-const ACTIONS: (keyof ModulePermission)[] = [
-  "can_view", "can_create", "can_edit", "can_delete", "can_execute",
-  "can_print", "can_export", "can_attach", "can_sign", "can_approve",
-  "can_cancel", "can_config"
-];
 
 const ACTION_LABELS: Record<keyof ModulePermission, string> = {
   can_view: "Visualizar",
@@ -50,32 +43,6 @@ const ACTION_LABELS: Record<keyof ModulePermission, string> = {
   can_cancel: "Cancelar",
   can_config: "Configurar",
 };
-
-const SOURCE_LABELS: Record<PermissionSourceType, string> = {
-  role_global: "Perfil (G)",
-  role_unit: "Perfil (U)",
-  user_global: "Individual (G)",
-  user_unit: "Individual (U)",
-  master_global: "Master Total",
-  default: "Padrão Sistema"
-};
-
-interface PermRow extends ModulePermission {
-  id?: string;
-  perfil: string;
-  modulo: string;
-  unidade_id: string;
-}
-
-interface UserPermRow extends ModulePermission {
-  id?: string;
-  user_id: string;
-  modulo: string;
-  unidade_id: string;
-}
-
-interface UnidadeOption { id: string; nome: string; }
-interface FuncOption { id: string; nome: string; usuario: string; role: string; unidade_id: string; }
 
 const Permissoes: React.FC = () => {
   const { hasPermission } = useAuth();
@@ -149,6 +116,9 @@ const Permissoes: React.FC = () => {
       || perfilRows.find((r) => r.modulo === modulo && r.unidade_id === "");
   };
 
+  const getUserRow = (modulo: ModuleName): UserPermRow | undefined =>
+    userRows.find((r) => r.modulo === modulo);
+
   const togglePerfil = async (modulo: ModuleName, action: keyof ModulePermission) => {
     const existing = getPerfilRow(modulo);
     const baseRow: PermRow = existing
@@ -171,17 +141,16 @@ const Permissoes: React.FC = () => {
     });
 
     const updateData: any = { perfil: selectedPerfil, modulo, unidade_id: selectedUnidade };
-    ACTIONS.forEach(a => updateData[a] = updated[a]);
+    PERMISSION_REGISTRY.forEach(() => {}); // Dummy
+    const ACTIONS = Object.keys(ACTION_LABELS);
+    ACTIONS.forEach(a => { if (a.startsWith('can_')) updateData[a] = updated[a as keyof ModulePermission]; });
 
     const { error } = await supabase.from("permissoes").upsert(updateData, { onConflict: "perfil,modulo,unidade_id" } as any);
     if (error) { toast.error(`Erro: ${error.message}`); loadPerfil(); } else {
-      toast.success(`${MODULO_LABELS[modulo]} → ${ACTION_LABELS[action]}: ${newVal ? "ATIVADO" : "DESATIVADO"}`);
+      toast.success(`${modLabel(modulo)} → ${ACTION_LABELS[action]}: ${newVal ? "ATIVADO" : "DESATIVADO"}`);
     }
     setSaving(null);
   };
-
-  const getUserRow = (modulo: ModuleName): UserPermRow | undefined =>
-    userRows.find((r) => r.modulo === modulo);
 
   const toggleUser = async (modulo: ModuleName, action: keyof ModulePermission) => {
     if (!selectedUserId) return;
@@ -219,11 +188,11 @@ const Permissoes: React.FC = () => {
     });
 
     const updateData: any = { user_id: selectedUserId, modulo, unidade_id: selectedUnidade };
-    ACTIONS.forEach(a => updateData[a] = updated[a]);
+    Object.keys(ACTION_LABELS).forEach(a => { if (a.startsWith('can_')) updateData[a] = updated[a as keyof ModulePermission]; });
 
     const { error } = await supabase.from("permissoes_usuario").upsert(updateData, { onConflict: "user_id,modulo,unidade_id" } as any);
     if (error) { toast.error(`Erro: ${error.message}`); loadUser(); } else {
-      toast.success(`Exceção salva: ${MODULO_LABELS[modulo]} → ${ACTION_LABELS[action]}`);
+      toast.success(`Exceção salva: ${modLabel(modulo)} → ${ACTION_LABELS[action]}`);
     }
     setSaving(null);
   };
@@ -238,10 +207,12 @@ const Permissoes: React.FC = () => {
       .eq("unidade_id", selectedUnidade);
     if (error) toast.error("Erro ao remover exceção");
     else {
-        toast.success(`Exceção removida: ${MODULO_LABELS[modulo]}`);
+        toast.success(`Exceção removida: ${modLabel(modulo)}`);
         setUserRows((prev) => prev.filter((r) => r.modulo !== modulo));
     }
   };
+
+  const modLabel = (id: ModuleName) => PERMISSION_REGISTRY.find(m => m.id === id)?.label || id;
 
   const funcionariosFiltered = useMemo(() => {
     const q = searchUser.toLowerCase().trim();
@@ -299,7 +270,7 @@ const Permissoes: React.FC = () => {
           <Accordion type="multiple" className="space-y-2">
             {PERMISSION_REGISTRY.map((mod) => {
               const row = getPerfilRow(mod.id);
-              const activeCount = row ? ACTIONS.filter((a) => row[a]).length : 0;
+              const activeCount = row ? Object.keys(ACTION_LABELS).filter((a) => a.startsWith('can_') && !!row[a as keyof ModulePermission]).length : 0;
               return (
                 <AccordionItem key={mod.id} value={mod.id} className="border rounded-lg px-4">
                   <AccordionTrigger className="hover:no-underline text-left">
@@ -322,9 +293,7 @@ const Permissoes: React.FC = () => {
                             onCheckedChange={() => togglePerfil(mod.id, action)} 
                             disabled={saving === `perfil-${mod.id}-${action}`}
                           />
-                          <div className="flex flex-col">
-                            <span className="text-sm font-medium group-hover:text-primary transition-colors">{ACTION_LABELS[action]}</span>
-                          </div>
+                          <span className="text-sm font-medium group-hover:text-primary transition-colors">{ACTION_LABELS[action]}</span>
                         </label>
                       ))}
                     </div>
@@ -388,6 +357,7 @@ const Permissoes: React.FC = () => {
             <Accordion type="multiple" className="space-y-2">
               {PERMISSION_REGISTRY.map((mod) => {
                 const override = getUserRow(mod.id);
+                const perfilRow = getPerfilRow(mod.id);
                 return (
                   <AccordionItem key={mod.id} value={mod.id} className="border rounded-lg px-4">
                     <AccordionTrigger className="hover:no-underline text-left">
@@ -399,16 +369,35 @@ const Permissoes: React.FC = () => {
                       </div>
                     </AccordionTrigger>
                     <AccordionContent>
-                      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 py-3">
-                        {mod.actions.map((action) => (
-                          <label key={action} className="flex items-center gap-2 cursor-pointer">
-                            <Switch 
-                                checked={!!override?.[action]} 
-                                onCheckedChange={() => toggleUser(mod.id, action)} 
-                            />
-                            <span className="text-sm">{ACTION_LABELS[action]}</span>
-                          </label>
-                        ))}
+                      <div className="grid grid-cols-1 gap-2 py-3">
+                        {mod.actions.map((action) => {
+                          const hasOverride = override !== undefined && override[action] !== undefined;
+                          const perfilAllowed = !!perfilRow?.[action];
+                          const effectiveAllowed = hasOverride ? !!override[action] : perfilAllowed;
+
+                          return (
+                            <div key={action} className="flex items-center justify-between p-2 border rounded bg-background/30">
+                              <div className="flex flex-col">
+                                <span className="text-sm font-medium">{ACTION_LABELS[action]}</span>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  <span className="text-[9px] text-muted-foreground uppercase">Base Perfil: {perfilAllowed ? "SIM" : "NÃO"}</span>
+                                  {hasOverride && <Badge variant="outline" className="text-[8px] h-3 px-1 border-primary/30 text-primary">Alterado</Badge>}
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-4">
+                                <Switch 
+                                    checked={effectiveAllowed} 
+                                    onCheckedChange={() => toggleUser(mod.id, action)} 
+                                    className="scale-90"
+                                />
+                                <div className="w-8 flex justify-center">
+                                  {effectiveAllowed ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <XCircle className="w-4 h-4 text-red-500 opacity-40" />}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                       {override && (
                         <div className="pt-2 border-t mt-2 flex justify-end">
@@ -430,9 +419,9 @@ const Permissoes: React.FC = () => {
   );
 };
 
-// Add missing icon
-const ChevronRight = ({ className }: { className?: string }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m9 18 6-6-6-6"/></svg>
-);
+interface UnidadeOption { id: string; nome: string; }
+interface FuncOption { id: string; nome: string; usuario: string; role: string; unidade_id: string; }
+interface PermRow extends ModulePermission { id?: string; perfil: string; modulo: string; unidade_id: string; }
+interface UserPermRow extends ModulePermission { id?: string; user_id: string; modulo: string; unidade_id: string; }
 
 export default Permissoes;
