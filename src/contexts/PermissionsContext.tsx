@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { PERMISSIONS_REGISTRY, MODULE_ACTIONS_MAP } from '@/config/permissions-registry';
+import { PERMISSION_REGISTRY } from '@/config/permissionsRegistry';
 
 // Nome de módulo agora é dinâmico baseado no registry
 export type ModuleName = string;
