@@ -217,6 +217,50 @@ const Permissoes: React.FC = () => {
             })}
           </Accordion>
         </TabsContent>
+
+        <TabsContent value="individual" className="space-y-4">
+          <Card>
+            <CardContent className="pt-6">
+               <div className="flex flex-col gap-4">
+                  <Input placeholder="Buscar funcionário..." value={searchUser} onChange={(e) => setSearchUser(e.target.value)} />
+                  {!selectedUserId && funcionariosFiltered.map((f: any) => (
+                    <Button key={f.id} variant="outline" className="justify-start" onClick={() => setSelectedUserId(f.id)}>
+                        {f.nome}
+                    </Button>
+                  ))}
+               </div>
+            </CardContent>
+          </Card>
+
+          {selectedUserId && (
+              <Accordion type="multiple" className="space-y-2">
+                {PERMISSION_REGISTRY.map((mod) => {
+                  const row = getUserRow(mod.id);
+                  const perfilRow = getPerfilRow(mod.id);
+                  return (
+                    <AccordionItem key={mod.id} value={mod.id} className="border rounded-lg px-4">
+                      <AccordionTrigger className="hover:no-underline text-left">
+                        <div className="flex items-center gap-3 flex-1 font-medium">{mod.label}</div>
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 py-3">
+                          {mod.actions.map((act) => {
+                            const val = row ? (row[act.key] ?? row.acoes_especificas?.[act.key]) : !!perfilRow?.[act.key];
+                            return (
+                                <label key={act.key} className="flex items-center justify-between p-2 border rounded">
+                                    <span className="text-sm">{act.label}</span>
+                                    <Switch checked={!!val} onCheckedChange={() => toggleUser(mod.id, act.key)} />
+                                </label>
+                            );
+                          })}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  );
+                })}
+              </Accordion>
+          )}
+        </TabsContent>
       </Tabs>
     </div>
   );
