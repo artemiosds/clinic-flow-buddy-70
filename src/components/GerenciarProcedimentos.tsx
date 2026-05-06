@@ -29,6 +29,7 @@ interface SigtapProc {
   origem: "SIGTAP" | "PERSONALIZADO";
   valor?: number | null;
   ativo: boolean;
+  cbo_obrigatorio?: boolean;
 }
 
 const ESPECIALIDADE_META: Record<string, { label: string; color: string }> = {
