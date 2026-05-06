@@ -118,7 +118,11 @@ interface FichaImpressaoProps {
 }
 
 const resolveLogoUrl = (src: string): string => {
-  if (src.startsWith("http") || src.startsWith("/")) return src;
+  if (!src) return "";
+  if (src.startsWith("http")) return src;
+  // Se for um caminho relativo ou base64, tenta resolver para absoluto
+  if (src.startsWith("data:image")) return src;
+  if (src.startsWith("/")) return window.location.origin + src;
   return src;
 };
 
@@ -434,7 +438,7 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = "co
   <!-- CABEÇALHO -->
   <div class="header">
     <div class="header-logo">
-      <img src="${logoLeft}" alt="Logo" />
+      <img src="${logoLeft}" alt="Logo" onerror="this.style.display='none'" />
     </div>
     <div class="header-center">
       <h1>${linha1}</h1>
@@ -442,7 +446,7 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = "co
       <div class="ficha-tipo">${somentePessoais ? "FICHA CADASTRAL SIMPLIFICADA" : "FICHA DE ATENDIMENTO COMPLETA"}</div>
     </div>
     <div class="header-logo">
-      <img src="${logoRight}" alt="Logo CAPS II" />
+      <img src="${logoRight}" alt="Logo" onerror="this.style.display='none'" />
     </div>
     <div class="header-right">
       <div><b>Data:</b> ${dataAtual}</div>
@@ -613,8 +617,9 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = "co
 
   const handlePrint = useCallback(() => {
     const html = buildHTML();
-    const win = window.open("", "_blank", "width=800,height=900");
-    if (!win) {
+    
+    // Fallback para quando o navegador bloqueia window.open (comum em popups)
+    const printUsingIframe = () => {
       const iframe = document.createElement("iframe");
       iframe.style.position = "fixed";
       iframe.style.top = "-9999px";
@@ -622,32 +627,73 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = "co
       iframe.style.width = "210mm";
       iframe.style.height = "297mm";
       document.body.appendChild(iframe);
-      const doc = iframe.contentDocument || iframe.contentWindow?.document;
+      
+      const doc = iframe.contentDocument || (iframe.contentWindow?.document);
       if (doc) {
         doc.open();
         doc.write(html);
         doc.close();
-        setTimeout(() => {
-          iframe.contentWindow?.print();
-          setTimeout(() => {
-            document.body.removeChild(iframe);
-            onPrintComplete?.();
-          }, 1000);
-        }, 500);
+        
+        // Aguarda renderização/imagens (importante para não sair em branco)
+        const checkReadyAndPrint = () => {
+          if (doc.readyState === "complete") {
+            setTimeout(() => {
+              iframe.contentWindow?.focus();
+              iframe.contentWindow?.print();
+              setTimeout(() => {
+                document.body.removeChild(iframe);
+                onPrintComplete?.();
+              }, 1000);
+            }, 500);
+          } else {
+            setTimeout(checkReadyAndPrint, 100);
+          }
+        };
+        checkReadyAndPrint();
       }
-      return;
+    };
+
+    try {
+      const win = window.open("", "_blank");
+      if (!win || win.closed || typeof win.closed === "undefined") {
+        printUsingIframe();
+        return;
+      }
+
+      win.document.open();
+      win.document.write(html);
+      win.document.close();
+      
+      // Monitora se o documento está carregado
+      const checkReady = setInterval(() => {
+        if (win.document.readyState === "complete") {
+          clearInterval(checkReady);
+          win.focus();
+          setTimeout(() => {
+            win.print();
+            // Fallback para navegadores que não suportam afterprint
+            let printed = false;
+            win.addEventListener("afterprint", () => {
+              printed = true;
+              win.close();
+              onPrintComplete?.();
+            });
+            // Se após 2 segundos o evento afterprint não disparou (o usuário pode ter cancelado ou o navegador não disparou),
+            // tentamos fechar via timeout caso o foco volte
+            window.addEventListener("focus", () => {
+              setTimeout(() => {
+                if (!printed && !win.closed) {
+                  // onPrintComplete?.(); // Opcional
+                }
+              }, 500);
+            }, { once: true });
+          }, 500);
+        }
+      }, 100);
+    } catch (e) {
+      console.error("Print error, falling back to iframe:", e);
+      printUsingIframe();
     }
-    win.document.open();
-    win.document.write(html);
-    win.document.close();
-    win.focus();
-    setTimeout(() => {
-      win.print();
-      win.addEventListener("afterprint", () => {
-        win.close();
-        onPrintComplete?.();
-      });
-    }, 400);
   }, [buildHTML, onPrintComplete]);
 
   return (
