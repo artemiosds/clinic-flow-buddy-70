@@ -434,7 +434,7 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = "co
   <!-- CABEÇALHO -->
   <div class="header">
     <div class="header-logo">
-      <img src="${logoLeft}" alt="Logo" />
+      <img src="${logoLeft}" alt="Logo" onerror="this.style.display='none'" />
     </div>
     <div class="header-center">
       <h1>${linha1}</h1>
@@ -442,7 +442,7 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = "co
       <div class="ficha-tipo">${somentePessoais ? "FICHA CADASTRAL SIMPLIFICADA" : "FICHA DE ATENDIMENTO COMPLETA"}</div>
     </div>
     <div class="header-logo">
-      <img src="${logoRight}" alt="Logo CAPS II" />
+      <img src="${logoRight}" alt="Logo" onerror="this.style.display='none'" />
     </div>
     <div class="header-right">
       <div><b>Data:</b> ${dataAtual}</div>
