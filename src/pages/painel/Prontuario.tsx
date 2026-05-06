@@ -2413,6 +2413,11 @@ const ProntuarioPage: React.FC = () => {
                               )}
                               {proc.nome}
                             </span>
+                            {!isCustom && (proc.id || '').replace(/\D/g, '').length !== 10 && (
+                              <Badge variant="destructive" className="h-5 text-[10px] shrink-0 animate-pulse">
+                                <AlertTriangle className="h-3 w-3 mr-1" /> Sem SIGTAP
+                              </Badge>
+                            )}
                             {checked && selCids.length > 0 && (
                               <Badge variant="secondary" className="h-5 text-[10px] shrink-0">{selCids.length} CID</Badge>
                             )}
