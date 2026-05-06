@@ -183,30 +183,31 @@ const PacienteAtualizacaoCadastral: React.FC = () => {
       <PageHeader 
         title="Central de Atualização Cadastral" 
         subtitle="Identifique e corrija dados incompletos dos pacientes para garantir a conformidade com BPA/SUS."
-      >
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setIsImportOpen(true)}>
-            <FileUp className="w-4 h-4 mr-2" />
-            Importar Atualizações
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                <FileDown className="w-4 h-4 mr-2" />
-                Exportar
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleExportCSV(false)}>
-                Exportar todos os pendentes
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleExportCSV(true)} disabled={selectedIds.length === 0}>
-                Exportar selecionados ({selectedIds.length})
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </PageHeader>
+        actions={
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setIsImportOpen(true)}>
+              <FileUp className="w-4 h-4 mr-2" />
+              Importar Atualizações
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  <FileDown className="w-4 h-4 mr-2" />
+                  Exportar
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => handleExportCSV(false)}>
+                  Exportar todos os pendentes
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleExportCSV(true)} disabled={selectedIds.length === 0}>
+                  Exportar selecionados ({selectedIds.length})
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        }
+      />
 
       {/* Cards de Resumo */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
