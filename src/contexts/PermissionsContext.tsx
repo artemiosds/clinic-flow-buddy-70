@@ -88,97 +88,10 @@ export const PermissionsProvider: React.FC<{ children: React.ReactNode }> = ({ c
         const full: PermissionsMap = {};
         const det: PermissionsDetailMap = {};
         
-        PERMISSIONS_REGISTRY.forEach((mod) => {
-          full[mod.id] = {};
-          det[mod.id] = {};
-          mod.actions.forEach(act => {
-            full[mod.id][act.key] = true;
-            det[mod.id][act.key] = { allowed: true, source: 'master_global' };
-          });
-        });
-        
-        setPermissions(full);
-        setDetails(det);
-        setLoading(false);
-        return;
-      }
-
-      const role = (user.role || '').toLowerCase().trim();
-      const unidadeId = user.unidadeId || '';
-
-      // 2. Buscar permissões de perfil
-      const { data: perfilData } = await supabase
-        .from('permissoes')
-        .select('*')
-        .eq('perfil', role)
-        .in('unidade_id', unidadeId ? [unidadeId, ''] : ['']);
-
-      // 3. Buscar overrides individuais
-      const { data: userOverrides } = await supabase
-        .from('permissoes_usuario')
-        .select('*')
-        .eq('user_id', user.id)
-        .in('unidade_id', unidadeId ? [unidadeId, ''] : ['']);
-
-      // 4. Consolidar mapa de permissões e detalhes
-      const map: PermissionsMap = {};
-      const detMap: PermissionsDetailMap = {};
-      
+        PERMISSION_REGISTRY.forEach((mod) => {
+...
       PERMISSIONS_REGISTRY.forEach((mod) => {
-        const m = mod.id;
-        map[m] = {};
-        detMap[m] = {};
-
-        const uUnid = (userOverrides || []).find((r: any) => r.modulo === m && r.unidade_id === unidadeId && unidadeId);
-        const uGlob = (userOverrides || []).find((r: any) => r.modulo === m && r.unidade_id === '');
-        const pUnid = (perfilData || []).find((r: any) => r.modulo === m && r.unidade_id === unidadeId && unidadeId);
-        const pGlob = (perfilData || []).find((r: any) => r.modulo === m && r.unidade_id === '');
-
-        mod.actions.forEach(act => {
-          const a = act.key;
-          let allowed = false;
-          let source: PermissionSourceType = 'default';
-
-          // Helper para pegar valor de permissão (seja da coluna boolean ou do JSONB)
-          const getVal = (row: any, key: string) => {
-            if (!row) return undefined;
-            if (LEGACY_ACTION_COLUMNS.includes(key)) return row[key];
-            return row.acoes_especificas?.[key];
-          };
-
-          const valUUnid = getVal(uUnid, a);
-          const valUGlob = getVal(uGlob, a);
-          const valPUnid = getVal(pUnid, a);
-          const valPGlob = getVal(pGlob, a);
-
-          if (valUUnid !== undefined) {
-            allowed = !!valUUnid;
-            source = 'user_unit';
-          } else if (valUGlob !== undefined) {
-            allowed = !!valUGlob;
-            source = 'user_global';
-          } else if (valPUnid !== undefined) {
-            allowed = !!valPUnid;
-            source = 'role_unit';
-          } else if (valPGlob !== undefined) {
-            allowed = !!valPGlob;
-            source = 'role_global';
-          } else {
-            allowed = !!(DEFAULT_PERMISSIONS_BY_ROLE[role]?.[m]?.[a]);
-            source = 'default';
-          }
-
-          map[m][a] = allowed;
-          detMap[m][a] = { allowed, source };
-        });
-      });
-
-      setPermissions(map);
-      setDetails(detMap);
-    } catch (err) {
-      console.error('[Permissions] Erro fatal ao carregar permissões:', err);
-      // Fallback para mapa vazio
-      const fallbackMap: PermissionsMap = {};
+...
       PERMISSIONS_REGISTRY.forEach(m => fallbackMap[m.id] = {});
       setPermissions(fallbackMap);
       setDetails(null);
