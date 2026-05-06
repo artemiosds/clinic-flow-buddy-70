@@ -774,8 +774,15 @@ const Agenda: React.FC = () => {
         let triagemHabilitada = false;
         const { data: profSetting } = await supabase.from('triage_settings').select('enabled').eq('profissional_id', ag.profissionalId).maybeSingle();
         if (profSetting) triagemHabilitada = !!profSetting.enabled;
-        else { const { data: globalSetting } = await supabase.from('triage_settings').select('enabled').is('profissional_id', null).maybeSingle(); if (globalSetting) triagemHabilitada = !!globalSetting.enabled; }
-        if (triagemHabilitada) {
+        else { 
+          const { data: globalSetting } = await supabase.from('triage_settings').select('enabled').is('profissional_id', null).maybeSingle(); 
+          if (globalSetting) triagemHabilitada = !!globalSetting.enabled; 
+        }
+
+        // Regra Especial: Profissional ou Master com permissão "confirmar_chegada" pode pular a triagem (fluxo excepcional)
+        const podePularTriagem = (isProfissional || isMaster) && can('agenda', 'confirmar_chegada');
+
+        if (triagemHabilitada && !podePularTriagem) {
           await updateAgendamento(agId, { status: "confirmado_chegada" as any });
           const filaExistente = fila.find((item) => item.id === agId);
           if (filaExistente) await updateFila(filaExistente.id, { status: "chegada_confirmada" as any, pacienteId: ag.pacienteId, pacienteNome: ag.pacienteNome, unidadeId: ag.unidadeId, profissionalId: ag.profissionalId, horaChegada, observacoes: ag.observacoes || "" } as any);
@@ -788,7 +795,7 @@ const Agenda: React.FC = () => {
           if (filaExistente) await updateFila(filaExistente.id, { status: "apto_atendimento" as any, pacienteId: ag.pacienteId, pacienteNome: ag.pacienteNome, unidadeId: ag.unidadeId, profissionalId: ag.profissionalId, horaChegada, observacoes: ag.observacoes || "" } as any);
           else await addToFila({ id: agId, pacienteId: ag.pacienteId, pacienteNome: ag.pacienteNome, unidadeId: ag.unidadeId, profissionalId: ag.profissionalId, setor: "", prioridade: "normal", status: "apto_atendimento" as any, posicao: fila.length + 1, horaChegada, observacoes: ag.observacoes || "", criadoPor: user?.nome || "recepcao" } as any);
           await Promise.all([refreshAgendamentos(), refreshFila()]);
-          toast.success(`Triagem desabilitada. ${ag.pacienteNome} liberado para atendimento direto.`, { id: toastId });
+          toast.success(podePularTriagem ? `Chegada confirmada. ${ag.pacienteNome} liberado diretamente para atendimento.` : `Triagem desabilitada. ${ag.pacienteNome} liberado para atendimento direto.`, { id: toastId });
         }
       } else {
         await updateAgendamento(agId, { status: newStatus as any });
@@ -877,7 +884,19 @@ const Agenda: React.FC = () => {
     const today = todayLocalStr();
     if (ag.data > today) { toast.error("Não é possível iniciar atendimento antes da data agendada."); return; }
     const statusPermitidos = ["confirmado_chegada", "aguardando_atendimento", "apto_atendimento"];
-    if (!statusPermitidos.includes(ag.status)) { toast.error("Este agendamento ainda não está liberado para iniciar atendimento."); return; }
+    
+    // Se não estiver nos status permitidos, verificamos se o usuário tem permissão para confirmar chegada e pular triagem
+    if (!statusPermitidos.includes(ag.status)) {
+      if (ag.status === "confirmado" && can('agenda', 'confirmar_chegada')) {
+        // Confirmamos a chegada automaticamente (o executarStatusChange já lidará com o bypass de triagem para profissionais com essa permissão)
+        await executarStatusChange(ag.id, "confirmado_chegada");
+        // Forçamos o refresh para garantir que o status no banco esteja correto antes de prosseguir
+        await refreshAgendamentos();
+      } else {
+        toast.error("Este agendamento ainda não está liberado para iniciar atendimento."); 
+        return; 
+      }
+    }
     try {
       if (ag.status === "apto_atendimento") await updateAgendamento(ag.id, { status: "em_atendimento" as any });
       else {
@@ -1489,7 +1508,7 @@ const Agenda: React.FC = () => {
               filtered.map((ag) => {
                 const ehHoje = isSameDay(new Date(`${ag.data}T12:00:00`), new Date());
                 const STATUS_LIBERADOS = ["confirmado_chegada", "aguardando_atendimento", "apto_atendimento"];
-                const canStart = isProfissional && STATUS_LIBERADOS.includes(ag.status) && (ag.status === "apto_atendimento" || ehHoje);
+                const canStart = isProfissional && (STATUS_LIBERADOS.includes(ag.status) || (ag.status === "confirmado" && can('agenda', 'confirmar_chegada'))) && (ag.status === "apto_atendimento" || ehHoje);
                 const isEmAtendimento = ag.status === "em_atendimento";
                 const tipoInfo = tipoBadge[ag.tipo] || { label: ag.tipo, class: "bg-muted text-muted-foreground", icon: "⚪" };
                 const paciente = pacientes.find((p) => p.id === ag.pacienteId);
@@ -1588,7 +1607,20 @@ const Agenda: React.FC = () => {
                         {isProfissional && (
                           <>
                             {(ag.status === "pendente" || ag.status === "confirmado") && ehHoje && (
-                              <Tooltip><TooltipTrigger asChild><Button size="sm" variant="ghost" className="h-8 px-3 text-xs cursor-not-allowed opacity-50" disabled>⏳ Aguardando chegada</Button></TooltipTrigger><TooltipContent>Aguardando confirmação de chegada pela recepção</TooltipContent></Tooltip>
+                              can('agenda', 'confirmar_chegada') ? (
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  className="h-8 px-3 text-xs border-success text-success hover:bg-success/10" 
+                                  onClick={() => handleStatusChange(ag.id, "confirmado_chegada")}
+                                  disabled={statusUpdating}
+                                >
+                                  {statusUpdating ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <LogIn className="w-3.5 h-3.5 mr-1" />}
+                                  Confirmar Chegada
+                                </Button>
+                              ) : (
+                                <Tooltip><TooltipTrigger asChild><Button size="sm" variant="ghost" className="h-8 px-3 text-xs cursor-not-allowed opacity-50" disabled>⏳ Aguardando chegada</Button></TooltipTrigger><TooltipContent>Aguardando confirmação de chegada pela recepção</TooltipContent></Tooltip>
+                              )
                             )}
                             {ag.status === "aguardando_triagem" && ehHoje && (
                               <Tooltip><TooltipTrigger asChild><Button size="sm" variant="outline" className="h-8 px-3 text-xs cursor-not-allowed opacity-50 border-warning text-warning" disabled>🩺 Em triagem</Button></TooltipTrigger><TooltipContent>Aguardando técnico de enfermagem concluir a triagem</TooltipContent></Tooltip>
@@ -1782,6 +1814,7 @@ const Agenda: React.FC = () => {
                                 size="sm" 
                                 className="h-9 gap-2 bg-success text-success-foreground hover:bg-success/90 px-4" 
                                 onClick={() => { handleIniciarAtendimento(ag); setRevisaoDialogOpen(false); }}
+                                disabled={!(["confirmado_chegada", "aguardando_atendimento", "apto_atendimento", "apto", "chegada_confirmada"].includes(ag.status) || (ag.status === "confirmado" && can('agenda', 'confirmar_chegada')))}
                               >
                                 <Play className="w-3.5 h-3.5" />
                                 <span className="text-xs font-bold">Resolver</span>
