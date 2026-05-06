@@ -153,8 +153,7 @@ export function ConferirDadosPacienteModal({
       console.log("[ConferirDados] Dados carregados com sucesso");
       
       const cd = data.custom_data || {};
-      setPaciente(data);
-      setForm({
+      const initialForm = {
         nome: data.nome || "",
         nome_mae: data.nome_mae || "",
         data_nascimento: data.data_nascimento || "",
@@ -162,7 +161,6 @@ export function ConferirDadosPacienteModal({
         cns: maskCns(data.cns || ""),
         telefone: formatPhoneForDisplay(data.telefone || ""),
         email: data.email || "",
-        // Endereço: prioriza campos estruturados (logradouro), fallback p/ coluna legada (endereco)
         endereco: cd.logradouro || data.endereco || "",
         municipio: data.municipio || "",
         sexo: (cd.sexo === "masculino" || cd.sexo === "M") ? "M" : 
@@ -184,7 +182,11 @@ export function ConferirDadosPacienteModal({
         naturalidade: cd.naturalidade || "",
         naturalidade_uf: cd.naturalidadeUf || cd.naturalidade_uf || "",
         naturalidade_codigo_ibge: cd.naturalidadeCodigoIbge || cd.naturalidade_codigo_ibge || "",
-      });
+      };
+      setPaciente(data);
+      setForm(initialForm);
+      lastSavedFormRef.current = JSON.stringify(initialForm);
+      setAutosaveStatus('idle');
     } catch (err: any) {
       console.error("[ConferirDados] Erro ao carregar:", err);
       setLoadError(err?.message || "Erro ao carregar dados do paciente");
