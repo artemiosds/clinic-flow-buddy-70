@@ -122,13 +122,13 @@ const PacienteAtualizacaoCadastral: React.FC = () => {
     ];
 
     const rows = dataToExport.map(p => {
-      const cd = p.custom_data || {};
+      const cd = (p.custom_data as any) || {};
       return [
         p.id,
         p.nome,
-        p.nome_mae || "",
-        p.data_nascimento || "",
-        p.sexo || cd.sexo || "",
+        (p as any).nome_mae || "",
+        (p as any).data_nascimento || "",
+        (p as any).sexo || cd.sexo || "",
         p.cpf || "",
         p.cns || "",
         cd.naturalidade || "",
