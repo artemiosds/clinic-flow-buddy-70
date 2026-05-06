@@ -337,34 +337,44 @@ const Agenda: React.FC = () => {
   const agendamentosPendentesRevisao = React.useMemo(() => {
     const today = todayLocalStr();
     const nowTime = new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+    
+    // Status que geram pendência (conforme regra solicitada)
     const PENDENTE_STATUSES = new Set([
       "confirmado",
-      "aguardando",
-      "confirmado_chegada",
-      "apto_atendimento",
-      "chamado",
-      "em_atendimento",
+      "confirmada",
+      "agendado",
+      "chegada_confirmada",
       "aguardando_triagem",
-      "aguardando_atendimento",
-      "aguardando_enfermagem",
       "triagem_concluida",
-      "apto_agendamento",
-      "pendente"
+      "apto_atendimento",
+      "apto",
+      "apto_para_atendimento",
+      "em_atendimento",
+      "pendente",
+      "aguardando_profissional",
+      "aguardando_atendimento",
+      "aguardando_enfermagem"
     ]);
 
     return agendamentos.filter((a) => {
-      const currentMonth = new Date().getMonth();
-      const currentYear = new Date().getFullYear();
-      const agDate = new Date(a.data + "T12:00:00");
-      const isThisMonthOrPast =
-        agDate.getFullYear() < currentYear || (agDate.getFullYear() === currentYear && agDate.getMonth() <= currentMonth);
-
-      if (!isThisMonthOrPast) return false;
+      // 1. Data atual ou passada
       if (a.data > today) return false;
+      
+      // 2. Se for hoje, o horário já deve ter passado
       if (a.data === today && a.hora >= nowTime) return false;
+      
+      // 3. Respeitar permissões de perfil
+      // Profissional vê apenas os seus
       if (isProfissional && user?.id && a.profissionalId !== user.id) return false;
-      if (user?.unidadeId && user?.usuario !== 'admin.sms' && a.unidadeId !== user.unidadeId) return false;
+      
+      // Recepção vê apenas da sua unidade
+      if (user?.role === "recepcao" && user?.unidadeId && a.unidadeId !== user.unidadeId) return false;
+      
+      // Master de unidade vê apenas da sua unidade (Master global vê tudo)
+      const isMasterUnidade = user?.role === "master" && user?.unidadeId && user?.usuario !== 'admin.sms';
+      if (isMasterUnidade && a.unidadeId !== user.unidadeId) return false;
 
+      // 4. Deve estar em um status de pendência
       return PENDENTE_STATUSES.has(a.status);
     });
   }, [agendamentos, user, isProfissional, nowTick]);
