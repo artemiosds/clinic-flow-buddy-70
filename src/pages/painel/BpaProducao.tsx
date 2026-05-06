@@ -184,16 +184,23 @@ const BpaProducao: React.FC = () => {
   const validateRow = (l: LinhaBPA): ValidationFlags => {
     const pac = pacMap[l.paciente_id];
     const prof = profMap[l.profissional_id];
+    const uni = unidades.find(u => u.id === l.unidade_id);
+    
     const cns = (pac?.cns || '').replace(/\D/g, '');
     const cpf = (pac?.cpf || '').replace(/\D/g, '');
     const cbo = (prof?.cbo || '').replace(/\D/g, '');
     const sigtap = (l.codigo_sigtap || '').replace(/\D/g, '');
+    const cnes = String((uni as any)?.custom_data?.cnes || '').replace(/\D/g, '');
+    
     const exigeSigtap = !isCboMedico(cbo);
+    const pacCd = (pac as any)?.custom_data || {};
+    const ibge = String(pacCd.municipio_ibge || pacCd.codigo_ibge_municipio || '').replace(/\D/g, '');
+
     return {
       identificacao: cns.length === 15 || cpf.length === 11,
-      cbo: cbo.length > 0,
+      cbo: cbo.length === 6,
       sigtap: !exigeSigtap || sigtap.length === 10,
-      nome: !!(pac?.nome && pac.nome.trim().length > 0),
+      nome: !!(pac?.nome && pac.nome.trim().length >= 3),
       dataNasc: !!(pac?.data_nascimento && pac.data_nascimento.trim().length > 0),
     };
   };
