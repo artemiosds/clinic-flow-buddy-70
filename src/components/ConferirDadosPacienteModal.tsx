@@ -316,6 +316,20 @@ export function ConferirDadosPacienteModal({
     }
   }, [paciente, form, saving, queryClient, refreshPacientes]);
 
+  // Debounced Auto-save
+  useEffect(() => {
+    if (!dirty || !paciente || saving || confirming) return;
+
+    const currentFormStr = JSON.stringify(form);
+    if (currentFormStr === lastSavedFormRef.current) return;
+
+    const timer = setTimeout(() => {
+      handleSave();
+    }, 1500); // 1.5 segundos de debounce
+
+    return () => clearTimeout(timer);
+  }, [form, dirty, paciente, saving, confirming, handleSave]);
+
   const renderFieldText = useCallback((
     label: string, name: string, type = "text", placeholder?: string,
     inputMode?: "text" | "tel" | "email" | "numeric",
