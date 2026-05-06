@@ -118,7 +118,11 @@ interface FichaImpressaoProps {
 }
 
 const resolveLogoUrl = (src: string): string => {
-  if (src.startsWith("http") || src.startsWith("/")) return src;
+  if (!src) return "";
+  if (src.startsWith("http")) return src;
+  // Se for um caminho relativo ou base64, tenta resolver para absoluto
+  if (src.startsWith("data:image")) return src;
+  if (src.startsWith("/")) return window.location.origin + src;
   return src;
 };
 
