@@ -187,7 +187,7 @@ export const NATIVE_FIELDS: Record<ScreenKey, { nome: string; rotulo: string }[]
     { nome: 'prescricao', rotulo: 'Prescrição' },
     { nome: 'observacoes', rotulo: 'Observações' },
   ],
-  encaminhamento: [
+  encaminhamentos: [
     { nome: 'profissionalDestino', rotulo: 'Profissional de Destino' },
     { nome: 'especialidadeDestino', rotulo: 'Especialidade de Destino' },
     { nome: 'motivo', rotulo: 'Motivo' },
@@ -201,7 +201,7 @@ export const NATIVE_FIELDS: Record<ScreenKey, { nome: string; rotulo: string }[]
     { nome: 'descricaoClinica', rotulo: 'Descrição Clínica' },
     { nome: 'observacoes', rotulo: 'Observações' },
   ],
-  atendimento: [
+  atendimentos: [
     { nome: 'pacienteNome', rotulo: 'Paciente' },
     { nome: 'profissionalNome', rotulo: 'Profissional' },
     { nome: 'procedimento', rotulo: 'Procedimento' },
