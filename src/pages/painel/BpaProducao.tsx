@@ -28,7 +28,10 @@ import {
   validateBpaLine, 
   exportBpaToXlsx, 
   isCboMedico,
-  generateBpaTxt 
+  generateBpaTxt,
+  LinhaBPA,
+  ProntuarioRow,
+  ValidationFlags
 } from '@/services/bpaService';
 
 
