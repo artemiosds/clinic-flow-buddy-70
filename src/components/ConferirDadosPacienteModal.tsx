@@ -224,8 +224,9 @@ export function ConferirDadosPacienteModal({
   };
 
   const handleSave = async () => {
-    if (!paciente) return false;
+    if (!paciente || saving) return false;
     setSaving(true);
+    setAutosaveStatus('saving');
     try {
       const { normalizePhone } = await import("@/lib/phoneUtils");
       const normalizedTelefone = normalizePhone(form.telefone) || "";
