@@ -833,6 +833,9 @@ const Pacientes: React.FC = () => {
         subtitle={`${visiblePacientes.length} cadastrados • ${pacientesNaFila.size} aguardando atendimento`}
         actions={
           <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" onClick={() => navigate("/painel/pacientes/atualizacao-cadastral")}>
+              <AlertTriangle className="w-4 h-4 mr-2 text-warning" /> Atualização Cadastral
+            </Button>
             {canImportCSV && (
               <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
                 <FileDown className="w-4 h-4 mr-2" /> Importar CSV
