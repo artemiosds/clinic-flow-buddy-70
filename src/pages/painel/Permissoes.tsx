@@ -300,14 +300,18 @@ const Permissoes: React.FC = () => {
       return [...prev, updated];
     });
 
-    const { error } = await (supabase as any)
+    const updateData: any = { 
+      user_id: selectedUserId, 
+      modulo, 
+      unidade_id: selectedUnidade
+    };
+    ACTIONS.forEach(a => {
+      updateData[a] = updated[a];
+    });
+
+    const { error } = await supabase
       .from("permissoes_usuario")
-      .upsert(
-        { user_id: selectedUserId, modulo, unidade_id: selectedUnidade,
-          can_view: updated.can_view, can_create: updated.can_create, can_edit: updated.can_edit,
-          can_delete: updated.can_delete, can_execute: updated.can_execute },
-        { onConflict: "user_id,modulo,unidade_id" }
-      );
+      .upsert(updateData, { onConflict: "user_id,modulo,unidade_id" } as any);
 
     if (error) {
       toast.error(`Erro: ${error.message}`);
