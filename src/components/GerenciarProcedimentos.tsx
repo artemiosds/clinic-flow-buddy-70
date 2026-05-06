@@ -409,9 +409,14 @@ const GerenciarProcedimentos: React.FC = () => {
                               <span className="font-medium text-sm">{p.nome}</span>
                             </div>
                             <div className="flex items-center gap-2 mt-1 flex-wrap">
-                              <Badge variant="outline" className="text-[10px] font-mono">
+                              <Badge variant="outline" className={`text-[10px] font-mono ${!isSigtapValido ? "text-destructive border-destructive" : ""}`}>
                                 {p.codigo}
                               </Badge>
+                              {!isSigtapValido && (
+                                <Badge variant="destructive" className="text-[10px] animate-pulse">
+                                  <AlertCircle className="w-3 h-3 mr-1" /> Inválido para BPA-I
+                                </Badge>
+                              )}
                               <Badge variant="secondary" className="text-[10px] gap-1">
                                 <Tag className="w-3 h-3" /> {p.total_cids} CIDs
                               </Badge>
