@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { ModuleName, ModulePermission, usePermissions, PermissionSourceType } from "@/contexts/PermissionsContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +18,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { PERMISSION_REGISTRY } from "@/config/permissionsRegistry";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const PERFIS = ["gestao", "recepcao", "tecnico", "avaliacao_enfermagem", "profissional"] as const;
 const PERFIL_LABELS: Record<string, string> = {
@@ -181,9 +180,12 @@ const Permissoes: React.FC = () => {
     setSaving(null);
   };
 
+  const getUserRow = (modulo: ModuleName): UserPermRow | undefined =>
+    userRows.find((r) => r.modulo === modulo);
+
   const toggleUser = async (modulo: ModuleName, action: keyof ModulePermission) => {
     if (!selectedUserId) return;
-    const existing = userRows.find((r) => r.modulo === modulo);
+    const existing = getUserRow(modulo);
     const userObj = funcionarios.find((f) => f.id === selectedUserId);
     
     let base: any;
@@ -228,7 +230,6 @@ const Permissoes: React.FC = () => {
 
   const resetUserOverride = async (modulo: ModuleName) => {
     if (!selectedUserId) return;
-    setSaving(`user-reset-${modulo}`);
     const { error } = await (supabase as any)
       .from("permissoes_usuario")
       .delete()
@@ -240,10 +241,7 @@ const Permissoes: React.FC = () => {
         toast.success(`Exceção removida: ${MODULO_LABELS[modulo]}`);
         setUserRows((prev) => prev.filter((r) => r.modulo !== modulo));
     }
-    setSaving(null);
   };
-
-  if (!hasPermission(["master"])) return <div className="p-6 text-center text-muted-foreground"><Shield className="w-12 h-12 mx-auto mb-3" /> Acesso restrito ao perfil MASTER.</div>;
 
   const funcionariosFiltered = useMemo(() => {
     const q = searchUser.toLowerCase().trim();
@@ -256,6 +254,8 @@ const Permissoes: React.FC = () => {
   }, [funcionarios, searchUser, selectedUnidade]);
 
   const selectedUser = funcionarios.find((f) => f.id === selectedUserId);
+
+  if (!hasPermission(["master"])) return <div className="p-6 text-center text-muted-foreground"><Shield className="w-12 h-12 mx-auto mb-3" /> Acesso restrito ao perfil MASTER.</div>;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -272,11 +272,13 @@ const Permissoes: React.FC = () => {
                 {unidades.map((u) => <SelectItem key={u.id} value={u.id}>{u.nome}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Badge variant="outline" className="gap-1"><ShieldCheck className="w-3 h-3" /> MASTER tem acesso total</Badge>
           </div>
         </CardContent>
       </Card>
 
+      {!selectedUnidade ? (
+        <Card><CardContent className="pt-6 text-center text-muted-foreground">Selecione uma unidade para continuar.</CardContent></Card>
+      ) : (
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="grid w-full grid-cols-2 max-w-md">
           <TabsTrigger value="perfil">Permissões por Perfil</TabsTrigger>
@@ -292,41 +294,129 @@ const Permissoes: React.FC = () => {
                 {PERFIS.map((p) => <SelectItem key={p} value={p}>{PERFIL_LABELS[p]}</SelectItem>)}
               </SelectContent>
             </Select>
-            <span className="text-xs text-muted-foreground">As alterações são salvas automaticamente.</span>
           </div>
 
-          {loading ? (
-            <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" /></div>
-          ) : (
+          <Accordion type="multiple" className="space-y-2">
+            {PERMISSION_REGISTRY.map((mod) => {
+              const row = getPerfilRow(mod.id);
+              const activeCount = row ? ACTIONS.filter((a) => row[a]).length : 0;
+              return (
+                <AccordionItem key={mod.id} value={mod.id} className="border rounded-lg px-4">
+                  <AccordionTrigger className="hover:no-underline text-left">
+                    <div className="flex items-center gap-3 flex-1">
+                      <div className="flex flex-col">
+                        <span className="font-medium">{mod.label}</span>
+                        <span className="text-[10px] text-muted-foreground font-normal">{mod.description}</span>
+                      </div>
+                      <Badge variant={activeCount > 0 ? "default" : "outline"} className="ml-auto">
+                        {activeCount} ações
+                      </Badge>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 py-3">
+                      {mod.actions.map((action) => (
+                        <label key={action} className="flex items-center gap-2 cursor-pointer group">
+                          <Switch 
+                            checked={!!row?.[action]} 
+                            onCheckedChange={() => togglePerfil(mod.id, action)} 
+                            disabled={saving === `perfil-${mod.id}-${action}`}
+                          />
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium group-hover:text-primary transition-colors">{ACTION_LABELS[action]}</span>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              );
+            })}
+          </Accordion>
+        </TabsContent>
+
+        <TabsContent value="individual" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <UserIcon className="w-4 h-4" /> Selecionar Profissional
+              </CardTitle>
+              <CardDescription>Configure exceções para um funcionário específico.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por nome, usuário ou perfil…"
+                  className="pl-9"
+                  value={searchUser}
+                  onChange={(e) => setSearchUser(e.target.value)}
+                />
+              </div>
+              {!selectedUserId && (
+                <div className="max-h-60 overflow-y-auto border rounded-md divide-y">
+                  {funcionariosFiltered.map((f) => (
+                    <button key={f.id} type="button" onClick={() => setSelectedUserId(f.id)}
+                      className="w-full text-left px-3 py-2 hover:bg-accent flex items-center justify-between">
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium">{f.nome}</span>
+                        <span className="text-xs text-muted-foreground">{PERFIL_LABELS[f.role] || f.role}</span>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    </button>
+                  ))}
+                </div>
+              )}
+              {selectedUser && (
+                <div className="flex items-center justify-between p-3 bg-accent/50 rounded-md border border-accent">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
+                        {selectedUser.nome.charAt(0)}
+                    </div>
+                    <div>
+                        <div className="font-semibold text-sm">{selectedUser.nome}</div>
+                        <div className="text-xs text-muted-foreground">Perfil Base: {PERFIL_LABELS[selectedUser.role] || selectedUser.role}</div>
+                    </div>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => setSelectedUserId("")}>Trocar</Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {selectedUserId && (
             <Accordion type="multiple" className="space-y-2">
-              {MODULOS.map((modulo) => {
-                const row = getPerfilRow(modulo);
-                const isUnidade = !!perfilRows.find((r) => r.modulo === modulo && r.unidade_id === selectedUnidade);
-                const activeCount = row ? ACTIONS.filter((a) => row[a]).length : 0;
+              {PERMISSION_REGISTRY.map((mod) => {
+                const override = getUserRow(mod.id);
                 return (
-                  <AccordionItem key={modulo} value={modulo} className="border rounded-lg px-4">
-                    <AccordionTrigger className="hover:no-underline">
+                  <AccordionItem key={mod.id} value={mod.id} className="border rounded-lg px-4">
+                    <AccordionTrigger className="hover:no-underline text-left">
                       <div className="flex items-center gap-3 flex-1">
-                        <span className="font-medium">{MODULO_LABELS[modulo]}</span>
-                        <Badge variant={activeCount > 0 ? "default" : "outline"}>{activeCount}/12</Badge>
-                        {!isUnidade && row && <Badge variant="outline" className="text-xs">Global</Badge>}
-                        {isUnidade && <Badge variant="secondary" className="text-xs">Unidade</Badge>}
+                        <div className="flex flex-col">
+                            <span className="font-medium">{mod.label}</span>
+                            {override ? <Badge variant="default" className="w-fit text-[9px] h-4">Com Exceção</Badge> : <span className="text-[10px] text-muted-foreground font-normal">Herda do perfil</span>}
+                        </div>
                       </div>
                     </AccordionTrigger>
                     <AccordionContent>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 py-2">
-                        {ACTIONS.map((action) => {
-                          const k = `perfil-${modulo}-${action}`;
-                          const isLoading = saving === k;
-                          return (
-                            <label key={action} className="flex items-center gap-2 cursor-pointer">
-                              <Switch checked={!!row?.[action]} onCheckedChange={() => togglePerfil(modulo, action)} disabled={isLoading} />
-                              <span className="text-sm">{ACTION_LABELS[action]}</span>
-                              {isLoading && <Loader2 className="w-3 h-3 animate-spin" />}
-                            </label>
-                          );
-                        })}
+                      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 py-3">
+                        {mod.actions.map((action) => (
+                          <label key={action} className="flex items-center gap-2 cursor-pointer">
+                            <Switch 
+                                checked={!!override?.[action]} 
+                                onCheckedChange={() => toggleUser(mod.id, action)} 
+                            />
+                            <span className="text-sm">{ACTION_LABELS[action]}</span>
+                          </label>
+                        ))}
                       </div>
+                      {override && (
+                        <div className="pt-2 border-t mt-2 flex justify-end">
+                          <Button variant="ghost" size="xs" onClick={() => resetUserOverride(mod.id)} className="text-[10px] h-7">
+                            <RotateCcw className="w-3 h-3 mr-1" /> Remover exceção
+                          </Button>
+                        </div>
+                      )}
                     </AccordionContent>
                   </AccordionItem>
                 );
@@ -334,99 +424,15 @@ const Permissoes: React.FC = () => {
             </Accordion>
           )}
         </TabsContent>
-
-        <TabsContent value="individual" className="space-y-4">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2"><UserIcon className="w-4 h-4" /> Selecionar Profissional</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input placeholder="Buscar por nome, usuário ou perfil…" className="pl-9" value={searchUser} onChange={(e) => setSearchUser(e.target.value)} />
-              </div>
-              {!selectedUserId && (
-                <div className="max-h-72 overflow-y-auto border rounded-md divide-y">
-                  {funcionariosFiltered.length === 0 ? (
-                    <div className="p-4 text-center text-sm text-muted-foreground">Nenhum profissional encontrado.</div>
-                  ) : funcionariosFiltered.map((f) => (
-                    <button key={f.id} type="button" onClick={() => setSelectedUserId(f.id)} className="w-full text-left px-3 py-2 hover:bg-accent flex items-center justify-between">
-                      <div>
-                        <div className="font-medium text-sm">{f.nome}</div>
-                        <div className="text-xs text-muted-foreground">{f.usuario} · {PERFIL_LABELS[f.role] || f.role.toUpperCase()}</div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-              {selectedUser && (
-                <div className="flex items-center justify-between p-3 bg-accent/50 rounded-md">
-                  <div>
-                    <div className="font-medium">{selectedUser.nome}</div>
-                    <div className="text-xs text-muted-foreground">{selectedUser.usuario} · Perfil base: <Badge variant="outline">{PERFIL_LABELS[selectedUser.role] || selectedUser.role}</Badge></div>
-                  </div>
-                  <Button variant="ghost" size="sm" onClick={() => { setSelectedUserId(""); setUserRows([]); }}>Trocar</Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {selectedUserId && (
-            loading ? (
-              <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" /></div>
-            ) : (
-              <Accordion type="multiple" className="space-y-2">
-                {MODULOS.map((modulo) => {
-                  const override = getUserRow(modulo);
-                  const activeCount = override ? ACTIONS.filter((a) => override[a]).length : 0;
-                  return (
-                    <AccordionItem key={modulo} value={modulo} className="border rounded-lg px-4">
-                      <AccordionTrigger className="hover:no-underline">
-                        <div className="flex items-center gap-3 flex-1">
-                          <span className="font-medium">{MODULO_LABELS[modulo]}</span>
-                          {override ? (
-                            <>
-                              <Badge variant="default">{activeCount}/12</Badge>
-                              <Badge variant="secondary" className="text-xs">Exceção ativa</Badge>
-                            </>
-                          ) : (
-                            <Badge variant="outline" className="text-xs">Herda do perfil</Badge>
-                          )}
-                        </div>
-                      </AccordionTrigger>
-                      <AccordionContent>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 py-2">
-                          {ACTIONS.map((action) => {
-                            const k = `user-${modulo}-${action}`;
-                            const isLoading = saving === k;
-                            return (
-                              <label key={action} className="flex items-center gap-2 cursor-pointer">
-                                <Switch checked={!!override?.[action]} onCheckedChange={() => toggleUser(modulo, action)} disabled={isLoading} />
-                                <span className="text-sm">{ACTION_LABELS[action]}</span>
-                                {isLoading && <Loader2 className="w-3 h-3 animate-spin" />}
-                              </label>
-                            );
-                          })}
-                        </div>
-                        {override && (
-                          <div className="pt-2 border-t mt-2">
-                            <Button variant="ghost" size="sm" onClick={() => resetUserOverride(modulo)} disabled={saving === `user-reset-${modulo}`}>
-                              {saving === `user-reset-${modulo}` ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <RotateCcw className="w-3 h-3 mr-1" />}
-                              Remover exceção (voltar ao perfil)
-                            </Button>
-                          </div>
-                        )}
-                      </AccordionContent>
-                    </AccordionItem>
-                  );
-                })}
-              </Accordion>
-            )
-          )}
-        </TabsContent>
       </Tabs>
+      )}
     </div>
   );
 };
+
+// Add missing icon
+const ChevronRight = ({ className }: { className?: string }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m9 18 6-6-6-6"/></svg>
+);
 
 export default Permissoes;
