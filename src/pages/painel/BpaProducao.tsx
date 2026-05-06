@@ -17,45 +17,26 @@ import {
   Table, TableHeader, TableHead, TableRow, TableBody, TableCell,
 } from '@/components/ui/table';
 import {
-  AlertCircle, CheckCircle2, Download, FileText, Loader2, RefreshCw,
+  AlertCircle, CheckCircle2, Download, FileText, Loader2, RefreshCw, FileSpreadsheet, AlertTriangle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { 
+  BpaLine, 
+  normalizeBpaData, 
+  validateBpaLine, 
+  exportBpaToXlsx, 
+  isCboMedico,
+  generateBpaTxt,
+  LinhaBPA,
+  ProntuarioRow,
+  ValidationFlags
+} from '@/services/bpaService';
 
 
-interface ProntuarioRow {
-  id: string;
-  paciente_id: string;
-  paciente_nome: string;
-  profissional_id: string;
-  profissional_nome: string;
-  data_atendimento: string;
-  unidade_id: string;
-}
 
-interface LinhaBPA {
-  key: string;                // prontuario_id + proc_id
-  prontuario_id: string;
-  paciente_id: string;
-  paciente_nome: string;
-  profissional_id: string;
-  profissional_nome: string;
-  data: string;
-  procedimento_nome: string;
-  codigo_sigtap: string;
-}
-
-interface ValidationFlags {
-  identificacao: boolean;  // CNS (15) OU CPF (11)
-  cbo: boolean;            // CBO obrigatório
-  sigtap: boolean;         // SIGTAP só obrigatório p/ não-médicos
-  nome: boolean;           // Nome paciente
-  dataNasc: boolean;       // Data nascimento
-}
-
-// CBOs de médicos (família 225*) — médicos podem registrar atendimento sem SIGTAP
-const isCboMedico = (cbo: string) => (cbo || '').replace(/\D/g, '').startsWith('225');
+// Os tipos e utilitários foram movidos para @/services/bpaService
 
 const currentCompetencia = (): string => {
   const d = new Date();
@@ -132,6 +113,7 @@ const BpaProducao: React.FC = () => {
           paciente_nome: pront.paciente_nome,
           profissional_id: pront.profissional_id,
           profissional_nome: pront.profissional_nome,
+          unidade_id: pront.unidade_id,
           data: pront.data_atendimento,
           procedimento_nome: v.nome_procedimento || '—',
           codigo_sigtap: v.codigo_sigtap || '',
@@ -148,6 +130,7 @@ const BpaProducao: React.FC = () => {
             paciente_nome: pront.paciente_nome,
             profissional_id: pront.profissional_id,
             profissional_nome: pront.profissional_nome,
+            unidade_id: pront.unidade_id,
             data: pront.data_atendimento,
             procedimento_nome: '— sem procedimento —',
             codigo_sigtap: '',
@@ -201,16 +184,23 @@ const BpaProducao: React.FC = () => {
   const validateRow = (l: LinhaBPA): ValidationFlags => {
     const pac = pacMap[l.paciente_id];
     const prof = profMap[l.profissional_id];
+    const uni = unidades.find(u => u.id === l.unidade_id);
+    
     const cns = (pac?.cns || '').replace(/\D/g, '');
     const cpf = (pac?.cpf || '').replace(/\D/g, '');
     const cbo = (prof?.cbo || '').replace(/\D/g, '');
     const sigtap = (l.codigo_sigtap || '').replace(/\D/g, '');
+    const cnes = String((uni as any)?.custom_data?.cnes || '').replace(/\D/g, '');
+    
     const exigeSigtap = !isCboMedico(cbo);
+    const pacCd = (pac as any)?.custom_data || {};
+    const ibge = String(pacCd.municipio_ibge || pacCd.codigo_ibge_municipio || '').replace(/\D/g, '');
+
     return {
       identificacao: cns.length === 15 || cpf.length === 11,
-      cbo: cbo.length > 0,
+      cbo: cbo.length === 6,
       sigtap: !exigeSigtap || sigtap.length === 10,
-      nome: !!(pac?.nome && pac.nome.trim().length > 0),
+      nome: !!(pac?.nome && pac.nome.trim().length >= 3),
       dataNasc: !!(pac?.data_nascimento && pac.data_nascimento.trim().length > 0),
     };
   };
@@ -342,8 +332,8 @@ const BpaProducao: React.FC = () => {
 
       {/* Filtros */}
       <Card className="shadow-card border-0">
-        <CardContent className="p-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div>
+        <CardContent className="p-4 flex flex-col sm:flex-row gap-3">
+          <div className="w-full sm:w-[180px]">
             <Label className="text-xs">Competência (AAAAMM)</Label>
             <Input
               value={competencia}
@@ -352,7 +342,7 @@ const BpaProducao: React.FC = () => {
               placeholder="202504"
             />
           </div>
-          <div className="sm:col-span-2">
+          <div className="flex-1">
             <Label className="text-xs">Unidade</Label>
             <Select value={unidadeFiltro} onValueChange={setUnidadeFiltro}>
               <SelectTrigger><SelectValue /></SelectTrigger>
@@ -363,6 +353,36 @@ const BpaProducao: React.FC = () => {
                 ))}
               </SelectContent>
             </Select>
+          </div>
+          <div className="flex items-end gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                const bpaLines: BpaLine[] = linhas.map(l => {
+                  const pac = pacMap[l.paciente_id];
+                  const prof = profMap[l.profissional_id];
+                  const uni = unidades.find(u => u.id === l.unidade_id);
+                  return normalizeBpaData({
+                    ...l,
+                    paciente_custom: (pac as any)?.custom_data || {},
+                    paciente_sexo: (pac as any)?.sexo || '',
+                    paciente_nascimento: pac?.data_nascimento || '',
+                    paciente_cns: pac?.cns || '',
+                    paciente_cpf: pac?.cpf || '',
+                    profissional_custom: (prof as any)?.custom_data || prof,
+                    unidade_custom: (uni as any)?.custom_data || {},
+                    unidade_nome: uni?.nome || '',
+                  });
+                });
+                exportBpaToXlsx(bpaLines, competencia);
+                toast.success('XLSX de conferência gerado com sucesso!');
+              }}
+              className="gap-2 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
+              disabled={linhas.length === 0}
+            >
+              <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+              Conferência (XLSX)
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -384,7 +404,10 @@ const BpaProducao: React.FC = () => {
         <Card className="shadow-card border-0">
           <CardContent className="p-4">
             <p className="text-xs text-destructive">Pendentes</p>
-            <p className="text-2xl font-bold text-destructive">{stats.pendentes}</p>
+            <p className="text-2xl font-bold text-destructive">
+              {stats.pendentes}
+              <span className="text-[10px] ml-1 font-normal">(não exportáveis)</span>
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -443,10 +466,13 @@ const BpaProducao: React.FC = () => {
                           {l.paciente_nome || <span className="italic">faltando</span>}
                         </TableCell>
                         <TableCell className={cn("text-xs font-mono", !v.identificacao && "text-destructive")}>
-                          {pac?.cns || pac?.cpf || <span className="italic">faltando</span>}
+                          <div className="flex flex-col">
+                            <span>{pac?.cns || <span className="italic opacity-50">sem cns</span>}</span>
+                            <span className="text-[10px] opacity-70">{pac?.cpf || <span className="italic opacity-50">sem cpf</span>}</span>
+                          </div>
                         </TableCell>
                         <TableCell className={cn("text-xs", !v.dataNasc && "text-destructive italic")}>
-                          {pac?.data_nascimento || 'faltando'}
+                          {pac?.data_nascimento ? new Date(pac.data_nascimento + 'T12:00:00').toLocaleDateString('pt-BR') : 'faltando'}
                         </TableCell>
                         <TableCell className="text-xs">{l.profissional_nome}</TableCell>
                         <TableCell className={cn("text-xs font-mono", !v.cbo && "text-destructive")}>

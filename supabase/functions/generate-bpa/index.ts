@@ -222,27 +222,36 @@ Deno.serve(async (req) => {
       if (!pac) motivosBloqueio.push('Paciente não encontrado');
       const cns = pac ? onlyDigits(pac.cns) : '';
       const cpf = pac ? onlyDigits(pac.cpf) : '';
-      // Regra: CNS OU CPF (um dos dois)
-      if (!(cns.length === 15) && !(cpf.length === 11)) motivosBloqueio.push('CNS ou CPF obrigatório');
-      if (pac && !pac.nome) motivosBloqueio.push('Nome do paciente ausente');
+      
+      // Regra BPA-I: CNS 15 dígitos ou CPF 11 dígitos
+      if (cns.length !== 15 && cpf.length !== 11) {
+        motivosBloqueio.push('Identificação inválida (CNS 15 ou CPF 11)');
+      }
+      
+      if (pac && (!pac.nome || pac.nome.trim().length < 3)) motivosBloqueio.push('Nome do paciente inválido');
       if (pac && !pac.data_nascimento) motivosBloqueio.push('Data de nascimento ausente');
 
-      // CBO obrigatório
+      const pacCustom = pac?.custom_data || {};
+      const municipio = onlyDigits(pacCustom.municipio_ibge || pacCustom.codigo_ibge_municipio || '');
+      if (!municipio || municipio.length < 6) motivosBloqueio.push('Código IBGE do município ausente/inválido');
+
+      // CBO obrigatório (6 dígitos)
       const cbo = prof ? String((prof.custom_data || {}).cbo_codigo || '') : '';
       const cboDigits = onlyDigits(cbo);
-      if (!cboDigits || cboDigits.length === 0) motivosBloqueio.push('CBO do profissional ausente');
+      if (!cboDigits || cboDigits.length !== 6) motivosBloqueio.push('CBO do profissional inválido (6 dígitos)');
 
-      // CNES obrigatório
+      // CNES obrigatório (7 dígitos)
       const cnesUni = uni ? onlyDigits((uni.custom_data || {}).cnes || '') : '';
       const cnes = cnesOverride || cnesUni;
-      if (!cnes || cnes.length === 0) motivosBloqueio.push('CNES da unidade ausente');
+      if (!cnes || cnes.length !== 7) motivosBloqueio.push('CNES da unidade inválido (7 dígitos)');
 
       // SIGTAP — obrigatório apenas para não-médicos
       const sigtap = proc ? onlyDigits(proc.codigo_sigtap || '') : '';
       const exigeSigtap = !isMedico(cboDigits);
       if (exigeSigtap) {
-        if (!proc) motivosBloqueio.push('Procedimento SIGTAP obrigatório (não-médico)');
-        else if (sigtap.length !== 10) motivosBloqueio.push('Código SIGTAP inválido (10 dígitos)');
+        if (!proc || !sigtap || sigtap.length !== 10) {
+          motivosBloqueio.push('Código SIGTAP obrigatório (10 dígitos)');
+        }
       }
 
       if (motivosBloqueio.length > 0) {
