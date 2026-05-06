@@ -955,6 +955,18 @@ const ProntuarioPage: React.FC = () => {
         .filter(Boolean)
         .join(", ");
 
+      // Validação BPA-I: Verifica se há algum procedimento sem código SIGTAP válido
+      const hasInvalidSigtapSave = selectedProcIds.some(id => {
+        const p = procedimentos.find(pr => pr.id === id);
+        return !p || (p.id || '').replace(/\D/g, '').length !== 10;
+      });
+
+      if (hasInvalidSigtapSave && !confirm("Atenção: Um ou mais procedimentos selecionados não possuem código SIGTAP de 10 dígitos. Isso impedirá a exportação correta para o BPA-I. Deseja continuar mesmo assim?")) {
+        setSaving(false);
+        toast.dismiss(toastId);
+        return false;
+      }
+
       // Resolve profissional responsável: preserva o original em edições.
       // Master pode reatribuir via overrideProfissionalId.
       const isMasterEditing = user?.role === 'master' && !!editId;
