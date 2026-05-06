@@ -1,9 +1,9 @@
 import { PageHeader } from '@/components/layout/PageHeader';
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { ModuleName, ModulePermission } from "@/contexts/PermissionsContext";
+import { ModuleName, ModulePermission, usePermissions, PermissionSourceType } from "@/contexts/PermissionsContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -11,8 +11,14 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader2, Shield, ShieldCheck, Search, User as UserIcon, Building2, RotateCcw, Radio } from "lucide-react";
+import { 
+  Loader2, Shield, ShieldCheck, Search, User as UserIcon, Building2, 
+  RotateCcw, Radio, LayoutGrid, ClipboardCheck, Settings2, Info,
+  Unlock, Lock as LockIcon, CheckCircle2, XCircle, AlertCircle
+} from "lucide-react";
 import { toast } from "sonner";
+import { PERMISSION_REGISTRY } from "@/config/permissionsRegistry";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const PERFIS = ["gestao", "recepcao", "tecnico", "avaliacao_enfermagem", "profissional"] as const;
 const PERFIL_LABELS: Record<string, string> = {
@@ -22,51 +28,6 @@ const PERFIL_LABELS: Record<string, string> = {
   enfermagem: "ENFERMAGEM",
   profissional: "PROFISSIONAL",
 };
-
-const MODULOS: ModuleName[] = [
-  "dashboard", "agenda", "fila_espera", "pacientes", "atendimentos", "gestao_tratamentos",
-  "prontuario", "triagem", "historico_triagem", "avaliacao_enfermagem", "pts", "avaliacao_multi",
-  "relatorio_alta", "encaminhamentos", "encaminhamentos_externos", "arquivo_digital", "relatorios",
-  "bpa_producao", "funcionarios", "unidades_salas", "disponibilidade", "feriados_bloqueios",
-  "logs_auditoria", "configuracoes", "permissoes", "assinatura_eletronica", "modelos_documentos", "sistema"
-];
-
-const MODULO_LABELS: Record<ModuleName, string> = {
-  dashboard: "Dashboard",
-  agenda: "Agenda",
-  fila_espera: "Fila de Espera",
-  pacientes: "Pacientes",
-  atendimentos: "Atendimentos",
-  gestao_tratamentos: "Gestão de Tratamentos",
-  prontuario: "Prontuário",
-  triagem: "Triagem",
-  historico_triagem: "Histórico Triagem",
-  avaliacao_enfermagem: "Avaliação Enfermagem",
-  pts: "PTS",
-  avaliacao_multi: "Avaliação Multi",
-  relatorio_alta: "Relatório de Alta",
-  encaminhamentos: "Encaminhamentos",
-  encaminhamentos_externos: "Encam. Externos",
-  arquivo_digital: "Arquivo Digital",
-  relatorios: "Relatórios",
-  bpa_producao: "BPA-Produção",
-  funcionarios: "Funcionários",
-  unidades_salas: "Unidades/Salas",
-  disponibilidade: "Disponibilidade",
-  feriados_bloqueios: "Feriados/Bloqueios",
-  logs_auditoria: "Logs & Auditoria",
-  configuracoes: "Configurações",
-  permissoes: "Permissões",
-  assinatura_eletronica: "Assinatura Eletrônica",
-  modelos_documentos: "Modelos de Documentos",
-  sistema: "Sistema"
-};
-
-const ACTIONS: (keyof ModulePermission)[] = [
-  "can_view", "can_create", "can_edit", "can_delete", "can_execute",
-  "can_print", "can_export", "can_attach", "can_sign", "can_approve",
-  "can_cancel", "can_config"
-];
 
 const ACTION_LABELS: Record<keyof ModulePermission, string> = {
   can_view: "Visualizar",
@@ -81,6 +42,15 @@ const ACTION_LABELS: Record<keyof ModulePermission, string> = {
   can_approve: "Aprovar",
   can_cancel: "Cancelar",
   can_config: "Configurar",
+};
+
+const SOURCE_LABELS: Record<PermissionSourceType, string> = {
+  role_global: "Perfil (G)",
+  role_unit: "Perfil (U)",
+  user_global: "Individual (G)",
+  user_unit: "Individual (U)",
+  master_global: "Master Total",
+  default: "Padrão Sistema"
 };
 
 interface PermRow extends ModulePermission {
