@@ -17,11 +17,20 @@ import {
   Table, TableHeader, TableHead, TableRow, TableBody, TableCell,
 } from '@/components/ui/table';
 import {
-  AlertCircle, CheckCircle2, Download, FileText, Loader2, RefreshCw,
+  AlertCircle, CheckCircle2, Download, FileText, Loader2, RefreshCw, FileSpreadsheet, AlertTriangle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { 
+  BpaLine, 
+  normalizeBpaData, 
+  validateBpaLine, 
+  exportBpaToXlsx, 
+  isCboMedico,
+  generateBpaTxt 
+} from '@/services/bpaService';
+
 
 
 interface ProntuarioRow {
