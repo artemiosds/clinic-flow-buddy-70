@@ -76,7 +76,7 @@ const Funcionarios: React.FC = () => {
   });
   const [cbo, setCbo] = useState<CboValue | null>(null);
   const [showCboError, setShowCboError] = useState(false);
-  const canManage = can('usuarios', 'can_edit');
+  const canManage = can('funcionarios', 'can_edit');
   const [searchTerm, setSearchTerm] = useState('');
 
   const loadFuncionarios = async () => {
