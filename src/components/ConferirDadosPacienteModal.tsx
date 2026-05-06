@@ -216,7 +216,7 @@ export function ConferirDadosPacienteModal({
     }, 1500); // 1.5 segundos de debounce
 
     return () => clearTimeout(timer);
-  }, [form, dirty, paciente, saving, confirming]);
+  }, [form, dirty, paciente, saving, confirming, handleSave]);
 
   const validacao = useMemo(() => {
     if (!paciente) return { incompleto: false, faltando: [] as string[] };
