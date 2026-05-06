@@ -613,8 +613,9 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = "co
 
   const handlePrint = useCallback(() => {
     const html = buildHTML();
-    const win = window.open("", "_blank", "width=800,height=900");
-    if (!win) {
+    
+    // Fallback para quando o navegador bloqueia window.open (comum em popups)
+    const printUsingIframe = () => {
       const iframe = document.createElement("iframe");
       iframe.style.position = "fixed";
       iframe.style.top = "-9999px";
@@ -622,32 +623,73 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = "co
       iframe.style.width = "210mm";
       iframe.style.height = "297mm";
       document.body.appendChild(iframe);
-      const doc = iframe.contentDocument || iframe.contentWindow?.document;
+      
+      const doc = iframe.contentDocument || (iframe.contentWindow?.document);
       if (doc) {
         doc.open();
         doc.write(html);
         doc.close();
-        setTimeout(() => {
-          iframe.contentWindow?.print();
-          setTimeout(() => {
-            document.body.removeChild(iframe);
-            onPrintComplete?.();
-          }, 1000);
-        }, 500);
+        
+        // Aguarda renderização/imagens (importante para não sair em branco)
+        const checkReadyAndPrint = () => {
+          if (doc.readyState === "complete") {
+            setTimeout(() => {
+              iframe.contentWindow?.focus();
+              iframe.contentWindow?.print();
+              setTimeout(() => {
+                document.body.removeChild(iframe);
+                onPrintComplete?.();
+              }, 1000);
+            }, 500);
+          } else {
+            setTimeout(checkReadyAndPrint, 100);
+          }
+        };
+        checkReadyAndPrint();
       }
-      return;
+    };
+
+    try {
+      const win = window.open("", "_blank");
+      if (!win || win.closed || typeof win.closed === "undefined") {
+        printUsingIframe();
+        return;
+      }
+
+      win.document.open();
+      win.document.write(html);
+      win.document.close();
+      
+      // Monitora se o documento está carregado
+      const checkReady = setInterval(() => {
+        if (win.document.readyState === "complete") {
+          clearInterval(checkReady);
+          win.focus();
+          setTimeout(() => {
+            win.print();
+            // Fallback para navegadores que não suportam afterprint
+            let printed = false;
+            win.addEventListener("afterprint", () => {
+              printed = true;
+              win.close();
+              onPrintComplete?.();
+            });
+            // Se após 2 segundos o evento afterprint não disparou (o usuário pode ter cancelado ou o navegador não disparou),
+            // tentamos fechar via timeout caso o foco volte
+            window.addEventListener("focus", () => {
+              setTimeout(() => {
+                if (!printed && !win.closed) {
+                  // onPrintComplete?.(); // Opcional
+                }
+              }, 500);
+            }, { once: true });
+          }, 500);
+        }
+      }, 100);
+    } catch (e) {
+      console.error("Print error, falling back to iframe:", e);
+      printUsingIframe();
     }
-    win.document.open();
-    win.document.write(html);
-    win.document.close();
-    win.focus();
-    setTimeout(() => {
-      win.print();
-      win.addEventListener("afterprint", () => {
-        win.close();
-        onPrintComplete?.();
-      });
-    }, 400);
   }, [buildHTML, onPrintComplete]);
 
   return (
