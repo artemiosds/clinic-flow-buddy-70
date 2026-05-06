@@ -323,8 +323,8 @@ const BpaProducao: React.FC = () => {
 
       {/* Filtros */}
       <Card className="shadow-card border-0">
-        <CardContent className="p-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div>
+        <CardContent className="p-4 flex flex-col sm:flex-row gap-3">
+          <div className="w-full sm:w-[180px]">
             <Label className="text-xs">Competência (AAAAMM)</Label>
             <Input
               value={competencia}
@@ -333,7 +333,7 @@ const BpaProducao: React.FC = () => {
               placeholder="202504"
             />
           </div>
-          <div className="sm:col-span-2">
+          <div className="flex-1">
             <Label className="text-xs">Unidade</Label>
             <Select value={unidadeFiltro} onValueChange={setUnidadeFiltro}>
               <SelectTrigger><SelectValue /></SelectTrigger>
@@ -344,6 +344,35 @@ const BpaProducao: React.FC = () => {
                 ))}
               </SelectContent>
             </Select>
+          </div>
+          <div className="flex items-end gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                const bpaLines: BpaLine[] = linhas.map(l => {
+                  const pac = pacMap[l.paciente_id];
+                  const prof = profMap[l.profissional_id];
+                  return normalizeBpaData({
+                    ...l,
+                    paciente_custom: (pac as any)?.custom_data || {},
+                    paciente_sexo: (pac as any)?.sexo || '',
+                    paciente_nascimento: pac?.data_nascimento || '',
+                    paciente_cns: pac?.cns || '',
+                    paciente_cpf: pac?.cpf || '',
+                    profissional_custom: (prof as any)?.custom_data || prof,
+                    unidade_custom: (unidades.find(u => u.id === l.unidade_id) as any)?.custom_data || {},
+                    unidade_nome: unidades.find(u => u.id === l.unidade_id)?.nome || '',
+                  });
+                });
+                exportBpaToXlsx(bpaLines, competencia);
+                toast.success('XLSX de conferência gerado com sucesso!');
+              }}
+              className="gap-2"
+              disabled={linhas.length === 0}
+            >
+              <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+              Conferência (XLSX)
+            </Button>
           </div>
         </CardContent>
       </Card>
