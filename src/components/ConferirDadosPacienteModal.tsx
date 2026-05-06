@@ -327,6 +327,7 @@ export function ConferirDadosPacienteModal({
       // Limpa o status de 'salvo' após 3 segundos
       setTimeout(() => setAutosaveStatus(prev => prev === 'saved' ? 'idle' : prev), 3000);
     }
+  }, [paciente, form, saving, queryClient, refreshPacientes]);
   };
 
   const renderFieldText = useCallback((
