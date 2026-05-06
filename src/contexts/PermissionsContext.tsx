@@ -87,23 +87,23 @@ const fullPerm: ModulePermission = {
 
 const DEFAULT_PERMISSIONS_BY_ROLE: Record<string, Partial<PermissionsMap>> = {
   gestao: {
-    dashboard: { can_view: true },
-    pacientes: { can_view: true, can_create: true, can_edit: true, can_print: true, can_export: true },
-    agenda: { can_view: true, can_create: true, can_edit: true, can_delete: true, can_execute: true, can_print: true },
-    relatorios: { can_view: true, can_export: true },
-    configuracoes: { can_view: true, can_config: true },
-    permissoes: { can_view: true, can_edit: true }
+    dashboard: { ...defaultPerm, can_view: true },
+    pacientes: { ...defaultPerm, can_view: true, can_create: true, can_edit: true, can_print: true, can_export: true },
+    agenda: { ...defaultPerm, can_view: true, can_create: true, can_edit: true, can_delete: true, can_execute: true, can_print: true },
+    relatorios: { ...defaultPerm, can_view: true, can_export: true },
+    configuracoes: { ...defaultPerm, can_view: true, can_config: true },
+    permissoes: { ...defaultPerm, can_view: true, can_edit: true }
   },
   profissional: {
-    agenda: { can_view: true, can_execute: true, can_print: true },
-    pacientes: { can_view: true },
-    atendimentos: { can_view: true, can_create: true, can_edit: true },
-    prontuario: { can_view: true, can_create: true, can_edit: true, can_print: true, can_sign: true }
+    agenda: { ...defaultPerm, can_view: true, can_execute: true, can_print: true },
+    pacientes: { ...defaultPerm, can_view: true },
+    atendimentos: { ...defaultPerm, can_view: true, can_create: true, can_edit: true },
+    prontuario: { ...defaultPerm, can_view: true, can_create: true, can_edit: true, can_print: true, can_sign: true }
   },
   recepcao: {
-    agenda: { can_view: true, can_create: true, can_edit: true, can_execute: true },
-    pacientes: { can_view: true, can_create: true, can_edit: true },
-    fila_espera: { can_view: true, can_create: true, can_execute: true }
+    agenda: { ...defaultPerm, can_view: true, can_create: true, can_edit: true, can_execute: true },
+    pacientes: { ...defaultPerm, can_view: true, can_create: true, can_edit: true },
+    fila_espera: { ...defaultPerm, can_view: true, can_create: true, can_execute: true }
   }
 };
 
