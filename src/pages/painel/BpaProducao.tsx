@@ -396,7 +396,10 @@ const BpaProducao: React.FC = () => {
         <Card className="shadow-card border-0">
           <CardContent className="p-4">
             <p className="text-xs text-destructive">Pendentes</p>
-            <p className="text-2xl font-bold text-destructive">{stats.pendentes}</p>
+            <p className="text-2xl font-bold text-destructive">
+              {stats.pendentes}
+              <span className="text-[10px] ml-1 font-normal">(não exportáveis)</span>
+            </p>
           </CardContent>
         </Card>
       </div>
