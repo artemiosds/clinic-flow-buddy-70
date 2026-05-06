@@ -1372,9 +1372,9 @@ const ProntuarioPage: React.FC = () => {
 
     await logAction({
       acao: "atendimento_finalizado",
-      entidade: "atendimento",
+      entidade: "atendimentos",
       entidadeId: agendamentoId,
-      modulo: "atendimento",
+      modulo: "atendimentos",
       user,
       detalhes: {
         paciente_nome: form.paciente_nome,
@@ -2623,7 +2623,7 @@ const ProntuarioPage: React.FC = () => {
                   </SelectTrigger>
                   <SelectContent>
                     {funcionarios
-                      .filter((f: any) => f.ativo && (f.role === 'profissional' || f.role === 'enfermagem' || f.role === 'tecnico'))
+                      .filter((f: any) => f.ativo && (f.role === 'profissional' || f.role === 'avaliacao_enfermagem' || f.role === 'tecnico'))
                       .map((f: any) => (
                         <SelectItem key={f.id} value={f.id}>
                           {f.nome} {f.profissao ? `— ${f.profissao}` : ''}

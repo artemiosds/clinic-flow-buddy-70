@@ -36,7 +36,7 @@ const REFERRAL_SOURCES = [
   { value: 'hospital', label: 'Hospital' },
   { value: 'espontaneo', label: 'Demanda Espontânea' },
   { value: 'judicial', label: 'Ordem Judicial' },
-  { value: 'encaminhamento', label: 'Encaminhamento Médico' },
+  { value: 'encaminhamentos', label: 'Encaminhamento Médico' },
 ];
 
 const PRIORITY_LEVELS = [
@@ -251,7 +251,7 @@ const Regulacao: React.FC = () => {
   const getEvaluationsForReg = (regId: string) =>
     evaluations.filter(e => e.regulation_id === regId);
 
-  if (!can('encaminhamento', 'can_view')) {
+  if (!can('encaminhamentos', 'can_view')) {
     return <div className="p-6 text-muted-foreground">Sem permissão para acessar esta página.</div>;
   }
 

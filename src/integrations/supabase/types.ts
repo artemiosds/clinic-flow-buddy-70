@@ -2248,10 +2248,17 @@ export type Database = {
       }
       permissoes: {
         Row: {
+          can_approve: boolean
+          can_attach: boolean
+          can_cancel: boolean
+          can_config: boolean
           can_create: boolean
           can_delete: boolean
           can_edit: boolean
           can_execute: boolean
+          can_export: boolean
+          can_print: boolean
+          can_sign: boolean
           can_view: boolean
           created_at: string
           id: string
@@ -2261,10 +2268,17 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          can_approve?: boolean
+          can_attach?: boolean
+          can_cancel?: boolean
+          can_config?: boolean
           can_create?: boolean
           can_delete?: boolean
           can_edit?: boolean
           can_execute?: boolean
+          can_export?: boolean
+          can_print?: boolean
+          can_sign?: boolean
           can_view?: boolean
           created_at?: string
           id?: string
@@ -2274,10 +2288,17 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          can_approve?: boolean
+          can_attach?: boolean
+          can_cancel?: boolean
+          can_config?: boolean
           can_create?: boolean
           can_delete?: boolean
           can_edit?: boolean
           can_execute?: boolean
+          can_export?: boolean
+          can_print?: boolean
+          can_sign?: boolean
           can_view?: boolean
           created_at?: string
           id?: string
@@ -2290,10 +2311,17 @@ export type Database = {
       }
       permissoes_usuario: {
         Row: {
+          can_approve: boolean
+          can_attach: boolean
+          can_cancel: boolean
+          can_config: boolean
           can_create: boolean
           can_delete: boolean
           can_edit: boolean
           can_execute: boolean
+          can_export: boolean
+          can_print: boolean
+          can_sign: boolean
           can_view: boolean
           created_at: string
           id: string
@@ -2303,10 +2331,17 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          can_approve?: boolean
+          can_attach?: boolean
+          can_cancel?: boolean
+          can_config?: boolean
           can_create?: boolean
           can_delete?: boolean
           can_edit?: boolean
           can_execute?: boolean
+          can_export?: boolean
+          can_print?: boolean
+          can_sign?: boolean
           can_view?: boolean
           created_at?: string
           id?: string
@@ -2316,10 +2351,17 @@ export type Database = {
           user_id: string
         }
         Update: {
+          can_approve?: boolean
+          can_attach?: boolean
+          can_cancel?: boolean
+          can_config?: boolean
           can_create?: boolean
           can_delete?: boolean
           can_edit?: boolean
           can_execute?: boolean
+          can_export?: boolean
+          can_print?: boolean
+          can_sign?: boolean
           can_view?: boolean
           created_at?: string
           id?: string

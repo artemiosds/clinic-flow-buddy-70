@@ -143,7 +143,7 @@ const Pacientes: React.FC = () => {
   const isProfissional = user?.role === "profissional";
   const canDelete = can("pacientes", "can_delete");
   const canImportCSV = can("pacientes", "can_create");
-  const canAddToFila = can("fila", "can_create");
+  const canAddToFila = can("fila_espera", "can_create");
   const canCreate = can("pacientes", "can_create");
   const canEdit = can("pacientes", "can_edit");
   const { unidadesVisiveis, profissionaisVisiveis } = useUnidadeFilter();
@@ -289,7 +289,7 @@ const Pacientes: React.FC = () => {
     );
 
     // Filter by fila
-    if (filterFila === "fila") {
+    if (filterFila === "fila_espera") {
       list = list.filter((p) => pacientesNaFila.has(p.id));
     } else if (filterFila === "sem_fila") {
       list = list.filter((p) => !pacientesNaFila.has(p.id));
@@ -655,7 +655,7 @@ const Pacientes: React.FC = () => {
       // Ensure portal access
       ensurePortalAccess({
         pacienteId: filaPaciente.id,
-        contexto: "fila",
+        contexto: "fila_espera",
         unidade: unidade?.nome || "",
         profissional: prof?.nome || "",
         posicaoFila: fila.length + 1,
@@ -999,7 +999,7 @@ const Pacientes: React.FC = () => {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="fila">Na Fila de Espera</SelectItem>
+            <SelectItem value="fila_espera">Na Fila de Espera</SelectItem>
             <SelectItem value="demanda_reprimida">Demanda Reprimida</SelectItem>
             <SelectItem value="sem_fila">Sem fila</SelectItem>
           </SelectContent>

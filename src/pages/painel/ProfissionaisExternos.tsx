@@ -42,7 +42,7 @@ const ProfissionaisExternos: React.FC = () => {
   const { unidades, funcionarios } = useData();
   const { unidadesVisiveis } = useUnidadeFilter();
   const { can } = usePermissions();
-  const canManage = can("usuarios", "can_edit");
+  const canManage = can("funcionarios", "can_edit");
 
   const [externos, setExternos] = useState<ExternalProf[]>([]);
   const [searchTerm, setSearchTerm] = useState("");

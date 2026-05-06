@@ -62,7 +62,7 @@ const PROFISSOES_PRESCRICAO = [
   { key: 'fonoaudiologia', label: 'Fonoaudiólogo / Fonoaudióloga' },
   { key: 'nutricao', label: 'Nutricionista' },
   { key: 'terapia_ocupacional', label: 'Terapeuta Ocupacional' },
-  { key: 'enfermagem', label: 'Enfermeiro / Enfermeira' },
+  { key: 'avaliacao_enfermagem', label: 'Enfermeiro / Enfermeira' },
 ];
 
 const CONFIG_KEY = 'config_prescricao_perfil';

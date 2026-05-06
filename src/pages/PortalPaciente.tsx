@@ -386,7 +386,7 @@ const PortalPaciente: React.FC = () => {
             <TabsTrigger value="historico" className="text-xs sm:text-sm">
               <FileText className="w-4 h-4 mr-1 hidden sm:inline" /> Histórico
             </TabsTrigger>
-            <TabsTrigger value="fila" className="text-xs sm:text-sm">
+            <TabsTrigger value="fila_espera" className="text-xs sm:text-sm">
               <List className="w-4 h-4 mr-1 hidden sm:inline" /> Fila ({fila.length})
             </TabsTrigger>
           </TabsList>
@@ -465,7 +465,7 @@ const PortalPaciente: React.FC = () => {
             })}
           </TabsContent>
 
-          <TabsContent value="fila" className="space-y-3">
+          <TabsContent value="fila_espera" className="space-y-3">
             {fila.length === 0 ? (
               <Card className="shadow-card border-0"><CardContent className="p-8 text-center text-muted-foreground">
                 <List className="w-10 h-10 mx-auto mb-3 opacity-30" />

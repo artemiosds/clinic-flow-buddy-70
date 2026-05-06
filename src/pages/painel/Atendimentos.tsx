@@ -33,7 +33,7 @@ const Atendimentos: React.FC = () => {
   const resolvePaciente = usePacienteNomeResolver();
   const [atendimentos, setAtendimentos] = useState<AtendimentoDB[]>([]);
   const [loading, setLoading] = useState(true);
-  const canDelete = can('atendimento', 'can_delete');
+  const canDelete = can('atendimentos', 'can_delete');
 
   const load = async () => {
     setLoading(true);
@@ -57,7 +57,7 @@ const Atendimentos: React.FC = () => {
     try {
       await (supabase as any).from('atendimentos').delete().eq('id', at.id);
       await logAction({
-        acao: 'excluir', entidade: 'atendimento', entidadeId: at.id,
+        acao: 'excluir', entidade: 'atendimentos', entidadeId: at.id,
         detalhes: { paciente: at.paciente_nome, profissional: at.profissional_nome },
         user,
       });

@@ -261,7 +261,7 @@ const AvaliacaoEnfermagem: React.FC = () => {
         acao: 'avaliacao_enfermagem',
         entidade: 'nursing_evaluation',
         entidadeId: selected.id,
-        modulo: 'enfermagem',
+        modulo: 'avaliacao_enfermagem',
         user,
         detalhes: {
           paciente_nome: selected.pacienteNome,
@@ -284,7 +284,7 @@ const AvaliacaoEnfermagem: React.FC = () => {
     setSaving(false);
   };
 
-  if (!can('enfermagem', 'can_view')) {
+  if (!can('avaliacao_enfermagem', 'can_view')) {
     return <div className="p-6 text-muted-foreground">Sem permissão para acessar esta página.</div>;
   }
 

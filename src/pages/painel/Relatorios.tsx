@@ -365,7 +365,7 @@ const Relatorios: React.FC = () => {
     { key: 'nutricionista', icon: Apple, label: 'Nutrição', cor: '#E05A2B', bgLight: '#FDF0EB',
       termos: ['nutricionista', 'nutricao', 'nutri'] },
     { key: 'enfermeiro', icon: Heart, label: 'Enfermagem', cor: '#B83232', bgLight: '#FDEAEA',
-      termos: ['enfermeiro', 'enfermeira', 'enfermagem', 'tecnicoenfermagem', 'auxiliarenfermagem'] },
+      termos: ['enfermeiro', 'enfermeira', 'avaliacao_enfermagem', 'tecnicoenfermagem', 'auxiliarenfermagem'] },
     { key: 'assistente_social', icon: Users2, label: 'Serviço Social', cor: '#3A6B9A', bgLight: '#EEF3F9',
       termos: ['assistentesocial', 'servicosocial'] },
     { key: 'odontologia', icon: Stethoscope, label: 'Odontologia', cor: '#0E7490', bgLight: '#ECFEFF',
@@ -799,7 +799,7 @@ const Relatorios: React.FC = () => {
     } else if (type === 'pacientes') {
       headers = ['Paciente', 'E-mail', 'Telefone', 'Total Agendamentos', 'Concluídos', 'Faltas', 'Retornos', 'Última Consulta'];
       rows = pacientesReport.map(p => [p.nome, p.email, p.telefone, p.totalAgendamentos.toString(), p.concluidos.toString(), p.faltas.toString(), p.retornos.toString(), p.ultimaConsulta]);
-    } else if (type === 'fila') {
+    } else if (type === 'fila_espera') {
       headers = ['Posição', 'Paciente', 'Unidade', 'Setor', 'Prioridade', 'Status', 'Hora Chegada', 'Hora Chamada'];
       rows = filaReport.items.map(f => {
         const un = unidades.find(u => u.id === f.unidade_id);
@@ -835,7 +835,7 @@ const Relatorios: React.FC = () => {
     } else if (type === 'pacientes') {
       headers = ['Paciente', 'Telefone', 'Agendamentos', 'Concluídos', 'Faltas', 'Última Consulta'];
       rows = pacientesReport.map(p => [p.nome, p.telefone, p.totalAgendamentos.toString(), p.concluidos.toString(), p.faltas.toString(), p.ultimaConsulta]);
-    } else if (type === 'fila') {
+    } else if (type === 'fila_espera') {
       headers = ['Posição', 'Paciente', 'Unidade', 'Setor', 'Prioridade', 'Status', 'Hora Chegada'];
       rows = filaReport.items.map(f => {
         const un = unidades.find(u => u.id === f.unidade_id);
@@ -933,7 +933,7 @@ ${dataRows}
       body = `${summaryBlock}
         <h2>Relatório de Pacientes</h2>
         <table><thead><tr><th>Paciente</th><th>E-mail</th><th>Telefone</th><th>Agendamentos</th><th>Concluídos</th><th>Faltas</th><th>Retornos</th><th>Última Consulta</th></tr></thead><tbody>${rows}</tbody></table>`;
-    } else if (type === 'fila') {
+    } else if (type === 'fila_espera') {
       const filaRows = filaReport.items.map(f => {
         const unName = unidades.find(u => u.id === f.unidade_id)?.nome || '';
         return `<tr><td>${f.posicao}</td><td>${f.paciente_nome}</td><td>${unName}</td><td>${f.setor}</td><td>${f.prioridade}</td><td>${f.status}</td><td>${f.hora_chegada}</td><td>${f.hora_chamada || '-'}</td></tr>`;
@@ -1247,9 +1247,9 @@ ${dataRows}
             { value: 'procedimentos', label: 'Procedimentos' },
             { value: 'faltas', label: 'Faltas' },
             { value: 'pacientes', label: 'Pacientes' },
-            { value: 'fila', label: 'Fila de Espera' },
+            { value: 'fila_espera', label: 'Fila de Espera' },
             { value: 'triagem', label: 'Triagem' },
-            { value: 'enfermagem', label: 'Enfermagem' },
+            { value: 'avaliacao_enfermagem', label: 'Enfermagem' },
             { value: 'multiprofissional', label: 'Multiprofissional' },
             { value: 'pts_report', label: 'PTS' },
             { value: 'tratamentos', label: 'Tratamentos' },
@@ -1814,7 +1814,7 @@ th{background:#f1f5f9;font-weight:600;}
         </TabsContent>
 
         {/* === FILA DE ESPERA === */}
-        <TabsContent value="fila" className="space-y-5 mt-4">
+        <TabsContent value="fila_espera" className="space-y-5 mt-4">
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
             <Card className="shadow-card border-0"><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-foreground">{filaReport.total}</p><p className="text-xs text-muted-foreground">Total na Fila</p></CardContent></Card>
             <Card className="shadow-card border-0"><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-warning">{filaReport.aguardando}</p><p className="text-xs text-muted-foreground">Aguardando</p></CardContent></Card>
@@ -2193,7 +2193,7 @@ th{background:#f1f5f9;font-weight:600;}
         </TabsContent>
 
         {/* === ENFERMAGEM === */}
-        <TabsContent value="enfermagem" className="space-y-5 mt-4">
+        <TabsContent value="avaliacao_enfermagem" className="space-y-5 mt-4">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
               { label: 'Total Avaliações', value: nursingReport.total },

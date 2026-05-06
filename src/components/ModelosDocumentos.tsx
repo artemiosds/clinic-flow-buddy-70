@@ -54,7 +54,7 @@ const PERFIS = [
   { value: 'master', label: 'Master' },
   { value: 'gestao', label: 'Gestão' },
   { value: 'profissional', label: 'Profissional' },
-  { value: 'enfermagem', label: 'Enfermagem' },
+  { value: 'avaliacao_enfermagem', label: 'Enfermagem' },
   { value: 'recepcao', label: 'Recepção' },
   { value: 'triagem', label: 'Triagem' },
 ];

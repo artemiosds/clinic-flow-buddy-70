@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Shield, ShieldCheck, Search, User as UserIcon, Building2, RotateCcw, Radio } from "lucide-react";
 import { toast } from "sonner";
 
-const PERFIS = ["gestao", "recepcao", "tecnico", "enfermagem", "profissional"] as const;
+const PERFIS = ["gestao", "recepcao", "tecnico", "avaliacao_enfermagem", "profissional"] as const;
 const PERFIL_LABELS: Record<string, string> = {
   gestao: "GESTÃO",
   recepcao: "RECEPÇÃO",
@@ -24,53 +24,77 @@ const PERFIL_LABELS: Record<string, string> = {
 };
 
 const MODULOS: ModuleName[] = [
-  "pacientes", "encaminhamento", "fila", "triagem", "enfermagem",
-  "agenda", "atendimento", "prontuario", "tratamento", "relatorios", "usuarios",
+  "dashboard", "agenda", "fila_espera", "pacientes", "atendimentos", "gestao_tratamentos",
+  "prontuario", "triagem", "historico_triagem", "avaliacao_enfermagem", "pts", "avaliacao_multi",
+  "relatorio_alta", "encaminhamentos", "encaminhamentos_externos", "arquivo_digital", "relatorios",
+  "bpa_producao", "funcionarios", "unidades_salas", "disponibilidade", "feriados_bloqueios",
+  "logs_auditoria", "configuracoes", "permissoes", "assinatura_eletronica", "modelos_documentos", "sistema"
 ];
+
 const MODULO_LABELS: Record<ModuleName, string> = {
-  pacientes: "Pacientes",
-  encaminhamento: "Encaminhamento",
-  fila: "Fila de Espera",
-  triagem: "Triagem",
-  enfermagem: "Enfermagem",
+  dashboard: "Dashboard",
   agenda: "Agenda",
-  atendimento: "Atendimento",
+  fila_espera: "Fila de Espera",
+  pacientes: "Pacientes",
+  atendimentos: "Atendimentos",
+  gestao_tratamentos: "Gestão de Tratamentos",
   prontuario: "Prontuário",
-  tratamento: "Tratamento",
+  triagem: "Triagem",
+  historico_triagem: "Histórico Triagem",
+  avaliacao_enfermagem: "Avaliação Enfermagem",
+  pts: "PTS",
+  avaliacao_multi: "Avaliação Multi",
+  relatorio_alta: "Relatório de Alta",
+  encaminhamentos: "Encaminhamentos",
+  encaminhamentos_externos: "Encam. Externos",
+  arquivo_digital: "Arquivo Digital",
   relatorios: "Relatórios",
-  usuarios: "Usuários",
+  bpa_producao: "BPA-Produção",
+  funcionarios: "Funcionários",
+  unidades_salas: "Unidades/Salas",
+  disponibilidade: "Disponibilidade",
+  feriados_bloqueios: "Feriados/Bloqueios",
+  logs_auditoria: "Logs & Auditoria",
+  configuracoes: "Configurações",
+  permissoes: "Permissões",
+  assinatura_eletronica: "Assinatura Eletrônica",
+  modelos_documentos: "Modelos de Documentos",
+  sistema: "Sistema"
 };
-const ACTIONS: (keyof ModulePermission)[] = ["can_view", "can_create", "can_edit", "can_delete", "can_execute"];
+
+const ACTIONS: (keyof ModulePermission)[] = [
+  "can_view", "can_create", "can_edit", "can_delete", "can_execute",
+  "can_print", "can_export", "can_attach", "can_sign", "can_approve",
+  "can_cancel", "can_config"
+];
+
 const ACTION_LABELS: Record<keyof ModulePermission, string> = {
   can_view: "Visualizar",
   can_create: "Criar",
   can_edit: "Editar",
   can_delete: "Excluir",
   can_execute: "Executar",
+  can_print: "Imprimir",
+  can_export: "Exportar",
+  can_attach: "Anexar",
+  can_sign: "Assinar",
+  can_approve: "Aprovar",
+  can_cancel: "Cancelar",
+  can_config: "Configurar",
 };
 
-interface PermRow {
+interface PermRow extends ModulePermission {
   id?: string;
   perfil: string;
   modulo: string;
   unidade_id: string;
-  can_view: boolean;
-  can_create: boolean;
-  can_edit: boolean;
-  can_delete: boolean;
-  can_execute: boolean;
 }
 
-interface UserPermRow {
+interface UserPermRow extends ModulePermission {
   id?: string;
   user_id: string;
   modulo: string;
   unidade_id: string;
-  can_view: boolean;
-  can_create: boolean;
-  can_edit: boolean;
-  can_delete: boolean;
-  can_execute: boolean;
 }
 
 interface UnidadeOption { id: string; nome: string; }
@@ -196,8 +220,12 @@ const Permissoes: React.FC = () => {
     const existing = getPerfilRow(modulo);
     const baseRow: PermRow = existing
       ? { ...existing, unidade_id: selectedUnidade } // criar/atualizar para a unidade
-      : { perfil: selectedPerfil, modulo, unidade_id: selectedUnidade,
-          can_view: false, can_create: false, can_edit: false, can_delete: false, can_execute: false };
+      : { 
+          perfil: selectedPerfil, modulo, unidade_id: selectedUnidade,
+          can_view: false, can_create: false, can_edit: false, can_delete: false, can_execute: false,
+          can_print: false, can_export: false, can_attach: false, can_sign: false, can_approve: false,
+          can_cancel: false, can_config: false
+        };
     const newVal = !baseRow[action];
     const updated: PermRow = { ...baseRow, [action]: newVal };
     const key = `perfil-${modulo}-${action}`;
@@ -210,14 +238,18 @@ const Permissoes: React.FC = () => {
       return [...prev, updated];
     });
 
-    const { error } = await (supabase as any)
+    const updateData: any = { 
+      perfil: selectedPerfil, 
+      modulo, 
+      unidade_id: selectedUnidade
+    };
+    ACTIONS.forEach(a => {
+      updateData[a] = updated[a];
+    });
+
+    const { error } = await supabase
       .from("permissoes")
-      .upsert(
-        { perfil: selectedPerfil, modulo, unidade_id: selectedUnidade,
-          can_view: updated.can_view, can_create: updated.can_create, can_edit: updated.can_edit,
-          can_delete: updated.can_delete, can_execute: updated.can_execute },
-        { onConflict: "perfil,modulo,unidade_id" }
-      );
+      .upsert(updateData, { onConflict: "perfil,modulo,unidade_id" } as any);
 
     if (error) {
       toast.error(`Erro: ${error.message}`);
@@ -252,9 +284,12 @@ const Permissoes: React.FC = () => {
         || (perfilData || []).find((r: any) => r.unidade_id === "");
       base = {
         user_id: selectedUserId, modulo, unidade_id: selectedUnidade,
-        can_view: ref?.can_view ?? false, can_create: ref?.can_create ?? false,
-        can_edit: ref?.can_edit ?? false, can_delete: ref?.can_delete ?? false,
-        can_execute: ref?.can_execute ?? false,
+        can_view: !!ref?.can_view, can_create: !!ref?.can_create,
+        can_edit: !!ref?.can_edit, can_delete: !!ref?.can_delete,
+        can_execute: !!ref?.can_execute, can_print: !!ref?.can_print,
+        can_export: !!ref?.can_export, can_attach: !!ref?.can_attach,
+        can_sign: !!ref?.can_sign, can_approve: !!ref?.can_approve,
+        can_cancel: !!ref?.can_cancel, can_config: !!ref?.can_config,
       };
     }
     const newVal = !base[action];
@@ -268,14 +303,18 @@ const Permissoes: React.FC = () => {
       return [...prev, updated];
     });
 
-    const { error } = await (supabase as any)
+    const updateData: any = { 
+      user_id: selectedUserId, 
+      modulo, 
+      unidade_id: selectedUnidade
+    };
+    ACTIONS.forEach(a => {
+      updateData[a] = updated[a];
+    });
+
+    const { error } = await supabase
       .from("permissoes_usuario")
-      .upsert(
-        { user_id: selectedUserId, modulo, unidade_id: selectedUnidade,
-          can_view: updated.can_view, can_create: updated.can_create, can_edit: updated.can_edit,
-          can_delete: updated.can_delete, can_execute: updated.can_execute },
-        { onConflict: "user_id,modulo,unidade_id" }
-      );
+      .upsert(updateData, { onConflict: "user_id,modulo,unidade_id" } as any);
 
     if (error) {
       toast.error(`Erro: ${error.message}`);

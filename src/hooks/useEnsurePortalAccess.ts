@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface PortalAccessParams {
   pacienteId: string;
-  contexto: 'agendamento' | 'fila' | 'encaixe';
+  contexto: 'agendamento' | 'fila_espera' | 'encaixe';
   data?: string;
   hora?: string;
   unidade?: string;

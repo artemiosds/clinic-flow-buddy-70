@@ -28,7 +28,7 @@ const SPECIALTY_TO_SIGTAP: Record<string, string> = {
   'Terapia Ocupacional': 'terapia_ocupacional',
   'Nutrição': 'nutricao',
   'Serviço Social': 'assistencia_social',
-  'Enfermagem': 'enfermagem',
+  'Enfermagem': 'avaliacao_enfermagem',
 };
 
 interface PTSRecord {
@@ -454,7 +454,7 @@ const PTS: React.FC = () => {
     return entry ? entry[0] : key;
   }, []);
 
-  if (!can('tratamento', 'can_view')) {
+  if (!can('gestao_tratamentos', 'can_view')) {
     return <div className="p-6 text-muted-foreground">Sem permissão.</div>;
   }
 
