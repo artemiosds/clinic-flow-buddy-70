@@ -884,7 +884,19 @@ const Agenda: React.FC = () => {
     const today = todayLocalStr();
     if (ag.data > today) { toast.error("Não é possível iniciar atendimento antes da data agendada."); return; }
     const statusPermitidos = ["confirmado_chegada", "aguardando_atendimento", "apto_atendimento"];
-    if (!statusPermitidos.includes(ag.status)) { toast.error("Este agendamento ainda não está liberado para iniciar atendimento."); return; }
+    
+    // Se não estiver nos status permitidos, verificamos se o usuário tem permissão para confirmar chegada e pular triagem
+    if (!statusPermitidos.includes(ag.status)) {
+      if (ag.status === "confirmado" && can('agenda', 'confirmar_chegada')) {
+        // Confirmamos a chegada automaticamente (o executarStatusChange já lidará com o bypass de triagem para profissionais com essa permissão)
+        await executarStatusChange(ag.id, "confirmado_chegada");
+        // Forçamos o refresh para garantir que o status no banco esteja correto antes de prosseguir
+        await refreshAgendamentos();
+      } else {
+        toast.error("Este agendamento ainda não está liberado para iniciar atendimento."); 
+        return; 
+      }
+    }
     try {
       if (ag.status === "apto_atendimento") await updateAgendamento(ag.id, { status: "em_atendimento" as any });
       else {
