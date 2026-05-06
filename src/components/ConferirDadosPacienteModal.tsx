@@ -237,7 +237,7 @@ export function ConferirDadosPacienteModal({
     setDirty(true);
   };
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (!paciente || saving) return false;
     setSaving(true);
     setAutosaveStatus('saving');
