@@ -328,7 +328,6 @@ export function ConferirDadosPacienteModal({
       setTimeout(() => setAutosaveStatus(prev => prev === 'saved' ? 'idle' : prev), 3000);
     }
   }, [paciente, form, saving, queryClient, refreshPacientes]);
-  };
 
   const renderFieldText = useCallback((
     label: string, name: string, type = "text", placeholder?: string,
