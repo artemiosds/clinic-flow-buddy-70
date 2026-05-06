@@ -1,4 +1,3 @@
-
 import { UserRole } from "@/types";
 
 export const roleLabels: Record<UserRole, string> = {
@@ -9,6 +8,7 @@ export const roleLabels: Record<UserRole, string> = {
   gestao: 'Gestão',
   tecnico: 'Triagem',
   avaliacao_enfermagem: 'Enfermagem',
+};
 
 export const roleColors: Record<UserRole, string> = {
   master: 'bg-destructive/10 text-destructive',
@@ -19,4 +19,3 @@ export const roleColors: Record<UserRole, string> = {
   tecnico: 'bg-primary/10 text-primary',
   avaliacao_enfermagem: 'bg-purple-100 text-purple-700',
 };
-
