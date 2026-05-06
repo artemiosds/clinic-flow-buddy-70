@@ -1,51 +1,13 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { PERMISSIONS_REGISTRY, MODULE_ACTIONS_MAP } from '@/config/permissions-registry';
 
-export type ModuleName =
-  | 'dashboard'
-  | 'agenda'
-  | 'fila_espera'
-  | 'pacientes'
-  | 'atendimentos'
-  | 'gestao_tratamentos'
-  | 'prontuario'
-  | 'triagem'
-  | 'historico_triagem'
-  | 'avaliacao_enfermagem'
-  | 'pts'
-  | 'avaliacao_multi'
-  | 'relatorio_alta'
-  | 'encaminhamentos'
-  | 'encaminhamentos_externos'
-  | 'arquivo_digital'
-  | 'relatorios'
-  | 'bpa_producao'
-  | 'funcionarios'
-  | 'unidades_salas'
-  | 'disponibilidade'
-  | 'feriados_bloqueios'
-  | 'logs_auditoria'
-  | 'configuracoes'
-  | 'permissoes'
-  | 'assinatura_eletronica'
-  | 'modelos_documentos'
-  | 'sistema';
+// Nome de módulo agora é dinâmico baseado no registry
+export type ModuleName = string;
 
-export interface ModulePermission {
-  can_view: boolean;
-  can_create: boolean;
-  can_edit: boolean;
-  can_delete: boolean;
-  can_execute: boolean;
-  can_print: boolean;
-  can_export: boolean;
-  can_attach: boolean;
-  can_sign: boolean;
-  can_approve: boolean;
-  can_cancel: boolean;
-  can_config: boolean;
-}
+// ModulePermission agora é um Record para suportar ações arbitrárias do JSONB
+export type ModulePermission = Record<string, boolean>;
 
 export type PermissionSourceType = 'role_global' | 'role_unit' | 'user_global' | 'user_unit' | 'master_global' | 'default';
 
@@ -56,75 +18,45 @@ export interface PermissionDetail {
 }
 
 type PermissionsMap = Record<ModuleName, ModulePermission>;
-type PermissionsDetailMap = Record<ModuleName, Record<keyof ModulePermission, PermissionDetail>>;
+type PermissionsDetailMap = Record<ModuleName, Record<string, PermissionDetail>>;
 
 interface PermissionsContextType {
   permissions: PermissionsMap | null;
   details: PermissionsDetailMap | null;
   loading: boolean;
-  can: (modulo: ModuleName, action: keyof ModulePermission) => boolean;
-  getDetail: (modulo: ModuleName, action: keyof ModulePermission) => PermissionDetail;
+  can: (modulo: ModuleName, action: string) => boolean;
+  getDetail: (modulo: ModuleName, action: string) => PermissionDetail;
   reload: () => Promise<void>;
 }
 
-export const ALL_MODULES: ModuleName[] = [
-  'dashboard', 'agenda', 'fila_espera', 'pacientes', 'atendimentos',
-  'gestao_tratamentos', 'prontuario', 'triagem', 'historico_triagem',
-  'avaliacao_enfermagem', 'pts', 'avaliacao_multi', 'relatorio_alta',
-  'encaminhamentos', 'encaminhamentos_externos', 'arquivo_digital',
-  'relatorios', 'bpa_producao', 'funcionarios', 'unidades_salas',
-  'disponibilidade', 'feriados_bloqueios', 'logs_auditoria',
-  'configuracoes', 'permissoes', 'assinatura_eletronica',
-  'modelos_documentos', 'sistema'
-];
-
-export const ALL_ACTIONS: (keyof ModulePermission)[] = [
+// Colunas fixas (boolean) que já existem no banco
+const LEGACY_ACTION_COLUMNS = [
   'can_view', 'can_create', 'can_edit', 'can_delete', 'can_execute',
   'can_print', 'can_export', 'can_attach', 'can_sign', 'can_approve',
   'can_cancel', 'can_config'
 ];
 
-const defaultPerm: ModulePermission = {
-  can_view: false, can_create: false, can_edit: false, can_delete: false, can_execute: false,
-  can_print: false, can_export: false, can_attach: false, can_sign: false, can_approve: false,
-  can_cancel: false, can_config: false
-};
-
-const fullPerm: ModulePermission = {
-  can_view: true, can_create: true, can_edit: true, can_delete: true, can_execute: true,
-  can_print: true, can_export: true, can_attach: true, can_sign: true, can_approve: true,
-  can_cancel: true, can_config: true
-};
-
-const DEFAULT_PERMISSIONS_BY_ROLE: Record<string, Partial<PermissionsMap>> = {
+const DEFAULT_PERMISSIONS_BY_ROLE: Record<string, Record<string, Partial<ModulePermission>>> = {
   gestao: {
-    dashboard: { ...defaultPerm, can_view: true },
-    pacientes: { ...defaultPerm, can_view: true, can_create: true, can_edit: true, can_print: true, can_export: true },
-    agenda: { ...defaultPerm, can_view: true, can_create: true, can_edit: true, can_delete: true, can_execute: true, can_print: true },
-    relatorios: { ...defaultPerm, can_view: true, can_export: true },
-    configuracoes: { ...defaultPerm, can_view: true, can_config: true },
-    permissoes: { ...defaultPerm, can_view: true, can_edit: true }
+    dashboard: { can_view: true },
+    pacientes: { can_view: true, can_create: true, can_edit: true, can_print: true, can_export: true },
+    agenda: { can_view: true, can_create: true, can_edit: true, can_delete: true, can_print: true },
+    relatorios: { can_view: true, can_export: true },
+    configuracoes: { can_view: true, can_config: true },
+    permissoes: { can_view: true, can_edit: true }
   },
   profissional: {
-    agenda: { ...defaultPerm, can_view: true, can_execute: true, can_print: true },
-    pacientes: { ...defaultPerm, can_view: true },
-    atendimentos: { ...defaultPerm, can_view: true, can_create: true, can_edit: true },
-    prontuario: { ...defaultPerm, can_view: true, can_create: true, can_edit: true, can_print: true, can_sign: true }
+    agenda: { can_view: true, can_print: true },
+    pacientes: { can_view: true },
+    atendimentos: { can_view: true, can_create: true, can_edit: true },
+    prontuario: { can_view: true, can_create: true, can_edit: true, can_print: true, can_sign: true }
   },
   recepcao: {
-    agenda: { ...defaultPerm, can_view: true, can_create: true, can_edit: true, can_execute: true },
-    pacientes: { ...defaultPerm, can_view: true, can_create: true, can_edit: true },
-    fila_espera: { ...defaultPerm, can_view: true, can_create: true, can_execute: true }
+    agenda: { can_view: true, can_create: true, can_edit: true },
+    pacientes: { can_view: true, can_create: true, can_edit: true },
+    fila_espera: { can_view: true, can_create: true }
   }
 };
-
-function buildFullMap(partial: Partial<PermissionsMap>): PermissionsMap {
-  const map = {} as PermissionsMap;
-  ALL_MODULES.forEach((m) => {
-    map[m] = { ...defaultPerm, ...(partial[m] || {}) };
-  });
-  return map;
-}
 
 const PermissionsContext = createContext<PermissionsContextType | null>(null);
 
@@ -151,17 +83,20 @@ export const PermissionsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     setLoading(true);
 
     try {
-      // 1. Regra MASTER Global (admin.sms)
+      // 1. Regra MASTER Global (admin.sms ou master sem unidade)
       if (isGlobalAdmin || (user.role === 'master' && !user.unidadeId)) {
-        const full = {} as PermissionsMap;
-        const det = {} as PermissionsDetailMap;
-        ALL_MODULES.forEach((m) => { 
-          full[m] = { ...fullPerm }; 
-          det[m] = {} as Record<keyof ModulePermission, PermissionDetail>;
-          ALL_ACTIONS.forEach(a => {
-            det[m][a] = { allowed: true, source: 'master_global' };
+        const full: PermissionsMap = {};
+        const det: PermissionsDetailMap = {};
+        
+        PERMISSIONS_REGISTRY.forEach((mod) => {
+          full[mod.id] = {};
+          det[mod.id] = {};
+          mod.actions.forEach(act => {
+            full[mod.id][act.key] = true;
+            det[mod.id][act.key] = { allowed: true, source: 'master_global' };
           });
         });
+        
         setPermissions(full);
         setDetails(det);
         setLoading(false);
@@ -186,49 +121,66 @@ export const PermissionsProvider: React.FC<{ children: React.ReactNode }> = ({ c
         .in('unidade_id', unidadeId ? [unidadeId, ''] : ['']);
 
       // 4. Consolidar mapa de permissões e detalhes
-      const map: Partial<PermissionsMap> = {};
-      const detMap = {} as PermissionsDetailMap;
+      const map: PermissionsMap = {};
+      const detMap: PermissionsDetailMap = {};
       
-      ALL_MODULES.forEach((m) => {
-        map[m] = { ...defaultPerm };
-        detMap[m] = {} as Record<keyof ModulePermission, PermissionDetail>;
+      PERMISSIONS_REGISTRY.forEach((mod) => {
+        const m = mod.id;
+        map[m] = {};
+        detMap[m] = {};
 
         const uUnid = (userOverrides || []).find((r: any) => r.modulo === m && r.unidade_id === unidadeId && unidadeId);
         const uGlob = (userOverrides || []).find((r: any) => r.modulo === m && r.unidade_id === '');
         const pUnid = (perfilData || []).find((r: any) => r.modulo === m && r.unidade_id === unidadeId && unidadeId);
         const pGlob = (perfilData || []).find((r: any) => r.modulo === m && r.unidade_id === '');
 
-        ALL_ACTIONS.forEach(a => {
+        mod.actions.forEach(act => {
+          const a = act.key;
           let allowed = false;
           let source: PermissionSourceType = 'default';
 
-          if (uUnid && uUnid[a] !== undefined) {
-            allowed = !!uUnid[a];
+          // Helper para pegar valor de permissão (seja da coluna boolean ou do JSONB)
+          const getVal = (row: any, key: string) => {
+            if (!row) return undefined;
+            if (LEGACY_ACTION_COLUMNS.includes(key)) return row[key];
+            return row.acoes_especificas?.[key];
+          };
+
+          const valUUnid = getVal(uUnid, a);
+          const valUGlob = getVal(uGlob, a);
+          const valPUnid = getVal(pUnid, a);
+          const valPGlob = getVal(pGlob, a);
+
+          if (valUUnid !== undefined) {
+            allowed = !!valUUnid;
             source = 'user_unit';
-          } else if (uGlob && uGlob[a] !== undefined) {
-            allowed = !!uGlob[a];
+          } else if (valUGlob !== undefined) {
+            allowed = !!valUGlob;
             source = 'user_global';
-          } else if (pUnid && pUnid[a] !== undefined) {
-            allowed = !!pUnid[a];
+          } else if (valPUnid !== undefined) {
+            allowed = !!valPUnid;
             source = 'role_unit';
-          } else if (pGlob && pGlob[a] !== undefined) {
-            allowed = !!pGlob[a];
+          } else if (valPGlob !== undefined) {
+            allowed = !!valPGlob;
             source = 'role_global';
           } else {
             allowed = !!(DEFAULT_PERMISSIONS_BY_ROLE[role]?.[m]?.[a]);
             source = 'default';
           }
 
-          map[m]![a] = allowed;
+          map[m][a] = allowed;
           detMap[m][a] = { allowed, source };
         });
       });
 
-      setPermissions(buildFullMap(map));
+      setPermissions(map);
       setDetails(detMap);
     } catch (err) {
-      console.error('[Permissions] Erro fatal:', err);
-      setPermissions(buildFullMap({}));
+      console.error('[Permissions] Erro fatal ao carregar permissões:', err);
+      // Fallback para mapa vazio
+      const fallbackMap: PermissionsMap = {};
+      PERMISSIONS_REGISTRY.forEach(m => fallbackMap[m.id] = {});
+      setPermissions(fallbackMap);
       setDetails(null);
     } finally {
       setLoading(false);
@@ -239,6 +191,7 @@ export const PermissionsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     loadPermissions();
   }, [loadPermissions]);
 
+  // Realtime updates
   useEffect(() => {
     if (!user?.id) return;
     const channel = supabase
@@ -255,7 +208,8 @@ export const PermissionsProvider: React.FC<{ children: React.ReactNode }> = ({ c
   }, [user?.id, loadPermissions]);
 
   const can = useCallback(
-    (modulo: ModuleName, action: keyof ModulePermission): boolean => {
+    (modulo: ModuleName, action: string): boolean => {
+      // Master global sempre tem acesso a tudo
       if (isGlobalAdmin || (user?.role === 'master' && !user?.unidadeId)) return true;
       if (loading || !permissions) return false;
       return !!permissions[modulo]?.[action];
@@ -264,7 +218,7 @@ export const PermissionsProvider: React.FC<{ children: React.ReactNode }> = ({ c
   );
 
   const getDetail = useCallback(
-    (modulo: ModuleName, action: keyof ModulePermission): PermissionDetail => {
+    (modulo: ModuleName, action: string): PermissionDetail => {
       if (isGlobalAdmin || (user?.role === 'master' && !user?.unidadeId)) {
         return { allowed: true, source: 'master_global' };
       }
@@ -282,4 +236,3 @@ export const PermissionsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     </PermissionsContext.Provider>
   );
 };
-
