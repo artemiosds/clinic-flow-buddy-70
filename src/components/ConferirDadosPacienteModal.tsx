@@ -130,7 +130,7 @@ export function ConferirDadosPacienteModal({
   const [dirty, setDirty] = useState(false);
   const [paciente, setPaciente] = useState<any | null>(null);
   const [form, setForm] = useState<any>({});
-  const lastSavedFormRef = React.useRef<string>("");
+  const lastSavedFormRef = useRef<string>("");
   const queryClient = useQueryClient();
   const { refreshPacientes } = useData();
 
