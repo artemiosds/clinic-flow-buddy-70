@@ -1607,7 +1607,20 @@ const Agenda: React.FC = () => {
                         {isProfissional && (
                           <>
                             {(ag.status === "pendente" || ag.status === "confirmado") && ehHoje && (
-                              <Tooltip><TooltipTrigger asChild><Button size="sm" variant="ghost" className="h-8 px-3 text-xs cursor-not-allowed opacity-50" disabled>⏳ Aguardando chegada</Button></TooltipTrigger><TooltipContent>Aguardando confirmação de chegada pela recepção</TooltipContent></Tooltip>
+                              can('agenda', 'confirmar_chegada') ? (
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  className="h-8 px-3 text-xs border-success text-success hover:bg-success/10" 
+                                  onClick={() => handleStatusChange(ag.id, "confirmado_chegada")}
+                                  disabled={statusUpdating}
+                                >
+                                  {statusUpdating ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <LogIn className="w-3.5 h-3.5 mr-1" />}
+                                  Confirmar Chegada
+                                </Button>
+                              ) : (
+                                <Tooltip><TooltipTrigger asChild><Button size="sm" variant="ghost" className="h-8 px-3 text-xs cursor-not-allowed opacity-50" disabled>⏳ Aguardando chegada</Button></TooltipTrigger><TooltipContent>Aguardando confirmação de chegada pela recepção</TooltipContent></Tooltip>
+                              )
                             )}
                             {ag.status === "aguardando_triagem" && ehHoje && (
                               <Tooltip><TooltipTrigger asChild><Button size="sm" variant="outline" className="h-8 px-3 text-xs cursor-not-allowed opacity-50 border-warning text-warning" disabled>🩺 Em triagem</Button></TooltipTrigger><TooltipContent>Aguardando técnico de enfermagem concluir a triagem</TooltipContent></Tooltip>
