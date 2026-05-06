@@ -19,6 +19,7 @@ export interface LinhaBPA {
   paciente_nome: string;
   profissional_id: string;
   profissional_nome: string;
+  unidade_id: string;
   data: string;
   procedimento_nome: string;
   codigo_sigtap: string;
