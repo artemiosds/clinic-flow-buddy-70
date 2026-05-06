@@ -90,9 +90,9 @@ export const validateBpaLine = (line: BpaLine): BpaValidation => {
   if (!cbo) errors.push('CBO do profissional não cadastrado');
   if (!cnes || cnes.length < 7) errors.push('CNES da unidade inválido (7 dígitos)');
   
-  const exigeSigtap = !isCboMedico(cbo);
-  if (exigeSigtap && (!sigtap || sigtap.length !== 10)) {
-    errors.push('Código SIGTAP obrigatório para esta categoria profissional');
+  // No BPA-I, o código SIGTAP é obrigatório para TODOS os registros exportados.
+  if (!sigtap || sigtap.length !== 10) {
+    errors.push('Código SIGTAP de 10 dígitos é obrigatório para produção BPA-I');
   }
 
   return {
