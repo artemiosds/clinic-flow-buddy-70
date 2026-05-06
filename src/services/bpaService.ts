@@ -128,7 +128,7 @@ export const normalizeBpaData = (raw: any): BpaLine => {
     cns_profissional: (profCd.cns || '').replace(/\D/g, '').slice(0, 15),
     procedimento_id: raw.procedimento_id || '',
     procedimento_nome: raw.procedimento_nome || (isCboMedico(profCd.cbo_codigo) ? 'Consulta Médica' : '—'),
-    codigo_sigtap: raw.codigo_sigtap || (isCboMedico(profCd.cbo_codigo) ? '0301010072' : ''),
+    codigo_sigtap: (raw.codigo_sigtap || '').replace(/\D/g, '').length === 10 ? raw.codigo_sigtap : (isCboMedico(profCd.cbo_codigo) ? '0301010072' : ''),
     paciente_cns: (raw.paciente_cns || '').replace(/\D/g, ''),
     paciente_cpf: (raw.paciente_cpf || '').replace(/\D/g, ''),
     paciente_nascimento: raw.paciente_nascimento,
