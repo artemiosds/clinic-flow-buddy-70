@@ -1667,6 +1667,7 @@ const Agenda: React.FC = () => {
         agendamento={conferenciaModal.agendamentoInfo}
         onConfirm={conferenciaModal.onConfirm}
       />
+
       <Dialog open={revisaoDialogOpen} onOpenChange={setRevisaoDialogOpen}>
         <DialogContent className="sm:max-w-4xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
           <DialogHeader className="px-6 pt-6 pb-4 border-b flex-shrink-0">
@@ -1714,6 +1715,8 @@ const Agenda: React.FC = () => {
                   <div className="grid gap-3">
                     {items.sort((a, b) => a.hora.localeCompare(b.hora)).map(ag => {
                       const statusInfo = statusBadgeClass[ag.status] || "bg-muted text-muted-foreground";
+                      const pac = pacientes.find(p => p.id === ag.pacienteId);
+                      
                       return (
                         <div key={ag.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border bg-card hover:shadow-md transition-all gap-4 group">
                           <div className="min-w-0 flex-1 space-y-1">
@@ -1730,6 +1733,11 @@ const Agenda: React.FC = () => {
                               <span className="flex items-center gap-1">
                                 <Stethoscope className="w-3 h-3" /> {ag.profissionalNome}
                               </span>
+                              {pac?.telefone && (
+                                <span className="flex items-center gap-1">
+                                  <Phone className="w-3 h-3" /> {pac.telefone}
+                                </span>
+                              )}
                               {isMaster && (
                                 <span className="flex items-center gap-1">
                                   <Building2 className="w-3 h-3" /> {unidades.find(u => u.id === ag.unidadeId)?.nome}
