@@ -2,6 +2,36 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import * as XLSX from 'xlsx';
 
+export interface ProntuarioRow {
+  id: string;
+  paciente_id: string;
+  paciente_nome: string;
+  profissional_id: string;
+  profissional_nome: string;
+  data_atendimento: string;
+  unidade_id: string;
+}
+
+export interface LinhaBPA {
+  key: string;                // prontuario_id + proc_id
+  prontuario_id: string;
+  paciente_id: string;
+  paciente_nome: string;
+  profissional_id: string;
+  profissional_nome: string;
+  data: string;
+  procedimento_nome: string;
+  codigo_sigtap: string;
+}
+
+export interface ValidationFlags {
+  identificacao: boolean;  // CNS (15) OU CPF (11)
+  cbo: boolean;            // CBO obrigatório
+  sigtap: boolean;         // SIGTAP só obrigatório p/ não-médicos
+  nome: boolean;           // Nome paciente
+  dataNasc: boolean;       // Data nascimento
+}
+
 export interface BpaLine {
   id: string;
   data: string;
