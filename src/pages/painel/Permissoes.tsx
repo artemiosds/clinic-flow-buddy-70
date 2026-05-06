@@ -324,6 +324,13 @@ const Permissoes: React.FC = () => {
           </Badge>
         }
       />
+const MODULOS = PERMISSION_REGISTRY.map(m => m.id);
+const MODULO_LABELS = PERMISSION_REGISTRY.reduce((acc, m) => ({ ...acc, [m.id]: m.label }), {} as Record<string, string>);
+const ACTIONS: (keyof ModulePermission)[] = [
+  "can_view", "can_create", "can_edit", "can_delete", "can_execute",
+  "can_print", "can_export", "can_attach", "can_sign", "can_approve",
+  "can_cancel", "can_config"
+];
 
 
       {/* Seletor de Unidade */}
