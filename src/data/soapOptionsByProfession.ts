@@ -172,7 +172,7 @@ export function normalizeProfissaoForSoap(profissao: string | undefined): string
   const p = profissao.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
   if (p.includes('fisioterapeut') || p.includes('fisioterapia')) return 'fisioterapia';
-  if (p.includes('enfermeir') || p.includes('enfermagem')) return 'enfermagem';
+  if (p.includes('enfermeir') || p.includes('avaliacao_enfermagem')) return 'avaliacao_enfermagem';
   if (p.includes('odontolog') || p.includes('dentist') || p.includes('cirurgiao dentista')) return 'odontologia';
   if (p.includes('psicologo') || p.includes('psicologia')) return 'psicologia';
   if (p.includes('fonoaudiolog') || p.includes('fonoaudiologia')) return 'fonoaudiologia';

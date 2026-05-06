@@ -38,7 +38,7 @@ const TIPOS_PRONTUARIO: { key: TipoProntuario; label: string; short: string }[] 
   { key: 'procedimento', label: TIPO_REGISTRO_LABELS.procedimento, short: 'Procedimento' },
 ];
 
-const PROFISSOES = ['fisioterapia', 'psicologia', 'fonoaudiologia', 'nutricao', 'terapia_ocupacional', 'medicina', 'odontologia', 'enfermagem', 'servico_social', 'assistente_social', 'cirurgia_geral', 'cirurgiao', 'infectologia', 'infectologista'];
+const PROFISSOES = ['fisioterapia', 'psicologia', 'fonoaudiologia', 'nutricao', 'terapia_ocupacional', 'medicina', 'odontologia', 'avaliacao_enfermagem', 'servico_social', 'assistente_social', 'cirurgia_geral', 'cirurgiao', 'infectologia', 'infectologista'];
 
 // ---------- Sortable item ----------
 interface SortableCampoProps {

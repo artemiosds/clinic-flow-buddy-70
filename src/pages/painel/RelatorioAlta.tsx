@@ -47,7 +47,7 @@ const MOTIVOS_ALTA = [
   { value: "objetivos_atingidos", label: "Alta por objetivos atingidos" },
   { value: "pedido_usuario", label: "A pedido do usuário/família" },
   { value: "infrequencia", label: "Infrequência/abandono" },
-  { value: "encaminhamento", label: "Encaminhamento para outro serviço" },
+  { value: "encaminhamentos", label: "Encaminhamento para outro serviço" },
   { value: "agravamento", label: "Agravamento clínico" },
   { value: "obito", label: "Óbito" },
 ];
@@ -671,7 +671,7 @@ const RelatorioAlta: React.FC = () => {
                     {MOTIVOS_ALTA.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
                   </SelectContent>
                 </Select>
-                {(motivoAlta === "infrequencia" || motivoAlta === "encaminhamento" || motivoAlta === "obito") && (
+                {(motivoAlta === "infrequencia" || motivoAlta === "encaminhamentos" || motivoAlta === "obito") && (
                   <Input value={motivoDetalhe} onChange={e => setMotivoDetalhe(e.target.value)}
                     placeholder={motivoAlta === "infrequencia" ? "Nº de faltas" : motivoAlta === "obito" ? "Data do óbito" : "Qual serviço?"}
                     className="h-8 text-sm mt-2" />
@@ -868,7 +868,7 @@ const RelatorioAlta: React.FC = () => {
                 {MOTIVOS_ALTA.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
               </SelectContent>
             </Select>
-            {(indMotivo === "infrequencia" || indMotivo === "encaminhamento" || indMotivo === "obito") && (
+            {(indMotivo === "infrequencia" || indMotivo === "encaminhamentos" || indMotivo === "obito") && (
               <Input value={indMotivoDet} onChange={e => setIndMotivoDet(e.target.value)}
                 placeholder={indMotivo === "infrequencia" ? "Nº de faltas" : indMotivo === "obito" ? "Data do óbito" : "Qual serviço?"}
                 className="h-8 text-sm mt-2" />

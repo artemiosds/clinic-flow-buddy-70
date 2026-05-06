@@ -589,7 +589,7 @@ const FilaEspera: React.FC = () => {
     const prof = form.profissionalId ? funcionarios.find((f) => f.id === form.profissionalId) : null;
     ensurePortalAccess({
       pacienteId,
-      contexto: "fila",
+      contexto: "fila_espera",
       unidade: unidade?.nome || "",
       profissional: prof?.nome || "",
       posicaoFila: fila.length + 1,
@@ -792,7 +792,7 @@ const FilaEspera: React.FC = () => {
       const prof = importForm.profissionalId ? funcionarios.find((f) => f.id === importForm.profissionalId) : null;
       ensurePortalAccess({
         pacienteId,
-        contexto: "fila",
+        contexto: "fila_espera",
         unidade: unidade?.nome || "",
         profissional: prof?.nome || "",
         posicaoFila: fila.length + 1,

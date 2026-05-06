@@ -28,7 +28,7 @@ const SPECIALTY_TO_SIGTAP: Record<string, string> = {
   'Terapia Ocupacional': 'terapia_ocupacional',
   'Nutrição': 'nutricao',
   'Serviço Social': 'assistencia_social',
-  'Enfermagem': 'enfermagem',
+  'Enfermagem': 'avaliacao_enfermagem',
 };
 
 interface PTSRecord {

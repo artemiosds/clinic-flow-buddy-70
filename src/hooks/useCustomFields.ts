@@ -29,9 +29,9 @@ export type ScreenKey =
   | 'unidade'
   | 'triagem'
   | 'prontuario'
-  | 'encaminhamento'
+  | 'encaminhamentos'
   | 'fila_espera'
-  | 'atendimento';
+  | 'atendimentos';
 
 export const SCREEN_LABELS: Record<ScreenKey, string> = {
   paciente: 'Cadastro de Paciente',

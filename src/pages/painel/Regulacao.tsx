@@ -36,7 +36,7 @@ const REFERRAL_SOURCES = [
   { value: 'hospital', label: 'Hospital' },
   { value: 'espontaneo', label: 'Demanda Espontânea' },
   { value: 'judicial', label: 'Ordem Judicial' },
-  { value: 'encaminhamento', label: 'Encaminhamento Médico' },
+  { value: 'encaminhamentos', label: 'Encaminhamento Médico' },
 ];
 
 const PRIORITY_LEVELS = [

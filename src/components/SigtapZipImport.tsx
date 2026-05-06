@@ -18,7 +18,7 @@ import { toast } from 'sonner';
 // Chave = "GGSS" (4 dígitos do início do código SIGTAP)
 const SUBGROUP_SPECIALTY_MAP: Record<string, string> = {
   // Grupo 03 — Procedimentos clínicos
-  '0301': 'enfermagem',
+  '0301': 'avaliacao_enfermagem',
   '0302': 'medico',
   '0303': 'odontologia',
   '0304': 'odontologia',
@@ -42,7 +42,7 @@ const SUBGROUP_SPECIALTY_MAP: Record<string, string> = {
 };
 
 const SPECIALTY_OPTIONS = [
-  { key: 'enfermagem', label: 'Enfermagem', subgrupos: '03.01' },
+  { key: 'avaliacao_enfermagem', label: 'Enfermagem', subgrupos: '03.01' },
   { key: 'medico', label: 'Médico', subgrupos: '03.02' },
   { key: 'odontologia', label: 'Odontologia', subgrupos: '03.03, 03.04, 04.14' },
   { key: 'fisioterapia', label: 'Fisioterapia', subgrupos: '03.05, 03.06' },

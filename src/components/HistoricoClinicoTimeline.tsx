@@ -24,7 +24,7 @@ import {
 // TIPOS E CONSTANTES
 // ============================================================
 
-type EventType = "consulta" | "retorno" | "sessao" | "procedimento" | "alta" | "fila" | "falta";
+type EventType = "consulta" | "retorno" | "sessao" | "procedimento" | "alta" | "fila_espera" | "falta";
 
 interface TimelineEvent {
   id: string;

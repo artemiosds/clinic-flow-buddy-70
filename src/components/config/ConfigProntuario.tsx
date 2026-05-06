@@ -82,7 +82,7 @@ const DEFAULT_CAMPOS: CampoConfig[] = [
   { id: 'c14', key: 'intercorrencias', label: 'Intercorrências', tipo: 'textarea', obrigatorio: false, habilitado: true, isBuiltin: false, order: 4, tiposProntuario: ['sessao'] },
   { id: 'c15', key: 'sinais_vitais_urgencia', label: 'Sinais Vitais Ampliados', tipo: 'text', obrigatorio: true, habilitado: true, isBuiltin: true, order: 1, tiposProntuario: ['urgencia'] },
   { id: 'c16', key: 'conduta_rapida', label: 'Conduta Rápida', tipo: 'textarea', obrigatorio: false, habilitado: true, isBuiltin: false, order: 3, tiposProntuario: ['urgencia'] },
-  { id: 'c17', key: 'encaminhamento', label: 'Encaminhamento', tipo: 'textarea', obrigatorio: false, habilitado: true, isBuiltin: false, order: 4, tiposProntuario: ['urgencia'] },
+  { id: 'c17', key: 'encaminhamentos', label: 'Encaminhamento', tipo: 'textarea', obrigatorio: false, habilitado: true, isBuiltin: false, order: 4, tiposProntuario: ['urgencia'] },
   { id: 'c18', key: 'tipo_procedimento', label: 'Tipo de Exame/Procedimento', tipo: 'text', obrigatorio: false, habilitado: true, isBuiltin: false, order: 1, tiposProntuario: ['procedimento'] },
   { id: 'c19', key: 'resultado', label: 'Resultado', tipo: 'textarea', obrigatorio: false, habilitado: true, isBuiltin: false, order: 2, tiposProntuario: ['procedimento'] },
   { id: 'c20', key: 'conduta_pos', label: 'Conduta Pós-Procedimento', tipo: 'textarea', obrigatorio: false, habilitado: true, isBuiltin: false, order: 3, tiposProntuario: ['procedimento'] },

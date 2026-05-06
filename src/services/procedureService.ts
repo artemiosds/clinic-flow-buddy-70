@@ -41,7 +41,7 @@ export const SIGTAP_ESPECIALIDADE_TO_PROFISSAO: Record<string, string[]> = {
 
 // Lista de chaves disponíveis para cadastro manual
 export const ESPECIALIDADES_DISPONIVEIS: { key: string; label: string }[] = [
-  { key: 'enfermagem', label: 'Enfermagem' },
+  { key: 'avaliacao_enfermagem', label: 'Enfermagem' },
   { key: 'medicina', label: 'Medicina' },
   { key: 'odontologia', label: 'Odontologia' },
   { key: 'fisioterapia', label: 'Fisioterapia' },

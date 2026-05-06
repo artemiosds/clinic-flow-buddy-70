@@ -141,7 +141,7 @@ const Funcionarios: React.FC = () => {
   };
 
   // Roles that require CBO and Professional Council
-  const requiresProfessionalData = (role: string) => role === 'profissional' || role === 'tecnico' || role === 'enfermagem';
+  const requiresProfessionalData = (role: string) => role === 'profissional' || role === 'tecnico' || role === 'avaliacao_enfermagem';
 
   const handleSave = async () => {
     if (!form.nome || !form.usuario || !form.email || !form.role) {
@@ -367,7 +367,7 @@ const Funcionarios: React.FC = () => {
                         <SelectItem value="gestao">GESTÃO</SelectItem>
                         <SelectItem value="recepcao">RECEPÇÃO</SelectItem>
                         <SelectItem value="tecnico">TRIAGEM</SelectItem>
-                        <SelectItem value="enfermagem">ENFERMAGEM</SelectItem>
+                        <SelectItem value="avaliacao_enfermagem">ENFERMAGEM</SelectItem>
                         <SelectItem value="profissional">PROFISSIONAL</SelectItem>
                       </SelectContent>
                     </Select>
@@ -473,7 +473,7 @@ const Funcionarios: React.FC = () => {
                       </div>
                     </div>
 
-                    {(form.role === 'tecnico' || form.role === 'enfermagem') && (
+                    {(form.role === 'tecnico' || form.role === 'avaliacao_enfermagem') && (
                       <div>
                         <Label>Informação Adicional (Ex: COREN)</Label>
                         <Input value={(form as any).coren || ''} onChange={e => setForm(p => ({ ...p, coren: e.target.value } as any))} placeholder="Nº do COREN ou outro" />

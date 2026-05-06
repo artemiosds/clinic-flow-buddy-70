@@ -67,7 +67,7 @@ const EncaminhamentoInternoModal: React.FC<Props> = ({ open, onOpenChange, pacie
     const target = norm(especialidade);
     return funcionarios.filter((f: any) => {
       if (!f.ativo) return false;
-      if (f.role !== 'profissional' && f.role !== 'enfermagem' && f.role !== 'master') return false;
+      if (f.role !== 'profissional' && f.role !== 'avaliacao_enfermagem' && f.role !== 'master') return false;
       if (user?.unidadeId && f.unidadeId && f.unidadeId !== user.unidadeId) return false;
       // Exclude the author himself
       if (f.id === user?.id) return false;

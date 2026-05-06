@@ -97,7 +97,7 @@ const DEFAULT_ESPECIALIDADES: EspecialidadeConfig[] = [
       { id: 'o3', key: 'plano_tratamento', label: 'Plano de Tratamento', tipo: 'textarea', obrigatorio: false, habilitado: true, isBuiltin: true, order: 3 },
     ],
   },
-  { key: 'enfermagem', label: 'Enfermagem', ativa: true, profissoes: ['enfermagem'],
+  { key: 'avaliacao_enfermagem', label: 'Enfermagem', ativa: true, profissoes: ['avaliacao_enfermagem'],
     campos: [
       { id: 'e1', key: 'avaliacao_enfermagem', label: 'Avaliação de Enfermagem', tipo: 'textarea', obrigatorio: false, habilitado: true, isBuiltin: true, order: 1 },
       { id: 'e2', key: 'cuidados', label: 'Cuidados Realizados', tipo: 'textarea', obrigatorio: false, habilitado: true, isBuiltin: true, order: 2 },

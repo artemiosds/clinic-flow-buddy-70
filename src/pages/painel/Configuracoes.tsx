@@ -57,7 +57,7 @@ const TABS = [
   { id: 'fluxo', label: 'Fluxo de Atendimento', icon: Activity, globalOnly: false },
   { id: 'campos', label: 'Personalizar Campos', icon: SettingsIcon, globalOnly: false },
   { id: 'whatsapp', label: 'WhatsApp', icon: MessageSquare, globalOnly: false },
-  { id: 'usuarios', label: 'Usuários e Permissões', icon: Users, globalOnly: false },
+  { id: 'funcionarios', label: 'Usuários e Permissões', icon: Users, globalOnly: false },
   { id: 'unidades', label: 'Unidades e Setores', icon: Building2, globalOnly: true },
   { id: 'integracoes', label: 'Sistemas Integrados', icon: Network, globalOnly: true },
   { id: 'sistema', label: 'Sistema', icon: Monitor, globalOnly: true },
@@ -508,7 +508,7 @@ const Configuracoes: React.FC = () => {
           </div>
         );
 
-      case 'usuarios':
+      case 'funcionarios':
         return (
           <div className="space-y-6">
             <Card className="shadow-card border-0">

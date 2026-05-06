@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Shield, ShieldCheck, Search, User as UserIcon, Building2, RotateCcw, Radio } from "lucide-react";
 import { toast } from "sonner";
 
-const PERFIS = ["gestao", "recepcao", "tecnico", "enfermagem", "profissional"] as const;
+const PERFIS = ["gestao", "recepcao", "tecnico", "avaliacao_enfermagem", "profissional"] as const;
 const PERFIL_LABELS: Record<string, string> = {
   gestao: "GESTÃO",
   recepcao: "RECEPÇÃO",

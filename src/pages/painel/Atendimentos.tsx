@@ -57,7 +57,7 @@ const Atendimentos: React.FC = () => {
     try {
       await (supabase as any).from('atendimentos').delete().eq('id', at.id);
       await logAction({
-        acao: 'excluir', entidade: 'atendimento', entidadeId: at.id,
+        acao: 'excluir', entidade: 'atendimentos', entidadeId: at.id,
         detalhes: { paciente: at.paciente_nome, profissional: at.profissional_nome },
         user,
       });

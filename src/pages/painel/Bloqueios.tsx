@@ -44,7 +44,7 @@ const ROLES_PROFISSIONAL = [
   'profissional',
   'Profissional',
   'PROFISSIONAL',
-  'enfermagem',
+  'avaliacao_enfermagem',
   'Enfermagem',
   'tecnico',
   'tecnico_enfermagem',

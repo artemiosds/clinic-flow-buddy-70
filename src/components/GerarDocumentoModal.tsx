@@ -29,7 +29,7 @@ interface Props {
   dataAtendimento?: string;
 }
 
-const ENCAMINHAMENTO_TIPOS = ['encaminhamento', 'guia de encaminhamento'];
+const ENCAMINHAMENTO_TIPOS = ['encaminhamentos', 'guia de encaminhamento'];
 
 interface MedicamentoRow {
   medicamento: string;
@@ -385,7 +385,7 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
     if (!selected) return null;
 
     // ENCAMINHAMENTO
-    if (tipoLower.includes('encaminhamento')) {
+    if (tipoLower.includes('encaminhamentos')) {
       return (
         <div className="space-y-3 border rounded-lg p-4 bg-muted/30">
           <h4 className="font-semibold text-xs uppercase text-primary">Campos do Encaminhamento</h4>

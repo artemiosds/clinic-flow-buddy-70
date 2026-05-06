@@ -199,7 +199,7 @@ const App = () => (
                   >
                     <Route index element={<Dashboard />} />
                     <Route path="agenda" element={<ModuleRoute modulo="agenda"><Agenda /></ModuleRoute>} />
-                    <Route path="fila" element={<ModuleRoute modulo="fila_espera"><FilaEspera /></ModuleRoute>} />
+                    <Route path="fila_espera" element={<ModuleRoute modulo="fila_espera"><FilaEspera /></ModuleRoute>} />
                     <Route path="pacientes" element={<ModuleRoute modulo="pacientes"><Pacientes /></ModuleRoute>} />
                     <Route path="atendimentos" element={<ModuleRoute modulo="atendimentos"><Atendimentos /></ModuleRoute>} />
                     <Route path="relatorios" element={<ModuleRoute modulo="relatorios"><Relatorios /></ModuleRoute>} />
@@ -214,7 +214,7 @@ const App = () => (
                     <Route path="bloqueios" element={<ModuleRoute modulo="feriados_bloqueios"><Bloqueios /></ModuleRoute>} />
                     <Route path="tratamentos" element={<ModuleRoute modulo="gestao_tratamentos"><Tratamentos /></ModuleRoute>} />
                     
-                    <Route path="enfermagem" element={<ModuleRoute modulo="avaliacao_enfermagem"><AvaliacaoEnfermagem /></ModuleRoute>} />
+                    <Route path="avaliacao_enfermagem" element={<ModuleRoute modulo="avaliacao_enfermagem"><AvaliacaoEnfermagem /></ModuleRoute>} />
                     <Route path="pts" element={<ModuleRoute modulo="pts"><PTSPage /></ModuleRoute>} />
                     <Route path="multiprofissional" element={<ModuleRoute modulo="avaliacao_multi"><AvaliacaoMultiprofissional /></ModuleRoute>} />
                     <Route path="configuracoes" element={<ModuleRoute modulo="configuracoes" masterOnly><Configuracoes /></ModuleRoute>} />

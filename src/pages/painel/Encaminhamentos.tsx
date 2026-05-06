@@ -92,7 +92,7 @@ const Encaminhamentos: React.FC = () => {
       let query = supabase
         .from('documentos_gerados')
         .select('*')
-        .in('tipo_documento', ['Encaminhamento', 'encaminhamento', 'Guia de Encaminhamento', 'guia de encaminhamento'])
+        .in('tipo_documento', ['Encaminhamento', 'encaminhamentos', 'Guia de Encaminhamento', 'guia de encaminhamento'])
         .order('created_at', { ascending: false });
 
       // Unit isolation
