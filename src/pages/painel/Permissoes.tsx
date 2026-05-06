@@ -220,8 +220,12 @@ const Permissoes: React.FC = () => {
     const existing = getPerfilRow(modulo);
     const baseRow: PermRow = existing
       ? { ...existing, unidade_id: selectedUnidade } // criar/atualizar para a unidade
-      : { perfil: selectedPerfil, modulo, unidade_id: selectedUnidade,
-          can_view: false, can_create: false, can_edit: false, can_delete: false, can_execute: false };
+      : { 
+          perfil: selectedPerfil, modulo, unidade_id: selectedUnidade,
+          can_view: false, can_create: false, can_edit: false, can_delete: false, can_execute: false,
+          can_print: false, can_export: false, can_attach: false, can_sign: false, can_approve: false,
+          can_cancel: false, can_config: false
+        };
     const newVal = !baseRow[action];
     const updated: PermRow = { ...baseRow, [action]: newVal };
     const key = `perfil-${modulo}-${action}`;
@@ -234,14 +238,18 @@ const Permissoes: React.FC = () => {
       return [...prev, updated];
     });
 
-    const { error } = await (supabase as any)
+    const updateData: any = { 
+      perfil: selectedPerfil, 
+      modulo, 
+      unidade_id: selectedUnidade
+    };
+    ACTIONS.forEach(a => {
+      updateData[a] = updated[a];
+    });
+
+    const { error } = await supabase
       .from("permissoes")
-      .upsert(
-        { perfil: selectedPerfil, modulo, unidade_id: selectedUnidade,
-          can_view: updated.can_view, can_create: updated.can_create, can_edit: updated.can_edit,
-          can_delete: updated.can_delete, can_execute: updated.can_execute },
-        { onConflict: "perfil,modulo,unidade_id" }
-      );
+      .upsert(updateData, { onConflict: "perfil,modulo,unidade_id" } as any);
 
     if (error) {
       toast.error(`Erro: ${error.message}`);
