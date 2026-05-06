@@ -137,11 +137,13 @@ export const usePermissions = () => {
 export const PermissionsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isGlobalAdmin } = useAuth();
   const [permissions, setPermissions] = useState<PermissionsMap | null>(null);
+  const [details, setDetails] = useState<PermissionsDetailMap | null>(null);
   const [loading, setLoading] = useState(true);
 
   const loadPermissions = useCallback(async () => {
     if (!user) {
       setPermissions(null);
+      setDetails(null);
       setLoading(false);
       return;
     }
@@ -152,8 +154,16 @@ export const PermissionsProvider: React.FC<{ children: React.ReactNode }> = ({ c
       // 1. Regra MASTER Global (admin.sms)
       if (isGlobalAdmin || (user.role === 'master' && !user.unidadeId)) {
         const full = {} as PermissionsMap;
-        ALL_MODULES.forEach((m) => { full[m] = { ...fullPerm }; });
+        const det = {} as PermissionsDetailMap;
+        ALL_MODULES.forEach((m) => { 
+          full[m] = { ...fullPerm }; 
+          det[m] = {} as Record<keyof ModulePermission, PermissionDetail>;
+          ALL_ACTIONS.forEach(a => {
+            det[m][a] = { allowed: true, source: 'master_global' };
+          });
+        });
         setPermissions(full);
+        setDetails(det);
         setLoading(false);
         return;
       }
@@ -175,49 +185,51 @@ export const PermissionsProvider: React.FC<{ children: React.ReactNode }> = ({ c
         .eq('user_id', user.id)
         .in('unidade_id', unidadeId ? [unidadeId, ''] : ['']);
 
-      // 4. Consolidar mapa de permissões
+      // 4. Consolidar mapa de permissões e detalhes
       const map: Partial<PermissionsMap> = {};
+      const detMap = {} as PermissionsDetailMap;
       
       ALL_MODULES.forEach((m) => {
-        // Hierarquia de prioridade:
-        // 1. Override Individual na Unidade
-        // 2. Override Individual Global
-        // 3. Perfil na Unidade
-        // 4. Perfil Global
-        // 5. Default Hardcoded
-        
+        map[m] = { ...defaultPerm };
+        detMap[m] = {} as Record<keyof ModulePermission, PermissionDetail>;
+
         const uUnid = (userOverrides || []).find((r: any) => r.modulo === m && r.unidade_id === unidadeId && unidadeId);
         const uGlob = (userOverrides || []).find((r: any) => r.modulo === m && r.unidade_id === '');
         const pUnid = (perfilData || []).find((r: any) => r.modulo === m && r.unidade_id === unidadeId && unidadeId);
         const pGlob = (perfilData || []).find((r: any) => r.modulo === m && r.unidade_id === '');
 
-        const pick = uUnid || uGlob || pUnid || pGlob;
+        ALL_ACTIONS.forEach(a => {
+          let allowed = false;
+          let source: PermissionSourceType = 'default';
 
-        if (pick) {
-          map[m] = {
-            can_view: !!pick.can_view,
-            can_create: !!pick.can_create,
-            can_edit: !!pick.can_edit,
-            can_delete: !!pick.can_delete,
-            can_execute: !!pick.can_execute,
-            can_print: !!pick.can_print,
-            can_export: !!pick.can_export,
-            can_attach: !!pick.can_attach,
-            can_sign: !!pick.can_sign,
-            can_approve: !!pick.can_approve,
-            can_cancel: !!pick.can_cancel,
-            can_config: !!pick.can_config,
-          };
-        } else {
-          // Fallback para defaults se nada for encontrado no banco
-          map[m] = (DEFAULT_PERMISSIONS_BY_ROLE[role]?.[m]) || { ...defaultPerm };
-        }
+          if (uUnid && uUnid[a] !== undefined) {
+            allowed = !!uUnid[a];
+            source = 'user_unit';
+          } else if (uGlob && uGlob[a] !== undefined) {
+            allowed = !!uGlob[a];
+            source = 'user_global';
+          } else if (pUnid && pUnid[a] !== undefined) {
+            allowed = !!pUnid[a];
+            source = 'role_unit';
+          } else if (pGlob && pGlob[a] !== undefined) {
+            allowed = !!pGlob[a];
+            source = 'role_global';
+          } else {
+            allowed = !!(DEFAULT_PERMISSIONS_BY_ROLE[role]?.[m]?.[a]);
+            source = 'default';
+          }
+
+          map[m]![a] = allowed;
+          detMap[m][a] = { allowed, source };
+        });
       });
 
       setPermissions(buildFullMap(map));
+      setDetails(detMap);
     } catch (err) {
       console.error('[Permissions] Erro fatal:', err);
       setPermissions(buildFullMap({}));
+      setDetails(null);
     } finally {
       setLoading(false);
     }
@@ -244,18 +256,30 @@ export const PermissionsProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   const can = useCallback(
     (modulo: ModuleName, action: keyof ModulePermission): boolean => {
-      // Se for MASTER global, sempre true (já tratado no loadPermissions, mas garantindo aqui)
       if (isGlobalAdmin || (user?.role === 'master' && !user?.unidadeId)) return true;
-      
       if (loading || !permissions) return false;
       return !!permissions[modulo]?.[action];
     },
     [permissions, loading, isGlobalAdmin, user?.role, user?.unidadeId]
   );
 
+  const getDetail = useCallback(
+    (modulo: ModuleName, action: keyof ModulePermission): PermissionDetail => {
+      if (isGlobalAdmin || (user?.role === 'master' && !user?.unidadeId)) {
+        return { allowed: true, source: 'master_global' };
+      }
+      if (loading || !details || !details[modulo]) {
+        return { allowed: false, source: 'default' };
+      }
+      return details[modulo][action] || { allowed: false, source: 'default' };
+    },
+    [details, loading, isGlobalAdmin, user?.role, user?.unidadeId]
+  );
+
   return (
-    <PermissionsContext.Provider value={{ permissions, loading, can, reload: loadPermissions }}>
+    <PermissionsContext.Provider value={{ permissions, details, loading, can, getDetail, reload: loadPermissions }}>
       {children}
     </PermissionsContext.Provider>
   );
 };
+
