@@ -47,12 +47,23 @@ export interface ModulePermission {
   can_config: boolean;
 }
 
+export type PermissionSourceType = 'role_global' | 'role_unit' | 'user_global' | 'user_unit' | 'master_global' | 'default';
+
+export interface PermissionDetail {
+  allowed: boolean;
+  source: PermissionSourceType;
+  inheritedFrom?: string;
+}
+
 type PermissionsMap = Record<ModuleName, ModulePermission>;
+type PermissionsDetailMap = Record<ModuleName, Record<keyof ModulePermission, PermissionDetail>>;
 
 interface PermissionsContextType {
   permissions: PermissionsMap | null;
+  details: PermissionsDetailMap | null;
   loading: boolean;
   can: (modulo: ModuleName, action: keyof ModulePermission) => boolean;
+  getDetail: (modulo: ModuleName, action: keyof ModulePermission) => PermissionDetail;
   reload: () => Promise<void>;
 }
 
