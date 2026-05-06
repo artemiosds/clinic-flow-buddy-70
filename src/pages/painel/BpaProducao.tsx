@@ -33,38 +33,7 @@ import {
 
 
 
-interface ProntuarioRow {
-  id: string;
-  paciente_id: string;
-  paciente_nome: string;
-  profissional_id: string;
-  profissional_nome: string;
-  data_atendimento: string;
-  unidade_id: string;
-}
-
-interface LinhaBPA {
-  key: string;                // prontuario_id + proc_id
-  prontuario_id: string;
-  paciente_id: string;
-  paciente_nome: string;
-  profissional_id: string;
-  profissional_nome: string;
-  data: string;
-  procedimento_nome: string;
-  codigo_sigtap: string;
-}
-
-interface ValidationFlags {
-  identificacao: boolean;  // CNS (15) OU CPF (11)
-  cbo: boolean;            // CBO obrigatório
-  sigtap: boolean;         // SIGTAP só obrigatório p/ não-médicos
-  nome: boolean;           // Nome paciente
-  dataNasc: boolean;       // Data nascimento
-}
-
-// CBOs de médicos (família 225*) — médicos podem registrar atendimento sem SIGTAP
-const isCboMedico = (cbo: string) => (cbo || '').replace(/\D/g, '').startsWith('225');
+// Os tipos e utilitários foram movidos para @/services/bpaService
 
 const currentCompetencia = (): string => {
   const d = new Date();
