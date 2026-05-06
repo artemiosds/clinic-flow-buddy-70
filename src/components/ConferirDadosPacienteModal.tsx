@@ -292,18 +292,26 @@ export function ConferirDadosPacienteModal({
 
       setPaciente({ ...paciente, ...updatePayload });
       setDirty(false);
+      lastSavedFormRef.current = JSON.stringify(form);
+      setAutosaveStatus('saved');
+      
       queryClient.invalidateQueries({ queryKey: queryKeys.pacientes.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.pacientes.detail(paciente.id) });
       queryClient.invalidateQueries({ queryKey: queryKeys.agendamentos.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.prontuarios.byPaciente(paciente.id) });
       try { await refreshPacientes(); } catch {}
-      toast.success("Dados atualizados em todo o sistema!");
+      
+      // Toast opcional para autosave (talvez muito intrusivo se for toda hora, mas o usuário pediu "reflete de imediato")
+      // Vamos usar apenas o indicador visual no header para ser mais elegante, mas manter o toast se for manual.
       return true;
     } catch (e: any) {
+      setAutosaveStatus('error');
       toast.error("Erro ao salvar: " + (e?.message || "desconhecido"));
       return false;
     } finally {
       setSaving(false);
+      // Limpa o status de 'salvo' após 3 segundos
+      setTimeout(() => setAutosaveStatus(prev => prev === 'saved' ? 'idle' : prev), 3000);
     }
   };
 
