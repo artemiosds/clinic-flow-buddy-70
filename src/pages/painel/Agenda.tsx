@@ -774,8 +774,15 @@ const Agenda: React.FC = () => {
         let triagemHabilitada = false;
         const { data: profSetting } = await supabase.from('triage_settings').select('enabled').eq('profissional_id', ag.profissionalId).maybeSingle();
         if (profSetting) triagemHabilitada = !!profSetting.enabled;
-        else { const { data: globalSetting } = await supabase.from('triage_settings').select('enabled').is('profissional_id', null).maybeSingle(); if (globalSetting) triagemHabilitada = !!globalSetting.enabled; }
-        if (triagemHabilitada) {
+        else { 
+          const { data: globalSetting } = await supabase.from('triage_settings').select('enabled').is('profissional_id', null).maybeSingle(); 
+          if (globalSetting) triagemHabilitada = !!globalSetting.enabled; 
+        }
+
+        // Regra Especial: Profissional ou Master com permissão "confirmar_chegada" pode pular a triagem (fluxo excepcional)
+        const podePularTriagem = (isProfissional || isMaster) && can('agenda', 'confirmar_chegada');
+
+        if (triagemHabilitada && !podePularTriagem) {
           await updateAgendamento(agId, { status: "confirmado_chegada" as any });
           const filaExistente = fila.find((item) => item.id === agId);
           if (filaExistente) await updateFila(filaExistente.id, { status: "chegada_confirmada" as any, pacienteId: ag.pacienteId, pacienteNome: ag.pacienteNome, unidadeId: ag.unidadeId, profissionalId: ag.profissionalId, horaChegada, observacoes: ag.observacoes || "" } as any);
@@ -788,7 +795,7 @@ const Agenda: React.FC = () => {
           if (filaExistente) await updateFila(filaExistente.id, { status: "apto_atendimento" as any, pacienteId: ag.pacienteId, pacienteNome: ag.pacienteNome, unidadeId: ag.unidadeId, profissionalId: ag.profissionalId, horaChegada, observacoes: ag.observacoes || "" } as any);
           else await addToFila({ id: agId, pacienteId: ag.pacienteId, pacienteNome: ag.pacienteNome, unidadeId: ag.unidadeId, profissionalId: ag.profissionalId, setor: "", prioridade: "normal", status: "apto_atendimento" as any, posicao: fila.length + 1, horaChegada, observacoes: ag.observacoes || "", criadoPor: user?.nome || "recepcao" } as any);
           await Promise.all([refreshAgendamentos(), refreshFila()]);
-          toast.success(`Triagem desabilitada. ${ag.pacienteNome} liberado para atendimento direto.`, { id: toastId });
+          toast.success(podePularTriagem ? `Chegada confirmada. ${ag.pacienteNome} liberado diretamente para atendimento.` : `Triagem desabilitada. ${ag.pacienteNome} liberado para atendimento direto.`, { id: toastId });
         }
       } else {
         await updateAgendamento(agId, { status: newStatus as any });
