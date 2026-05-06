@@ -412,7 +412,7 @@ const Permissoes: React.FC = () => {
                       </div>
                       {override && (
                         <div className="pt-2 border-t mt-2 flex justify-end">
-                          <Button variant="ghost" size="xs" onClick={() => resetUserOverride(mod.id)} className="text-[10px] h-7">
+                          <Button variant="ghost" size="sm" onClick={() => resetUserOverride(mod.id)} className="text-[10px] h-7">
                             <RotateCcw className="w-3 h-3 mr-1" /> Remover exceção
                           </Button>
                         </div>
