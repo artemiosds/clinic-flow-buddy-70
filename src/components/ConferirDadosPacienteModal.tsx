@@ -204,6 +204,20 @@ export function ConferirDadosPacienteModal({
     fetchPaciente(pacienteId);
   }, [open, pacienteId, fetchPaciente]);
 
+  // Debounced Auto-save
+  useEffect(() => {
+    if (!dirty || !paciente || saving || confirming) return;
+
+    const currentFormStr = JSON.stringify(form);
+    if (currentFormStr === lastSavedFormRef.current) return;
+
+    const timer = setTimeout(() => {
+      handleSave();
+    }, 1500); // 1.5 segundos de debounce
+
+    return () => clearTimeout(timer);
+  }, [form, dirty, paciente, saving, confirming]);
+
   const validacao = useMemo(() => {
     if (!paciente) return { incompleto: false, faltando: [] as string[] };
     return isCadastroIncompleto({
