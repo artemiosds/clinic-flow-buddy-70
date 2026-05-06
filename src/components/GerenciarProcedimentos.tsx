@@ -102,7 +102,7 @@ const GerenciarProcedimentos: React.FC = () => {
     const [procsRes, vincRes] = await Promise.all([
       (supabase as any)
         .from("sigtap_procedimentos")
-        .select("codigo, nome, descricao, especialidade, total_cids, origem, valor, ativo")
+        .select("codigo, nome, descricao, especialidade, total_cids, origem, valor, ativo, cbo_obrigatorio")
         .eq("ativo", true)
         .order("especialidade")
         .order("nome"),
