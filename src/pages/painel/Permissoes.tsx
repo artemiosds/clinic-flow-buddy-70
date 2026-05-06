@@ -284,9 +284,12 @@ const Permissoes: React.FC = () => {
         || (perfilData || []).find((r: any) => r.unidade_id === "");
       base = {
         user_id: selectedUserId, modulo, unidade_id: selectedUnidade,
-        can_view: ref?.can_view ?? false, can_create: ref?.can_create ?? false,
-        can_edit: ref?.can_edit ?? false, can_delete: ref?.can_delete ?? false,
-        can_execute: ref?.can_execute ?? false,
+        can_view: !!ref?.can_view, can_create: !!ref?.can_create,
+        can_edit: !!ref?.can_edit, can_delete: !!ref?.can_delete,
+        can_execute: !!ref?.can_execute, can_print: !!ref?.can_print,
+        can_export: !!ref?.can_export, can_attach: !!ref?.can_attach,
+        can_sign: !!ref?.can_sign, can_approve: !!ref?.can_approve,
+        can_cancel: !!ref?.can_cancel, can_config: !!ref?.can_config,
       };
     }
     const newVal = !base[action];
