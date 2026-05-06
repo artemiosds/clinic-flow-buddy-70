@@ -465,10 +465,13 @@ const BpaProducao: React.FC = () => {
                           {l.paciente_nome || <span className="italic">faltando</span>}
                         </TableCell>
                         <TableCell className={cn("text-xs font-mono", !v.identificacao && "text-destructive")}>
-                          {pac?.cns || pac?.cpf || <span className="italic">faltando</span>}
+                          <div className="flex flex-col">
+                            <span>{pac?.cns || <span className="italic opacity-50">sem cns</span>}</span>
+                            <span className="text-[10px] opacity-70">{pac?.cpf || <span className="italic opacity-50">sem cpf</span>}</span>
+                          </div>
                         </TableCell>
                         <TableCell className={cn("text-xs", !v.dataNasc && "text-destructive italic")}>
-                          {pac?.data_nascimento || 'faltando'}
+                          {pac?.data_nascimento ? new Date(pac.data_nascimento + 'T12:00:00').toLocaleDateString('pt-BR') : 'faltando'}
                         </TableCell>
                         <TableCell className="text-xs">{l.profissional_nome}</TableCell>
                         <TableCell className={cn("text-xs font-mono", !v.cbo && "text-destructive")}>
