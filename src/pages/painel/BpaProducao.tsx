@@ -116,7 +116,7 @@ const BpaProducao: React.FC = () => {
           unidade_id: pront.unidade_id,
           data: pront.data_atendimento,
           procedimento_nome: v.nome_procedimento || '—',
-          codigo_sigtap: v.codigo_sigtap || '',
+          codigo_sigtap: (v.codigo_sigtap || '').replace(/\D/g, '').length === 10 ? v.codigo_sigtap : '',
         });
       });
 

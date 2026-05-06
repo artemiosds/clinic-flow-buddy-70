@@ -90,9 +90,9 @@ export const validateBpaLine = (line: BpaLine): BpaValidation => {
   if (!cbo) errors.push('CBO do profissional não cadastrado');
   if (!cnes || cnes.length < 7) errors.push('CNES da unidade inválido (7 dígitos)');
   
-  const exigeSigtap = !isCboMedico(cbo);
-  if (exigeSigtap && (!sigtap || sigtap.length !== 10)) {
-    errors.push('Código SIGTAP obrigatório para esta categoria profissional');
+  // No BPA-I, o código SIGTAP é obrigatório para TODOS os registros exportados.
+  if (!sigtap || sigtap.length !== 10) {
+    errors.push('Código SIGTAP de 10 dígitos é obrigatório para produção BPA-I');
   }
 
   return {
@@ -128,7 +128,7 @@ export const normalizeBpaData = (raw: any): BpaLine => {
     cns_profissional: (profCd.cns || '').replace(/\D/g, '').slice(0, 15),
     procedimento_id: raw.procedimento_id || '',
     procedimento_nome: raw.procedimento_nome || (isCboMedico(profCd.cbo_codigo) ? 'Consulta Médica' : '—'),
-    codigo_sigtap: raw.codigo_sigtap || (isCboMedico(profCd.cbo_codigo) ? '0301010072' : ''),
+    codigo_sigtap: (raw.codigo_sigtap || '').replace(/\D/g, '').length === 10 ? raw.codigo_sigtap : (isCboMedico(profCd.cbo_codigo) ? '0301010072' : ''),
     paciente_cns: (raw.paciente_cns || '').replace(/\D/g, ''),
     paciente_cpf: (raw.paciente_cpf || '').replace(/\D/g, ''),
     paciente_nascimento: raw.paciente_nascimento,

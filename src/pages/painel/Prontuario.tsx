@@ -955,6 +955,18 @@ const ProntuarioPage: React.FC = () => {
         .filter(Boolean)
         .join(", ");
 
+      // Validação BPA-I: Verifica se há algum procedimento sem código SIGTAP válido
+      const hasInvalidSigtapSave = selectedProcIds.some(id => {
+        const p = procedimentos.find(pr => pr.id === id);
+        return !p || (p.id || '').replace(/\D/g, '').length !== 10;
+      });
+
+      if (hasInvalidSigtapSave && !confirm("Atenção: Um ou mais procedimentos selecionados não possuem código SIGTAP de 10 dígitos. Isso impedirá a exportação correta para o BPA-I. Deseja continuar mesmo assim?")) {
+        setSaving(false);
+        toast.dismiss(toastId);
+        return false;
+      }
+
       // Resolve profissional responsável: preserva o original em edições.
       // Master pode reatribuir via overrideProfissionalId.
       const isMasterEditing = user?.role === 'master' && !!editId;
@@ -1417,6 +1429,18 @@ const ProntuarioPage: React.FC = () => {
     let prontuarioId: string | null = editId;
     try {
       const procTexto = selectedProcIds.map(id => procedimentos.find(pr => pr.id === id)?.nome || "").filter(Boolean).join(", ");
+      
+      // Validação BPA-I: Verifica se há algum procedimento sem código SIGTAP válido
+      const hasInvalidSigtap = selectedProcIds.some(id => {
+        const p = procedimentos.find(pr => pr.id === id);
+        return !p || (p.id || '').replace(/\D/g, '').length !== 10;
+      });
+
+      if (hasInvalidSigtap && !confirm("Atenção: Um ou mais procedimentos selecionados não possuem código SIGTAP de 10 dígitos. Isso impedirá a exportação correta para o BPA-I. Deseja continuar mesmo assim?")) {
+        setSaving(false);
+        return;
+      }
+
       // Save+finalize: preserva profissional original em edição
       const isMasterEditingFin = user?.role === 'master' && !!editId;
       const overrideProfFin = isMasterEditingFin && overrideProfissionalId
@@ -2375,7 +2399,16 @@ const ProntuarioPage: React.FC = () => {
                               checked={checked}
                               onClick={(e) => e.stopPropagation()}
                               onCheckedChange={(c) => {
-                                setSelectedProcIds((prev) => c ? [...prev, proc.id] : prev.filter((id) => id !== proc.id));
+                                setSelectedProcIds((prev) => {
+                                  if (c) {
+                                    const proc = procedimentos.find(p => p.id === proc.id);
+                                    if (proc && (proc.id || '').replace(/\D/g, '').length !== 10) {
+                                      toast.warning("Este procedimento não possui um código SIGTAP de 10 dígitos e será ignorado no BPA-I.");
+                                    }
+                                    return [...prev, proc.id];
+                                  }
+                                  return prev.filter((id) => id !== proc.id);
+                                });
                                 if (c) loadCidsForProc(proc.id);
                               }}
                             />
@@ -2389,6 +2422,11 @@ const ProntuarioPage: React.FC = () => {
                               )}
                               {proc.nome}
                             </span>
+                            {!isCustom && (proc.id || '').replace(/\D/g, '').length !== 10 && (
+                              <Badge variant="destructive" className="h-5 text-[10px] shrink-0 animate-pulse">
+                                <AlertTriangle className="h-3 w-3 mr-1" /> Sem SIGTAP
+                              </Badge>
+                            )}
                             {checked && selCids.length > 0 && (
                               <Badge variant="secondary" className="h-5 text-[10px] shrink-0">{selCids.length} CID</Badge>
                             )}

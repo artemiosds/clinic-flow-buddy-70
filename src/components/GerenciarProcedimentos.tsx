@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Search, Stethoscope, Users, ChevronDown, Tag, Loader2, Plus, Pencil, Trash2, X } from "lucide-react";
+import { Search, Stethoscope, Users, ChevronDown, Tag, Loader2, Plus, Pencil, Trash2, X, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useData } from "@/contexts/DataContext";
@@ -29,6 +29,7 @@ interface SigtapProc {
   origem: "SIGTAP" | "PERSONALIZADO";
   valor?: number | null;
   ativo: boolean;
+  cbo_obrigatorio?: boolean;
 }
 
 const ESPECIALIDADE_META: Record<string, { label: string; color: string }> = {
@@ -101,7 +102,7 @@ const GerenciarProcedimentos: React.FC = () => {
     const [procsRes, vincRes] = await Promise.all([
       (supabase as any)
         .from("sigtap_procedimentos")
-        .select("codigo, nome, descricao, especialidade, total_cids, origem, valor, ativo")
+        .select("codigo, nome, descricao, especialidade, total_cids, origem, valor, ativo, cbo_obrigatorio")
         .eq("ativo", true)
         .order("especialidade")
         .order("nome"),
@@ -389,10 +390,13 @@ const GerenciarProcedimentos: React.FC = () => {
                     {items.map((p) => {
                       const linked = links.get(p.codigo)?.size || 0;
                       const isCustom = p.origem === "PERSONALIZADO";
+                      const isSigtapValido = p.codigo.length === 10;
                       return (
                         <div
                           key={p.codigo}
-                          className="p-3 rounded-lg border bg-muted/30 flex flex-col sm:flex-row sm:items-center gap-3"
+                          className={`p-3 rounded-lg border flex flex-col sm:flex-row sm:items-center gap-3 ${
+                            !isSigtapValido ? "bg-destructive/5 border-destructive/20" : "bg-muted/30"
+                          }`}
                         >
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
@@ -405,9 +409,14 @@ const GerenciarProcedimentos: React.FC = () => {
                               <span className="font-medium text-sm">{p.nome}</span>
                             </div>
                             <div className="flex items-center gap-2 mt-1 flex-wrap">
-                              <Badge variant="outline" className="text-[10px] font-mono">
+                              <Badge variant="outline" className={`text-[10px] font-mono ${!isSigtapValido ? "text-destructive border-destructive" : ""}`}>
                                 {p.codigo}
                               </Badge>
+                              {!isSigtapValido && (
+                                <Badge variant="destructive" className="text-[10px] animate-pulse">
+                                  <AlertCircle className="w-3 h-3 mr-1" /> Inválido para BPA-I
+                                </Badge>
+                              )}
                               <Badge variant="secondary" className="text-[10px] gap-1">
                                 <Tag className="w-3 h-3" /> {p.total_cids} CIDs
                               </Badge>

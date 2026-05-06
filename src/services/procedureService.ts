@@ -182,6 +182,11 @@ export const procedureService = {
     criadoPor?: string;
   }): Promise<{ codigo: string }> {
     const codigo = (input.codigo?.trim() || `CUSTOM-${Date.now().toString(36).toUpperCase()}`);
+    
+    // Validação BPA-I: Se o código fornecido não for um SIGTAP válido (10 dígitos), 
+    // e o usuário não for master, poderíamos ter problemas. 
+    // Mas aqui o master pode cadastrar códigos personalizados.
+    
     const { error } = await (supabase as any).from('sigtap_procedimentos').insert({
       codigo,
       nome: input.nome.trim(),
@@ -224,6 +229,15 @@ export const procedureService = {
       .delete()
       .eq('codigo', codigo)
       .eq('origem', 'PERSONALIZADO');
+    if (error) throw error;
+    this.invalidateCache();
+  },
+
+  async toggleActive(codigo: string, ativo: boolean) {
+    const { error } = await (supabase as any)
+      .from('sigtap_procedimentos')
+      .update({ ativo })
+      .eq('codigo', codigo);
     if (error) throw error;
     this.invalidateCache();
   },
