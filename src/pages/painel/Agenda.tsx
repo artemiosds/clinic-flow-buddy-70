@@ -1682,8 +1682,17 @@ const Agenda: React.FC = () => {
                 </Badge>
               </DialogTitle>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={refreshAgendamentos} className="h-8 text-xs">
-                  <RotateCcw className="w-3 h-3 mr-1" /> Atualizar
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={async () => {
+                    const tid = toast.loading("Atualizando...");
+                    await refreshAgendamentos();
+                    toast.success("Atualizado!", { id: tid });
+                  }} 
+                  className="h-8 text-xs"
+                >
+                  <RefreshCw className="w-3 h-3 mr-1" /> Atualizar
                 </Button>
               </div>
             </div>
