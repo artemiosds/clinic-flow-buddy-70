@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { Filter as LucideFilter } from "lucide-react";
 import { usePacienteNomeResolver } from "@/hooks/usePacienteNomeResolver";
 import { isSameDay } from "date-fns";
 import { useData } from "@/contexts/DataContext";
