@@ -195,7 +195,7 @@ const Dashboard: React.FC = () => {
           value={pendenciasAgenda.length} 
           icon={<Bell className="w-5 h-5 text-warning-foreground" />} 
           color="bg-warning" 
-          subtitle="Ações necessárias"
+          subtitle={pendenciasAgenda.length > 0 ? "Ações necessárias" : "Tudo em dia"}
           onClick={() => navigate('/painel/agenda')} 
           critical={pendenciasAgenda.length > 0}
         />
