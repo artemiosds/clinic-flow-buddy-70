@@ -377,6 +377,9 @@ export function ConferirDadosPacienteModal({
         <DialogHeader className="px-4 sm:px-6 pt-5 pb-3 border-b shrink-0">
           <DialogTitle className="flex items-center gap-2 font-display text-base sm:text-lg pr-6">
             {modo === "chegada" ? "Confirmar Chegada — Conferência" : "Conferir Dados do Paciente"}
+            {autosaveStatus === 'saving' && <span className="text-[10px] text-primary animate-pulse ml-2 font-normal">(Salvando alterações...)</span>}
+            {autosaveStatus === 'saved' && <span className="text-[10px] text-success ml-2 font-normal">(Alterações salvas)</span>}
+            {autosaveStatus === 'error' && <span className="text-[10px] text-destructive ml-2 font-normal">(Erro ao salvar)</span>}
           </DialogTitle>
         </DialogHeader>
 
