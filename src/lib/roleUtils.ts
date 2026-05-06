@@ -1,5 +1,5 @@
 
-import { UserRole } from "./types";
+import { UserRole } from "@/types";
 
 export const roleLabels: Record<UserRole, string> = {
   master: 'Master',
