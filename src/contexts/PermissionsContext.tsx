@@ -83,16 +83,98 @@ export const PermissionsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     setLoading(true);
 
     try {
-      // 1. Regra MASTER Global (admin.sms ou master sem unidade)
+      // 1. Regra MASTER Global
       if (isGlobalAdmin || (user.role === 'master' && !user.unidadeId)) {
         const full: PermissionsMap = {};
         const det: PermissionsDetailMap = {};
         
         PERMISSION_REGISTRY.forEach((mod) => {
-...
-      PERMISSIONS_REGISTRY.forEach((mod) => {
-...
-      PERMISSIONS_REGISTRY.forEach(m => fallbackMap[m.id] = {});
+          full[mod.id] = {};
+          det[mod.id] = {};
+          mod.actions.forEach(act => {
+            full[mod.id][act.key] = true;
+            det[mod.id][act.key] = { allowed: true, source: 'master_global' };
+          });
+        });
+        
+        setPermissions(full);
+        setDetails(det);
+        setLoading(false);
+        return;
+      }
+
+      const role = (user.role || '').toLowerCase().trim();
+      const unidadeId = user.unidadeId || '';
+
+      const { data: perfilData } = await supabase
+        .from('permissoes')
+        .select('*')
+        .eq('perfil', role)
+        .in('unidade_id', unidadeId ? [unidadeId, ''] : ['']);
+
+      const { data: userOverrides } = await supabase
+        .from('permissoes_usuario')
+        .select('*')
+        .eq('user_id', user.id)
+        .in('unidade_id', unidadeId ? [unidadeId, ''] : ['']);
+
+      const map: PermissionsMap = {};
+      const detMap: PermissionsDetailMap = {};
+      
+      PERMISSION_REGISTRY.forEach((mod) => {
+        const m = mod.id;
+        map[m] = {};
+        detMap[m] = {};
+
+        const uUnid = (userOverrides || []).find((r: any) => r.modulo === m && r.unidade_id === unidadeId && unidadeId);
+        const uGlob = (userOverrides || []).find((r: any) => r.modulo === m && r.unidade_id === '');
+        const pUnid = (perfilData || []).find((r: any) => r.modulo === m && r.unidade_id === unidadeId && unidadeId);
+        const pGlob = (perfilData || []).find((r: any) => r.modulo === m && r.unidade_id === '');
+
+        mod.actions.forEach(act => {
+          const a = act.key;
+          let allowed = false;
+          let source: PermissionSourceType = 'default';
+
+          const getVal = (row: any, key: string) => {
+            if (!row) return undefined;
+            if (LEGACY_ACTION_COLUMNS.includes(key)) return row[key];
+            return row.acoes_especificas?.[key];
+          };
+
+          const valUUnid = getVal(uUnid, a);
+          const valUGlob = getVal(uGlob, a);
+          const valPUnid = getVal(pUnid, a);
+          const valPGlob = getVal(pGlob, a);
+
+          if (valUUnid !== undefined) {
+            allowed = !!valUUnid;
+            source = 'user_unit';
+          } else if (valUGlob !== undefined) {
+            allowed = !!valUGlob;
+            source = 'user_global';
+          } else if (valPUnid !== undefined) {
+            allowed = !!valPUnid;
+            source = 'role_unit';
+          } else if (valPGlob !== undefined) {
+            allowed = !!valPGlob;
+            source = 'role_global';
+          } else {
+            allowed = !!(DEFAULT_PERMISSIONS_BY_ROLE[role]?.[m]?.[a]);
+            source = 'default';
+          }
+
+          map[m][a] = allowed;
+          detMap[m][a] = { allowed, source };
+        });
+      });
+
+      setPermissions(map);
+      setDetails(detMap);
+    } catch (err) {
+      console.error('[Permissions] Erro fatal:', err);
+      const fallbackMap: PermissionsMap = {};
+      PERMISSION_REGISTRY.forEach(m => fallbackMap[m.id] = {});
       setPermissions(fallbackMap);
       setDetails(null);
     } finally {
@@ -104,25 +186,18 @@ export const PermissionsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     loadPermissions();
   }, [loadPermissions]);
 
-  // Realtime updates
   useEffect(() => {
     if (!user?.id) return;
     const channel = supabase
       .channel(`permissoes-realtime-${user.id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'permissoes' }, () => loadPermissions())
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'permissoes_usuario', 
-        filter: `user_id=eq.${user.id}` 
-      }, () => loadPermissions())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'permissoes_usuario', filter: `user_id=eq.${user.id}` }, () => loadPermissions())
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [user?.id, loadPermissions]);
 
   const can = useCallback(
     (modulo: ModuleName, action: string): boolean => {
-      // Master global sempre tem acesso a tudo
       if (isGlobalAdmin || (user?.role === 'master' && !user?.unidadeId)) return true;
       if (loading || !permissions) return false;
       return !!permissions[modulo]?.[action];
