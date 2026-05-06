@@ -2248,6 +2248,7 @@ export type Database = {
       }
       permissoes: {
         Row: {
+          acoes_especificas: Json | null
           can_approve: boolean
           can_attach: boolean
           can_cancel: boolean
@@ -2268,6 +2269,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          acoes_especificas?: Json | null
           can_approve?: boolean
           can_attach?: boolean
           can_cancel?: boolean
@@ -2288,6 +2290,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          acoes_especificas?: Json | null
           can_approve?: boolean
           can_attach?: boolean
           can_cancel?: boolean
@@ -2311,6 +2314,7 @@ export type Database = {
       }
       permissoes_usuario: {
         Row: {
+          acoes_especificas: Json | null
           can_approve: boolean
           can_attach: boolean
           can_cancel: boolean
@@ -2331,6 +2335,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          acoes_especificas?: Json | null
           can_approve?: boolean
           can_attach?: boolean
           can_cancel?: boolean
@@ -2351,6 +2356,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          acoes_especificas?: Json | null
           can_approve?: boolean
           can_attach?: boolean
           can_cancel?: boolean
