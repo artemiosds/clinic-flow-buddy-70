@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useEffect } from "react";
+import React, { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { usePacienteNomeResolver } from "@/hooks/usePacienteNomeResolver";
 import { isSameDay } from "date-fns";
 import { useData } from "@/contexts/DataContext";
@@ -10,7 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -50,6 +50,10 @@ import {
   Loader2,
   FilterX,
   Filter,
+  Stethoscope,
+  Building2,
+  Phone,
+  RefreshCw,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import DetalheDrawer, { Secao, Campo, StatusBadge, calcularIdade, formatarData } from "@/components/DetalheDrawer";
@@ -337,34 +341,47 @@ const Agenda: React.FC = () => {
   const agendamentosPendentesRevisao = React.useMemo(() => {
     const today = todayLocalStr();
     const nowTime = new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+    
+    // Status que geram pendência (conforme regra solicitada)
     const PENDENTE_STATUSES = new Set([
       "confirmado",
-      "aguardando",
+      "confirmada",
+      "agendado",
       "confirmado_chegada",
-      "apto_atendimento",
-      "chamado",
-      "em_atendimento",
+      "chegada_confirmada",
       "aguardando_triagem",
-      "aguardando_atendimento",
-      "aguardando_enfermagem",
       "triagem_concluida",
-      "apto_agendamento",
-      "pendente"
+      "apto_atendimento",
+      "apto",
+      "apto_para_atendimento",
+      "em_atendimento",
+      "pendente",
+      "aguardando_profissional",
+      "aguardando_atendimento",
+      "aguardando_enfermagem"
     ]);
 
     return agendamentos.filter((a) => {
-      const currentMonth = new Date().getMonth();
-      const currentYear = new Date().getFullYear();
-      const agDate = new Date(a.data + "T12:00:00");
-      const isThisMonthOrPast =
-        agDate.getFullYear() < currentYear || (agDate.getFullYear() === currentYear && agDate.getMonth() <= currentMonth);
-
-      if (!isThisMonthOrPast) return false;
+      // 1. Data atual ou passada
       if (a.data > today) return false;
+      
+      // 2. Se for hoje, o horário já deve ter passado
       if (a.data === today && a.hora >= nowTime) return false;
+      
+      // 3. Respeitar permissões de perfil
+      const isMasterGlobal = user?.role === "master" && user?.usuario === 'admin.sms';
+      const isMasterUnidade = user?.role === "master" && !isMasterGlobal;
+      
+      // Profissional vê apenas os seus vinculados
       if (isProfissional && user?.id && a.profissionalId !== user.id) return false;
-      if (user?.unidadeId && user?.usuario !== 'admin.sms' && a.unidadeId !== user.unidadeId) return false;
+      
+      // Recepção vê apenas da sua unidade
+      if (user?.role === "recepcao" && user?.unidadeId && a.unidadeId !== user.unidadeId) return false;
+      
+      // Master de unidade vê apenas da sua unidade
+      if (isMasterUnidade && user?.unidadeId && a.unidadeId !== user.unidadeId) return false;
 
+      // 4. Deve estar em um status de pendência
       return PENDENTE_STATUSES.has(a.status);
     });
   }, [agendamentos, user, isProfissional, nowTick]);
@@ -1652,27 +1669,136 @@ const Agenda: React.FC = () => {
         agendamento={conferenciaModal.agendamentoInfo}
         onConfirm={conferenciaModal.onConfirm}
       />
+
       <Dialog open={revisaoDialogOpen} onOpenChange={setRevisaoDialogOpen}>
-        <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader><DialogTitle className="font-display flex items-center gap-2"><Bell className="w-5 h-5 text-warning" /> Pendências de agenda</DialogTitle></DialogHeader>
-          <div className="space-y-4 py-2">
-            <p className="text-sm text-muted-foreground">Revise os agendamentos abaixo que não foram concluídos corretamente. Você pode marcar falta ou abrir o atendimento para finalizar o prontuário.</p>
-            <div className="space-y-6">
-              {Object.entries(agendamentosPendentesRevisao.reduce((acc, ag) => { const date = ag.data; if (!acc[date]) acc[date] = []; acc[date].push(ag); return acc; }, {} as Record<string, typeof agendamentos>)).sort(([dateA], [dateB]) => dateB.localeCompare(dateA)).map(([date, items]) => (
-                <div key={date} className="space-y-2">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2"><CalendarIcon className="w-3 h-3" />{new Date(date + "T12:00:00").toLocaleDateString("pt-BR", { day: '2-digit', month: 'long' })}</h3>
-                  <div className="grid gap-2">
-                    {items.sort((a, b) => a.hora.localeCompare(b.hora)).map(ag => (
-                      <div key={ag.id} className="flex items-center justify-between p-3 rounded-lg border bg-muted/30 gap-3">
-                        <div className="min-w-0 flex-1"><p className="text-sm font-semibold truncate">{ag.pacienteNome}</p><p className="text-xs text-muted-foreground">{ag.hora} • {ag.profissionalNome} • <span className={cn(statusBadgeClass[ag.status], "bg-transparent p-0")}>{statusLabels[ag.status] || ag.status}</span></p></div>
-                        <div className="flex gap-1 shrink-0"><Button size="sm" variant="outline" className="h-7 px-2 text-[10px] border-destructive/50 text-destructive hover:bg-destructive/10" onClick={() => setFaltaTarget(ag)}><X className="w-3 h-3 mr-1" /> Faltou</Button><Button size="sm" className="h-7 px-2 text-[10px] bg-primary text-primary-foreground" onClick={() => { handleIniciarAtendimento(ag); setRevisaoDialogOpen(false); }}><Play className="w-3 h-3 mr-1" /> Resolver</Button></div>
-                      </div>
-                    ))}
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b flex-shrink-0">
+            <div className="flex items-center justify-between">
+              <DialogTitle className="font-display flex items-center gap-2 text-xl">
+                <Bell className="w-5 h-5 text-warning" /> 
+                Pendências de Agenda 
+                <Badge variant="outline" className="ml-2 bg-warning/10 text-warning border-warning/20">
+                  {agendamentosPendentesRevisao.length}
+                </Badge>
+              </DialogTitle>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={async () => {
+                    const tid = toast.loading("Atualizando...");
+                    await refreshAgendamentos();
+                    toast.success("Atualizado!", { id: tid });
+                  }} 
+                  className="h-8 text-xs"
+                >
+                  <RefreshCw className="w-3 h-3 mr-1" /> Atualizar
+                </Button>
+              </div>
+            </div>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            {agendamentosPendentesRevisao.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center space-y-3">
+                <div className="bg-success/10 p-4 rounded-full">
+                  <CheckCircle2 className="w-10 h-10 text-success" />
+                </div>
+                <div>
+                  <p className="font-semibold text-lg">Tudo em dia!</p>
+                  <p className="text-muted-foreground">Nenhuma pendência encontrada para o seu perfil.</p>
+                </div>
+              </div>
+            ) : (
+              Object.entries(agendamentosPendentesRevisao.reduce((acc, ag) => { 
+                const date = ag.data; 
+                if (!acc[date]) acc[date] = []; 
+                acc[date].push(ag); 
+                return acc; 
+              }, {} as Record<string, typeof agendamentos>))
+              .sort(([dateA], [dateB]) => dateB.localeCompare(dateA))
+              .map(([date, items]) => (
+                <div key={date} className="space-y-3">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2 sticky top-0 bg-background/95 py-1 z-10">
+                    <CalendarIcon className="w-3 h-3" />
+                    {new Date(date + "T12:00:00").toLocaleDateString("pt-BR", { day: '2-digit', month: 'long', year: 'numeric' })}
+                  </h3>
+                  <div className="grid gap-3">
+                    {items.sort((a, b) => a.hora.localeCompare(b.hora)).map(ag => {
+                      const statusInfo = statusBadgeClass[ag.status] || "bg-muted text-muted-foreground";
+                      const pac = pacientes.find(p => p.id === ag.pacienteId);
+                      
+                      return (
+                        <div key={ag.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border bg-card hover:shadow-md transition-all gap-4 group">
+                          <div className="min-w-0 flex-1 space-y-1">
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm font-bold text-foreground truncate">{ag.pacienteNome}</p>
+                              <Badge variant="outline" className={cn("text-[10px] uppercase font-bold border-none px-2 h-5", statusInfo)}>
+                                {statusLabels[ag.status] || ag.status}
+                              </Badge>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                              <span className="flex items-center gap-1 font-mono font-bold text-primary">
+                                <Clock className="w-3 h-3" /> {ag.hora}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Stethoscope className="w-3 h-3" /> {ag.profissionalNome}
+                              </span>
+                              {pac?.telefone && (
+                                <span className="flex items-center gap-1">
+                                  <Phone className="w-3 h-3" /> {pac.telefone}
+                                </span>
+                              )}
+                              {isMaster && (
+                                <span className="flex items-center gap-1">
+                                  <Building2 className="w-3 h-3" /> {unidades.find(u => u.id === ag.unidadeId)?.nome}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              className="h-9 w-9 p-0 text-info hover:bg-info/10" 
+                              onClick={() => { setDetalheAg(ag); setDetalheOpen(true); }}
+                              title="Visualizar Detalhes"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              className="h-9 w-9 p-0 text-destructive hover:bg-destructive/10" 
+                              onClick={() => setFaltaTarget(ag)}
+                              title="Marcar Falta"
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+
+                            {(isProfissional || isMaster) && (
+                              <Button 
+                                size="sm" 
+                                className="h-9 gap-2 bg-success text-success-foreground hover:bg-success/90 px-4" 
+                                onClick={() => { handleIniciarAtendimento(ag); setRevisaoDialogOpen(false); }}
+                              >
+                                <Play className="w-3.5 h-3.5" />
+                                <span className="text-xs font-bold">Resolver</span>
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
-              ))}
-            </div>
+              ))
+            )}
           </div>
+          <DialogFooter className="px-6 py-4 border-t bg-muted/20 flex-shrink-0">
+            <Button variant="outline" onClick={() => setRevisaoDialogOpen(false)}>Fechar</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

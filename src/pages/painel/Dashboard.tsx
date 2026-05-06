@@ -3,11 +3,11 @@ import { usePacienteNomeResolver } from '@/hooks/usePacienteNomeResolver';
 import { useData } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
-import { Calendar, Users, Clock, CheckCircle, TrendingUp, XCircle, AlertTriangle, BarChart3, ArrowRight } from 'lucide-react';
+import { Calendar, Users, Clock, CheckCircle, TrendingUp, XCircle, AlertTriangle, BarChart3, ArrowRight, Bell } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
-import { cn } from '@/lib/utils';
+import { cn, todayLocalStr } from '@/lib/utils';
 import { DashboardSkeleton } from '@/components/skeletons';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
@@ -91,6 +91,33 @@ const Dashboard: React.FC = () => {
   const pendentes = todayAg.filter(a => a.status === 'pendente').length;
   const aguardando = fila.filter(f => f.status === 'aguardando').length;
 
+  const pendenciasAgenda = useMemo(() => {
+    const today = todayLocalStr();
+    const nowTime = new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+    const isProfissional = user?.role === 'profissional';
+    
+    const PENDENTE_STATUSES = new Set([
+      "confirmado", "confirmada", "agendado", "confirmado_chegada", "chegada_confirmada",
+      "aguardando_triagem", "triagem_concluida", "apto_atendimento", "apto",
+      "apto_para_atendimento", "em_atendimento", "pendente", "aguardando_profissional",
+      "aguardando_atendimento", "aguardando_enfermagem"
+    ]);
+
+    return agendamentos.filter((a) => {
+      if (a.data > today) return false;
+      if (a.data === today && a.hora >= nowTime) return false;
+      
+      const isMasterGlobal = user?.role === "master" && user?.usuario === 'admin.sms';
+      const isMasterUnidade = user?.role === "master" && !isMasterGlobal;
+      
+      if (isProfissional && user?.id && a.profissionalId !== user.id) return false;
+      if (user?.role === "recepcao" && user?.unidadeId && a.unidadeId !== user.unidadeId) return false;
+      if (isMasterUnidade && user?.unidadeId && a.unidadeId !== user.unidadeId) return false;
+
+      return PENDENTE_STATUSES.has(a.status);
+    });
+  }, [agendamentos, user]);
+
   // KPIs
   const kpis = useMemo(() => {
     const totalAg = filteredAgendamentos.length;
@@ -163,9 +190,17 @@ const Dashboard: React.FC = () => {
       {/* Main KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard title="Consultas Hoje" value={todayAg.length} icon={<Calendar className="w-5 h-5 text-primary-foreground" />} color="gradient-primary" onClick={() => navigate('/painel/agenda')} />
-        <StatCard title="Confirmados/Chegou" value={confirmados} icon={<CheckCircle className="w-5 h-5 text-success-foreground" />} color="bg-success" onClick={() => navigate('/painel/agenda')} />
-        <StatCard title="Na Fila" value={aguardando} icon={<Clock className="w-5 h-5 text-warning-foreground" />} color="bg-warning" onClick={() => navigate('/painel/fila')} />
-        <StatCard title="Atendimentos Totais" value={totalAtendimentos} icon={<TrendingUp className="w-5 h-5 text-info-foreground" />} color="bg-info" onClick={() => navigate('/painel/atendimentos')} />
+        <StatCard 
+          title="Pendências Agenda" 
+          value={pendenciasAgenda.length} 
+          icon={<Bell className="w-5 h-5 text-warning-foreground" />} 
+          color="bg-warning" 
+          subtitle={pendenciasAgenda.length > 0 ? "Ações necessárias" : "Tudo em dia"}
+          onClick={() => navigate('/painel/agenda')} 
+          critical={pendenciasAgenda.length > 0}
+        />
+        <StatCard title="Na Fila" value={aguardando} icon={<Clock className="w-5 h-5 text-info-foreground" />} color="bg-info" onClick={() => navigate('/painel/fila')} />
+        <StatCard title="Atendimentos Totais" value={totalAtendimentos} icon={<TrendingUp className="w-5 h-5 text-success-foreground" />} color="bg-success" onClick={() => navigate('/painel/atendimentos')} />
       </div>
 
       {/* Executive KPIs */}
