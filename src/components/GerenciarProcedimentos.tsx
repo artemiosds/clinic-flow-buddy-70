@@ -390,10 +390,13 @@ const GerenciarProcedimentos: React.FC = () => {
                     {items.map((p) => {
                       const linked = links.get(p.codigo)?.size || 0;
                       const isCustom = p.origem === "PERSONALIZADO";
+                      const isSigtapValido = p.codigo.length === 10;
                       return (
                         <div
                           key={p.codigo}
-                          className="p-3 rounded-lg border bg-muted/30 flex flex-col sm:flex-row sm:items-center gap-3"
+                          className={`p-3 rounded-lg border flex flex-col sm:flex-row sm:items-center gap-3 ${
+                            !isSigtapValido ? "bg-destructive/5 border-destructive/20" : "bg-muted/30"
+                          }`}
                         >
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
