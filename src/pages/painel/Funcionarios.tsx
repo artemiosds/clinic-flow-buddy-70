@@ -23,14 +23,7 @@ import ProfissionaisExternos from './ProfissionaisExternos';
 import CustomFieldsRenderer from '@/components/CustomFieldsRenderer';
 import { useCustomFields } from '@/hooks/useCustomFields';
 import CboAutocomplete, { CboValue } from '@/components/CboAutocomplete';
-const roleLabels: Record<string, string> = {
-  master: 'MASTER', coordenador: 'Coordenador', recepcao: 'RECEPÇÃO', profissional: 'PROFISSIONAL', gestao: 'GESTÃO', tecnico: 'TRIAGEM', enfermagem: 'ENFERMAGEM',
-};
-const roleColors: Record<UserRole, string> = {
-  master: 'bg-destructive/10 text-destructive', coordenador: 'bg-warning/10 text-warning',
-  recepcao: 'bg-info/10 text-info', profissional: 'bg-success/10 text-success', gestao: 'bg-accent text-accent-foreground',
-  tecnico: 'bg-primary/10 text-primary', enfermagem: 'bg-purple-100 text-purple-700',
-};
+import { roleLabels, roleColors } from "@/lib/roleUtils";
 
 interface FuncionarioDB {
   id: string;

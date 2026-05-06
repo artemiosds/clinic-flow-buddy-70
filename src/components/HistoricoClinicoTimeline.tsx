@@ -66,7 +66,7 @@ const TYPE_CONFIG: Record<EventType, { icon: React.ReactNode; color: string; lab
     label: "Procedimento",
   },
   alta: { icon: <UserCheck className="w-3.5 h-3.5" />, color: "bg-muted text-muted-foreground", label: "Alta" },
-  fila: { icon: <Clock className="w-3.5 h-3.5" />, color: "bg-amber-500 text-white", label: "Entrada na Fila" },
+  fila_espera: { icon: <Clock className="w-3.5 h-3.5" />, color: "bg-amber-500 text-white", label: "Entrada na Fila" },
   falta: { icon: <X className="w-3.5 h-3.5" />, color: "bg-red-500 text-white", label: "Falta" },
 };
 

@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Phone, Mail, Pencil, Trash2, FileDown, Users, Clock, FileUp, Eye, FileText, Printer, Loader2, Paperclip } from "lucide-react";
+import { Plus, Search, Phone, Mail, Pencil, Trash2, FileDown, Users, Clock, FileUp, Eye, FileText, Printer, Loader2, Paperclip, AlertTriangle } from "lucide-react";
 import PacienteDocumentos from "@/components/PacienteDocumentos";
 import ContactActionButton from "@/components/ContactActionButton";
 import DetalheDrawer, { Secao, Campo, calcularIdade, formatarData } from "@/components/DetalheDrawer";
@@ -833,6 +833,9 @@ const Pacientes: React.FC = () => {
         subtitle={`${visiblePacientes.length} cadastrados • ${pacientesNaFila.size} aguardando atendimento`}
         actions={
           <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" onClick={() => navigate("/painel/pacientes/atualizacao-cadastral")}>
+              <AlertTriangle className="w-4 h-4 mr-2 text-warning" /> Atualização Cadastral
+            </Button>
             {canImportCSV && (
               <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
                 <FileDown className="w-4 h-4 mr-2" /> Importar CSV

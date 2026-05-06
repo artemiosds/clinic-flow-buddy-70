@@ -44,9 +44,9 @@ export const SCREEN_LABELS: Record<ScreenKey, string> = {
   unidade: 'Unidades',
   triagem: 'Triagem',
   prontuario: 'Prontuário',
-  encaminhamento: 'Encaminhamento',
+  encaminhamentos: 'Encaminhamento',
   fila_espera: 'Fila de Espera',
-  atendimento: 'Atendimentos',
+  atendimentos: 'Atendimentos',
 };
 
 // Native fields per screen — exported so config UI and forms share one source of truth.
@@ -187,7 +187,7 @@ export const NATIVE_FIELDS: Record<ScreenKey, { nome: string; rotulo: string }[]
     { nome: 'prescricao', rotulo: 'Prescrição' },
     { nome: 'observacoes', rotulo: 'Observações' },
   ],
-  encaminhamento: [
+  encaminhamentos: [
     { nome: 'profissionalDestino', rotulo: 'Profissional de Destino' },
     { nome: 'especialidadeDestino', rotulo: 'Especialidade de Destino' },
     { nome: 'motivo', rotulo: 'Motivo' },
@@ -201,7 +201,7 @@ export const NATIVE_FIELDS: Record<ScreenKey, { nome: string; rotulo: string }[]
     { nome: 'descricaoClinica', rotulo: 'Descrição Clínica' },
     { nome: 'observacoes', rotulo: 'Observações' },
   ],
-  atendimento: [
+  atendimentos: [
     { nome: 'pacienteNome', rotulo: 'Paciente' },
     { nome: 'profissionalNome', rotulo: 'Profissional' },
     { nome: 'procedimento', rotulo: 'Procedimento' },
