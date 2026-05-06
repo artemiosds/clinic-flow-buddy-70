@@ -2399,7 +2399,16 @@ const ProntuarioPage: React.FC = () => {
                               checked={checked}
                               onClick={(e) => e.stopPropagation()}
                               onCheckedChange={(c) => {
-                                setSelectedProcIds((prev) => c ? [...prev, proc.id] : prev.filter((id) => id !== proc.id));
+                                setSelectedProcIds((prev) => {
+                                  if (c) {
+                                    const proc = procedimentos.find(p => p.id === proc.id);
+                                    if (proc && (proc.id || '').replace(/\D/g, '').length !== 10) {
+                                      toast.warning("Este procedimento não possui um código SIGTAP de 10 dígitos e será ignorado no BPA-I.");
+                                    }
+                                    return [...prev, proc.id];
+                                  }
+                                  return prev.filter((id) => id !== proc.id);
+                                });
                                 if (c) loadCidsForProc(proc.id);
                               }}
                             />
