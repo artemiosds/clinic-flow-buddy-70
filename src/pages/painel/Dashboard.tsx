@@ -91,6 +91,33 @@ const Dashboard: React.FC = () => {
   const pendentes = todayAg.filter(a => a.status === 'pendente').length;
   const aguardando = fila.filter(f => f.status === 'aguardando').length;
 
+  const pendenciasAgenda = useMemo(() => {
+    const today = todayLocalStr();
+    const nowTime = new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+    const isProfissional = user?.role === 'profissional';
+    
+    const PENDENTE_STATUSES = new Set([
+      "confirmado", "confirmada", "agendado", "confirmado_chegada", "chegada_confirmada",
+      "aguardando_triagem", "triagem_concluida", "apto_atendimento", "apto",
+      "apto_para_atendimento", "em_atendimento", "pendente", "aguardando_profissional",
+      "aguardando_atendimento", "aguardando_enfermagem"
+    ]);
+
+    return agendamentos.filter((a) => {
+      if (a.data > today) return false;
+      if (a.data === today && a.hora >= nowTime) return false;
+      
+      const isMasterGlobal = user?.role === "master" && user?.usuario === 'admin.sms';
+      const isMasterUnidade = user?.role === "master" && !isMasterGlobal;
+      
+      if (isProfissional && user?.id && a.profissionalId !== user.id) return false;
+      if (user?.role === "recepcao" && user?.unidadeId && a.unidadeId !== user.unidadeId) return false;
+      if (isMasterUnidade && user?.unidadeId && a.unidadeId !== user.unidadeId) return false;
+
+      return PENDENTE_STATUSES.has(a.status);
+    });
+  }, [agendamentos, user]);
+
   // KPIs
   const kpis = useMemo(() => {
     const totalAg = filteredAgendamentos.length;
