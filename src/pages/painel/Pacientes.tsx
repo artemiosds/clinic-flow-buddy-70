@@ -433,7 +433,7 @@ const Pacientes: React.FC = () => {
       tipo_encaminhamento: form.tipoEncaminhamento,
       diagnostico_resumido: form.diagnosticoResumido,
       justificativa: form.justificativa,
-      data_encaminhamento: form.dataEncaminhamento || null,
+      data_encaminhamento: form.dataEncaminhamento || "",
       documento_url: form.documentoUrl,
       tipo_condicao: form.tipoCondicao,
       mobilidade: form.mobilidade,
