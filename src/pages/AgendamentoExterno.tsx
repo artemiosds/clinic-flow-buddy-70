@@ -266,10 +266,16 @@ const AgendamentoExterno: React.FC = () => {
     try {
       if (isEditingPatient && selectedPatient) {
         const { error } = await supabase.from("pacientes").update({
-          nome: patientForm.nome, cpf: patientForm.cpf, cns: patientForm.cns,
-          data_nascimento: patientForm.data_nascimento, telefone: patientForm.telefone,
-          email: patientForm.email, endereco: patientForm.endereco, nome_mae: patientForm.nome_mae,
-          municipio: patientForm.municipio, observacoes: patientForm.observacoes,
+          nome: patientForm.nome, 
+          cpf: patientForm.cpf, 
+          cns: patientForm.cns,
+          data_nascimento: patientForm.data_nascimento || "", 
+          telefone: patientForm.telefone,
+          email: patientForm.email || "", 
+          endereco: patientForm.endereco, 
+          nome_mae: patientForm.nome_mae,
+          municipio: patientForm.municipio, 
+          observacoes: patientForm.observacoes,
         }).eq("id", selectedPatient.id);
         if (error) throw error;
         setSelectedPatient({ ...selectedPatient, ...patientForm });
@@ -277,10 +283,17 @@ const AgendamentoExterno: React.FC = () => {
       } else {
         const id = `pac_${Date.now()}`;
         const { data, error } = await supabase.from("pacientes").insert({
-          id, nome: patientForm.nome, cpf: patientForm.cpf, cns: patientForm.cns,
-          data_nascimento: patientForm.data_nascimento, telefone: patientForm.telefone,
-          email: patientForm.email, endereco: patientForm.endereco, nome_mae: patientForm.nome_mae,
-          municipio: patientForm.municipio, observacoes: patientForm.observacoes,
+          id, 
+          nome: patientForm.nome, 
+          cpf: patientForm.cpf, 
+          cns: patientForm.cns,
+          data_nascimento: patientForm.data_nascimento || "", 
+          telefone: patientForm.telefone,
+          email: patientForm.email || "", 
+          endereco: patientForm.endereco, 
+          nome_mae: patientForm.nome_mae,
+          municipio: patientForm.municipio, 
+          observacoes: patientForm.observacoes,
         }).select().single();
         if (error) throw error;
         setSelectedPatient(data);
