@@ -52,6 +52,8 @@ const QuickEditPatientModal: React.FC<Props> = ({ open, onOpenChange, pacienteId
 
     const dbFields = {
       ...form,
+      email: form.email || "",
+      data_nascimento: form.data_nascimento || "",
       telefone: normalizedPhone,
       custom_data: customData,
       atualizado_em: new Date().toISOString(),
