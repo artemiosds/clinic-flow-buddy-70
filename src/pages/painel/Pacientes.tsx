@@ -420,7 +420,7 @@ const Pacientes: React.FC = () => {
       cns: (form.cns || "").replace(/\D/g, "").slice(0, 15),
       nome_mae: form.nomeMae,
       telefone: normalizedPhone,
-      data_nascimento: form.dataNascimento || null,
+      data_nascimento: form.dataNascimento || "",
       email: form.email || "",
       endereco: form.endereco,
       descricao_clinica: form.descricaoClinica || form.diagnosticoResumido,
