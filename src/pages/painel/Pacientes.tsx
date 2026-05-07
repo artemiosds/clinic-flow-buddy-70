@@ -433,7 +433,7 @@ const Pacientes: React.FC = () => {
       tipo_encaminhamento: form.tipoEncaminhamento,
       diagnostico_resumido: form.diagnosticoResumido,
       justificativa: form.justificativa,
-      data_encaminhamento: form.data_encaminhamento || form.dataEncaminhamento || null,
+      data_encaminhamento: form.dataEncaminhamento || null,
       documento_url: form.documentoUrl,
       tipo_condicao: form.tipoCondicao,
       mobilidade: form.mobilidade,
@@ -449,7 +449,7 @@ const Pacientes: React.FC = () => {
       turno_preferido: form.turnoPreferido,
       is_gestante: form.isGestante,
       is_pne: form.isPne,
-      is_artista: form.isAutista,
+      is_autista: form.isAutista,
       custom_data: {
         ...(form.customData || {}),
         logradouro: form.endereco,
