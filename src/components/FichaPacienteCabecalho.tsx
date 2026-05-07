@@ -215,14 +215,14 @@ const FichaPacienteCabecalho: React.FC<FichaPacienteCabecalhoProps> = ({
 
       const { error } = await supabase.from("pacientes").update({
         nome: editData.nome.trim(),
-        data_nascimento: editData.data_nascimento,
+        data_nascimento: editData.data_nascimento || "",
         cpf: editData.cpf,
         cns: editData.cns,
         cid: editData.cid,
         nome_mae: editData.nome_mae,
         endereco: editData.endereco,
         telefone: editData.telefone,
-        email: editData.email,
+        email: editData.email || "",
         custom_data: newCustom,
       }).eq("id", pacienteId);
 
