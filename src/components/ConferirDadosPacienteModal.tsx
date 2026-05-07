@@ -266,7 +266,7 @@ export function ConferirDadosPacienteModal({
         cpf: form.cpf,
         cns: (form.cns || "").replace(/\D/g, "").slice(0, 15),
         telefone: normalizedTelefone,
-        email: form.email,
+        email: form.email || "",
         endereco: form.endereco, // mantém coluna legada sincronizada com o logradouro
         municipio: form.municipio,
         custom_data: customData,
