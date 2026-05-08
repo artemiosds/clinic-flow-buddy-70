@@ -389,13 +389,13 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                 <div className="md:col-span-2">
                   <Label>{L("naturalidade", "Naturalidade")}</Label>
                   <MunicipioIbgeCombobox
-                    value={cd.naturalidade || ""}
+                    value={form.naturalidade || ""}
                     onChange={(label, payload) => {
                       onChange({
                         ...form,
+                        naturalidade: label,
                         customData: {
                           ...(form.customData || {}),
-                          naturalidade: label,
                           naturalidadeUf: payload?.uf || "",
                           naturalidadeCodigoIbge: payload?.codigoIbge || "",
                         },
@@ -408,6 +408,7 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                   </p>
                 </div>
               )}
+
 
               {!H("situacaoRua") && (
               <div className="flex items-center gap-3 p-2 rounded-md bg-muted/40 md:col-span-2">
