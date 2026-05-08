@@ -200,7 +200,9 @@ const App = () => (
                   >
                     <Route index element={<Dashboard />} />
                     <Route path="agenda" element={<ModuleRoute modulo="agenda"><Agenda /></ModuleRoute>} />
-                    <Route path="fila_espera" element={<ModuleRoute modulo="fila_espera"><FilaEspera /></ModuleRoute>} />
+                    <Route path="fila" element={<ModuleRoute modulo="fila_espera"><FilaEspera /></ModuleRoute>} />
+                    <Route path="fila_espera" element={<Navigate to="/painel/fila" replace />} />
+                    <Route path="fila-de-espera" element={<Navigate to="/painel/fila" replace />} />
                     <Route path="pacientes" element={<ModuleRoute modulo="pacientes"><Pacientes /></ModuleRoute>} />
                     <Route path="pacientes/atualizacao-cadastral" element={<ModuleRoute modulo="pacientes"><PacienteAtualizacaoCadastral /></ModuleRoute>} />
 
