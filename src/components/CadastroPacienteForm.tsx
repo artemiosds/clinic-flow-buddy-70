@@ -217,7 +217,7 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
 
   // ---- ViaCEP ----
   const handleCepBlur = async () => {
-    const cep = (cd.cep || "").replace(/\D/g, "");
+    const cep = (form.cep || "").replace(/\D/g, "");
     if (cep.length !== 8) return;
     setCepLoading(true);
     try {
@@ -227,20 +227,18 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
         toast.error("CEP não encontrado.");
       } else {
         const update = {
-          ...cd,
-          logradouro: data.logradouro ? sanitizeUpper(data.logradouro) : cd.logradouro,
-          bairro: data.bairro ? sanitizeUpper(data.bairro) : cd.bairro,
-          uf: data.uf || cd.uf,
+          ...form,
+          endereco: data.logradouro ? sanitizeUpper(data.logradouro) : form.endereco,
+          bairro: data.bairro ? sanitizeUpper(data.bairro) : form.bairro,
+          uf: data.uf || form.uf,
         };
         const novoMunicipio = data.localidade || form.municipio;
         const municipioMatch = MUNICIPIOS.find((m) =>
           sanitizeUpper(m) === sanitizeUpper(novoMunicipio)
         );
         onChange({
-          ...form,
+          ...update,
           municipio: municipioMatch || form.municipio,
-          endereco: data.logradouro ? sanitizeUpper(data.logradouro) : form.endereco,
-          customData: update,
         });
         toast.success("Endereço preenchido pelo CEP");
       }
@@ -250,6 +248,7 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
       setCepLoading(false);
     }
   };
+
 
 
   const toggleEquipamento = (eq: string) => {
