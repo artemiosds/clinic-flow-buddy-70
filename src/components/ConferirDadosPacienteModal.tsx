@@ -230,58 +230,20 @@ export function ConferirDadosPacienteModal({
     setSaving(true);
     setAutosaveStatus('saving');
     try {
-      const { normalizePhone } = await import("@/lib/phoneUtils");
-      const normalizedTelefone = normalizePhone(form.telefone) || "";
-      const normalizedTelefoneSec = normalizePhone(form.telefone_secundario) || "";
-
-      const oldCd = paciente.custom_data || {};
-      const customData = {
-        ...oldCd,
-        sexo: form.sexo,
-        racaCor: form.raca_cor,
+      // Preparar payload para a função centralizada
+      const payload = {
+        ...form,
+        logradouro: form.endereco, // mapeamento para compatibilidade
+        tipo_logradouro: form.tipo_logradouro_dne,
         raca_cor: form.raca_cor,
-        etnia: form.etnia,
-        etniaOutra: form.etnia_outra,
-        nacionalidade: form.nacionalidade,
-        paisNascimento: form.pais_nascimento,
-        tipoLogradouro: form.tipo_logradouro_dne,
-        tipoLogradouroDne: form.tipo_logradouro_dne,
-        tipoLogradouroCodigo: form.tipo_logradouro_codigo,
-        logradouro: form.endereco, // 'endereco' no formulário mapeia para 'logradouro' no banco estruturado
-        numero: form.numero,
-        complemento: form.complemento,
-        bairro: form.bairro,
-        uf: form.uf,
-        cep: form.cep,
-        telefoneSecundario: normalizedTelefoneSec,
-        naturalidade: form.naturalidade,
-        naturalidadeUf: form.naturalidade_uf,
-        naturalidadeCodigoIbge: form.naturalidade_codigo_ibge,
-        data_ultima_validacao_cadastro: new Date().toISOString(),
+        custom_data: {
+          ...form,
+          data_ultima_validacao_cadastro: new Date().toISOString(),
+        }
       };
 
-      const cleanCPF = (form.cpf || "").replace(/\D/g, "");
-      const cleanCNS = (form.cns || "").replace(/\D/g, "").slice(0, 15);
-
-      const updatePayload: any = {
-        nome: (form.nome || "").trim(),
-        nome_mae: (form.nome_mae || "").trim(),
-        data_nascimento: form.data_nascimento || "",
-        cpf: cleanCPF,
-        cns: cleanCNS,
-        telefone: normalizedTelefone || "",
-        email: (form.email || "").trim().toLowerCase(),
-        endereco: (form.endereco || "").trim(), 
-        municipio: form.municipio || "",
-        custom_data: customData || {},
-        atualizado_em: new Date().toISOString(),
-      };
-
-      const { error } = await (supabase as any)
-        .from("pacientes")
-        .update(updatePayload)
-        .eq("id", paciente.id);
-      if (error) throw error;
+      // Chamar função centralizada que atualiza colunas REAIS e custom_data
+      const updatedData = await updatePacienteCadastro(paciente.id, payload, "Conferir Dados");
 
       // Auditoria
       try {
@@ -292,34 +254,39 @@ export function ConferirDadosPacienteModal({
           entidadeId: paciente.id,
           modulo: "Conferir Dados do Paciente",
           oldValue: { ...paciente },
-          newValue: { ...paciente, ...updatePayload },
+          newValue: { ...updatedData },
         });
       } catch {}
 
-      setPaciente({ ...paciente, ...updatePayload });
+      setPaciente(updatedData);
       setDirty(false);
       lastSavedFormRef.current = JSON.stringify(form);
       setAutosaveStatus('saved');
       
+      // Invalidação massiva de caches
       queryClient.invalidateQueries({ queryKey: queryKeys.pacientes.all });
+      queryClient.invalidateQueries({ queryKey: ["pacientes"] });
+      queryClient.invalidateQueries({ queryKey: ["paciente"] });
       queryClient.invalidateQueries({ queryKey: queryKeys.pacientes.detail(paciente.id) });
       queryClient.invalidateQueries({ queryKey: queryKeys.agendamentos.all });
+      queryClient.invalidateQueries({ queryKey: ["agenda"] });
+      queryClient.invalidateQueries({ queryKey: ["pacientes-pendencias"] });
       queryClient.invalidateQueries({ queryKey: queryKeys.prontuarios.byPaciente(paciente.id) });
+      queryClient.invalidateQueries({ queryKey: ["prontuario"] });
+      
       try { await refreshPacientes(); } catch {}
       
-      // Toast opcional para autosave (talvez muito intrusivo se for toda hora, mas o usuário pediu "reflete de imediato")
-      // Vamos usar apenas o indicador visual no header para ser mais elegante, mas manter o toast se for manual.
       return true;
     } catch (e: any) {
       setAutosaveStatus('error');
-      toast.error("Erro ao salvar: " + (e?.message || "desconhecido"));
+      toast.error("Erro ao salvar no banco de dados: " + (e?.message || "desconhecido"));
       return false;
     } finally {
       setSaving(false);
-      // Limpa o status de 'salvo' após 3 segundos
       setTimeout(() => setAutosaveStatus(prev => prev === 'saved' ? 'idle' : prev), 3000);
     }
   }, [paciente, form, saving, queryClient, refreshPacientes]);
+
 
   // Debounced Auto-save
   useEffect(() => {
