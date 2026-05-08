@@ -344,13 +344,8 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                 <div>
                   <Label>{L("sexo", "Sexo")}</Label>
                   <Select 
-                    value={
-                      cd.sexo === "masculino" || cd.sexo === "M" ? "M" : 
-                      cd.sexo === "feminino" || cd.sexo === "F" ? "F" : 
-                      cd.sexo === "ignorado" || cd.sexo === "I" ? "I" : 
-                      ""
-                    } 
-                    onValueChange={(v) => setCustom("sexo", v)}
+                    value={form.sexo || ""} 
+                    onValueChange={(v) => set("sexo", v)}
                   >
                     <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                     <SelectContent>
@@ -361,6 +356,7 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                   </Select>
                 </div>
               )}
+
 
               {!H("cpf") && (
                 <div>
