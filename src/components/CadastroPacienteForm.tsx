@@ -459,8 +459,8 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                 <Label>{L("cep", "CEP")}</Label>
                 <div className="relative">
                   <Input
-                    value={cd.cep || ""}
-                    onChange={(e) => setCustom("cep", maskCEP(e.target.value))}
+                    value={form.cep || ""}
+                    onChange={(e) => set("cep", maskCEP(e.target.value))}
                     onBlur={handleCepBlur}
                     placeholder="00000-000"
                     inputMode="numeric"
@@ -478,16 +478,13 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                   {L("tipoLogradouro", "Tipo de Logradouro (DNE)")} <span className="text-destructive">*</span>
                 </Label>
                 <LogradouroDneAutocomplete
-                  value={cd.tipoLogradouro || ""}
-                  codigo={cd.tipoLogradouroCodigo || ""}
+                  value={form.tipo_logradouro || ""}
+                  codigo={form.tipo_logradouro_codigo || ""}
                   onChange={(descricao, codigo) => {
                     onChange({
                       ...form,
-                      customData: {
-                        ...(form.customData || {}),
-                        tipoLogradouro: descricao,
-                        tipoLogradouroCodigo: codigo,
-                      },
+                      tipo_logradouro: descricao,
+                      tipo_logradouro_codigo: codigo,
                     });
                   }}
                   required
@@ -499,8 +496,8 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
               <div className="md:col-span-2">
                 <Label>{L("logradouro", "Logradouro")}</Label>
                 <Input
-                  value={cd.logradouro || ""}
-                  onChange={(e) => setCustom("logradouro", sanitizeUpper(e.target.value))}
+                  value={form.endereco || ""}
+                  onChange={(e) => set("endereco", sanitizeUpper(e.target.value))}
                   placeholder="NOME DA RUA / AVENIDA"
                 />
               </div>
@@ -510,8 +507,8 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
               <div>
                 <Label>{L("numero", "Número")}</Label>
                 <Input
-                  value={cd.numero || ""}
-                  onChange={(e) => setCustom("numero", e.target.value.replace(/[^\dA-Za-z\/\-]/g, "").toUpperCase())}
+                  value={form.numero || ""}
+                  onChange={(e) => set("numero", e.target.value.replace(/[^\dA-Za-z\/\-]/g, "").toUpperCase())}
                   placeholder="Nº"
                   inputMode="numeric"
                 />
@@ -522,8 +519,8 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
               <div>
                 <Label>{L("complemento", "Complemento")}</Label>
                 <Input
-                  value={cd.complemento || ""}
-                  onChange={(e) => setCustom("complemento", sanitizeUpper(e.target.value))}
+                  value={form.complemento || ""}
+                  onChange={(e) => set("complemento", sanitizeUpper(e.target.value))}
                   placeholder="APTO, BLOCO, ETC"
                 />
               </div>
@@ -533,8 +530,8 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
               <div>
                 <Label>{L("bairro", "Bairro")}</Label>
                 <Input
-                  value={cd.bairro || ""}
-                  onChange={(e) => setCustom("bairro", sanitizeUpper(e.target.value))}
+                  value={form.bairro || ""}
+                  onChange={(e) => set("bairro", sanitizeUpper(e.target.value))}
                   placeholder="BAIRRO"
                 />
               </div>
@@ -556,7 +553,7 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
               {!H("uf") && (
               <div>
                 <Label>{L("uf", "UF")}</Label>
-                <Select value={cd.uf || ""} onValueChange={(v) => setCustom("uf", v)}>
+                <Select value={form.uf || ""} onValueChange={(v) => set("uf", v)}>
                   <SelectTrigger><SelectValue placeholder="UF" /></SelectTrigger>
                   <SelectContent>
                     {UFS.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}
@@ -564,6 +561,7 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                 </Select>
               </div>
               )}
+
 
               {/* Mantém endereco legacy (oculto, sincroniza para retrocompat) */}
               {!H("endereco") && (
