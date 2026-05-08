@@ -1956,6 +1956,7 @@ export type Database = {
       }
       pacientes: {
         Row: {
+          atualizado_em: string | null
           auth_user_id: string | null
           cid: string
           cns: string
@@ -2001,6 +2002,7 @@ export type Database = {
           usa_equipamentos: boolean
         }
         Insert: {
+          atualizado_em?: string | null
           auth_user_id?: string | null
           cid?: string
           cns?: string
@@ -2046,6 +2048,7 @@ export type Database = {
           usa_equipamentos?: boolean
         }
         Update: {
+          atualizado_em?: string | null
           auth_user_id?: string | null
           cid?: string
           cns?: string
