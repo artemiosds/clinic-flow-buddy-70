@@ -2,11 +2,12 @@ import React, { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Upload, CheckCircle2, AlertCircle, Save, X } from "lucide-react";
+import { Loader2, Upload, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { normalizePhone } from "@/lib/phoneUtils";
 import { Badge } from "@/components/ui/badge";
+import { updatePacienteCadastro } from "@/lib/pacienteService";
 
 interface Props {
   open: boolean;
@@ -96,67 +97,60 @@ const PatientUpdateImportModal: React.FC<Props> = ({ open, onOpenChange, onImpor
 
     for (const row of previewData) {
       try {
-        const cd: any = {};
-        const updateData: any = {
+        const payload: any = {
           nome: row.nome_completo,
-          cpf: (row.cpf || "").replace(/\D/g, ""),
-          cns: (row.cns || "").replace(/\D/g, "").slice(0, 15),
+          cpf: row.cpf,
+          cns: row.cns,
           data_nascimento: row.data_nascimento,
-          telefone: normalizePhone(row.telefone || "") || row.telefone,
-          email: row.raw.email,
-          nome_mae: row.raw.nome_mae,
-          unidade_id: row.raw.unidade_id,
-          atualizado_em: new Date().toISOString(),
+          telefone: row.telefone,
+          ...row.raw
         };
 
-        let currentCD = {};
-        if (row.id_paciente) {
-          const { data: current } = await supabase.from("pacientes").select("custom_data").eq("id", row.id_paciente).single();
-          if (current?.custom_data) currentCD = current.custom_data;
-        }
-
-        const cdFields = [
-          "cep", "logradouro", "numero", "complemento", "bairro", "municipio", 
-          "uf", "nacionalidade", "raca_cor_ibge", "sexo"
-        ];
-        
-        cdFields.forEach(f => {
-          const csvVal = row.raw[f] || row.raw[f === "raca_cor_ibge" ? "raca_cor" : f];
-          if (csvVal) {
-            cd[f === "raca_cor_ibge" ? "raca_cor" : f] = csvVal;
-          }
-        });
-
-        updateData.custom_data = { ...currentCD, ...cd };
-
-        Object.keys(updateData).forEach(key => {
-          if (updateData[key] === "" || updateData[key] === undefined || updateData[key] === null) {
-            delete updateData[key];
-          }
-        });
+        // Mapear campos comuns que podem estar com nomes diferentes no CSV
+        if (row.raw.raca_cor_ibge) payload.raca_cor = row.raw.raca_cor_ibge;
+        if (row.raw.logradouro) payload.endereco = row.raw.logradouro;
 
         if (row.id_paciente) {
-          const { error } = await supabase.from("pacientes").update(updateData).eq("id", row.id_paciente);
-          if (error) throw error;
+          // Atualizar paciente existente usando a função centralizada
+          await updatePacienteCadastro(row.id_paciente, payload, "Importador");
         } else {
+          // Tentar encontrar por CPF se não tiver ID
+          const cleanCPF = (row.cpf || "").replace(/\D/g, "");
+          if (cleanCPF) {
+            const { data: existing } = await supabase
+              .from("pacientes")
+              .select("id")
+              .eq("cpf", cleanCPF)
+              .maybeSingle();
+            
+            if (existing) {
+              await updatePacienteCadastro(existing.id, payload, "Importador(CPF)");
+              count++;
+              continue;
+            }
+          }
+
+          // Criar novo paciente
           const { error } = await supabase.from("pacientes").insert({
-            ...updateData,
-            id: `p${Date.now()}${Math.floor(Math.random() * 1000)}`
+            ...payload,
+            id: `p${Date.now()}${Math.floor(Math.random() * 1000)}`,
+            atualizado_em: new Date().toISOString()
           });
           if (error) throw error;
         }
         count++;
       } catch (err) {
-        console.error(err);
+        console.error("Erro na importação de linha:", err);
         errors++;
       }
     }
 
-    toast.success(`Importação finalizada: ${count} pacientes atualizados/criados.`);
+    toast.success(`Importação finalizada: ${count} pacientes processados.`);
     if (errors > 0) toast.warning(`${errors} registros falharam.`);
     onImported();
     onOpenChange(false);
   };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

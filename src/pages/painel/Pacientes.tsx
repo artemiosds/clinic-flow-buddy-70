@@ -338,55 +338,73 @@ const Pacientes: React.FC = () => {
     setDialogOpen(true);
   };
 
-  const openEdit = (p: (typeof pacientes)[0]) => {
+  const openEdit = (p: any) => {
     setEditId(p.id);
     setForm({
       ...emptyPacienteForm,
-      nome: p.nome,
-      cpf: p.cpf,
+      nome: p.nome || "",
+      cpf: p.cpf || "",
       cns: maskCNSInput(p.cns || ""),
-      nomeMae: p.nomeMae || "",
-      telefone: p.telefone,
-      dataNascimento: p.dataNascimento,
-      email: p.email,
+      nomeMae: p.nome_mae || p.nomeMae || "",
+      telefone: p.telefone || "",
+      dataNascimento: p.data_nascimento || p.dataNascimento || "",
+      email: p.email || "",
       endereco: p.endereco || "",
-      descricaoClinica: p.descricaoClinica || "",
+      descricaoClinica: p.descricao_clinica || p.descricaoClinica || "",
       cid: p.cid || "",
-      especialidadeDestino: (p as any).especialidade_destino || "",
-      municipio: (p as any).municipio || "",
-      menorIdade: (p as any).menor_idade || false,
-      nomeResponsavel: (p as any).nome_responsavel || "",
-      cpfResponsavel: (p as any).cpf_responsavel || "",
-      ubsOrigem: (p as any).ubs_origem || "",
-      profissionalSolicitante: (p as any).profissional_solicitante || "",
-      tipoEncaminhamento: (p as any).tipo_encaminhamento || "",
-      diagnosticoResumido: (p as any).diagnostico_resumido || "",
-      justificativa: (p as any).justificativa || "",
-      dataEncaminhamento: (p as any).data_encaminhamento || "",
-      documentoUrl: (p as any).documento_url || "",
-      tipoCondicao: (p as any).tipo_condicao || "",
-      mobilidade: (p as any).mobilidade || "",
-      usaDispositivo: (p as any).usa_dispositivo || false,
-      tipoDispositivo: (p as any).tipo_dispositivo || "",
-      comunicacao: (p as any).comunicacao || "",
-      comportamento: (p as any).comportamento || "",
-      usaEquipamentos: (p as any).usa_equipamentos || false,
-      equipamentos: (p as any).equipamentos || [],
-      observacaoEquipamentos: (p as any).observacao_equipamentos || "",
-      outroServicoSus: (p as any).outro_servico_sus || false,
-      transporte: (p as any).transporte || "",
-      turnoPreferido: (p as any).turno_preferido || "",
-      isGestante: (p as any).isGestante || (p as any).is_gestante || false,
-      isPne: (p as any).isPne || (p as any).is_pne || false,
-      isAutista: (p as any).isAutista || (p as any).is_autista || false,
-      customData: (p as any).custom_data || {},
+      especialidadeDestino: p.especialidade_destino || p.especialidadeDestino || "",
+      municipio: p.municipio || "",
+      menorIdade: !!p.menor_idade,
+      nomeResponsavel: p.nome_responsavel || "",
+      cpfResponsavel: p.cpf_responsavel || "",
+      ubsOrigem: p.ubs_origem || "",
+      profissionalSolicitante: p.profissional_solicitante || "",
+      tipoEncaminhamento: p.tipo_encaminhamento || "",
+      diagnosticoResumido: p.diagnostico_resumido || "",
+      justificativa: p.justificativa || "",
+      dataEncaminhamento: p.data_encaminhamento || "",
+      documentoUrl: p.documento_url || "",
+      tipoCondicao: p.tipo_condicao || "",
+      mobilidade: p.mobilidade || "",
+      usaDispositivo: !!p.usa_dispositivo,
+      tipoDispositivo: p.tipo_dispositivo || "",
+      comunicacao: p.comunicacao || "",
+      comportamento: p.comportamento || "",
+      usaEquipamentos: !!p.usa_equipamentos,
+      equipamentos: p.equipamentos || [],
+      observacaoEquipamentos: p.observacao_equipamentos || "",
+      outroServicoSus: !!p.outro_servico_sus,
+      transporte: p.transporte || "",
+      turnoPreferido: p.turno_preferido || "",
+      isGestante: !!(p.is_gestante || p.isGestante),
+      isPne: !!(p.is_pne || p.isPne),
+      isAutista: !!(p.is_autista || p.isAutista),
+      
+      // Novos campos de coluna
+      sexo: p.sexo || (p.custom_data?.sexo === "M" || p.custom_data?.sexo === "masculino" ? "M" : p.custom_data?.sexo === "F" || p.custom_data?.sexo === "feminino" ? "F" : ""),
+      cep: p.cep || p.custom_data?.cep || "",
+      tipo_logradouro: p.tipo_logradouro || p.custom_data?.tipoLogradouro || "",
+      tipo_logradouro_codigo: p.tipo_logradouro_codigo || p.custom_data?.tipoLogradouroCodigo || "",
+      numero: p.numero || p.custom_data?.numero || "",
+      complemento: p.complemento || p.custom_data?.complemento || "",
+      bairro: p.bairro || p.custom_data?.bairro || "",
+      uf: p.uf || p.custom_data?.uf || "PA",
+      telefone_secundario: p.telefone_secundario || p.custom_data?.telefoneSecundario || "",
+      naturalidade: p.naturalidade || p.custom_data?.naturalidade || "",
+      nacionalidade: p.nacionalidade || p.custom_data?.nacionalidade || "Brasil",
+      raca_cor: p.raca_cor || p.custom_data?.raca_cor || p.custom_data?.racaCor || "",
+      
+      customData: p.custom_data || {},
     });
     setErrors({});
     setDialogOpen(true);
   };
 
+
   const handleSave = async () => {
     const { normalizePhone } = await import("@/lib/phoneUtils");
+    const { updatePacienteCadastro } = await import("@/lib/pacienteService");
+    
     const newErrors: Record<string, string> = {};
     if (!form.nome.trim()) newErrors.nome = "Nome é obrigatório";
 
@@ -409,17 +427,14 @@ const Pacientes: React.FC = () => {
     setErrors({});
     setSaving(true);
     
-    // Feedback visual imediato
     const toastId = toast.loading(editId ? "Atualizando paciente..." : "Cadastrando paciente...");
-
-    const normalizedPhone = normalizePhone(rawPhone!) || "";
 
     const dbFields: any = {
       nome: form.nome || "",
       cpf: (form.cpf || "").replace(/\D/g, ""),
       cns: (form.cns || "").replace(/\D/g, "").slice(0, 15),
       nome_mae: form.nomeMae || "",
-      telefone: normalizedPhone || "",
+      telefone: normalizePhone(rawPhone!) || "",
       data_nascimento: form.dataNascimento || "",
       email: form.email || "",
       endereco: form.endereco || "",
@@ -450,6 +465,21 @@ const Pacientes: React.FC = () => {
       is_gestante: !!form.isGestante,
       is_pne: !!form.isPne,
       is_autista: !!form.isAutista,
+      
+      // Novos campos
+      sexo: form.sexo || "",
+      cep: form.cep || "",
+      tipo_logradouro: form.tipo_logradouro || "",
+      tipo_logradouro_codigo: form.tipo_logradouro_codigo || "",
+      numero: form.numero || "",
+      complemento: form.complemento || "",
+      bairro: form.bairro || "",
+      uf: form.uf || "PA",
+      telefone_secundario: normalizePhone(form.telefone_secundario) || form.telefone_secundario || "",
+      naturalidade: form.naturalidade || "",
+      nacionalidade: form.nacionalidade || "Brasil",
+      raca_cor: form.raca_cor || "",
+
       atualizado_em: new Date().toISOString(),
       custom_data: {
         ...(form.customData || {}),
@@ -461,58 +491,33 @@ const Pacientes: React.FC = () => {
 
     try {
       if (editId) {
-        // Close dialog immediately (optimistic)
         setDialogOpen(false);
-        const { error } = await supabase.from("pacientes").update(dbFields).eq("id", editId);
+        await updatePacienteCadastro(editId, dbFields, "Página Pacientes");
         
-        if (error) {
-          console.error("Erro ao atualizar paciente:", error);
-          toast.error("Erro ao atualizar paciente.", { id: toastId });
-          setSaving(false);
-          return;
-        }
-
+        queryClient.invalidateQueries({ queryKey: ["pacientes"] });
+        queryClient.invalidateQueries({ queryKey: ["pacientes-paginated"] });
+        queryClient.invalidateQueries({ queryKey: ["pacientes-pendencias"] });
+        
         await refreshPacientes();
-        toast.success("Paciente atualizado!", { id: toastId });
+        toast.success("Paciente atualizado com sucesso!", { id: toastId });
       } else {
         // === DUPLICATE DETECTION ===
         const duplicateChecks: string[] = [];
 
         if (form.cpf.trim()) {
-          const { data: cpfMatch } = await supabase
-            .from("pacientes")
-            .select("id, nome")
-            .eq("cpf", form.cpf.trim())
-            .limit(1);
+          const { data: cpfMatch } = await supabase.from("pacientes").select("id, nome").eq("cpf", form.cpf.trim()).limit(1);
           if (cpfMatch && cpfMatch.length > 0) duplicateChecks.push(`CPF já cadastrado: ${cpfMatch[0].nome}`);
         }
 
         const cnsCleanCheck = (form.cns || "").replace(/\D/g, "");
         if (cnsCleanCheck) {
-          const { data: cnsMatch } = await supabase
-            .from("pacientes")
-            .select("id, nome, cns")
-            .limit(1000);
+          const { data: cnsMatch } = await supabase.from("pacientes").select("id, nome, cns").limit(1000);
           const dup = (cnsMatch || []).find((m: any) => (m.cns || '').replace(/\D/g, '') === cnsCleanCheck);
           if (dup) duplicateChecks.push(`CNS já cadastrado: ${dup.nome}`);
         }
 
-        if (form.nome.trim() && form.dataNascimento && form.nomeMae.trim()) {
-          const { data: nameMatch } = await supabase
-            .from("pacientes")
-            .select("id, nome")
-            .eq("nome", form.nome.trim())
-            .eq("data_nascimento", form.dataNascimento)
-            .eq("nome_mae", form.nomeMae.trim())
-            .limit(1);
-          if (nameMatch && nameMatch.length > 0)
-            duplicateChecks.push(`Nome + Data Nasc. + Mãe já cadastrado: ${nameMatch[0].nome}`);
-        }
-
         if (duplicateChecks.length > 0) {
-          const confirmed = window.confirm(
-            `⚠️ Possível duplicidade detectada:\n\n${duplicateChecks.join("\n")}\n\nDeseja continuar com o cadastro mesmo assim?`,
-          );
+          const confirmed = window.confirm(`⚠️ Possível duplicidade detectada:\n\n${duplicateChecks.join("\n")}\n\nDeseja continuar com o cadastro mesmo assim?`);
           if (!confirmed) {
             toast.dismiss(toastId);
             setSaving(false);
@@ -521,11 +526,11 @@ const Pacientes: React.FC = () => {
         }
 
         const id = `p${Date.now()}`;
-        const { error } = await supabase.from("pacientes").insert({ id, ...dbFields });
+        const { error } = await supabase.from("pacientes").insert({ id, ...dbFields, criado_em: new Date().toISOString() });
         
         if (error) {
           console.error("Erro ao cadastrar paciente:", error);
-          toast.error("Erro ao cadastrar paciente.", { id: toastId });
+          toast.error("Erro ao cadastrar paciente: " + error.message, { id: toastId });
           setSaving(false);
           return;
         }
@@ -569,18 +574,18 @@ const Pacientes: React.FC = () => {
           }
         }
 
-        // Close dialog
-        setDialogOpen(false);
         await refreshPacientes();
         toast.success("Paciente cadastrado com sucesso!", { id: toastId });
+        setDialogOpen(false);
       }
-    } catch (err) {
-      console.error(err);
-      toast.error("Erro ao salvar paciente.", { id: toastId });
+    } catch (error: any) {
+      console.error("Erro geral no salvamento:", error);
+      toast.error("Erro ao processar dados: " + (error.message || "desconhecido"), { id: toastId });
     } finally {
       setSaving(false);
     }
   };
+
 
   const handleDelete = async (p: (typeof pacientes)[0]) => {
     if (!can("pacientes", "can_delete")) {

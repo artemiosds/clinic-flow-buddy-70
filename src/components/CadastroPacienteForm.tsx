@@ -90,6 +90,11 @@ export interface PacienteFormData {
   menorIdade: boolean;
   nomeResponsavel: string;
   cpfResponsavel: string;
+  sexo: string;
+  naturalidade: string;
+  nacionalidade: string;
+  raca_cor: string;
+  
   // Bloco 2 - Encaminhamento
   especialidadeDestino: string;
   ubsOrigem: string;
@@ -113,9 +118,18 @@ export interface PacienteFormData {
   outroServicoSus: boolean;
   transporte: string;
   turnoPreferido: string;
-  // Legacy / contato / endereço
+  // Endereço e contato
   email: string;
   endereco: string;
+  cep: string;
+  tipo_logradouro: string;
+  tipo_logradouro_codigo: string;
+  numero: string;
+  complemento: string;
+  bairro: string;
+  uf: string;
+  telefone_secundario: string;
+  
   nomeMae: string;
   descricaoClinica: string;
   // Prioridade especial
@@ -128,6 +142,7 @@ export interface PacienteFormData {
 export const emptyPacienteForm: PacienteFormData = {
   nome: "", dataNascimento: "", cpf: "", cns: "", telefone: "", municipio: "",
   menorIdade: false, nomeResponsavel: "", cpfResponsavel: "",
+  sexo: "", naturalidade: "", nacionalidade: "Brasil", raca_cor: "",
   especialidadeDestino: "", ubsOrigem: "", profissionalSolicitante: "",
   tipoEncaminhamento: "", cid: "", diagnosticoResumido: "", justificativa: "",
   dataEncaminhamento: "", documentoUrl: "",
@@ -135,9 +150,12 @@ export const emptyPacienteForm: PacienteFormData = {
   comunicacao: "", comportamento: "", usaEquipamentos: false, equipamentos: [],
   observacaoEquipamentos: "", outroServicoSus: false, transporte: "", turnoPreferido: "",
   email: "", endereco: "", nomeMae: "", descricaoClinica: "",
+  cep: "", tipo_logradouro: "", tipo_logradouro_codigo: "", numero: "", complemento: "", bairro: "", uf: "PA",
+  telefone_secundario: "",
   isGestante: false, isPne: false, isAutista: false,
   customData: {},
 };
+
 
 interface Props {
   form: PacienteFormData;
@@ -199,7 +217,7 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
 
   // ---- ViaCEP ----
   const handleCepBlur = async () => {
-    const cep = (cd.cep || "").replace(/\D/g, "");
+    const cep = (form.cep || "").replace(/\D/g, "");
     if (cep.length !== 8) return;
     setCepLoading(true);
     try {
@@ -209,20 +227,18 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
         toast.error("CEP não encontrado.");
       } else {
         const update = {
-          ...cd,
-          logradouro: data.logradouro ? sanitizeUpper(data.logradouro) : cd.logradouro,
-          bairro: data.bairro ? sanitizeUpper(data.bairro) : cd.bairro,
-          uf: data.uf || cd.uf,
+          ...form,
+          endereco: data.logradouro ? sanitizeUpper(data.logradouro) : form.endereco,
+          bairro: data.bairro ? sanitizeUpper(data.bairro) : form.bairro,
+          uf: data.uf || form.uf,
         };
         const novoMunicipio = data.localidade || form.municipio;
         const municipioMatch = MUNICIPIOS.find((m) =>
           sanitizeUpper(m) === sanitizeUpper(novoMunicipio)
         );
         onChange({
-          ...form,
+          ...update,
           municipio: municipioMatch || form.municipio,
-          endereco: data.logradouro ? sanitizeUpper(data.logradouro) : form.endereco,
-          customData: update,
         });
         toast.success("Endereço preenchido pelo CEP");
       }
@@ -232,6 +248,7 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
       setCepLoading(false);
     }
   };
+
 
 
   const toggleEquipamento = (eq: string) => {
@@ -326,13 +343,8 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                 <div>
                   <Label>{L("sexo", "Sexo")}</Label>
                   <Select 
-                    value={
-                      cd.sexo === "masculino" || cd.sexo === "M" ? "M" : 
-                      cd.sexo === "feminino" || cd.sexo === "F" ? "F" : 
-                      cd.sexo === "ignorado" || cd.sexo === "I" ? "I" : 
-                      ""
-                    } 
-                    onValueChange={(v) => setCustom("sexo", v)}
+                    value={form.sexo || ""} 
+                    onValueChange={(v) => set("sexo", v)}
                   >
                     <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                     <SelectContent>
@@ -343,6 +355,7 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                   </Select>
                 </div>
               )}
+
 
               {!H("cpf") && (
                 <div>
@@ -375,13 +388,13 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                 <div className="md:col-span-2">
                   <Label>{L("naturalidade", "Naturalidade")}</Label>
                   <MunicipioIbgeCombobox
-                    value={cd.naturalidade || ""}
+                    value={form.naturalidade || ""}
                     onChange={(label, payload) => {
                       onChange({
                         ...form,
+                        naturalidade: label,
                         customData: {
                           ...(form.customData || {}),
-                          naturalidade: label,
                           naturalidadeUf: payload?.uf || "",
                           naturalidadeCodigoIbge: payload?.codigoIbge || "",
                         },
@@ -394,6 +407,7 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                   </p>
                 </div>
               )}
+
 
               {!H("situacaoRua") && (
               <div className="flex items-center gap-3 p-2 rounded-md bg-muted/40 md:col-span-2">
@@ -445,8 +459,8 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                 <Label>{L("cep", "CEP")}</Label>
                 <div className="relative">
                   <Input
-                    value={cd.cep || ""}
-                    onChange={(e) => setCustom("cep", maskCEP(e.target.value))}
+                    value={form.cep || ""}
+                    onChange={(e) => set("cep", maskCEP(e.target.value))}
                     onBlur={handleCepBlur}
                     placeholder="00000-000"
                     inputMode="numeric"
@@ -464,16 +478,13 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                   {L("tipoLogradouro", "Tipo de Logradouro (DNE)")} <span className="text-destructive">*</span>
                 </Label>
                 <LogradouroDneAutocomplete
-                  value={cd.tipoLogradouro || ""}
-                  codigo={cd.tipoLogradouroCodigo || ""}
+                  value={form.tipo_logradouro || ""}
+                  codigo={form.tipo_logradouro_codigo || ""}
                   onChange={(descricao, codigo) => {
                     onChange({
                       ...form,
-                      customData: {
-                        ...(form.customData || {}),
-                        tipoLogradouro: descricao,
-                        tipoLogradouroCodigo: codigo,
-                      },
+                      tipo_logradouro: descricao,
+                      tipo_logradouro_codigo: codigo,
                     });
                   }}
                   required
@@ -485,8 +496,8 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
               <div className="md:col-span-2">
                 <Label>{L("logradouro", "Logradouro")}</Label>
                 <Input
-                  value={cd.logradouro || ""}
-                  onChange={(e) => setCustom("logradouro", sanitizeUpper(e.target.value))}
+                  value={form.endereco || ""}
+                  onChange={(e) => set("endereco", sanitizeUpper(e.target.value))}
                   placeholder="NOME DA RUA / AVENIDA"
                 />
               </div>
@@ -496,8 +507,8 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
               <div>
                 <Label>{L("numero", "Número")}</Label>
                 <Input
-                  value={cd.numero || ""}
-                  onChange={(e) => setCustom("numero", e.target.value.replace(/[^\dA-Za-z\/\-]/g, "").toUpperCase())}
+                  value={form.numero || ""}
+                  onChange={(e) => set("numero", e.target.value.replace(/[^\dA-Za-z\/\-]/g, "").toUpperCase())}
                   placeholder="Nº"
                   inputMode="numeric"
                 />
@@ -508,8 +519,8 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
               <div>
                 <Label>{L("complemento", "Complemento")}</Label>
                 <Input
-                  value={cd.complemento || ""}
-                  onChange={(e) => setCustom("complemento", sanitizeUpper(e.target.value))}
+                  value={form.complemento || ""}
+                  onChange={(e) => set("complemento", sanitizeUpper(e.target.value))}
                   placeholder="APTO, BLOCO, ETC"
                 />
               </div>
@@ -519,8 +530,8 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
               <div>
                 <Label>{L("bairro", "Bairro")}</Label>
                 <Input
-                  value={cd.bairro || ""}
-                  onChange={(e) => setCustom("bairro", sanitizeUpper(e.target.value))}
+                  value={form.bairro || ""}
+                  onChange={(e) => set("bairro", sanitizeUpper(e.target.value))}
                   placeholder="BAIRRO"
                 />
               </div>
@@ -542,7 +553,7 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
               {!H("uf") && (
               <div>
                 <Label>{L("uf", "UF")}</Label>
-                <Select value={cd.uf || ""} onValueChange={(v) => setCustom("uf", v)}>
+                <Select value={form.uf || ""} onValueChange={(v) => set("uf", v)}>
                   <SelectTrigger><SelectValue placeholder="UF" /></SelectTrigger>
                   <SelectContent>
                     {UFS.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}
@@ -550,6 +561,7 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                 </Select>
               </div>
               )}
+
 
               {/* Mantém endereco legacy (oculto, sincroniza para retrocompat) */}
               {!H("endereco") && (
@@ -585,8 +597,8 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
               <div>
                 <Label>{L("telefoneSecundario", "Telefone Secundário")}</Label>
                 <Input
-                  value={cd.telefoneSecundario || ""}
-                  onChange={(e) => setCustom("telefoneSecundario", applyPhoneMask(e.target.value))}
+                  value={form.telefone_secundario || ""}
+                  onChange={(e) => set("telefone_secundario", applyPhoneMask(e.target.value))}
                   placeholder="(99) 99999-9999"
                   inputMode="numeric"
                 />
@@ -620,14 +632,14 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                 <div>
                   <Label>Nacionalidade *</Label>
                   <Select
-                    value={cd.nacionalidade || "brasileiro"}
-                    onValueChange={(v) => setCustom("nacionalidade", v)}
+                    value={form.nacionalidade || "Brasil"}
+                    onValueChange={(v) => set("nacionalidade", v)}
                   >
                     <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="brasileiro">Brasileiro(a)</SelectItem>
-                      <SelectItem value="naturalizado">Naturalizado(a)</SelectItem>
-                      <SelectItem value="estrangeiro">Estrangeiro(a)</SelectItem>
+                      <SelectItem value="Brasil">Brasileiro(a)</SelectItem>
+                      <SelectItem value="Naturalizado">Naturalizado(a)</SelectItem>
+                      <SelectItem value="Estrangeiro">Estrangeiro(a)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -635,14 +647,8 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                 <div>
                   <Label>Raça/Cor (IBGE) *</Label>
                   <Select
-                    value={cd.racaCor || cd.raca_cor || ""}
-                    onValueChange={(v) => {
-                      // Persistir em ambas as chaves para compat com BPA
-                      onChange({
-                        ...form,
-                        customData: { ...(form.customData || {}), racaCor: v, raca_cor: v },
-                      });
-                    }}
+                    value={form.raca_cor || ""}
+                    onValueChange={(v) => set("raca_cor", v)}
                   >
                     <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                     <SelectContent>
@@ -654,10 +660,11 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                 </div>
 
                 {/* Etnia: obrigatória apenas se Raça/Cor = Indígena */}
-                {(cd.racaCor === "indigena" || cd.raca_cor === "indigena") && (
+                {form.raca_cor === "indigena" && (
                   <div className="md:col-span-2">
                     <Label>Etnia (povo indígena) *</Label>
                     <Select value={cd.etnia || ""} onValueChange={(v) => setCustom("etnia", v)}>
+
                       <SelectTrigger><SelectValue placeholder="Selecione a etnia" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="X101">X101 — Apalai</SelectItem>
