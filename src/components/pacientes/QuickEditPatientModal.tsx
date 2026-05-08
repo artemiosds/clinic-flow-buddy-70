@@ -10,10 +10,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import MunicipioIbgeCombobox from "@/components/MunicipioIbgeCombobox";
 import LogradouroDneAutocomplete from "@/components/LogradouroDneAutocomplete";
-import { applyPhoneMask, normalizePhone } from "@/lib/phoneUtils";
-import { maskCNS, unmaskCNS } from "@/lib/cnsUtils";
+import { applyPhoneMask } from "@/lib/phoneUtils";
+import { maskCNS } from "@/lib/cnsUtils";
 import { useData } from "@/contexts/DataContext";
 import { useQueryClient } from "@tanstack/react-query";
+import { updatePacienteCadastro } from "@/lib/pacienteService";
 
 interface Props {
   open: boolean;
@@ -29,7 +30,6 @@ const QuickEditPatientModal: React.FC<Props> = ({ open, onOpenChange, pacienteId
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("identificacao");
   const [form, setForm] = useState<any>({});
-  const [customData, setCustomData] = useState<any>({});
   const [dirty, setDirty] = useState(false);
   const lastSavedFormRef = useRef<string>("");
 
@@ -44,9 +44,7 @@ const QuickEditPatientModal: React.FC<Props> = ({ open, onOpenChange, pacienteId
     const { data, error } = await supabase.from("pacientes").select("*").eq("id", pacienteId).single();
     if (data) {
       setForm(data);
-      const cd = data.custom_data || {};
-      setCustomData(cd);
-      lastSavedFormRef.current = JSON.stringify({ ...data, custom_data: cd });
+      lastSavedFormRef.current = JSON.stringify(data);
       setDirty(false);
     }
     setLoading(false);
@@ -55,8 +53,7 @@ const QuickEditPatientModal: React.FC<Props> = ({ open, onOpenChange, pacienteId
   const handleSave = useCallback(async (manual = false) => {
     if (!pacienteId || saving) return;
     
-    // Check if there are actual changes
-    const currentFormStr = JSON.stringify({ ...form, custom_data: customData });
+    const currentFormStr = JSON.stringify(form);
     if (!manual && currentFormStr === lastSavedFormRef.current) {
       setDirty(false);
       return;
@@ -64,82 +61,54 @@ const QuickEditPatientModal: React.FC<Props> = ({ open, onOpenChange, pacienteId
 
     setSaving(true);
     
-    // Normalize data
-    const normalizedPhone = normalizePhone(form.telefone) || form.telefone || "";
-    const cleanCPF = (form.cpf || "").replace(/\D/g, "");
-    const cleanCNS = unmaskCNS(form.cns);
-
-    // Campos que são NOT NULL no banco e precisam de sanitização
-    const dbFields: any = {
-      nome: (form.nome || "").trim(),
-      nome_mae: (form.nome_mae || "").trim(),
-      data_nascimento: form.data_nascimento || "",
-      cpf: cleanCPF,
-      cns: cleanCNS,
-      telefone: normalizedPhone,
-      email: (form.email || "").trim().toLowerCase(),
-      municipio: form.municipio || "",
-      endereco: (customData.logradouro || form.endereco || "").trim(),
-      unidade_id: form.unidade_id || "",
-      custom_data: {
-        ...(customData || {}),
-        sexo: form.sexo || customData.sexo || "",
-        logradouro: (customData.logradouro || form.endereco || "").trim(),
-      },
-      atualizado_em: new Date().toISOString(),
-    };
-
-    const { error } = await supabase.from("pacientes").update(dbFields).eq("id", pacienteId);
-
-    if (error) {
-      console.error("Erro ao salvar paciente:", error);
-      if (manual) toast.error("Erro ao salvar alterações: " + error.message);
-    } else {
-      setDirty(false);
-      lastSavedFormRef.current = currentFormStr;
+    try {
+      // Usar a função centralizada de atualização
+      const updatedData = await updatePacienteCadastro(pacienteId, form, "QuickEditModal");
       
-      // Invalidate ALL relevant queries to ensure UI is updated everywhere
+      setDirty(false);
+      lastSavedFormRef.current = JSON.stringify(updatedData);
+      setForm(updatedData);
+      
+      // Invalidação de caches
       queryClient.invalidateQueries({ queryKey: ["pacientes"] });
+      queryClient.invalidateQueries({ queryKey: ["paciente", pacienteId] });
       queryClient.invalidateQueries({ queryKey: ["pacientes-pendencias"] });
       queryClient.invalidateQueries({ queryKey: ["pacientes-paginated"] });
+      queryClient.invalidateQueries({ queryKey: ["pendencias_cadastrais"] });
 
-      // Refresh global context for components using useData
+      // Atualizar contexto global
       await refreshPacientes();
 
       if (manual) {
-        toast.success("Paciente atualizado com sucesso!");
+        toast.success("Cadastro atualizado com sucesso no banco de dados.");
         onSaved();
       }
+    } catch (error: any) {
+      console.error("Erro ao salvar paciente:", error);
+      if (manual) toast.error("Erro ao salvar alterações: " + (error.message || "Erro desconhecido"));
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
-  }, [pacienteId, form, customData, saving, onSaved, queryClient, refreshPacientes]);
+  }, [pacienteId, form, saving, onSaved, queryClient, refreshPacientes]);
 
   const set = (field: string, value: any) => {
     setForm((prev: any) => ({ ...prev, [field]: value }));
     setDirty(true);
   };
   
-  const setCD = (field: string, value: any) => {
-    setCustomData((prev: any) => ({ ...prev, [field]: value }));
-    setDirty(true);
-  };
-
   // Debounced Auto-save
   useEffect(() => {
     if (!dirty || !pacienteId || saving) return;
 
-    const currentFormStr = JSON.stringify({ ...form, custom_data: customData });
-    if (currentFormStr === lastSavedFormRef.current) return;
-
     const timer = setTimeout(() => {
-      handleSave();
+      handleSave(false);
     }, 2000); 
 
     return () => clearTimeout(timer);
-  }, [form, customData, dirty, pacienteId, saving, handleSave]);
-
+  }, [form, dirty, pacienteId, saving, handleSave]);
 
   const sanitizeUpper = (v: string) => (v || "").toUpperCase();
+
 
   return (
     <Dialog open={open} onOpenChange={(val) => {
