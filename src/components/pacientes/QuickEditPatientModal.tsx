@@ -12,7 +12,9 @@ import { toast } from "sonner";
 import MunicipioIbgeCombobox from "@/components/MunicipioIbgeCombobox";
 import LogradouroDneAutocomplete from "@/components/LogradouroDneAutocomplete";
 import { applyPhoneMask, normalizePhone } from "@/lib/phoneUtils";
-import { maskCNS } from "@/lib/cnsUtils";
+import { maskCNS, unmaskCNS } from "@/lib/cnsUtils";
+import { useData } from "@/contexts/DataContext";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface Props {
   open: boolean;
@@ -22,6 +24,8 @@ interface Props {
 }
 
 const QuickEditPatientModal: React.FC<Props> = ({ open, onOpenChange, pacienteId, onSaved }) => {
+  const { refreshPacientes, logAction } = useData();
+  const queryClient = useQueryClient();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("identificacao");
@@ -51,31 +55,43 @@ const QuickEditPatientModal: React.FC<Props> = ({ open, onOpenChange, pacienteId
 
   const handleSave = useCallback(async (manual = false) => {
     if (!pacienteId || saving) return;
+    
+    // Check if there are actual changes
+    const currentFormStr = JSON.stringify({ ...form, custom_data: customData });
+    if (!manual && currentFormStr === lastSavedFormRef.current) {
+      setDirty(false);
+      return;
+    }
+
     setSaving(true);
     
-    // Normalize phone
-    const normalizedPhone = normalizePhone(form.telefone) || form.telefone;
+    // Normalize data
+    const normalizedPhone = normalizePhone(form.telefone) || form.telefone || "";
+    const cleanCPF = (form.cpf || "").replace(/\D/g, "");
+    const cleanCNS = unmaskCNS(form.cns);
 
     // Campos que são NOT NULL no banco e precisam de sanitização
     const dbFields: any = {
-      nome: form.nome || "",
-      nome_mae: form.nome_mae || "",
+      nome: (form.nome || "").trim(),
+      nome_mae: (form.nome_mae || "").trim(),
       data_nascimento: form.data_nascimento || "",
-      cpf: form.cpf || "",
-      cns: form.cns || "",
-      telefone: normalizedPhone || "",
-      email: form.email || "",
+      cpf: cleanCPF,
+      cns: cleanCNS,
+      telefone: normalizedPhone,
+      email: (form.email || "").trim().toLowerCase(),
       municipio: form.municipio || "",
-      endereco: customData.logradouro || form.endereco || "",
+      endereco: (customData.logradouro || form.endereco || "").trim(),
       unidade_id: form.unidade_id || "",
-      custom_data: customData || {},
+      custom_data: {
+        ...(customData || {}),
+        sexo: form.sexo || customData.sexo || "",
+        logradouro: (customData.logradouro || form.endereco || "").trim(),
+      },
       atualizado_em: new Date().toISOString(),
     };
 
-    // Garantir que não enviamos IDs ou campos de sistema
-    delete (dbFields as any).id;
-    delete (dbFields as any).criado_em;
-
+    // Remove empty/undefined fields to avoid constraint issues if needed, 
+    // but here we want to ensure they stay empty strings if provided as such
     const { error } = await supabase.from("pacientes").update(dbFields).eq("id", pacienteId);
 
     if (error) {
@@ -83,14 +99,25 @@ const QuickEditPatientModal: React.FC<Props> = ({ open, onOpenChange, pacienteId
       toast.error("Erro ao salvar alterações: " + error.message);
     } else {
       setDirty(false);
-      lastSavedFormRef.current = JSON.stringify({ ...form, custom_data: customData });
+      lastSavedFormRef.current = currentFormStr;
+      
+      // Invalidate ALL relevant queries
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["pacientes"] }),
+        queryClient.invalidateQueries({ queryKey: ["pacientes-pendencias"] }),
+        queryClient.invalidateQueries({ queryKey: ["pacientes-paginated"] }),
+      ]);
+
+      // Refresh global context
+      await refreshPacientes();
+
       if (manual) {
         toast.success("Paciente atualizado com sucesso!");
         onSaved();
       }
     }
     setSaving(false);
-  }, [pacienteId, form, customData, saving, onSaved]);
+  }, [pacienteId, form, customData, saving, onSaved, queryClient, refreshPacientes]);
 
   const set = (field: string, value: any) => {
     setForm((prev: any) => ({ ...prev, [field]: value }));
@@ -111,10 +138,11 @@ const QuickEditPatientModal: React.FC<Props> = ({ open, onOpenChange, pacienteId
 
     const timer = setTimeout(() => {
       handleSave();
-    }, 1500); 
+    }, 2000); 
 
     return () => clearTimeout(timer);
   }, [form, customData, dirty, pacienteId, saving, handleSave]);
+
 
   const sanitizeUpper = (v: string) => (v || "").toUpperCase();
 
