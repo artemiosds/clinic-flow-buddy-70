@@ -532,8 +532,7 @@ const Disponibilidade: React.FC = () => {
     const savedModo = modosPorProfissional[profId] || 'por_hora';
     setModo(savedModo);
     setDaySchedules(defaultDaySchedules.map(d => ({ ...d })));
-    setTurnoDays(defaultTurnoDays.map(d => ({ ...d, turnosAtivos: [] })));
-    setTurnoVagas({});
+    setTurnoDays(createDefaultDayConfigs());
     setDialogOpen(true);
   };
 
