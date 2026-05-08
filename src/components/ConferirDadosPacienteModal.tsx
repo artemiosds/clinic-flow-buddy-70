@@ -260,16 +260,17 @@ export function ConferirDadosPacienteModal({
       };
 
       const updatePayload: any = {
-        nome: form.nome,
-        nome_mae: form.nome_mae,
+        nome: form.nome || "",
+        nome_mae: form.nome_mae || "",
         data_nascimento: form.data_nascimento || "",
-        cpf: form.cpf,
+        cpf: form.cpf || "",
         cns: (form.cns || "").replace(/\D/g, "").slice(0, 15),
-        telefone: normalizedTelefone,
+        telefone: normalizedTelefone || "",
         email: form.email || "",
-        endereco: form.endereco, // mantém coluna legada sincronizada com o logradouro
-        municipio: form.municipio,
-        custom_data: customData,
+        endereco: form.endereco || "", 
+        municipio: form.municipio || "",
+        custom_data: customData || {},
+        atualizado_em: new Date().toISOString(),
       };
 
       const { error } = await (supabase as any)
