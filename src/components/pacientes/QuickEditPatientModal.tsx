@@ -49,7 +49,7 @@ const QuickEditPatientModal: React.FC<Props> = ({ open, onOpenChange, pacienteId
     setLoading(false);
   };
 
-  const handleSave = useCallback(async () => {
+  const handleSave = useCallback(async (manual = false) => {
     if (!pacienteId || saving) return;
     setSaving(true);
     
@@ -80,16 +80,17 @@ const QuickEditPatientModal: React.FC<Props> = ({ open, onOpenChange, pacienteId
 
     if (error) {
       console.error("Erro ao salvar paciente:", error);
-      // Only show error toast for manual saves or if really important
       toast.error("Erro ao salvar alterações: " + error.message);
     } else {
-      // success toast might be too noisy for autosave, but user asked for "reflete de imediato"
-      // toast.success("Paciente atualizado com sucesso!");
       setDirty(false);
       lastSavedFormRef.current = JSON.stringify({ ...form, custom_data: customData });
+      if (manual) {
+        toast.success("Paciente atualizado com sucesso!");
+        onSaved();
+      }
     }
     setSaving(false);
-  }, [pacienteId, form, customData, saving]);
+  }, [pacienteId, form, customData, saving, onSaved]);
 
   const set = (field: string, value: any) => {
     setForm((prev: any) => ({ ...prev, [field]: value }));
