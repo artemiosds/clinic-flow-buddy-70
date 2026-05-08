@@ -21,7 +21,6 @@ export async function updatePacienteCadastro(
   const normalizedPhoneSec = dados.telefone_secundario ? normalizePhone(dados.telefone_secundario) : undefined;
 
   // 2. Montagem do payload principal (colunas da tabela)
-  // Removemos campos undefined para não sobrescrever com null se não foi enviado
   const updateData: any = {
     atualizado_em: new Date().toISOString(),
   };
@@ -57,24 +56,16 @@ export async function updatePacienteCadastro(
   if (dados.unidade_id !== undefined) updateData.unidade_id = dados.unidade_id || "";
   if (dados.observacoes !== undefined) updateData.observacoes = dados.observacoes || "";
 
-  // 3. Tratamento de campos obrigatórios (impedir null em campos que o banco não aceita)
-  // Se o nome vier vazio, tentamos manter o antigo ou garantimos que não seja null se o banco exigir
-  if (updateData.nome === "") {
-     // Em uma atualização real, se o usuário tentou limpar o nome, talvez devamos impedir se for obrigatório
-  }
-
-  // 4. Preservar custom_data se necessário ou atualizar campos nele também para compatibilidade
-  // O usuário disse que não quer salvar APENAS no custom_data, mas ele pode ser usado para campos extras.
-  // Vamos buscar o custom_data atual para não perder informações de outros módulos
+  // 4. Preservar custom_data
   const { data: currentPatient } = await supabase
     .from("pacientes")
     .select("custom_data")
     .eq("id", pacienteId)
     .single();
 
-  const currentCD = currentPatient?.custom_data || {};
+  const currentCD = (currentPatient?.custom_data as any) || {};
   
-  // Sincronizamos os campos principais no custom_data também por precaução (compatibilidade com telas antigas)
+  // Sincronizamos os campos principais no custom_data também por precaução
   const newCD = {
     ...currentCD,
     ...(dados.custom_data || {}),
