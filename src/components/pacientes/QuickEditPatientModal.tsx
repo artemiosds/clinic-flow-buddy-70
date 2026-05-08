@@ -41,7 +41,10 @@ const QuickEditPatientModal: React.FC<Props> = ({ open, onOpenChange, pacienteId
     const { data, error } = await supabase.from("pacientes").select("*").eq("id", pacienteId).single();
     if (data) {
       setForm(data);
-      setCustomData(data.custom_data || {});
+      const cd = data.custom_data || {};
+      setCustomData(cd);
+      lastSavedFormRef.current = JSON.stringify({ ...data, custom_data: cd });
+      setDirty(false);
     }
     setLoading(false);
   };
