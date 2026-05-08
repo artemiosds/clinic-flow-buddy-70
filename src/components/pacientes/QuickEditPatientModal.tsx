@@ -49,7 +49,8 @@ const QuickEditPatientModal: React.FC<Props> = ({ open, onOpenChange, pacienteId
     setLoading(false);
   };
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
+    if (!pacienteId || saving) return;
     setSaving(true);
     
     // Normalize phone
@@ -71,11 +72,6 @@ const QuickEditPatientModal: React.FC<Props> = ({ open, onOpenChange, pacienteId
       atualizado_em: new Date().toISOString(),
     };
 
-    // Outros campos importantes que podem estar no form
-    const otherFields = [
-      'sexo', 'nacionalidade', 'raca_cor', 'naturalidade', 'cep', 'bairro', 'numero', 'complemento'
-    ];
-    
     // Garantir que não enviamos IDs ou campos de sistema
     delete (dbFields as any).id;
     delete (dbFields as any).criado_em;
@@ -84,13 +80,16 @@ const QuickEditPatientModal: React.FC<Props> = ({ open, onOpenChange, pacienteId
 
     if (error) {
       console.error("Erro ao salvar paciente:", error);
+      // Only show error toast for manual saves or if really important
       toast.error("Erro ao salvar alterações: " + error.message);
     } else {
-      toast.success("Paciente atualizado com sucesso!");
-      onSaved();
+      // success toast might be too noisy for autosave, but user asked for "reflete de imediato"
+      // toast.success("Paciente atualizado com sucesso!");
+      setDirty(false);
+      lastSavedFormRef.current = JSON.stringify({ ...form, custom_data: customData });
     }
     setSaving(false);
-  };
+  }, [pacienteId, form, customData, saving]);
 
   const set = (field: string, value: any) => setForm((prev: any) => ({ ...prev, [field]: value }));
   const setCD = (field: string, value: any) => setCustomData((prev: any) => ({ ...prev, [field]: value }));
