@@ -289,7 +289,7 @@ const QuickEditPatientModal: React.FC<Props> = ({ open, onOpenChange, pacienteId
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
             Cancelar
           </Button>
-          <Button onClick={handleSave} disabled={saving}>
+          <Button onClick={() => handleSave(true)} disabled={saving}>
             {saving ? (
               <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Salvando...</>
             ) : (
