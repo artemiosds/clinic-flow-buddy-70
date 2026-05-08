@@ -401,16 +401,64 @@ const Disponibilidade: React.FC = () => {
   const toggleTurnoDay = (dayIndex: number, ativo: boolean) => {
     setTurnoDays(prev => prev.map((td, i) => {
       if (i !== dayIndex) return td;
-      return { ...td, ativo, turnosAtivos: ativo ? activeTurnos.map(t => t.id) : [] };
+      // If activating and no blocks, add a default one
+      let newBlocos = [...td.blocos];
+      if (ativo && newBlocos.length === 0) {
+        newBlocos = [{
+          id: Math.random().toString(36).substr(2, 9),
+          nome: 'Turno',
+          tipo: 'custom',
+          horaInicio: '08:00',
+          horaFim: '12:00',
+          vagas: 20,
+          ativo: true
+        }];
+      }
+      return { ...td, ativo, blocos: newBlocos };
     }));
   };
 
-  const toggleTurnoForDay = (dayIndex: number, turnoId: string) => {
+  const addBlocoToDay = (dayIndex: number) => {
     setTurnoDays(prev => prev.map((td, i) => {
       if (i !== dayIndex) return td;
-      const has = td.turnosAtivos.includes(turnoId);
-      return { ...td, turnosAtivos: has ? td.turnosAtivos.filter(id => id !== turnoId) : [...td.turnosAtivos, turnoId] };
+      const newBloco: BlocoConfig = {
+        id: Math.random().toString(36).substr(2, 9),
+        nome: 'Novo Turno',
+        tipo: 'custom',
+        horaInicio: '08:00',
+        horaFim: '12:00',
+        vagas: 20,
+        ativo: true
+      };
+      return { ...td, ativo: true, blocos: [...td.blocos, newBloco] };
     }));
+  };
+
+  const removeBlocoFromDay = (dayIndex: number, blocoId: string) => {
+    setTurnoDays(prev => prev.map((td, i) => {
+      if (i !== dayIndex) return td;
+      return { ...td, blocos: td.blocos.filter(b => b.id !== blocoId) };
+    }));
+  };
+
+  const updateBloco = (dayIndex: number, blocoId: string, updates: Partial<BlocoConfig>) => {
+    setTurnoDays(prev => prev.map((td, i) => {
+      if (i !== dayIndex) return td;
+      return { ...td, blocos: td.blocos.map(b => b.id === blocoId ? { ...b, ...updates } : b) };
+    }));
+  };
+
+  const copyDayToAll = (sourceDayIndex: number) => {
+    const sourceDay = turnoDays[sourceDayIndex];
+    setTurnoDays(prev => prev.map((td, i) => {
+      if (i === sourceDayIndex) return td;
+      return { 
+        ...td, 
+        ativo: sourceDay.ativo, 
+        blocos: sourceDay.blocos.map(b => ({ ...b, id: Math.random().toString(36).substr(2, 9) })) 
+      };
+    }));
+    toast.success(`Configuração de ${diasSemanaFull[sourceDayIndex]} copiada para todos os dias!`);
   };
 
   const filteredSalas = salas.filter(s => s.unidadeId === form.unidadeId && s.ativo);
