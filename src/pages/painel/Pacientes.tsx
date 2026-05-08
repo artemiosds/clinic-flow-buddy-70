@@ -535,20 +535,6 @@ const Pacientes: React.FC = () => {
           return;
         }
 
-        await refreshPacientes();
-        toast.success("Paciente cadastrado com sucesso!", { id: toastId });
-        setDialogOpen(false);
-      }
-    } catch (error: any) {
-      console.error("Erro geral no salvamento:", error);
-      toast.error("Erro ao processar dados: " + (error.message || "desconhecido"), { id: toastId });
-    } finally {
-      setSaving(false);
-    }
-  };
-
-
-
         // === SALVAR ENCAMINHAMENTOS PENDENTES ===
         const pendingEnc = dbFields.custom_data?._pendingReferrals;
         if (pendingEnc && Array.isArray(pendingEnc) && pendingEnc.length > 0) {
@@ -588,18 +574,18 @@ const Pacientes: React.FC = () => {
           }
         }
 
-        // Close dialog
-        setDialogOpen(false);
         await refreshPacientes();
         toast.success("Paciente cadastrado com sucesso!", { id: toastId });
+        setDialogOpen(false);
       }
-    } catch (err) {
-      console.error(err);
-      toast.error("Erro ao salvar paciente.", { id: toastId });
+    } catch (error: any) {
+      console.error("Erro geral no salvamento:", error);
+      toast.error("Erro ao processar dados: " + (error.message || "desconhecido"), { id: toastId });
     } finally {
       setSaving(false);
     }
   };
+
 
   const handleDelete = async (p: (typeof pacientes)[0]) => {
     if (!can("pacientes", "can_delete")) {
