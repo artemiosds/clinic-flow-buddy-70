@@ -22,19 +22,26 @@ import type { TurnoDefinition } from '@/components/config/ConfigFluxoAtendimento
 const diasSemanaLabels = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 const diasSemanaFull = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 
+interface BlocoConfig {
+  id: string;
+  nome: string;
+  tipo: 'padrao' | 'custom';
+  horaInicio: string;
+  horaFim: string;
+  vagas: number;
+  ativo: boolean;
+}
+
+interface DayConfig {
+  diaSemana: number;
+  ativo: boolean;
+  blocos: BlocoConfig[];
+}
+
 interface DaySchedule {
   ativo: boolean;
   horaInicio: string;
   horaFim: string;
-}
-
-interface TurnoDayConfig {
-  ativo: boolean;
-  turnosAtivos: string[]; // turno ids active for this day
-}
-
-interface TurnoVagas {
-  [turnoId: string]: number;
 }
 
 const defaultDaySchedules: DaySchedule[] = [
@@ -47,10 +54,12 @@ const defaultDaySchedules: DaySchedule[] = [
   { ativo: false, horaInicio: '08:00', horaFim: '17:00' },
 ];
 
-const defaultTurnoDays: TurnoDayConfig[] = Array.from({ length: 7 }, (_, i) => ({
-  ativo: i >= 1 && i <= 5,
-  turnosAtivos: [],
-}));
+const createDefaultDayConfigs = (): DayConfig[] => 
+  Array.from({ length: 7 }, (_, i) => ({
+    diaSemana: i,
+    ativo: i >= 1 && i <= 5,
+    blocos: [],
+  }));
 
 const timeToMin = (t: string) => {
   const [h, m] = t.split(':').map(Number);
@@ -85,8 +94,8 @@ const Disponibilidade: React.FC = () => {
   });
 
   const [modo, setModo] = useState<ModoDisponibilidade>('por_hora');
-  const [turnoDays, setTurnoDays] = useState<TurnoDayConfig[]>(defaultTurnoDays.map(d => ({ ...d, turnosAtivos: [] })));
-  const [turnoVagas, setTurnoVagas] = useState<TurnoVagas>({});
+  const [turnoDays, setTurnoDays] = useState<DayConfig[]>(createDefaultDayConfigs());
+  // Removed turnoVagas as it will be inside DayConfig.blocos
 
   const [daySchedules, setDaySchedules] = useState<DaySchedule[]>(defaultDaySchedules.map(d => ({ ...d })));
   const dayInputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -152,8 +161,7 @@ const Disponibilidade: React.FC = () => {
     setForm({ profissionalId: '', unidadeId: '', salaId: '', dataInicio: '', dataFim: '', vagasPorHora: 3, vagasPorDia: 25, duracaoConsulta: 30, intervalo: 0 });
     setDaySchedules(defaultDaySchedules.map(d => ({ ...d })));
     setModo('por_hora');
-    setTurnoDays(defaultTurnoDays.map(d => ({ ...d, turnosAtivos: [] })));
-    setTurnoVagas({});
+    setTurnoDays(createDefaultDayConfigs());
     setDialogOpen(true);
   };
 
@@ -175,28 +183,32 @@ const Disponibilidade: React.FC = () => {
 
     if (isTurno) {
       setModo('por_turno');
-      // Reconstruct turno days from records
-      const newTurnoDays: TurnoDayConfig[] = Array.from({ length: 7 }, () => ({ ativo: false, turnosAtivos: [] }));
-      const vagasMap: TurnoVagas = {};
+      // Reconstruct days and blocks from records
+      const newDays: DayConfig[] = Array.from({ length: 7 }, (_, i) => ({ 
+        diaSemana: i, 
+        ativo: false, 
+        blocos: [] 
+      }));
 
       records.forEach(r => {
-        // For turno records, salaId stores the turno ID
-        const turnoId = r.salaId || '';
-        if (turnoId) {
-          vagasMap[turnoId] = r.vagasPorDia;
-          r.diasSemana.forEach(dayNum => {
-            if (dayNum >= 0 && dayNum <= 6) {
-              newTurnoDays[dayNum].ativo = true;
-              if (!newTurnoDays[dayNum].turnosAtivos.includes(turnoId)) {
-                newTurnoDays[dayNum].turnosAtivos.push(turnoId);
-              }
-            }
-          });
-        }
+        const turnoNome = r.salaId || 'Turno';
+        r.diasSemana.forEach(dayNum => {
+          if (dayNum >= 0 && dayNum <= 6) {
+            newDays[dayNum].ativo = true;
+            newDays[dayNum].blocos.push({
+              id: Math.random().toString(36).substr(2, 9),
+              nome: turnoNome,
+              tipo: 'custom', // We treat all saved blocks as custom for editing flexibility
+              horaInicio: r.horaInicio,
+              horaFim: r.horaFim,
+              vagas: r.vagasPorDia,
+              ativo: true
+            });
+          }
+        });
       });
 
-      setTurnoDays(newTurnoDays);
-      setTurnoVagas(vagasMap);
+      setTurnoDays(newDays);
     } else {
       setModo('por_hora');
       const newSchedules = defaultDaySchedules.map(ds => ({ ...ds, ativo: false }));
@@ -231,16 +243,25 @@ const Disponibilidade: React.FC = () => {
       const updated = { ...modosPorProfissional, [form.profissionalId]: newModo };
       await saveModos(updated);
     }
-    // Initialize turno vagas with defaults
+    // Initialize defaults for the new mode
     if (newModo === 'por_turno') {
-      const defaultVagas: TurnoVagas = {};
-      activeTurnos.forEach(t => { defaultVagas[t.id] = turnoVagas[t.id] || 20; });
-      setTurnoVagas(defaultVagas);
-      // Set default turnosAtivos for active days
-      setTurnoDays(prev => prev.map(td => ({
-        ...td,
-        turnosAtivos: td.ativo && td.turnosAtivos.length === 0 ? activeTurnos.map(t => t.id) : td.turnosAtivos,
-      })));
+      setTurnoDays(prev => prev.map(td => {
+        if (td.ativo && td.blocos.length === 0) {
+          return {
+            ...td,
+            blocos: activeTurnos.map(t => ({
+              id: Math.random().toString(36).substr(2, 9),
+              nome: t.nome,
+              tipo: 'padrao',
+              horaInicio: t.horaInicio,
+              horaFim: t.horaFim,
+              vagas: 20,
+              ativo: true
+            }))
+          };
+        }
+        return td;
+      }));
     }
   };
 
@@ -329,8 +350,8 @@ const Disponibilidade: React.FC = () => {
       } finally { setSaving(false); }
     } else {
       // Por Turno
-      const activeDays = turnoDays.map((td, i) => ({ ...td, dayNum: i })).filter(td => td.ativo && td.turnosAtivos.length > 0);
-      if (activeDays.length === 0) { toast.error('Ative pelo menos um dia com turnos.'); return; }
+      const activeDays = turnoDays.map((td, i) => ({ ...td, dayNum: i })).filter(td => td.ativo && td.blocos.some(b => b.ativo));
+      if (activeDays.length === 0) { toast.error('Ative pelo menos um dia com turnos ativos.'); return; }
 
       const overlapMsg = checkOverlap();
       if (overlapMsg) { toast.error(overlapMsg); return; }
@@ -339,21 +360,18 @@ const Disponibilidade: React.FC = () => {
       try {
         if (isEditing) { for (const id of editGroupIds) { await deleteDisponibilidade(id); } }
 
-        // Create one record per turno-day combination
-        // We use salaId to store turnoId, vagasPorHora = 0 as turno marker
+        // Create one record per block-day combination
         for (const day of activeDays) {
-          for (const turnoId of day.turnosAtivos) {
-            const turno = turnosGlobais.find(t => t.id === turnoId);
-            if (!turno) continue;
+          for (const bloco of day.blocos.filter(b => b.ativo)) {
             await addDisponibilidade({
-              id: `d${Date.now()}_${day.dayNum}_${turnoId.slice(-4)}`,
+              id: `d${Date.now()}_${day.dayNum}_${Math.random().toString(36).substr(2, 4)}`,
               profissionalId: form.profissionalId,
               unidadeId: form.unidadeId,
-              salaId: turnoId, // store turno id here
+              salaId: bloco.nome, // store block name here
               dataInicio: form.dataInicio, dataFim: form.dataFim,
-              horaInicio: turno.horaInicio, horaFim: turno.horaFim,
+              horaInicio: bloco.horaInicio, horaFim: bloco.horaFim,
               vagasPorHora: 0, // marker for turno mode
-              vagasPorDia: turnoVagas[turnoId] || 20,
+              vagasPorDia: bloco.vagas,
               diasSemana: [day.dayNum],
               duracaoConsulta: 0,
             });
@@ -383,16 +401,64 @@ const Disponibilidade: React.FC = () => {
   const toggleTurnoDay = (dayIndex: number, ativo: boolean) => {
     setTurnoDays(prev => prev.map((td, i) => {
       if (i !== dayIndex) return td;
-      return { ...td, ativo, turnosAtivos: ativo ? activeTurnos.map(t => t.id) : [] };
+      // If activating and no blocks, add a default one
+      let newBlocos = [...td.blocos];
+      if (ativo && newBlocos.length === 0) {
+        newBlocos = [{
+          id: Math.random().toString(36).substr(2, 9),
+          nome: 'Turno',
+          tipo: 'custom',
+          horaInicio: '08:00',
+          horaFim: '12:00',
+          vagas: 20,
+          ativo: true
+        }];
+      }
+      return { ...td, ativo, blocos: newBlocos };
     }));
   };
 
-  const toggleTurnoForDay = (dayIndex: number, turnoId: string) => {
+  const addBlocoToDay = (dayIndex: number) => {
     setTurnoDays(prev => prev.map((td, i) => {
       if (i !== dayIndex) return td;
-      const has = td.turnosAtivos.includes(turnoId);
-      return { ...td, turnosAtivos: has ? td.turnosAtivos.filter(id => id !== turnoId) : [...td.turnosAtivos, turnoId] };
+      const newBloco: BlocoConfig = {
+        id: Math.random().toString(36).substr(2, 9),
+        nome: 'Novo Turno',
+        tipo: 'custom',
+        horaInicio: '08:00',
+        horaFim: '12:00',
+        vagas: 20,
+        ativo: true
+      };
+      return { ...td, ativo: true, blocos: [...td.blocos, newBloco] };
     }));
+  };
+
+  const removeBlocoFromDay = (dayIndex: number, blocoId: string) => {
+    setTurnoDays(prev => prev.map((td, i) => {
+      if (i !== dayIndex) return td;
+      return { ...td, blocos: td.blocos.filter(b => b.id !== blocoId) };
+    }));
+  };
+
+  const updateBloco = (dayIndex: number, blocoId: string, updates: Partial<BlocoConfig>) => {
+    setTurnoDays(prev => prev.map((td, i) => {
+      if (i !== dayIndex) return td;
+      return { ...td, blocos: td.blocos.map(b => b.id === blocoId ? { ...b, ...updates } : b) };
+    }));
+  };
+
+  const copyDayToAll = (sourceDayIndex: number) => {
+    const sourceDay = turnoDays[sourceDayIndex];
+    setTurnoDays(prev => prev.map((td, i) => {
+      if (i === sourceDayIndex) return td;
+      return { 
+        ...td, 
+        ativo: sourceDay.ativo, 
+        blocos: sourceDay.blocos.map(b => ({ ...b, id: Math.random().toString(36).substr(2, 9) })) 
+      };
+    }));
+    toast.success(`Configuração de ${diasSemanaFull[sourceDayIndex]} copiada para todos os dias!`);
   };
 
   const filteredSalas = salas.filter(s => s.unidadeId === form.unidadeId && s.ativo);
@@ -407,17 +473,19 @@ const Disponibilidade: React.FC = () => {
     if (modo !== 'por_turno') return { totalVagas: 0, diasAtivos: 0, turnosConfig: 0 };
     let totalVagas = 0;
     let diasAtivos = 0;
-    const turnosUsados = new Set<string>();
+    let totalTurnos = 0;
     turnoDays.forEach(td => {
       if (!td.ativo) return;
       diasAtivos++;
-      td.turnosAtivos.forEach(tId => {
-        turnosUsados.add(tId);
-        totalVagas += turnoVagas[tId] || 20;
+      td.blocos.forEach(b => {
+        if (b.ativo) {
+          totalTurnos++;
+          totalVagas += b.vagas;
+        }
       });
     });
-    return { totalVagas, diasAtivos, turnosConfig: turnosUsados.size };
-  }, [modo, turnoDays, turnoVagas]);
+    return { totalVagas, diasAtivos, turnosConfig: totalTurnos };
+  }, [modo, turnoDays]);
 
   // Group disponibilidades by professional
   const profGroups = useMemo(() => {
@@ -464,8 +532,7 @@ const Disponibilidade: React.FC = () => {
     const savedModo = modosPorProfissional[profId] || 'por_hora';
     setModo(savedModo);
     setDaySchedules(defaultDaySchedules.map(d => ({ ...d })));
-    setTurnoDays(defaultTurnoDays.map(d => ({ ...d, turnosAtivos: [] })));
-    setTurnoVagas({});
+    setTurnoDays(createDefaultDayConfigs());
     setDialogOpen(true);
   };
 
@@ -680,154 +747,185 @@ const Disponibilidade: React.FC = () => {
 
             {/* === POR TURNO mode === */}
             {modo === 'por_turno' && (
-              <>
-                {activeTurnos.length === 0 ? (
-                  <Card className="border-l-4 border-l-warning">
-                    <CardContent className="p-4 text-sm text-warning">
-                      Nenhum turno ativo cadastrado. Configure turnos em Configurações → Fluxo de Atendimento → Turnos.
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <>
-                    {/* Turnos + vagas */}
-                    <div>
-                      <Label className="mb-2 block">Turnos Disponíveis</Label>
-                      <div className="rounded-lg border border-border overflow-hidden">
-                        <div className="grid grid-cols-[1fr_auto_auto_auto] gap-0 bg-muted/50 px-3 py-2 text-xs font-medium text-muted-foreground border-b border-border">
-                          <span>Turno</span>
-                          <span className="text-center px-3">Horário</span>
-                          <span className="text-center px-3">Vagas</span>
-                          <span className="text-center px-3">Ativo</span>
-                        </div>
-                        {activeTurnos.map(turno => (
-                          <div key={turno.id} className="grid grid-cols-[1fr_auto_auto_auto] gap-0 items-center px-3 py-2.5 border-b border-border last:border-b-0">
-                            <span className="text-sm font-medium flex items-center gap-2">
-                              <Clock className="w-3.5 h-3.5 text-muted-foreground" />
-                              {turno.nome}
-                            </span>
-                            <span className="text-xs text-muted-foreground text-center px-3">{turno.horaInicio} - {turno.horaFim}</span>
-                            <div className="px-3">
-                              <Input
-                                type="number" min={1} value={turnoVagas[turno.id] || 20}
-                                onChange={e => setTurnoVagas(prev => ({ ...prev, [turno.id]: parseInt(e.target.value) || 1 }))}
-                                className="h-8 w-16 text-xs text-center"
-                              />
-                            </div>
-                            <div className="px-3 flex justify-center">
-                              <Switch
-                                checked={turnoVagas[turno.id] !== undefined}
-                                onCheckedChange={v => {
-                                  if (v) {
-                                    setTurnoVagas(prev => ({ ...prev, [turno.id]: 20 }));
-                                  } else {
-                                    setTurnoVagas(prev => { const n = { ...prev }; delete n[turno.id]; return n; });
-                                    setTurnoDays(prev => prev.map(td => ({ ...td, turnosAtivos: td.turnosAtivos.filter(id => id !== turno.id) })));
-                                  }
-                                }}
-                              />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-base font-semibold text-foreground flex items-center gap-2">
+                      <Clock className="w-5 h-5 text-primary" /> Configuração por Dia
+                    </Label>
+                    <p className="text-xs text-muted-foreground mt-0.5">Defina os turnos e vagas específicos para cada dia da semana.</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={() => copyDayToAll(1)} className="text-[10px] h-7 px-2">
+                      <RefreshCw className="w-3 h-3 mr-1" /> Replicar Seg para todos
+                    </Button>
+                  </div>
+                </div>
 
-                    {/* Days + turno selection */}
-                    <div>
-                      <Label className="mb-2 block">Dias da Semana</Label>
-                      <div className="rounded-lg border border-border overflow-hidden">
-                        <div className="grid grid-cols-[1fr_auto_1fr] gap-0 bg-muted/50 px-3 py-2 text-xs font-medium text-muted-foreground border-b border-border">
-                          <span>Dia</span>
-                          <span className="text-center px-2">Ativo</span>
-                          <span>Turnos ativos neste dia</span>
-                        </div>
-                        {turnoDays.map((td, i) => {
-                          const isFds = i === 0 || i === 6;
-                          const enabledTurnos = activeTurnos.filter(t => turnoVagas[t.id] !== undefined);
-                          return (
-                            <div key={i} className={cn(
-                              "grid grid-cols-[1fr_auto_1fr] gap-0 items-center px-3 py-2.5 border-b border-border last:border-b-0",
-                              !td.ativo && "bg-muted/20",
-                              isFds && td.ativo && "bg-orange-500/5",
-                            )}>
+                <div className="space-y-3">
+                  {turnoDays.map((td, i) => {
+                    const isFds = i === 0 || i === 6;
+                    const activeBlocos = td.blocos.filter(b => b.ativo);
+                    
+                    return (
+                      <Card key={i} className={cn(
+                        "border border-border overflow-hidden transition-all duration-200",
+                        !td.ativo && "opacity-60 bg-muted/20 border-dashed",
+                        td.ativo && "shadow-sm ring-1 ring-primary/5",
+                        isFds && td.ativo && "border-orange-200 bg-orange-50/30"
+                      )}>
+                        <div className={cn(
+                          "px-4 py-3 flex items-center justify-between border-b border-border/50",
+                          td.ativo ? "bg-muted/30" : "bg-transparent"
+                        )}>
+                          <div className="flex items-center gap-3">
+                            <Switch checked={td.ativo} onCheckedChange={v => toggleTurnoDay(i, v)} />
+                            <div className="flex flex-col">
                               <span className={cn(
-                                "text-sm font-medium",
+                                "text-sm font-bold tracking-tight",
                                 td.ativo ? "text-foreground" : "text-muted-foreground",
-                                isFds && td.ativo && "text-orange-600 dark:text-orange-400",
+                                isFds && td.ativo && "text-orange-600"
                               )}>
                                 {diasSemanaFull[i]}
                               </span>
-                              <div className="flex justify-center px-2">
-                                <Switch checked={td.ativo} onCheckedChange={v => toggleTurnoDay(i, v)} />
-                              </div>
-                              <div className="flex flex-wrap gap-1.5">
-                                {td.ativo ? (
-                                  enabledTurnos.length > 0 ? enabledTurnos.map(turno => (
-                                    <button
-                                      key={turno.id}
-                                      onClick={() => toggleTurnoForDay(i, turno.id)}
-                                      className={cn(
-                                        "inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full border transition-colors cursor-pointer",
-                                        td.turnosAtivos.includes(turno.id)
-                                          ? "bg-primary/10 text-primary border-primary/30"
-                                          : "bg-muted/50 text-muted-foreground border-border"
-                                      )}
-                                    >
-                                      {td.turnosAtivos.includes(turno.id) ? '✅' : '○'} {turno.nome}
-                                    </button>
-                                  )) : (
-                                    <span className="text-[11px] text-muted-foreground">Ative turnos acima</span>
-                                  )
-                                ) : (
-                                  <span className="text-[11px] text-muted-foreground">—</span>
-                                )}
-                              </div>
+                              {td.ativo && (
+                                <span className="text-[10px] text-muted-foreground font-medium">
+                                  {activeBlocos.length} turno(s) configurado(s)
+                                </span>
+                              )}
                             </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Summary */}
-                    <Card className="bg-muted/30 border border-border">
-                      <CardContent className="p-4">
-                        <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Resumo de Disponibilidade</h4>
-                        <div className="space-y-2">
-                          {activeTurnos.filter(t => turnoVagas[t.id] !== undefined).map(turno => {
-                            const diasComTurno = turnoDays.filter(td => td.ativo && td.turnosAtivos.includes(turno.id)).length;
-                            const vagasTurno = turnoVagas[turno.id] || 0;
-                            return (
-                              <div key={turno.id} className="flex items-center justify-between text-sm">
-                                <span className="flex items-center gap-2">
-                                  <span>{turno.horaInicio < '12:00' ? '🌅' : turno.horaInicio < '18:00' ? '🌆' : '🌙'}</span>
-                                  <span className="font-medium">Turno {turno.nome}:</span>
-                                </span>
-                                <span className="text-muted-foreground">
-                                  {vagasTurno} vagas/dia × {diasComTurno} dias = <strong className="text-foreground">{vagasTurno * diasComTurno} vagas/semana</strong>
-                                </span>
-                              </div>
-                            );
-                          })}
-                          <div className="border-t border-border pt-2 mt-2 flex items-center justify-between text-sm font-semibold">
-                            <span>Total:</span>
-                            <span>{(() => {
-                              const totalPerDay = activeTurnos
-                                .filter(t => turnoVagas[t.id] !== undefined)
-                                .reduce((s, t) => s + (turnoVagas[t.id] || 0), 0);
-                              return `${totalPerDay} vagas/dia × ${turnoWeeklySummary.diasAtivos} dias = ${turnoWeeklySummary.totalVagas} vagas/semana`;
-                            })()}</span>
                           </div>
-                          <div className="text-xs text-muted-foreground mt-1">
-                            <span>Dias ativos: {turnoDays.map((td, i) => td.ativo ? diasSemanaLabels[i] : null).filter(Boolean).join(' / ')}</span>
-                            {turnoDays.some((td, i) => !td.ativo) && (
-                              <span className="ml-2">• {turnoDays.map((td, i) => !td.ativo ? diasSemanaFull[i] : null).filter(Boolean).join(' e ')}: sem atendimento</span>
+                          
+                          {td.ativo && (
+                            <div className="flex items-center gap-2">
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => addBlocoToDay(i)}
+                                className="h-8 px-2 text-xs font-semibold hover:bg-primary/10 hover:text-primary transition-colors"
+                              >
+                                <Plus className="w-3.5 h-3.5 mr-1" /> Adicionar
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+
+                        {td.ativo && (
+                          <div className="p-3 space-y-2 bg-white/50 dark:bg-black/20">
+                            {td.blocos.length === 0 ? (
+                              <div className="text-center py-4 border-2 border-dashed border-border/40 rounded-lg">
+                                <p className="text-[11px] text-muted-foreground italic">Nenhum turno definido. Clique em Adicionar.</p>
+                              </div>
+                            ) : (
+                              <div className="space-y-2">
+                                {td.blocos.map((bloco) => (
+                                  <div 
+                                    key={bloco.id} 
+                                    className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 rounded-lg bg-card border border-border/60 hover:border-primary/30 transition-all group"
+                                  >
+                                    <div className="w-full sm:flex-1 space-y-1.5">
+                                      <Label className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Nome do Turno</Label>
+                                      <div className="flex items-center gap-2">
+                                        <Input
+                                          placeholder="Ex: Manhã"
+                                          value={bloco.nome}
+                                          onChange={e => updateBloco(i, bloco.id, { nome: e.target.value })}
+                                          className="h-8 text-xs font-medium"
+                                        />
+                                        <div className="sm:hidden">
+                                           <Button 
+                                            variant="ghost" 
+                                            size="icon" 
+                                            onClick={() => removeBlocoFromDay(i, bloco.id)}
+                                            className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                                          >
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-3 w-full sm:w-auto">
+                                      <div className="space-y-1.5">
+                                        <Label className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Início</Label>
+                                        <Input
+                                          type="time"
+                                          value={bloco.horaInicio}
+                                          onChange={e => updateBloco(i, bloco.id, { horaInicio: e.target.value })}
+                                          className="h-8 text-xs w-full sm:w-24 text-center"
+                                        />
+                                      </div>
+                                      <div className="space-y-1.5">
+                                        <Label className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Fim</Label>
+                                        <Input
+                                          type="time"
+                                          value={bloco.horaFim}
+                                          onChange={e => updateBloco(i, bloco.id, { horaFim: e.target.value })}
+                                          className="h-8 text-xs w-full sm:w-24 text-center"
+                                        />
+                                      </div>
+                                    </div>
+
+                                    <div className="space-y-1.5 w-full sm:w-auto">
+                                      <Label className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Vagas</Label>
+                                      <Input
+                                        type="number"
+                                        min={1}
+                                        value={bloco.vagas}
+                                        onChange={e => updateBloco(i, bloco.id, { vagas: parseInt(e.target.value) || 1 })}
+                                        className="h-8 text-xs w-full sm:w-16 text-center"
+                                      />
+                                    </div>
+
+                                    <div className="hidden sm:block pt-4">
+                                      <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        onClick={() => removeBlocoFromDay(i, bloco.id)}
+                                        className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover:opacity-100"
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
                             )}
                           </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </>
-                )}
-              </>
+                        )}
+                      </Card>
+                    );
+                  })}
+                </div>
+
+                <Card className="bg-primary/[0.03] border-primary/10 overflow-hidden">
+                  <div className="bg-primary/5 px-4 py-2 border-b border-primary/10">
+                    <h4 className="text-xs font-bold text-primary uppercase tracking-widest">Resumo Semanal</h4>
+                  </div>
+                  <CardContent className="p-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div className="space-y-1">
+                        <span className="text-[10px] text-muted-foreground uppercase font-bold">Dias Atendidos</span>
+                        <p className="text-xl font-display font-bold text-foreground">
+                          {turnoWeeklySummary.diasAtivos} <span className="text-xs font-normal text-muted-foreground">dias</span>
+                        </p>
+                      </div>
+                      <div className="space-y-1">
+                        <span className="text-[10px] text-muted-foreground uppercase font-bold">Total de Turnos</span>
+                        <p className="text-xl font-display font-bold text-foreground">
+                          {turnoWeeklySummary.turnosConfig} <span className="text-xs font-normal text-muted-foreground">blocos</span>
+                        </p>
+                      </div>
+                      <div className="space-y-1">
+                        <span className="text-[10px] text-muted-foreground uppercase font-bold">Capacidade Total</span>
+                        <p className="text-xl font-display font-bold text-primary">
+                          {turnoWeeklySummary.totalVagas} <span className="text-xs font-normal text-muted-foreground">vagas/sem</span>
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             )}
 
             <Button onClick={handleSave} disabled={!canSave} className="w-full gradient-primary text-primary-foreground">
@@ -870,11 +968,23 @@ const Disponibilidade: React.FC = () => {
                     const allIds = records.map(r => r.id);
 
                     if (isTurno) {
-                      const turnoMap = new Map<string, { turno: TurnoDefinition | undefined; vagas: number; days: number[] }>();
+                      const turnoMap = new Map<string, { nome: string; horaInicio: string; horaFim: string; vagas: number; days: number[] }>();
                       records.forEach(r => {
-                        const tId = r.salaId || '';
-                        if (!turnoMap.has(tId)) turnoMap.set(tId, { turno: turnosGlobais.find(t => t.id === tId), vagas: r.vagasPorDia, days: [] });
-                        r.diasSemana.forEach(d => { turnoMap.get(tId)!.days.push(d); });
+                        const key = `${r.salaId}|${r.horaInicio}|${r.horaFim}`;
+                        if (!turnoMap.has(key)) {
+                          turnoMap.set(key, { 
+                            nome: r.salaId || 'Turno', 
+                            horaInicio: r.horaInicio, 
+                            horaFim: r.horaFim, 
+                            vagas: r.vagasPorDia, 
+                            days: [] 
+                          });
+                        }
+                        r.diasSemana.forEach(d => { 
+                          if (!turnoMap.get(key)!.days.includes(d)) {
+                            turnoMap.get(key)!.days.push(d); 
+                          }
+                        });
                       });
 
                       return (
@@ -900,10 +1010,10 @@ const Disponibilidade: React.FC = () => {
                               </div>
                             </div>
                             <div className="space-y-1">
-                              {Array.from(turnoMap.entries()).map(([tId, info]) => (
-                                <div key={tId} className="flex items-center gap-2 text-xs">
-                                  <Badge variant="outline" className="text-[10px]">{info.turno?.nome || tId}</Badge>
-                                  <span className="text-muted-foreground">{info.turno?.horaInicio}–{info.turno?.horaFim}</span>
+                               {Array.from(turnoMap.entries()).map(([mKey, info]) => (
+                                <div key={mKey} className="flex items-center gap-2 text-xs">
+                                  <Badge variant="outline" className="text-[10px]">{info.nome}</Badge>
+                                  <span className="text-muted-foreground">{info.horaInicio}–{info.horaFim}</span>
                                   <span className="font-medium">{info.vagas} vagas</span>
                                   <span className="text-muted-foreground">• {info.days.sort().map(d => diasSemanaLabels[d]).join(', ')}</span>
                                 </div>
