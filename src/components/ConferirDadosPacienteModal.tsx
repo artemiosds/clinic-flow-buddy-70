@@ -163,28 +163,27 @@ export function ConferirDadosPacienteModal({
         cns: maskCns(data.cns || ""),
         telefone: formatPhoneForDisplay(data.telefone || ""),
         email: data.email || "",
-        endereco: cd.logradouro || data.endereco || "",
-        municipio: data.municipio || "",
-        sexo: (cd.sexo === "masculino" || cd.sexo === "M") ? "M" : 
-              (cd.sexo === "feminino" || cd.sexo === "F") ? "F" : 
-              (cd.sexo === "ignorado" || cd.sexo === "I") ? "I" : "",
-        raca_cor: cd.racaCor || cd.raca_cor || "",
+        endereco: data.endereco || cd.logradouro || "",
+        municipio: data.municipio || cd.municipio || "",
+        sexo: data.sexo || (cd.sexo === "masculino" || cd.sexo === "M" ? "M" : cd.sexo === "feminino" || cd.sexo === "F" ? "F" : cd.sexo === "ignorado" || cd.sexo === "I" ? "I" : ""),
+        raca_cor: data.raca_cor || cd.racaCor || cd.raca_cor || "",
         etnia: cd.etnia || "",
         etnia_outra: cd.etniaOutra || "",
-        nacionalidade: cd.nacionalidade || "brasileiro",
+        nacionalidade: data.nacionalidade || cd.nacionalidade || "brasileiro",
         pais_nascimento: cd.paisNascimento || "",
-        tipo_logradouro_dne: cd.tipoLogradouro || cd.tipoLogradouroDne || cd.tipo_logradouro_dne || "",
-        tipo_logradouro_codigo: cd.tipoLogradouroCodigo || cd.tipo_logradouro_codigo || "",
-        numero: cd.numero || "",
-        complemento: cd.complemento || "",
-        bairro: cd.bairro || "",
-        uf: cd.uf || "PA",
-        cep: cd.cep || "",
-        telefone_secundario: cd.telefoneSecundario || cd.telefone_secundario || "",
-        naturalidade: cd.naturalidade || "",
+        tipo_logradouro_dne: data.tipo_logradouro || cd.tipoLogradouro || cd.tipoLogradouroDne || cd.tipo_logradouro_dne || "",
+        tipo_logradouro_codigo: data.tipo_logradouro_codigo || cd.tipoLogradouroCodigo || cd.tipo_logradouro_codigo || "",
+        numero: data.numero || cd.numero || "",
+        complemento: data.complemento || cd.complemento || "",
+        bairro: data.bairro || cd.bairro || "",
+        uf: data.uf || cd.uf || "PA",
+        cep: data.cep || cd.cep || "",
+        telefone_secundario: data.telefone_secundario || cd.telefoneSecundario || cd.telefone_secundario || "",
+        naturalidade: data.naturalidade || cd.naturalidade || "",
         naturalidade_uf: cd.naturalidadeUf || cd.naturalidade_uf || "",
         naturalidade_codigo_ibge: cd.naturalidadeCodigoIbge || cd.naturalidade_codigo_ibge || "",
       };
+
       setPaciente(data);
       setForm(initialForm);
       lastSavedFormRef.current = JSON.stringify(initialForm);
