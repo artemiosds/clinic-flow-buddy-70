@@ -387,6 +387,8 @@ const Pacientes: React.FC = () => {
 
   const handleSave = async () => {
     const { normalizePhone } = await import("@/lib/phoneUtils");
+    const { updatePacienteCadastro } = await import("@/lib/pacienteService");
+    
     const newErrors: Record<string, string> = {};
     if (!form.nome.trim()) newErrors.nome = "Nome é obrigatório";
 
@@ -409,72 +411,34 @@ const Pacientes: React.FC = () => {
     setErrors({});
     setSaving(true);
     
-    // Feedback visual imediato
     const toastId = toast.loading(editId ? "Atualizando paciente..." : "Cadastrando paciente...");
-
-    const normalizedPhone = normalizePhone(rawPhone!) || "";
-
-    const dbFields: any = {
-      nome: form.nome || "",
-      cpf: (form.cpf || "").replace(/\D/g, ""),
-      cns: (form.cns || "").replace(/\D/g, "").slice(0, 15),
-      nome_mae: form.nomeMae || "",
-      telefone: normalizedPhone || "",
-      data_nascimento: form.dataNascimento || "",
-      email: form.email || "",
-      endereco: form.endereco || "",
-      descricao_clinica: form.descricaoClinica || form.diagnosticoResumido || "",
-      municipio: form.municipio || "",
-      menor_idade: !!form.menorIdade,
-      nome_responsavel: form.nomeResponsavel || "",
-      cpf_responsavel: form.cpfResponsavel || "",
-      ubs_origem: form.ubsOrigem || "",
-      profissional_solicitante: form.profissionalSolicitante || "",
-      tipo_encaminhamento: form.tipoEncaminhamento || "",
-      diagnostico_resumido: form.diagnosticoResumido || "",
-      justificativa: form.justificativa || "",
-      data_encaminhamento: form.dataEncaminhamento || "",
-      documento_url: form.documentoUrl || "",
-      tipo_condicao: form.tipoCondicao || "",
-      mobilidade: form.mobilidade || "",
-      usa_dispositivo: !!form.usaDispositivo,
-      tipo_dispositivo: form.tipoDispositivo || "",
-      comunicacao: form.comunicacao || "",
-      comportamento: form.comportamento || "",
-      usa_equipamentos: !!form.usaEquipamentos,
-      equipamentos: form.equipamentos || [],
-      observacao_equipamentos: form.observacaoEquipamentos || "",
-      outro_servico_sus: !!form.outroServicoSus,
-      transporte: form.transporte || "",
-      turno_preferido: form.turnoPreferido || "",
-      is_gestante: !!form.isGestante,
-      is_pne: !!form.isPne,
-      is_autista: !!form.isAutista,
-      atualizado_em: new Date().toISOString(),
-      custom_data: {
-        ...(form.customData || {}),
-        logradouro: form.endereco,
-        cid: form.cid,
-        especialidade_destino: form.especialidadeDestino,
-      },
-    };
 
     try {
       if (editId) {
         // Close dialog immediately (optimistic)
         setDialogOpen(false);
-        const { error } = await supabase.from("pacientes").update(dbFields).eq("id", editId);
         
-        if (error) {
-          console.error("Erro ao atualizar paciente:", error);
-          toast.error("Erro ao atualizar paciente.", { id: toastId });
-          setSaving(false);
-          return;
-        }
-
+        // Usar a função centralizada
+        await updatePacienteCadastro(editId, {
+          ...form,
+          // Mapeamentos específicos se necessário
+          nome_mae: form.nomeMae,
+          custom_data: {
+            ...(form.customData || {}),
+            cid: form.cid,
+            especialidade_destino: form.especialidadeDestino,
+          }
+        }, "Página Pacientes");
+        
+        // Invalidação massiva
+        queryClient.invalidateQueries({ queryKey: ["pacientes"] });
+        queryClient.invalidateQueries({ queryKey: ["pacientes-paginated"] });
+        queryClient.invalidateQueries({ queryKey: ["pacientes-pendencias"] });
+        
         await refreshPacientes();
-        toast.success("Paciente atualizado!", { id: toastId });
+        toast.success("Paciente atualizado no banco de dados!", { id: toastId });
       } else {
+
         // === DUPLICATE DETECTION ===
         const duplicateChecks: string[] = [];
 
