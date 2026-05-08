@@ -1283,12 +1283,8 @@ const ProntuarioPage: React.FC = () => {
         const { error } = await (supabase as any).from('prontuarios').update(record).eq('id', editIdRef.current);
         if (error) throw error;
         
-        // Sincroniza procedimentos no autosave para evitar perda de dados
-        await (supabase as any).from("prontuario_procedimentos").delete().eq("prontuario_id", editIdRef.current);
-        if (selectedProcIds.length > 0) {
-          const links = buildProntuarioProcedimentoLinks(editIdRef.current, profIdAuto);
-          await (supabase as any).from("prontuario_procedimentos").insert(links);
-        }
+        // Sincroniza procedimentos no autosave de forma segura
+        await saveProntuarioProcedimentos(editIdRef.current, profIdAuto);
       } else {
         const { data: inserted, error } = await (supabase as any)
           .from('prontuarios')
