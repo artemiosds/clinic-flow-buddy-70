@@ -15,6 +15,8 @@ import { maskCNS } from "@/lib/cnsUtils";
 import { useData } from "@/contexts/DataContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { updatePacienteCadastro } from "@/lib/pacienteService";
+import UnidadeSelect from "./UnidadeSelect";
+
 
 interface Props {
   open: boolean;
@@ -278,7 +280,10 @@ const QuickEditPatientModal: React.FC<Props> = ({ open, onOpenChange, pacienteId
                   </div>
                   <div className="md:col-span-2">
                     <Label>Unidade Vinculada</Label>
-                    <Input value={form.unidade_id || ""} disabled placeholder="ID da Unidade" />
+                    <UnidadeSelect 
+                      value={form.unidade_id === "" ? "none" : (form.unidade_id || "")} 
+                      onValueChange={v => set("unidade_id", v === "none" ? "" : v)} 
+                    />
                   </div>
                 </div>
               </TabsContent>

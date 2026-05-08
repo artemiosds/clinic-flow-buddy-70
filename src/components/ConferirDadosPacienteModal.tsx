@@ -18,6 +18,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/hooks/queries/queryKeys";
 import { useData } from "@/contexts/DataContext";
 import { updatePacienteCadastro } from "@/lib/pacienteService";
+import UnidadeSelect from "./pacientes/UnidadeSelect";
+
 
 export interface ConferirDadosPacienteModalProps {
   open: boolean;
@@ -508,16 +510,18 @@ export function ConferirDadosPacienteModal({
                   {renderFieldText("Bairro", "bairro")}
                   <div className="space-y-1.5">
                     <Label className="text-xs text-muted-foreground">Município de residência</Label>
-                    <Select value={form.municipio || ""} onValueChange={(v) => updateField("municipio", v)}>
-                      <SelectTrigger className="h-11 sm:h-10 text-base sm:text-sm">
-                        <SelectValue placeholder="Selecione" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {MUNICIPIOS.map((m) => (
-                          <SelectItem key={m} value={m}>{m}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <MunicipioIbgeCombobox
+                      value={form.municipio || ""}
+                      onChange={(label, payload) => {
+                        setForm((p: any) => ({
+                          ...p,
+                          municipio: label,
+                          uf: payload?.uf || p.uf,
+                        }));
+                        setDirty(true);
+                      }}
+                      placeholder="Selecione o município de residência"
+                    />
                   </div>
                   {renderFieldSelect("UF", "uf", UFS.map((u) => ({ value: u, label: u })))}
                   {renderFieldText("CEP", "cep", "text", "00000-000", "numeric")}
@@ -533,6 +537,24 @@ export function ConferirDadosPacienteModal({
                   {renderFieldText("Telefone principal", "telefone", "tel", "(00) 00000-0000", "tel")}
                   {renderFieldText("Telefone secundário", "telefone_secundario", "tel", "(00) 00000-0000", "tel")}
                   {renderFieldText("E-mail", "email", "email", "email@exemplo.com", "email")}
+                </div>
+              </div>
+
+              {/* Unidade */}
+              <div>
+                <div className="flex items-center gap-2 text-sm font-semibold text-foreground border-b pb-1.5 mb-3">
+                  <Stethoscope className="w-4 h-4 text-primary" />Vínculo de Unidade
+                </div>
+                <div className="grid sm:grid-cols-1 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">Unidade de Atendimento</Label>
+                    <UnidadeSelect 
+                      value={form.unidade_id === "" ? "none" : (form.unidade_id || paciente?.unidade_id || "")} 
+                      onValueChange={v => {
+                        updateField("unidade_id", v === "none" ? "" : v);
+                      }} 
+                    />
+                  </div>
                 </div>
               </div>
 
