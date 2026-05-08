@@ -597,8 +597,8 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
               <div>
                 <Label>{L("telefoneSecundario", "Telefone Secundário")}</Label>
                 <Input
-                  value={cd.telefoneSecundario || ""}
-                  onChange={(e) => setCustom("telefoneSecundario", applyPhoneMask(e.target.value))}
+                  value={form.telefone_secundario || ""}
+                  onChange={(e) => set("telefone_secundario", applyPhoneMask(e.target.value))}
                   placeholder="(99) 99999-9999"
                   inputMode="numeric"
                 />
@@ -632,14 +632,14 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                 <div>
                   <Label>Nacionalidade *</Label>
                   <Select
-                    value={cd.nacionalidade || "brasileiro"}
-                    onValueChange={(v) => setCustom("nacionalidade", v)}
+                    value={form.nacionalidade || "Brasil"}
+                    onValueChange={(v) => set("nacionalidade", v)}
                   >
                     <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="brasileiro">Brasileiro(a)</SelectItem>
-                      <SelectItem value="naturalizado">Naturalizado(a)</SelectItem>
-                      <SelectItem value="estrangeiro">Estrangeiro(a)</SelectItem>
+                      <SelectItem value="Brasil">Brasileiro(a)</SelectItem>
+                      <SelectItem value="Naturalizado">Naturalizado(a)</SelectItem>
+                      <SelectItem value="Estrangeiro">Estrangeiro(a)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -647,14 +647,8 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                 <div>
                   <Label>Raça/Cor (IBGE) *</Label>
                   <Select
-                    value={cd.racaCor || cd.raca_cor || ""}
-                    onValueChange={(v) => {
-                      // Persistir em ambas as chaves para compat com BPA
-                      onChange({
-                        ...form,
-                        customData: { ...(form.customData || {}), racaCor: v, raca_cor: v },
-                      });
-                    }}
+                    value={form.raca_cor || ""}
+                    onValueChange={(v) => set("raca_cor", v)}
                   >
                     <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                     <SelectContent>
@@ -666,10 +660,11 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                 </div>
 
                 {/* Etnia: obrigatória apenas se Raça/Cor = Indígena */}
-                {(cd.racaCor === "indigena" || cd.raca_cor === "indigena") && (
+                {form.raca_cor === "indigena" && (
                   <div className="md:col-span-2">
                     <Label>Etnia (povo indígena) *</Label>
                     <Select value={cd.etnia || ""} onValueChange={(v) => setCustom("etnia", v)}>
+
                       <SelectTrigger><SelectValue placeholder="Selecione a etnia" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="X101">X101 — Apalai</SelectItem>
