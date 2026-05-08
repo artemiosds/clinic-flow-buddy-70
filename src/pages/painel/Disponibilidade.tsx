@@ -22,19 +22,26 @@ import type { TurnoDefinition } from '@/components/config/ConfigFluxoAtendimento
 const diasSemanaLabels = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 const diasSemanaFull = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 
+interface BlocoConfig {
+  id: string;
+  nome: string;
+  tipo: 'padrao' | 'custom';
+  horaInicio: string;
+  horaFim: string;
+  vagas: number;
+  ativo: boolean;
+}
+
+interface DayConfig {
+  diaSemana: number;
+  ativo: boolean;
+  blocos: BlocoConfig[];
+}
+
 interface DaySchedule {
   ativo: boolean;
   horaInicio: string;
   horaFim: string;
-}
-
-interface TurnoDayConfig {
-  ativo: boolean;
-  turnosAtivos: string[]; // turno ids active for this day
-}
-
-interface TurnoVagas {
-  [turnoId: string]: number;
 }
 
 const defaultDaySchedules: DaySchedule[] = [
@@ -47,10 +54,12 @@ const defaultDaySchedules: DaySchedule[] = [
   { ativo: false, horaInicio: '08:00', horaFim: '17:00' },
 ];
 
-const defaultTurnoDays: TurnoDayConfig[] = Array.from({ length: 7 }, (_, i) => ({
-  ativo: i >= 1 && i <= 5,
-  turnosAtivos: [],
-}));
+const createDefaultDayConfigs = (): DayConfig[] => 
+  Array.from({ length: 7 }, (_, i) => ({
+    diaSemana: i,
+    ativo: i >= 1 && i <= 5,
+    blocos: [],
+  }));
 
 const timeToMin = (t: string) => {
   const [h, m] = t.split(':').map(Number);
