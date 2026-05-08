@@ -968,11 +968,23 @@ const Disponibilidade: React.FC = () => {
                     const allIds = records.map(r => r.id);
 
                     if (isTurno) {
-                      const turnoMap = new Map<string, { turno: TurnoDefinition | undefined; vagas: number; days: number[] }>();
+                      const turnoMap = new Map<string, { nome: string; horaInicio: string; horaFim: string; vagas: number; days: number[] }>();
                       records.forEach(r => {
-                        const tId = r.salaId || '';
-                        if (!turnoMap.has(tId)) turnoMap.set(tId, { turno: turnosGlobais.find(t => t.id === tId), vagas: r.vagasPorDia, days: [] });
-                        r.diasSemana.forEach(d => { turnoMap.get(tId)!.days.push(d); });
+                        const key = `${r.salaId}|${r.horaInicio}|${r.horaFim}`;
+                        if (!turnoMap.has(key)) {
+                          turnoMap.set(key, { 
+                            nome: r.salaId || 'Turno', 
+                            horaInicio: r.horaInicio, 
+                            horaFim: r.horaFim, 
+                            vagas: r.vagasPorDia, 
+                            days: [] 
+                          });
+                        }
+                        r.diasSemana.forEach(d => { 
+                          if (!turnoMap.get(key)!.days.includes(d)) {
+                            turnoMap.get(key)!.days.push(d); 
+                          }
+                        });
                       });
 
                       return (
