@@ -375,7 +375,7 @@ export function ConferirDadosPacienteModal({
   const isEstrangeiro = form.nacionalidade === "estrangeiro";
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(v) => { if (!v && dirty) handleSave(); onOpenChange(v); }}>
       <DialogContent
         className="p-0 gap-0 max-w-3xl w-[calc(100vw-1rem)] sm:w-full max-h-[95vh] sm:max-h-[90vh] flex flex-col overflow-hidden"
       >
