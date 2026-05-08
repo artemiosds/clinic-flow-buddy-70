@@ -450,6 +450,7 @@ const Pacientes: React.FC = () => {
       is_gestante: !!form.isGestante,
       is_pne: !!form.isPne,
       is_autista: !!form.isAutista,
+      atualizado_em: new Date().toISOString(),
       custom_data: {
         ...(form.customData || {}),
         logradouro: form.endereco,
