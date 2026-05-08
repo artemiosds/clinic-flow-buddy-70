@@ -90,6 +90,11 @@ export interface PacienteFormData {
   menorIdade: boolean;
   nomeResponsavel: string;
   cpfResponsavel: string;
+  sexo: string;
+  naturalidade: string;
+  nacionalidade: string;
+  raca_cor: string;
+  
   // Bloco 2 - Encaminhamento
   especialidadeDestino: string;
   ubsOrigem: string;
@@ -113,9 +118,18 @@ export interface PacienteFormData {
   outroServicoSus: boolean;
   transporte: string;
   turnoPreferido: string;
-  // Legacy / contato / endereço
+  // Endereço e contato
   email: string;
   endereco: string;
+  cep: string;
+  tipo_logradouro: string;
+  tipo_logradouro_codigo: string;
+  numero: string;
+  complemento: string;
+  bairro: string;
+  uf: string;
+  telefone_secundario: string;
+  
   nomeMae: string;
   descricaoClinica: string;
   // Prioridade especial
@@ -128,6 +142,7 @@ export interface PacienteFormData {
 export const emptyPacienteForm: PacienteFormData = {
   nome: "", dataNascimento: "", cpf: "", cns: "", telefone: "", municipio: "",
   menorIdade: false, nomeResponsavel: "", cpfResponsavel: "",
+  sexo: "", naturalidade: "", nacionalidade: "Brasil", raca_cor: "",
   especialidadeDestino: "", ubsOrigem: "", profissionalSolicitante: "",
   tipoEncaminhamento: "", cid: "", diagnosticoResumido: "", justificativa: "",
   dataEncaminhamento: "", documentoUrl: "",
@@ -135,9 +150,12 @@ export const emptyPacienteForm: PacienteFormData = {
   comunicacao: "", comportamento: "", usaEquipamentos: false, equipamentos: [],
   observacaoEquipamentos: "", outroServicoSus: false, transporte: "", turnoPreferido: "",
   email: "", endereco: "", nomeMae: "", descricaoClinica: "",
+  cep: "", tipo_logradouro: "", tipo_logradouro_codigo: "", numero: "", complemento: "", bairro: "", uf: "PA",
+  telefone_secundario: "",
   isGestante: false, isPne: false, isAutista: false,
   customData: {},
 };
+
 
 interface Props {
   form: PacienteFormData;
