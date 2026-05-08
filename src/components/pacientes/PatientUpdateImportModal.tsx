@@ -99,7 +99,7 @@ const PatientUpdateImportModal: React.FC<Props> = ({ open, onOpenChange, onImpor
         const cd: any = {};
         const updateData: any = {
           nome: row.nome_completo,
-          cpf: row.cpf,
+          cpf: (row.cpf || "").replace(/\D/g, ""),
           cns: row.cns,
           data_nascimento: row.data_nascimento,
           telefone: normalizePhone(row.telefone || "") || row.telefone,
