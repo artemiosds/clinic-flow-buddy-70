@@ -259,15 +259,18 @@ export function ConferirDadosPacienteModal({
         data_ultima_validacao_cadastro: new Date().toISOString(),
       };
 
+      const cleanCPF = (form.cpf || "").replace(/\D/g, "");
+      const cleanCNS = (form.cns || "").replace(/\D/g, "").slice(0, 15);
+
       const updatePayload: any = {
-        nome: form.nome || "",
-        nome_mae: form.nome_mae || "",
+        nome: (form.nome || "").trim(),
+        nome_mae: (form.nome_mae || "").trim(),
         data_nascimento: form.data_nascimento || "",
-        cpf: form.cpf || "",
-        cns: (form.cns || "").replace(/\D/g, "").slice(0, 15),
+        cpf: cleanCPF,
+        cns: cleanCNS,
         telefone: normalizedTelefone || "",
-        email: form.email || "",
-        endereco: form.endereco || "", 
+        email: (form.email || "").trim().toLowerCase(),
+        endereco: (form.endereco || "").trim(), 
         municipio: form.municipio || "",
         custom_data: customData || {},
         atualizado_em: new Date().toISOString(),
@@ -372,7 +375,7 @@ export function ConferirDadosPacienteModal({
   const isEstrangeiro = form.nacionalidade === "estrangeiro";
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(v) => { if (!v && dirty) handleSave(); onOpenChange(v); }}>
       <DialogContent
         className="p-0 gap-0 max-w-3xl w-[calc(100vw-1rem)] sm:w-full max-h-[95vh] sm:max-h-[90vh] flex flex-col overflow-hidden"
       >
