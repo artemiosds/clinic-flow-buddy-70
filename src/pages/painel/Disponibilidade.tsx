@@ -747,154 +747,185 @@ const Disponibilidade: React.FC = () => {
 
             {/* === POR TURNO mode === */}
             {modo === 'por_turno' && (
-              <>
-                {activeTurnos.length === 0 ? (
-                  <Card className="border-l-4 border-l-warning">
-                    <CardContent className="p-4 text-sm text-warning">
-                      Nenhum turno ativo cadastrado. Configure turnos em Configurações → Fluxo de Atendimento → Turnos.
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <>
-                    {/* Turnos + vagas */}
-                    <div>
-                      <Label className="mb-2 block">Turnos Disponíveis</Label>
-                      <div className="rounded-lg border border-border overflow-hidden">
-                        <div className="grid grid-cols-[1fr_auto_auto_auto] gap-0 bg-muted/50 px-3 py-2 text-xs font-medium text-muted-foreground border-b border-border">
-                          <span>Turno</span>
-                          <span className="text-center px-3">Horário</span>
-                          <span className="text-center px-3">Vagas</span>
-                          <span className="text-center px-3">Ativo</span>
-                        </div>
-                        {activeTurnos.map(turno => (
-                          <div key={turno.id} className="grid grid-cols-[1fr_auto_auto_auto] gap-0 items-center px-3 py-2.5 border-b border-border last:border-b-0">
-                            <span className="text-sm font-medium flex items-center gap-2">
-                              <Clock className="w-3.5 h-3.5 text-muted-foreground" />
-                              {turno.nome}
-                            </span>
-                            <span className="text-xs text-muted-foreground text-center px-3">{turno.horaInicio} - {turno.horaFim}</span>
-                            <div className="px-3">
-                              <Input
-                                type="number" min={1} value={turnoVagas[turno.id] || 20}
-                                onChange={e => setTurnoVagas(prev => ({ ...prev, [turno.id]: parseInt(e.target.value) || 1 }))}
-                                className="h-8 w-16 text-xs text-center"
-                              />
-                            </div>
-                            <div className="px-3 flex justify-center">
-                              <Switch
-                                checked={turnoVagas[turno.id] !== undefined}
-                                onCheckedChange={v => {
-                                  if (v) {
-                                    setTurnoVagas(prev => ({ ...prev, [turno.id]: 20 }));
-                                  } else {
-                                    setTurnoVagas(prev => { const n = { ...prev }; delete n[turno.id]; return n; });
-                                    setTurnoDays(prev => prev.map(td => ({ ...td, turnosAtivos: td.turnosAtivos.filter(id => id !== turno.id) })));
-                                  }
-                                }}
-                              />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-base font-semibold text-foreground flex items-center gap-2">
+                      <Clock className="w-5 h-5 text-primary" /> Configuração por Dia
+                    </Label>
+                    <p className="text-xs text-muted-foreground mt-0.5">Defina os turnos e vagas específicos para cada dia da semana.</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={() => copyDayToAll(1)} className="text-[10px] h-7 px-2">
+                      <RefreshCw className="w-3 h-3 mr-1" /> Replicar Seg para todos
+                    </Button>
+                  </div>
+                </div>
 
-                    {/* Days + turno selection */}
-                    <div>
-                      <Label className="mb-2 block">Dias da Semana</Label>
-                      <div className="rounded-lg border border-border overflow-hidden">
-                        <div className="grid grid-cols-[1fr_auto_1fr] gap-0 bg-muted/50 px-3 py-2 text-xs font-medium text-muted-foreground border-b border-border">
-                          <span>Dia</span>
-                          <span className="text-center px-2">Ativo</span>
-                          <span>Turnos ativos neste dia</span>
-                        </div>
-                        {turnoDays.map((td, i) => {
-                          const isFds = i === 0 || i === 6;
-                          const enabledTurnos = activeTurnos.filter(t => turnoVagas[t.id] !== undefined);
-                          return (
-                            <div key={i} className={cn(
-                              "grid grid-cols-[1fr_auto_1fr] gap-0 items-center px-3 py-2.5 border-b border-border last:border-b-0",
-                              !td.ativo && "bg-muted/20",
-                              isFds && td.ativo && "bg-orange-500/5",
-                            )}>
+                <div className="space-y-3">
+                  {turnoDays.map((td, i) => {
+                    const isFds = i === 0 || i === 6;
+                    const activeBlocos = td.blocos.filter(b => b.ativo);
+                    
+                    return (
+                      <Card key={i} className={cn(
+                        "border border-border overflow-hidden transition-all duration-200",
+                        !td.ativo && "opacity-60 bg-muted/20 border-dashed",
+                        td.ativo && "shadow-sm ring-1 ring-primary/5",
+                        isFds && td.ativo && "border-orange-200 bg-orange-50/30"
+                      )}>
+                        <div className={cn(
+                          "px-4 py-3 flex items-center justify-between border-b border-border/50",
+                          td.ativo ? "bg-muted/30" : "bg-transparent"
+                        )}>
+                          <div className="flex items-center gap-3">
+                            <Switch checked={td.ativo} onCheckedChange={v => toggleTurnoDay(i, v)} />
+                            <div className="flex flex-col">
                               <span className={cn(
-                                "text-sm font-medium",
+                                "text-sm font-bold tracking-tight",
                                 td.ativo ? "text-foreground" : "text-muted-foreground",
-                                isFds && td.ativo && "text-orange-600 dark:text-orange-400",
+                                isFds && td.ativo && "text-orange-600"
                               )}>
                                 {diasSemanaFull[i]}
                               </span>
-                              <div className="flex justify-center px-2">
-                                <Switch checked={td.ativo} onCheckedChange={v => toggleTurnoDay(i, v)} />
-                              </div>
-                              <div className="flex flex-wrap gap-1.5">
-                                {td.ativo ? (
-                                  enabledTurnos.length > 0 ? enabledTurnos.map(turno => (
-                                    <button
-                                      key={turno.id}
-                                      onClick={() => toggleTurnoForDay(i, turno.id)}
-                                      className={cn(
-                                        "inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full border transition-colors cursor-pointer",
-                                        td.turnosAtivos.includes(turno.id)
-                                          ? "bg-primary/10 text-primary border-primary/30"
-                                          : "bg-muted/50 text-muted-foreground border-border"
-                                      )}
-                                    >
-                                      {td.turnosAtivos.includes(turno.id) ? '✅' : '○'} {turno.nome}
-                                    </button>
-                                  )) : (
-                                    <span className="text-[11px] text-muted-foreground">Ative turnos acima</span>
-                                  )
-                                ) : (
-                                  <span className="text-[11px] text-muted-foreground">—</span>
-                                )}
-                              </div>
+                              {td.ativo && (
+                                <span className="text-[10px] text-muted-foreground font-medium">
+                                  {activeBlocos.length} turno(s) configurado(s)
+                                </span>
+                              )}
                             </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Summary */}
-                    <Card className="bg-muted/30 border border-border">
-                      <CardContent className="p-4">
-                        <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Resumo de Disponibilidade</h4>
-                        <div className="space-y-2">
-                          {activeTurnos.filter(t => turnoVagas[t.id] !== undefined).map(turno => {
-                            const diasComTurno = turnoDays.filter(td => td.ativo && td.turnosAtivos.includes(turno.id)).length;
-                            const vagasTurno = turnoVagas[turno.id] || 0;
-                            return (
-                              <div key={turno.id} className="flex items-center justify-between text-sm">
-                                <span className="flex items-center gap-2">
-                                  <span>{turno.horaInicio < '12:00' ? '🌅' : turno.horaInicio < '18:00' ? '🌆' : '🌙'}</span>
-                                  <span className="font-medium">Turno {turno.nome}:</span>
-                                </span>
-                                <span className="text-muted-foreground">
-                                  {vagasTurno} vagas/dia × {diasComTurno} dias = <strong className="text-foreground">{vagasTurno * diasComTurno} vagas/semana</strong>
-                                </span>
-                              </div>
-                            );
-                          })}
-                          <div className="border-t border-border pt-2 mt-2 flex items-center justify-between text-sm font-semibold">
-                            <span>Total:</span>
-                            <span>{(() => {
-                              const totalPerDay = activeTurnos
-                                .filter(t => turnoVagas[t.id] !== undefined)
-                                .reduce((s, t) => s + (turnoVagas[t.id] || 0), 0);
-                              return `${totalPerDay} vagas/dia × ${turnoWeeklySummary.diasAtivos} dias = ${turnoWeeklySummary.totalVagas} vagas/semana`;
-                            })()}</span>
                           </div>
-                          <div className="text-xs text-muted-foreground mt-1">
-                            <span>Dias ativos: {turnoDays.map((td, i) => td.ativo ? diasSemanaLabels[i] : null).filter(Boolean).join(' / ')}</span>
-                            {turnoDays.some((td, i) => !td.ativo) && (
-                              <span className="ml-2">• {turnoDays.map((td, i) => !td.ativo ? diasSemanaFull[i] : null).filter(Boolean).join(' e ')}: sem atendimento</span>
+                          
+                          {td.ativo && (
+                            <div className="flex items-center gap-2">
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => addBlocoToDay(i)}
+                                className="h-8 px-2 text-xs font-semibold hover:bg-primary/10 hover:text-primary transition-colors"
+                              >
+                                <Plus className="w-3.5 h-3.5 mr-1" /> Adicionar
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+
+                        {td.ativo && (
+                          <div className="p-3 space-y-2 bg-white/50 dark:bg-black/20">
+                            {td.blocos.length === 0 ? (
+                              <div className="text-center py-4 border-2 border-dashed border-border/40 rounded-lg">
+                                <p className="text-[11px] text-muted-foreground italic">Nenhum turno definido. Clique em Adicionar.</p>
+                              </div>
+                            ) : (
+                              <div className="space-y-2">
+                                {td.blocos.map((bloco) => (
+                                  <div 
+                                    key={bloco.id} 
+                                    className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 rounded-lg bg-card border border-border/60 hover:border-primary/30 transition-all group"
+                                  >
+                                    <div className="w-full sm:flex-1 space-y-1.5">
+                                      <Label className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Nome do Turno</Label>
+                                      <div className="flex items-center gap-2">
+                                        <Input
+                                          placeholder="Ex: Manhã"
+                                          value={bloco.nome}
+                                          onChange={e => updateBloco(i, bloco.id, { nome: e.target.value })}
+                                          className="h-8 text-xs font-medium"
+                                        />
+                                        <div className="sm:hidden">
+                                           <Button 
+                                            variant="ghost" 
+                                            size="icon" 
+                                            onClick={() => removeBlocoFromDay(i, bloco.id)}
+                                            className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                                          >
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-3 w-full sm:w-auto">
+                                      <div className="space-y-1.5">
+                                        <Label className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Início</Label>
+                                        <Input
+                                          type="time"
+                                          value={bloco.horaInicio}
+                                          onChange={e => updateBloco(i, bloco.id, { horaInicio: e.target.value })}
+                                          className="h-8 text-xs w-full sm:w-24 text-center"
+                                        />
+                                      </div>
+                                      <div className="space-y-1.5">
+                                        <Label className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Fim</Label>
+                                        <Input
+                                          type="time"
+                                          value={bloco.horaFim}
+                                          onChange={e => updateBloco(i, bloco.id, { horaFim: e.target.value })}
+                                          className="h-8 text-xs w-full sm:w-24 text-center"
+                                        />
+                                      </div>
+                                    </div>
+
+                                    <div className="space-y-1.5 w-full sm:w-auto">
+                                      <Label className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Vagas</Label>
+                                      <Input
+                                        type="number"
+                                        min={1}
+                                        value={bloco.vagas}
+                                        onChange={e => updateBloco(i, bloco.id, { vagas: parseInt(e.target.value) || 1 })}
+                                        className="h-8 text-xs w-full sm:w-16 text-center"
+                                      />
+                                    </div>
+
+                                    <div className="hidden sm:block pt-4">
+                                      <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        onClick={() => removeBlocoFromDay(i, bloco.id)}
+                                        className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover:opacity-100"
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
                             )}
                           </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </>
-                )}
-              </>
+                        )}
+                      </Card>
+                    );
+                  })}
+                </div>
+
+                <Card className="bg-primary/[0.03] border-primary/10 overflow-hidden">
+                  <div className="bg-primary/5 px-4 py-2 border-b border-primary/10">
+                    <h4 className="text-xs font-bold text-primary uppercase tracking-widest">Resumo Semanal</h4>
+                  </div>
+                  <CardContent className="p-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div className="space-y-1">
+                        <span className="text-[10px] text-muted-foreground uppercase font-bold">Dias Atendidos</span>
+                        <p className="text-xl font-display font-bold text-foreground">
+                          {turnoWeeklySummary.diasAtivos} <span className="text-xs font-normal text-muted-foreground">dias</span>
+                        </p>
+                      </div>
+                      <div className="space-y-1">
+                        <span className="text-[10px] text-muted-foreground uppercase font-bold">Total de Turnos</span>
+                        <p className="text-xl font-display font-bold text-foreground">
+                          {turnoWeeklySummary.turnosConfig} <span className="text-xs font-normal text-muted-foreground">blocos</span>
+                        </p>
+                      </div>
+                      <div className="space-y-1">
+                        <span className="text-[10px] text-muted-foreground uppercase font-bold">Capacidade Total</span>
+                        <p className="text-xl font-display font-bold text-primary">
+                          {turnoWeeklySummary.totalVagas} <span className="text-xs font-normal text-muted-foreground">vagas/sem</span>
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             )}
 
             <Button onClick={handleSave} disabled={!canSave} className="w-full gradient-primary text-primary-foreground">
