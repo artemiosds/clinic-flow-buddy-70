@@ -350,8 +350,8 @@ const Disponibilidade: React.FC = () => {
       } finally { setSaving(false); }
     } else {
       // Por Turno
-      const activeDays = turnoDays.map((td, i) => ({ ...td, dayNum: i })).filter(td => td.ativo && td.turnosAtivos.length > 0);
-      if (activeDays.length === 0) { toast.error('Ative pelo menos um dia com turnos.'); return; }
+      const activeDays = turnoDays.map((td, i) => ({ ...td, dayNum: i })).filter(td => td.ativo && td.blocos.some(b => b.ativo));
+      if (activeDays.length === 0) { toast.error('Ative pelo menos um dia com turnos ativos.'); return; }
 
       const overlapMsg = checkOverlap();
       if (overlapMsg) { toast.error(overlapMsg); return; }
@@ -360,21 +360,18 @@ const Disponibilidade: React.FC = () => {
       try {
         if (isEditing) { for (const id of editGroupIds) { await deleteDisponibilidade(id); } }
 
-        // Create one record per turno-day combination
-        // We use salaId to store turnoId, vagasPorHora = 0 as turno marker
+        // Create one record per block-day combination
         for (const day of activeDays) {
-          for (const turnoId of day.turnosAtivos) {
-            const turno = turnosGlobais.find(t => t.id === turnoId);
-            if (!turno) continue;
+          for (const bloco of day.blocos.filter(b => b.ativo)) {
             await addDisponibilidade({
-              id: `d${Date.now()}_${day.dayNum}_${turnoId.slice(-4)}`,
+              id: `d${Date.now()}_${day.dayNum}_${Math.random().toString(36).substr(2, 4)}`,
               profissionalId: form.profissionalId,
               unidadeId: form.unidadeId,
-              salaId: turnoId, // store turno id here
+              salaId: bloco.nome, // store block name here
               dataInicio: form.dataInicio, dataFim: form.dataFim,
-              horaInicio: turno.horaInicio, horaFim: turno.horaFim,
+              horaInicio: bloco.horaInicio, horaFim: bloco.horaFim,
               vagasPorHora: 0, // marker for turno mode
-              vagasPorDia: turnoVagas[turnoId] || 20,
+              vagasPorDia: bloco.vagas,
               diasSemana: [day.dayNum],
               duracaoConsulta: 0,
             });
