@@ -1,0 +1,6 @@
+ALTER TABLE public.pacientes 
+ADD COLUMN IF NOT EXISTS situacao_rua BOOLEAN DEFAULT false,
+ADD COLUMN IF NOT EXISTS etnia TEXT,
+ADD COLUMN IF NOT EXISTS etnia_outra TEXT,
+ADD COLUMN IF NOT EXISTS pais_nascimento TEXT,
+ADD COLUMN IF NOT EXISTS tipo_logradouro_codigo TEXT;

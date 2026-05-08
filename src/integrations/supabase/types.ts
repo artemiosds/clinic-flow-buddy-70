@@ -1978,6 +1978,8 @@ export type Database = {
           endereco: string
           equipamentos: string[]
           especialidade_destino: string
+          etnia: string | null
+          etnia_outra: string | null
           id: string
           is_autista: boolean
           is_gestante: boolean
@@ -1995,15 +1997,18 @@ export type Database = {
           observacao_equipamentos: string
           observacoes: string
           outro_servico_sus: boolean
+          pais_nascimento: string | null
           profissional_solicitante: string
           raca_cor: string | null
           sexo: string | null
+          situacao_rua: boolean | null
           telefone: string
           telefone_secundario: string | null
           tipo_condicao: string
           tipo_dispositivo: string
           tipo_encaminhamento: string
           tipo_logradouro: string | null
+          tipo_logradouro_codigo: string | null
           transporte: string
           turno_preferido: string
           ubs_origem: string
@@ -2035,6 +2040,8 @@ export type Database = {
           endereco?: string
           equipamentos?: string[]
           especialidade_destino?: string
+          etnia?: string | null
+          etnia_outra?: string | null
           id: string
           is_autista?: boolean
           is_gestante?: boolean
@@ -2052,15 +2059,18 @@ export type Database = {
           observacao_equipamentos?: string
           observacoes?: string
           outro_servico_sus?: boolean
+          pais_nascimento?: string | null
           profissional_solicitante?: string
           raca_cor?: string | null
           sexo?: string | null
+          situacao_rua?: boolean | null
           telefone?: string
           telefone_secundario?: string | null
           tipo_condicao?: string
           tipo_dispositivo?: string
           tipo_encaminhamento?: string
           tipo_logradouro?: string | null
+          tipo_logradouro_codigo?: string | null
           transporte?: string
           turno_preferido?: string
           ubs_origem?: string
@@ -2092,6 +2102,8 @@ export type Database = {
           endereco?: string
           equipamentos?: string[]
           especialidade_destino?: string
+          etnia?: string | null
+          etnia_outra?: string | null
           id?: string
           is_autista?: boolean
           is_gestante?: boolean
@@ -2109,15 +2121,18 @@ export type Database = {
           observacao_equipamentos?: string
           observacoes?: string
           outro_servico_sus?: boolean
+          pais_nascimento?: string | null
           profissional_solicitante?: string
           raca_cor?: string | null
           sexo?: string | null
+          situacao_rua?: boolean | null
           telefone?: string
           telefone_secundario?: string | null
           tipo_condicao?: string
           tipo_dispositivo?: string
           tipo_encaminhamento?: string
           tipo_logradouro?: string | null
+          tipo_logradouro_codigo?: string | null
           transporte?: string
           turno_preferido?: string
           ubs_origem?: string
