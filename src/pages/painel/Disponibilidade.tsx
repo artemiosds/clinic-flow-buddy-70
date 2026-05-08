@@ -473,17 +473,19 @@ const Disponibilidade: React.FC = () => {
     if (modo !== 'por_turno') return { totalVagas: 0, diasAtivos: 0, turnosConfig: 0 };
     let totalVagas = 0;
     let diasAtivos = 0;
-    const turnosUsados = new Set<string>();
+    let totalTurnos = 0;
     turnoDays.forEach(td => {
       if (!td.ativo) return;
       diasAtivos++;
-      td.turnosAtivos.forEach(tId => {
-        turnosUsados.add(tId);
-        totalVagas += turnoVagas[tId] || 20;
+      td.blocos.forEach(b => {
+        if (b.ativo) {
+          totalTurnos++;
+          totalVagas += b.vagas;
+        }
       });
     });
-    return { totalVagas, diasAtivos, turnosConfig: turnosUsados.size };
-  }, [modo, turnoDays, turnoVagas]);
+    return { totalVagas, diasAtivos, turnosConfig: totalTurnos };
+  }, [modo, turnoDays]);
 
   // Group disponibilidades by professional
   const profGroups = useMemo(() => {
