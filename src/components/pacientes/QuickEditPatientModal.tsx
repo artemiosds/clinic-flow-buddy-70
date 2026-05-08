@@ -27,6 +27,8 @@ const QuickEditPatientModal: React.FC<Props> = ({ open, onOpenChange, pacienteId
   const [activeTab, setActiveTab] = useState("identificacao");
   const [form, setForm] = useState<any>({});
   const [customData, setCustomData] = useState<any>({});
+  const [dirty, setDirty] = useState(false);
+  const lastSavedFormRef = useRef<string>("");
 
   useEffect(() => {
     if (open && pacienteId) {
