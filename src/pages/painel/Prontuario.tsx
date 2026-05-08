@@ -640,6 +640,8 @@ const ProntuarioPage: React.FC = () => {
 
   // Monta os links procedimento↔prontuário, embarcando os CIDs selecionados e metadados detalhados
   const buildProntuarioProcedimentoLinks = (prontuarioId: string, customProfId?: string) => {
+    if (!prontuarioId) return [];
+    
     return selectedProcIds.map((pid) => {
       const proc = procedimentos.find((p) => p.id === pid);
       const codigosSelecionados = selectedCidsByProc[pid] || [];
@@ -653,28 +655,67 @@ const ProntuarioPage: React.FC = () => {
 
       const primaryCid = codigosSelecionados.length > 0 ? codigosSelecionados[0] : null;
 
+      // Garantir que observacao nunca seja null ou undefined para satisfazer constraint NOT NULL
       const observacao = cidsPayload.length > 0
         ? JSON.stringify({ cids: cidsPayload })
         : '';
 
       return {
         prontuario_id: prontuarioId,
-        procedimento_id: pid, // Mantido para compatibilidade (UUID ou código conforme o caso)
+        procedimento_id: pid || '0000000000', // Campo obrigatório no banco
         paciente_id: form.paciente_id || null,
         agendamento_id: form.agendamento_id || null,
         profissional_id: customProfId || user?.id || null,
         unidade_id: user?.unidadeId || null,
-        codigo_sigtap: proc?.id || pid,
-        nome_procedimento: proc?.nome || '',
+        codigo_sigtap: proc?.id || pid || '0000000000',
+        nome_procedimento: proc?.nome || 'Procedimento não identificado',
         especialidade: proc?.especialidade || '',
         quantidade: 1,
         cid: primaryCid,
         origem: proc?.origem || 'SIGTAP',
-        observacao,
-        criado_por: user?.id,
+        observacao: observacao,
+        criado_por: user?.id || null,
         updated_at: new Date().toISOString()
       };
     });
+  };
+
+  // Função centralizada para persistir os procedimentos do prontuário
+  const saveProntuarioProcedimentos = async (prontuarioId: string, profissionalId: string) => {
+    if (!prontuarioId) return;
+
+    try {
+      // 1. Limpa procedimentos antigos
+      const { error: deleteError } = await (supabase as any)
+        .from("prontuario_procedimentos")
+        .delete()
+        .eq("prontuario_id", prontuarioId);
+
+      if (deleteError) {
+        console.error("[Prontuario] Erro ao deletar procedimentos antigos:", deleteError);
+        throw new Error("Não foi possível atualizar a lista de procedimentos.");
+      }
+
+      // 2. Se houver novos procedimentos, insere
+      if (selectedProcIds.length > 0) {
+        const links = buildProntuarioProcedimentoLinks(prontuarioId, profissionalId);
+        const { error: insertError } = await (supabase as any)
+          .from("prontuario_procedimentos")
+          .insert(links);
+
+        if (insertError) {
+          console.error("[Prontuario] Erro ao inserir novos procedimentos:", insertError);
+          // Detalhar o erro para ajudar no debug
+          if (insertError.code === '42501') {
+            throw new Error("Permissão negada (RLS) para salvar procedimentos.");
+          }
+          throw new Error("Erro ao vincular procedimentos ao prontuário.");
+        }
+      }
+    } catch (err: any) {
+      console.error("[Prontuario] Falha crítica ao salvar procedimentos:", err);
+      throw err;
+    }
   };
 
   const loadEpisodios = async (pacienteId: string) => {
