@@ -165,10 +165,7 @@ const QuickEditPatientModal: React.FC<Props> = ({ open, onOpenChange, pacienteId
                   </div>
                   <div>
                     <Label>Sexo</Label>
-                    <Select value={form.sexo || customData.sexo || ""} onValueChange={v => {
-                      set("sexo", v);
-                      setCD("sexo", v);
-                    }}>
+                    <Select value={form.sexo || ""} onValueChange={v => set("sexo", v)}>
                       <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="M">Masculino</SelectItem>
@@ -192,40 +189,37 @@ const QuickEditPatientModal: React.FC<Props> = ({ open, onOpenChange, pacienteId
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label>CEP</Label>
-                    <Input value={customData.cep || ""} onChange={e => setCD("cep", e.target.value)} />
+                    <Input value={form.cep || ""} onChange={e => set("cep", e.target.value)} />
                   </div>
                   <div>
                     <Label>Município</Label>
                     <MunicipioIbgeCombobox 
-                      value={form.municipio || customData.municipio || ""} 
-                      onChange={(label) => {
-                        set("municipio", label);
-                        setCD("municipio", label);
-                      }} 
+                      value={form.municipio || ""} 
+                      onChange={(label) => set("municipio", label)} 
                     />
                   </div>
                   <div className="md:col-span-2">
                     <Label>Tipo de Logradouro (DNE)</Label>
                     <LogradouroDneAutocomplete 
-                      value={customData.tipo_logradouro_descricao || ""}
-                      codigo={customData.tipo_logradouro_codigo || ""}
+                      value={form.tipo_logradouro || ""}
+                      codigo={form.tipo_logradouro_codigo || ""}
                       onChange={(desc, cod) => {
-                        setCD("tipo_logradouro_descricao", desc);
-                        setCD("tipo_logradouro_codigo", cod);
+                        set("tipo_logradouro", desc);
+                        set("tipo_logradouro_codigo", cod);
                       }}
                     />
                   </div>
                   <div className="md:col-span-2">
                     <Label>Logradouro</Label>
-                    <Input value={customData.logradouro || form.endereco || ""} onChange={e => setCD("logradouro", sanitizeUpper(e.target.value))} />
+                    <Input value={form.endereco || ""} onChange={e => set("endereco", sanitizeUpper(e.target.value))} />
                   </div>
                   <div>
                     <Label>Número</Label>
-                    <Input value={customData.numero || ""} onChange={e => setCD("numero", e.target.value)} />
+                    <Input value={form.numero || ""} onChange={e => set("numero", e.target.value)} />
                   </div>
                   <div>
                     <Label>Bairro</Label>
-                    <Input value={customData.bairro || ""} onChange={e => setCD("bairro", sanitizeUpper(e.target.value))} />
+                    <Input value={form.bairro || ""} onChange={e => set("bairro", sanitizeUpper(e.target.value))} />
                   </div>
                 </div>
               </TabsContent>
@@ -242,8 +236,8 @@ const QuickEditPatientModal: React.FC<Props> = ({ open, onOpenChange, pacienteId
                   <div>
                     <Label>Telefone Secundário</Label>
                     <Input 
-                      value={applyPhoneMask(customData.telefone_secundario || "")} 
-                      onChange={e => setCD("telefone_secundario", e.target.value)} 
+                      value={applyPhoneMask(form.telefone_secundario || "")} 
+                      onChange={e => set("telefone_secundario", e.target.value)} 
                     />
                   </div>
                   <div className="md:col-span-2">
@@ -257,7 +251,7 @@ const QuickEditPatientModal: React.FC<Props> = ({ open, onOpenChange, pacienteId
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label>Raça / Cor (IBGE)</Label>
-                    <Select value={customData.raca_cor || ""} onValueChange={v => setCD("raca_cor", v)}>
+                    <Select value={form.raca_cor || ""} onValueChange={v => set("raca_cor", v)}>
                       <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="branca">Branca</SelectItem>
@@ -271,7 +265,7 @@ const QuickEditPatientModal: React.FC<Props> = ({ open, onOpenChange, pacienteId
                   </div>
                   <div>
                     <Label>Nacionalidade</Label>
-                    <Input value={customData.nacionalidade || "Brasil"} onChange={e => setCD("nacionalidade", sanitizeUpper(e.target.value))} />
+                    <Input value={form.nacionalidade || "Brasil"} onChange={e => set("nacionalidade", sanitizeUpper(e.target.value))} />
                   </div>
                   <div className="md:col-span-2">
                     <Label>Unidade Vinculada</Label>
@@ -279,6 +273,7 @@ const QuickEditPatientModal: React.FC<Props> = ({ open, onOpenChange, pacienteId
                   </div>
                 </div>
               </TabsContent>
+
             </div>
           </Tabs>
         )}
