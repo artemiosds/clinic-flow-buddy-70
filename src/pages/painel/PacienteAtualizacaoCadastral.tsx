@@ -60,7 +60,8 @@ const PacienteAtualizacaoCadastral: React.FC = () => {
       const { data, error } = await query;
       if (error) throw error;
       return data || [];
-    }
+    },
+    placeholderData: keepPreviousData
   });
 
   const patientsWithPendencies = useMemo(() => {
