@@ -7,7 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertTriangle, CheckCircle2, Save, User, MapPin, Phone, Globe, Calendar, Stethoscope, FileText, Paperclip } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Save, User, MapPin, Phone, Globe, Calendar, Stethoscope, FileText, Paperclip, Loader2 } from "lucide-react";
 import PacienteDocumentos from "./PacienteDocumentos";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -17,6 +17,7 @@ import { applyPhoneMask, formatPhoneForDisplay } from "@/lib/phoneUtils";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/hooks/queries/queryKeys";
 import { useData } from "@/contexts/DataContext";
+import { updatePacienteCadastro } from "@/lib/pacienteService";
 
 export interface ConferirDadosPacienteModalProps {
   open: boolean;
@@ -37,6 +38,7 @@ export interface ConferirDadosPacienteModalProps {
   onConfirm: () => void;
   confirmLabel?: string;
 }
+
 
 // ───────── Listas oficiais (mesmas do CadastroPacienteForm) ─────────
 const SEXO_OPTIONS = [
