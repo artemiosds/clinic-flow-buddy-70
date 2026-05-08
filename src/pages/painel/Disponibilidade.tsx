@@ -161,8 +161,7 @@ const Disponibilidade: React.FC = () => {
     setForm({ profissionalId: '', unidadeId: '', salaId: '', dataInicio: '', dataFim: '', vagasPorHora: 3, vagasPorDia: 25, duracaoConsulta: 30, intervalo: 0 });
     setDaySchedules(defaultDaySchedules.map(d => ({ ...d })));
     setModo('por_hora');
-    setTurnoDays(defaultTurnoDays.map(d => ({ ...d, turnosAtivos: [] })));
-    setTurnoVagas({});
+    setTurnoDays(createDefaultDayConfigs());
     setDialogOpen(true);
   };
 
