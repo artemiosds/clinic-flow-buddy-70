@@ -184,28 +184,32 @@ const Disponibilidade: React.FC = () => {
 
     if (isTurno) {
       setModo('por_turno');
-      // Reconstruct turno days from records
-      const newTurnoDays: TurnoDayConfig[] = Array.from({ length: 7 }, () => ({ ativo: false, turnosAtivos: [] }));
-      const vagasMap: TurnoVagas = {};
+      // Reconstruct days and blocks from records
+      const newDays: DayConfig[] = Array.from({ length: 7 }, (_, i) => ({ 
+        diaSemana: i, 
+        ativo: false, 
+        blocos: [] 
+      }));
 
       records.forEach(r => {
-        // For turno records, salaId stores the turno ID
-        const turnoId = r.salaId || '';
-        if (turnoId) {
-          vagasMap[turnoId] = r.vagasPorDia;
-          r.diasSemana.forEach(dayNum => {
-            if (dayNum >= 0 && dayNum <= 6) {
-              newTurnoDays[dayNum].ativo = true;
-              if (!newTurnoDays[dayNum].turnosAtivos.includes(turnoId)) {
-                newTurnoDays[dayNum].turnosAtivos.push(turnoId);
-              }
-            }
-          });
-        }
+        const turnoNome = r.salaId || 'Turno';
+        r.diasSemana.forEach(dayNum => {
+          if (dayNum >= 0 && dayNum <= 6) {
+            newDays[dayNum].ativo = true;
+            newDays[dayNum].blocos.push({
+              id: Math.random().toString(36).substr(2, 9),
+              nome: turnoNome,
+              tipo: 'custom', // We treat all saved blocks as custom for editing flexibility
+              horaInicio: r.horaInicio,
+              horaFim: r.horaFim,
+              vagas: r.vagasPorDia,
+              ativo: true
+            });
+          }
+        });
       });
 
-      setTurnoDays(newTurnoDays);
-      setTurnoVagas(vagasMap);
+      setTurnoDays(newDays);
     } else {
       setModo('por_hora');
       const newSchedules = defaultDaySchedules.map(ds => ({ ...ds, ativo: false }));
