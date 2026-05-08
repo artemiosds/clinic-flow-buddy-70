@@ -1525,11 +1525,7 @@ const ProntuarioPage: React.FC = () => {
       }
 
       if (prontuarioId) {
-        await (supabase as any).from("prontuario_procedimentos").delete().eq("prontuario_id", prontuarioId);
-        if (selectedProcIds.length > 0) {
-          const links = buildProntuarioProcedimentoLinks(prontuarioId, profIdFin);
-          await (supabase as any).from("prontuario_procedimentos").insert(links);
-        }
+        await saveProntuarioProcedimentos(prontuarioId, profIdFin);
       }
 
       const procedureDone = procTexto || form.procedimentos_texto?.trim() || form.outro_procedimento?.trim() || form.queixa_principal?.trim() || 'Sessão registrada';
