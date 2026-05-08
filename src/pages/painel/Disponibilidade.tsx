@@ -1010,10 +1010,10 @@ const Disponibilidade: React.FC = () => {
                               </div>
                             </div>
                             <div className="space-y-1">
-                              {Array.from(turnoMap.entries()).map(([tId, info]) => (
-                                <div key={tId} className="flex items-center gap-2 text-xs">
-                                  <Badge variant="outline" className="text-[10px]">{info.turno?.nome || tId}</Badge>
-                                  <span className="text-muted-foreground">{info.turno?.horaInicio}–{info.turno?.horaFim}</span>
+                               {Array.from(turnoMap.entries()).map(([mKey, info]) => (
+                                <div key={mKey} className="flex items-center gap-2 text-xs">
+                                  <Badge variant="outline" className="text-[10px]">{info.nome}</Badge>
+                                  <span className="text-muted-foreground">{info.horaInicio}–{info.horaFim}</span>
                                   <span className="font-medium">{info.vagas} vagas</span>
                                   <span className="text-muted-foreground">• {info.days.sort().map(d => diasSemanaLabels[d]).join(', ')}</span>
                                 </div>
