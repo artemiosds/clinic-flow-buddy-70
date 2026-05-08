@@ -539,6 +539,14 @@ const Pacientes: React.FC = () => {
         toast.success("Paciente cadastrado com sucesso!", { id: toastId });
         setDialogOpen(false);
       }
+    } catch (error: any) {
+      console.error("Erro geral no salvamento:", error);
+      toast.error("Erro ao processar dados: " + (error.message || "desconhecido"), { id: toastId });
+    } finally {
+      setSaving(false);
+    }
+  };
+
 
 
         // === SALVAR ENCAMINHAMENTOS PENDENTES ===
