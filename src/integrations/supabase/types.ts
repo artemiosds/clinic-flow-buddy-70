@@ -1958,8 +1958,11 @@ export type Database = {
         Row: {
           atualizado_em: string | null
           auth_user_id: string | null
+          bairro: string | null
+          cep: string | null
           cid: string
           cns: string
+          complemento: string | null
           comportamento: string
           comunicacao: string
           cpf: string
@@ -1983,20 +1986,28 @@ export type Database = {
           menor_idade: boolean
           mobilidade: string
           municipio: string
+          nacionalidade: string | null
+          naturalidade: string | null
           nome: string
           nome_mae: string
           nome_responsavel: string
+          numero: string | null
           observacao_equipamentos: string
           observacoes: string
           outro_servico_sus: boolean
           profissional_solicitante: string
+          raca_cor: string | null
+          sexo: string | null
           telefone: string
+          telefone_secundario: string | null
           tipo_condicao: string
           tipo_dispositivo: string
           tipo_encaminhamento: string
+          tipo_logradouro: string | null
           transporte: string
           turno_preferido: string
           ubs_origem: string
+          uf: string | null
           unidade_id: string
           usa_dispositivo: boolean
           usa_equipamentos: boolean
@@ -2004,8 +2015,11 @@ export type Database = {
         Insert: {
           atualizado_em?: string | null
           auth_user_id?: string | null
+          bairro?: string | null
+          cep?: string | null
           cid?: string
           cns?: string
+          complemento?: string | null
           comportamento?: string
           comunicacao?: string
           cpf?: string
@@ -2029,20 +2043,28 @@ export type Database = {
           menor_idade?: boolean
           mobilidade?: string
           municipio?: string
+          nacionalidade?: string | null
+          naturalidade?: string | null
           nome: string
           nome_mae?: string
           nome_responsavel?: string
+          numero?: string | null
           observacao_equipamentos?: string
           observacoes?: string
           outro_servico_sus?: boolean
           profissional_solicitante?: string
+          raca_cor?: string | null
+          sexo?: string | null
           telefone?: string
+          telefone_secundario?: string | null
           tipo_condicao?: string
           tipo_dispositivo?: string
           tipo_encaminhamento?: string
+          tipo_logradouro?: string | null
           transporte?: string
           turno_preferido?: string
           ubs_origem?: string
+          uf?: string | null
           unidade_id?: string
           usa_dispositivo?: boolean
           usa_equipamentos?: boolean
@@ -2050,8 +2072,11 @@ export type Database = {
         Update: {
           atualizado_em?: string | null
           auth_user_id?: string | null
+          bairro?: string | null
+          cep?: string | null
           cid?: string
           cns?: string
+          complemento?: string | null
           comportamento?: string
           comunicacao?: string
           cpf?: string
@@ -2075,20 +2100,28 @@ export type Database = {
           menor_idade?: boolean
           mobilidade?: string
           municipio?: string
+          nacionalidade?: string | null
+          naturalidade?: string | null
           nome?: string
           nome_mae?: string
           nome_responsavel?: string
+          numero?: string | null
           observacao_equipamentos?: string
           observacoes?: string
           outro_servico_sus?: boolean
           profissional_solicitante?: string
+          raca_cor?: string | null
+          sexo?: string | null
           telefone?: string
+          telefone_secundario?: string | null
           tipo_condicao?: string
           tipo_dispositivo?: string
           tipo_encaminhamento?: string
+          tipo_logradouro?: string | null
           transporte?: string
           turno_preferido?: string
           ubs_origem?: string
+          uf?: string | null
           unidade_id?: string
           usa_dispositivo?: boolean
           usa_equipamentos?: boolean
