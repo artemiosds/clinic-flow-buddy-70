@@ -55,6 +55,14 @@ export async function updatePacienteCadastro(
   if (dados.telefone_secundario !== undefined) updateData.telefone_secundario = normalizedPhoneSec || "";
   if (dados.unidade_id !== undefined) updateData.unidade_id = dados.unidade_id || "";
   if (dados.observacoes !== undefined) updateData.observacoes = dados.observacoes || "";
+  
+  // Novos campos SUS
+  if (dados.situacao_rua !== undefined) updateData.situacao_rua = !!dados.situacao_rua;
+  if (dados.etnia !== undefined) updateData.etnia = dados.etnia || "";
+  if (dados.etnia_outra !== undefined) updateData.etnia_outra = dados.etnia_outra || "";
+  if (dados.pais_nascimento !== undefined) updateData.pais_nascimento = dados.pais_nascimento || "";
+  if (dados.tipo_logradouro_codigo !== undefined) updateData.tipo_logradouro_codigo = dados.tipo_logradouro_codigo || "";
+
 
   // 4. Preservar custom_data
   const { data: currentPatient } = await supabase
