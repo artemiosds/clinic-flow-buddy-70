@@ -243,16 +243,25 @@ const Disponibilidade: React.FC = () => {
       const updated = { ...modosPorProfissional, [form.profissionalId]: newModo };
       await saveModos(updated);
     }
-    // Initialize turno vagas with defaults
+    // Initialize defaults for the new mode
     if (newModo === 'por_turno') {
-      const defaultVagas: TurnoVagas = {};
-      activeTurnos.forEach(t => { defaultVagas[t.id] = turnoVagas[t.id] || 20; });
-      setTurnoVagas(defaultVagas);
-      // Set default turnosAtivos for active days
-      setTurnoDays(prev => prev.map(td => ({
-        ...td,
-        turnosAtivos: td.ativo && td.turnosAtivos.length === 0 ? activeTurnos.map(t => t.id) : td.turnosAtivos,
-      })));
+      setTurnoDays(prev => prev.map(td => {
+        if (td.ativo && td.blocos.length === 0) {
+          return {
+            ...td,
+            blocos: activeTurnos.map(t => ({
+              id: Math.random().toString(36).substr(2, 9),
+              nome: t.nome,
+              tipo: 'padrao',
+              horaInicio: t.horaInicio,
+              horaFim: t.horaFim,
+              vagas: 20,
+              ativo: true
+            }))
+          };
+        }
+        return td;
+      }));
     }
   };
 
