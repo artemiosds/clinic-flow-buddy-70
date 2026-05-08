@@ -50,22 +50,35 @@ const QuickEditPatientModal: React.FC<Props> = ({ open, onOpenChange, pacienteId
     // Normalize phone
     const normalizedPhone = normalizePhone(form.telefone) || form.telefone;
 
-    const dbFields = {
-      ...form,
-      email: form.email || "",
+    // Campos que são NOT NULL no banco e precisam de sanitização
+    const dbFields: any = {
+      nome: form.nome || "",
+      nome_mae: form.nome_mae || "",
       data_nascimento: form.data_nascimento || "",
-      telefone: normalizedPhone,
-      custom_data: customData,
+      cpf: form.cpf || "",
+      cns: form.cns || "",
+      telefone: normalizedPhone || "",
+      email: form.email || "",
+      municipio: form.municipio || "",
+      endereco: customData.logradouro || form.endereco || "",
+      unidade_id: form.unidade_id || "",
+      custom_data: customData || {},
       atualizado_em: new Date().toISOString(),
     };
 
-    // Remove read-only or fields we don't want to update directly like this
+    // Outros campos importantes que podem estar no form
+    const otherFields = [
+      'sexo', 'nacionalidade', 'raca_cor', 'naturalidade', 'cep', 'bairro', 'numero', 'complemento'
+    ];
+    
+    // Garantir que não enviamos IDs ou campos de sistema
     delete (dbFields as any).id;
     delete (dbFields as any).criado_em;
 
     const { error } = await supabase.from("pacientes").update(dbFields).eq("id", pacienteId);
 
     if (error) {
+      console.error("Erro ao salvar paciente:", error);
       toast.error("Erro ao salvar alterações: " + error.message);
     } else {
       toast.success("Paciente atualizado com sucesso!");
