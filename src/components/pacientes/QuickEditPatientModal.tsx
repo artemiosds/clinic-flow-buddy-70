@@ -69,12 +69,21 @@ const QuickEditPatientModal: React.FC<Props> = ({ open, onOpenChange, pacienteId
       lastSavedFormRef.current = JSON.stringify(updatedData);
       setForm(updatedData);
       
-      // Invalidação de caches
+      // Invalidação massiva de caches para garantir sincronização total
       queryClient.invalidateQueries({ queryKey: ["pacientes"] });
-      queryClient.invalidateQueries({ queryKey: ["paciente", pacienteId] });
+      queryClient.invalidateQueries({ queryKey: ["paciente"] });
       queryClient.invalidateQueries({ queryKey: ["pacientes-pendencias"] });
       queryClient.invalidateQueries({ queryKey: ["pacientes-paginated"] });
       queryClient.invalidateQueries({ queryKey: ["pendencias_cadastrais"] });
+      queryClient.invalidateQueries({ queryKey: ["conferir_dados_paciente"] });
+      queryClient.invalidateQueries({ queryKey: ["agenda"] });
+      queryClient.invalidateQueries({ queryKey: ["fila_espera"] });
+      queryClient.invalidateQueries({ queryKey: ["prontuario"] });
+      queryClient.invalidateQueries({ queryKey: ["ficha_cadastral"] });
+      queryClient.invalidateQueries({ queryKey: ["bpa"] });
+      queryClient.invalidateQueries({ queryKey: ["relatorios"] });
+      queryClient.invalidateQueries({ queryKey: ["paciente_by_id"] });
+
 
       // Atualizar contexto global
       await refreshPacientes();
