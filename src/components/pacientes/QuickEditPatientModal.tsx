@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -90,25 +89,21 @@ const QuickEditPatientModal: React.FC<Props> = ({ open, onOpenChange, pacienteId
       atualizado_em: new Date().toISOString(),
     };
 
-    // Remove empty/undefined fields to avoid constraint issues if needed, 
-    // but here we want to ensure they stay empty strings if provided as such
     const { error } = await supabase.from("pacientes").update(dbFields).eq("id", pacienteId);
 
     if (error) {
       console.error("Erro ao salvar paciente:", error);
-      toast.error("Erro ao salvar alterações: " + error.message);
+      if (manual) toast.error("Erro ao salvar alterações: " + error.message);
     } else {
       setDirty(false);
       lastSavedFormRef.current = currentFormStr;
       
-      // Invalidate ALL relevant queries
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["pacientes"] }),
-        queryClient.invalidateQueries({ queryKey: ["pacientes-pendencias"] }),
-        queryClient.invalidateQueries({ queryKey: ["pacientes-paginated"] }),
-      ]);
+      // Invalidate ALL relevant queries to ensure UI is updated everywhere
+      queryClient.invalidateQueries({ queryKey: ["pacientes"] });
+      queryClient.invalidateQueries({ queryKey: ["pacientes-pendencias"] });
+      queryClient.invalidateQueries({ queryKey: ["pacientes-paginated"] });
 
-      // Refresh global context
+      // Refresh global context for components using useData
       await refreshPacientes();
 
       if (manual) {
@@ -148,7 +143,11 @@ const QuickEditPatientModal: React.FC<Props> = ({ open, onOpenChange, pacienteId
 
   return (
     <Dialog open={open} onOpenChange={(val) => {
-      if (!val) onSaved();
+      if (!val) {
+        // Se estiver sujo, tenta salvar uma última vez antes de fechar
+        if (dirty) handleSave(false);
+        onSaved();
+      }
       onOpenChange(val);
     }}>
       <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
@@ -307,7 +306,6 @@ const QuickEditPatientModal: React.FC<Props> = ({ open, onOpenChange, pacienteId
                   </div>
                   <div className="md:col-span-2">
                     <Label>Unidade Vinculada</Label>
-                    {/* Simplified for quick edit, ideally a selector of units */}
                     <Input value={form.unidade_id || ""} disabled placeholder="ID da Unidade" />
                   </div>
                 </div>
