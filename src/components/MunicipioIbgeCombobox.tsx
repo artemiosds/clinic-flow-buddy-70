@@ -43,30 +43,52 @@ async function loadMunicipios(): Promise<MunicipioIbge[]> {
     const raw = localStorage.getItem(CACHE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (parsed?.ts && Date.now() - parsed.ts < CACHE_TTL_MS && Array.isArray(parsed.data)) {
+      if (parsed?.ts && Date.now() - parsed.ts < CACHE_TTL_MS && Array.isArray(parsed.data) && parsed.data.length > 0) {
+        console.log("[IBGE] Carregando municípios do cache local...");
         inMemoryCache = parsed.data;
         return inMemoryCache;
       }
     }
-  } catch {}
+  } catch (e) {
+    console.warn("[IBGE] Erro ao ler cache local:", e);
+  }
 
   inflight = (async () => {
     try {
+      console.log("[IBGE] Buscando municípios da API oficial...");
       const res = await fetch(
         "https://servicodados.ibge.gov.br/api/v1/localidades/municipios?orderBy=nome",
+        { signal: AbortSignal.timeout(15000) } // Timeout de 15s
       );
-      if (!res.ok) throw new Error("ibge_unavailable");
+      
+      if (!res.ok) {
+        console.error("[IBGE] Erro na API (Status):", res.status);
+        throw new Error(`ibge_api_error_${res.status}`);
+      }
+      
       const json: any[] = await res.json();
+      if (!Array.isArray(json) || json.length === 0) {
+        throw new Error("ibge_api_empty_response");
+      }
+
       const data: MunicipioIbge[] = json.map((m) => ({
         nome: m.nome,
         uf: m?.microrregiao?.mesorregiao?.UF?.sigla || m?.["regiao-imediata"]?.["regiao-intermediaria"]?.UF?.sigla || "",
         codigoIbge: String(m.id),
       }));
+
       try {
         localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data }));
-      } catch {}
+      } catch (e) {
+        console.warn("[IBGE] Erro ao salvar cache local:", e);
+      }
+      
+      console.log(`[IBGE] ${data.length} municípios carregados com sucesso.`);
       inMemoryCache = data;
       return data;
+    } catch (e: any) {
+      console.error("[IBGE] Erro fatal ao carregar municípios:", e);
+      throw e;
     } finally {
       inflight = null;
     }
@@ -92,29 +114,37 @@ export default function MunicipioIbgeCombobox({
 }: Props) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [list, setList] = useState<MunicipioIbge[]>([]);
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
+  const fetchList = useCallback(async (isManual = false) => {
     let cancelled = false;
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await loadMunicipios();
+      if (!cancelled) {
+        setList(data);
+      }
+    } catch (err: any) {
+      if (!cancelled) {
+        console.error("[MunicipioIbgeCombobox] Falha no fetch:", err);
+        setError(err.message || "Erro de conexão");
+        setList([]);
+      }
+    } finally {
+      if (!cancelled) setLoading(false);
+    }
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
     if (!open) return;
     if (list.length > 0) return;
-    setLoading(true);
-    loadMunicipios()
-      .then((data) => {
-        if (!cancelled) setList(data);
-      })
-      .catch(() => {
-        if (!cancelled) setList([]);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [open, list.length]);
+    fetchList();
+  }, [open, list.length, fetchList]);
 
   // Foco automático no input ao abrir
   useEffect(() => {
@@ -179,10 +209,21 @@ export default function MunicipioIbgeCombobox({
             </div>
           )}
           {!loading && filtered.length === 0 && (
-            <div className="py-6 text-center text-sm text-muted-foreground">
-              {list.length === 0
-                ? "Não foi possível carregar a lista. Verifique a conexão."
-                : "Nenhum município encontrado."}
+            <div className="py-6 px-4 text-center text-sm text-muted-foreground flex flex-col items-center gap-3">
+              {list.length === 0 ? (
+                <>
+                  <p className="text-destructive font-medium">
+                    {error?.includes("403") ? "Acesso bloqueado pela API do IBGE." : 
+                     error?.includes("timeout") ? "A API do IBGE demorou muito a responder." :
+                     "Não foi possível carregar a lista de municípios."}
+                  </p>
+                  <Button size="sm" variant="outline" onClick={() => fetchList(true)}>
+                    Tentar Novamente
+                  </Button>
+                </>
+              ) : (
+                "Nenhum município encontrado."
+              )}
             </div>
           )}
           {!loading &&
