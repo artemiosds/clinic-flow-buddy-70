@@ -1,34 +1,31 @@
-The user is experiencing issues with the Central de Atualização Cadastral (Patient Registration Update Center), specifically that the municipalities list is not loading and the unit cannot be linked or selected. My analysis shows that:
-1. `MunicipioIbgeCombobox` relies on an external IBGE API which might be failing or blocked in some environments.
-2. `QuickEditPatientModal` has the `unidade_id` field as a disabled `Input`, making it impossible to change.
-3. `ConferirDadosPacienteModal` uses a hardcoded, very limited list of municipalities for the residence field and lacks a unit selector.
+The issue involves professionals being unable to save procedures in the medical record (prontuário). The error message "Erro ao salvar: Não foi possível salvar os procedimentos do prontuário" (or similar) occurs during "Salvar Rascunho", "Finalizar Prontuário", or "Salvar Alterações".
 
-### Proposed Changes
+### Analysis:
+1.  **Multiple Save Flows**: The `Prontuario.tsx` file has multiple save flows: `handleSave`, `performAutosave`, and `handleRegistrarSessaoOnly`. All of them attempt to delete existing procedures and re-insert the selected ones into the `prontuario_procedimentos` table.
+2.  **Missing Fields**: In some flows (like `handleRegistrarSessaoOnly`), the `prontuario_procedimentos` insert might be missing required fields or sending incorrect types. Specifically, the table schema shows `prontuario_id` as a UUID and `observacao` as a non-nullable text field.
+3.  **RLS Policies**: There are three RLS policies on `prontuario_procedimentos`. One of them, "Staff manage prontuario_procedimentos", allows Staff to perform ALL operations if `is_staff_member()` is true. Another "Permitir acesso total para autenticados" allows all authenticated users. However, if a professional is not correctly identified as staff or if the `with_check` fails, the insert might be blocked.
+4.  **Autosave/Manual Conflict**: The autosave logic also performs deletions and insertions, which might conflict with manual saves if triggered simultaneously.
+5.  **Error Handling**: The current error handling often wraps specific errors in generic messages, making it hard to see the underlying database failure (e.g., foreign key violation, null constraint, or RLS denial).
 
-#### 1. Enhance `MunicipioIbgeCombobox`
-- Add robust error handling to `loadMunicipios`.
-- Provide a fallback mechanism or a clear "Retry" action if the IBGE API fails.
-- Log specific errors to help diagnose why it's "not loading".
+### Proposed Fixes:
 
-#### 2. Update `QuickEditPatientModal`
-- Replace the disabled `unidade_id` input with a searchable `Select` or `Combobox`.
-- Fetch active units from the `unidades` table to populate the selector.
-- Ensure the `unidade_id` is correctly persisted to the `pacientes` table.
+#### 1. Robust `buildProntuarioProcedimentoLinks`
+Standardize the payload generation to ensure all required fields are present and correctly typed. Ensure `observacao` is always an empty string if no JSON content is provided, satisfying the NOT NULL constraint.
 
-#### 3. Update `ConferirDadosPacienteModal`
-- Replace the hardcoded `MUNICIPIOS` select for "Município de residência" with `MunicipioIbgeCombobox`.
-- Add a "Unidade Vinculada" selector to allow correcting the patient's primary unit.
-- Standardize the mapping of `custom_data` to ensure all fields (including `uf` and `codigoIbge` from the municipality selection) are correctly stored.
+#### 2. Synchronized Procedure Saving
+Create a centralized `saveProcedimentos` function that handles the delete-then-insert logic with better error reporting and ensuring the `prontuario_id` is valid.
 
-#### 4. Update `pacienteService.ts` (if needed)
-- Ensure `updatePacienteCadastro` handles all incoming fields from both modals consistently.
+#### 3. Update Save Flows
+Refactor `handleSave`, `performAutosave`, and `handleRegistrarSessaoOnly` to use the centralized procedure saving logic. Ensure that the `prontuario_id` is always obtained before attempting to save procedures.
 
-### Technical Details
-- Use `@tanstack/react-query` to fetch units for the selectors.
-- Implement a reusable `UnidadeSelect` component or utility to avoid duplication.
-- Ensure RLS policies allow the current user to see and link units.
+#### 4. Improved Error Logging
+Add detailed console logging for Supabase errors in the procedure saving process to help identify RLS or constraint issues during development.
 
-### Verification Plan
-- Verify that `MunicipioIbgeCombobox` loads data or shows a helpful error message.
-- Verify that units can be selected and saved in both modals.
-- Confirm that changes reflect in the database and across the application.
+#### 5. RLS Verification
+Ensure the `prontuario_procedimentos` table has a policy that explicitly allows professionals to manage records linked to their own prontuários. If the current "Staff manage" policy is insufficient, I will add a targeted policy.
+
+### Technical Details:
+- Modify `src/pages/painel/Prontuario.tsx`.
+- Centralize procedure persistence logic.
+- Ensure `observacao` is never null/undefined.
+- Add specific error catching for the `prontuario_procedimentos` operations.
