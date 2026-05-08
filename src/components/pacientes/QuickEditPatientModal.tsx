@@ -119,7 +119,10 @@ const QuickEditPatientModal: React.FC<Props> = ({ open, onOpenChange, pacienteId
   const sanitizeUpper = (v: string) => (v || "").toUpperCase();
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(val) => {
+      if (!val) onSaved();
+      onOpenChange(val);
+    }}>
       <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
         <DialogHeader className="p-6 pb-2">
           <DialogTitle className="flex items-center gap-2">
