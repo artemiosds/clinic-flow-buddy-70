@@ -1297,10 +1297,7 @@ const ProntuarioPage: React.FC = () => {
           editIdRef.current = inserted.id;
           
           // Sincroniza procedimentos para novo prontuário no autosave
-          if (selectedProcIds.length > 0) {
-            const links = buildProntuarioProcedimentoLinks(inserted.id, profIdAuto);
-            await (supabase as any).from("prontuario_procedimentos").insert(links);
-          }
+          await saveProntuarioProcedimentos(inserted.id, profIdAuto);
         }
       }
       setAutosaveStatus('saved');
