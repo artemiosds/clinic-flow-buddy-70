@@ -91,8 +91,29 @@ const QuickEditPatientModal: React.FC<Props> = ({ open, onOpenChange, pacienteId
     setSaving(false);
   }, [pacienteId, form, customData, saving]);
 
-  const set = (field: string, value: any) => setForm((prev: any) => ({ ...prev, [field]: value }));
-  const setCD = (field: string, value: any) => setCustomData((prev: any) => ({ ...prev, [field]: value }));
+  const set = (field: string, value: any) => {
+    setForm((prev: any) => ({ ...prev, [field]: value }));
+    setDirty(true);
+  };
+  
+  const setCD = (field: string, value: any) => {
+    setCustomData((prev: any) => ({ ...prev, [field]: value }));
+    setDirty(true);
+  };
+
+  // Debounced Auto-save
+  useEffect(() => {
+    if (!dirty || !pacienteId || saving) return;
+
+    const currentFormStr = JSON.stringify({ ...form, custom_data: customData });
+    if (currentFormStr === lastSavedFormRef.current) return;
+
+    const timer = setTimeout(() => {
+      handleSave();
+    }, 1500); 
+
+    return () => clearTimeout(timer);
+  }, [form, customData, dirty, pacienteId, saving, handleSave]);
 
   const sanitizeUpper = (v: string) => (v || "").toUpperCase();
 
