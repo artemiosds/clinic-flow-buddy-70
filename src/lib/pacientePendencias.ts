@@ -39,8 +39,8 @@ export function calcularPendenciasPaciente(p: any): PendenciaResultado {
   
   // Endereço
   if (!p.endereco && !cd.logradouro) pendencias.push("sem_endereco");
-  if (!cd.bairro) pendencias.push("sem_bairro");
-  if (!cd.tipo_logradouro && !cd.tipoLogradouro) pendencias.push("sem_tipo_logradouro");
+  if (!cd.bairro && !p.bairro) pendencias.push("sem_bairro");
+  if (!cd.tipo_logradouro && !cd.tipoLogradouro && !p.tipo_logradouro) pendencias.push("sem_tipo_logradouro");
   
   const municipio = p.municipio || cd.municipio;
   if (!municipio) pendencias.push("sem_municipio");
@@ -48,8 +48,9 @@ export function calcularPendenciasPaciente(p: any): PendenciaResultado {
   if (!p.unidade_id && !p.unidadeId) pendencias.push("sem_unidade");
   
   // SUS specific
-  if (!cd.raca_cor && !cd.racaCor) pendencias.push("sem_raca");
-  if (!cd.nacionalidade) pendencias.push("sem_nacionalidade");
+  if (!cd.raca_cor && !cd.racaCor && !p.raca_cor) pendencias.push("sem_raca");
+  if (!cd.nacionalidade && !p.nacionalidade) pendencias.push("sem_nacionalidade");
+
 
   const totalFields = 12; // Adjusted weighted score target
   const missingCount = pendencias.length;
