@@ -106,6 +106,7 @@ const PatientUpdateImportModal: React.FC<Props> = ({ open, onOpenChange, onImpor
           email: row.raw.email,
           nome_mae: row.raw.nome_mae,
           unidade_id: row.raw.unidade_id,
+          atualizado_em: new Date().toISOString(),
         };
 
         let currentCD = {};

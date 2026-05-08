@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +27,8 @@ const QuickEditPatientModal: React.FC<Props> = ({ open, onOpenChange, pacienteId
   const [activeTab, setActiveTab] = useState("identificacao");
   const [form, setForm] = useState<any>({});
   const [customData, setCustomData] = useState<any>({});
+  const [dirty, setDirty] = useState(false);
+  const lastSavedFormRef = useRef<string>("");
 
   useEffect(() => {
     if (open && pacienteId) {
@@ -39,48 +41,88 @@ const QuickEditPatientModal: React.FC<Props> = ({ open, onOpenChange, pacienteId
     const { data, error } = await supabase.from("pacientes").select("*").eq("id", pacienteId).single();
     if (data) {
       setForm(data);
-      setCustomData(data.custom_data || {});
+      const cd = data.custom_data || {};
+      setCustomData(cd);
+      lastSavedFormRef.current = JSON.stringify({ ...data, custom_data: cd });
+      setDirty(false);
     }
     setLoading(false);
   };
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async (manual = false) => {
+    if (!pacienteId || saving) return;
     setSaving(true);
     
     // Normalize phone
     const normalizedPhone = normalizePhone(form.telefone) || form.telefone;
 
-    const dbFields = {
-      ...form,
-      email: form.email || "",
+    // Campos que são NOT NULL no banco e precisam de sanitização
+    const dbFields: any = {
+      nome: form.nome || "",
+      nome_mae: form.nome_mae || "",
       data_nascimento: form.data_nascimento || "",
-      telefone: normalizedPhone,
-      custom_data: customData,
+      cpf: form.cpf || "",
+      cns: form.cns || "",
+      telefone: normalizedPhone || "",
+      email: form.email || "",
+      municipio: form.municipio || "",
+      endereco: customData.logradouro || form.endereco || "",
+      unidade_id: form.unidade_id || "",
+      custom_data: customData || {},
       atualizado_em: new Date().toISOString(),
     };
 
-    // Remove read-only or fields we don't want to update directly like this
+    // Garantir que não enviamos IDs ou campos de sistema
     delete (dbFields as any).id;
     delete (dbFields as any).criado_em;
 
     const { error } = await supabase.from("pacientes").update(dbFields).eq("id", pacienteId);
 
     if (error) {
+      console.error("Erro ao salvar paciente:", error);
       toast.error("Erro ao salvar alterações: " + error.message);
     } else {
-      toast.success("Paciente atualizado com sucesso!");
-      onSaved();
+      setDirty(false);
+      lastSavedFormRef.current = JSON.stringify({ ...form, custom_data: customData });
+      if (manual) {
+        toast.success("Paciente atualizado com sucesso!");
+        onSaved();
+      }
     }
     setSaving(false);
+  }, [pacienteId, form, customData, saving, onSaved]);
+
+  const set = (field: string, value: any) => {
+    setForm((prev: any) => ({ ...prev, [field]: value }));
+    setDirty(true);
+  };
+  
+  const setCD = (field: string, value: any) => {
+    setCustomData((prev: any) => ({ ...prev, [field]: value }));
+    setDirty(true);
   };
 
-  const set = (field: string, value: any) => setForm((prev: any) => ({ ...prev, [field]: value }));
-  const setCD = (field: string, value: any) => setCustomData((prev: any) => ({ ...prev, [field]: value }));
+  // Debounced Auto-save
+  useEffect(() => {
+    if (!dirty || !pacienteId || saving) return;
+
+    const currentFormStr = JSON.stringify({ ...form, custom_data: customData });
+    if (currentFormStr === lastSavedFormRef.current) return;
+
+    const timer = setTimeout(() => {
+      handleSave();
+    }, 1500); 
+
+    return () => clearTimeout(timer);
+  }, [form, customData, dirty, pacienteId, saving, handleSave]);
 
   const sanitizeUpper = (v: string) => (v || "").toUpperCase();
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(val) => {
+      if (!val) onSaved();
+      onOpenChange(val);
+    }}>
       <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
         <DialogHeader className="p-6 pb-2">
           <DialogTitle className="flex items-center gap-2">
@@ -250,7 +292,7 @@ const QuickEditPatientModal: React.FC<Props> = ({ open, onOpenChange, pacienteId
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
             Cancelar
           </Button>
-          <Button onClick={handleSave} disabled={saving}>
+          <Button onClick={() => handleSave(true)} disabled={saving}>
             {saving ? (
               <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Salvando...</>
             ) : (
