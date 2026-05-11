@@ -217,7 +217,7 @@ Deno.serve(async (req) => {
         ? supabase.from('pacientes').select('id, nome, cpf, cns, data_nascimento, custom_data').in('id', pacIds)
         : Promise.resolve({ data: [] }),
       profIds.length
-        ? supabase.from('funcionarios').select('id, nome, custom_data').in('id', profIds)
+        ? supabase.from('funcionarios').select('id, nome, custom_data, profissao, cargo').in('id', profIds)
         : Promise.resolve({ data: [] }),
       uniIds.length
         ? supabase.from('unidades').select('id, nome, custom_data').in('id', uniIds)
