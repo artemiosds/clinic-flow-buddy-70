@@ -276,7 +276,7 @@ const BpaProducao: React.FC = () => {
       paciente_nascimento: pac?.data_nascimento || '',
       paciente_cns: pac?.cns || '',
       paciente_cpf: pac?.cpf || '',
-      profissional_custom: (prof as any)?.custom_data || prof,
+      profissional_custom: prof, // Agora prof já contém profissao, cargo, cbo e custom_data
       unidade_custom: (uni as any)?.custom_data || {},
       unidade_nome: uni?.nome || '',
     });
@@ -287,6 +287,7 @@ const BpaProducao: React.FC = () => {
       errors: v.errors
     };
   };
+
 
   const stats = useMemo(() => {
     let validos = 0, pendentes = 0;
