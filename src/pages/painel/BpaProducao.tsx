@@ -27,8 +27,8 @@ import {
   normalizeBpaData, 
   validateBpaLine, 
   exportBpaToXlsx, 
-  isCboMedico,
   isProfissionalMedico,
+
   generateBpaTxt,
   LinhaBPA,
   ProntuarioRow,
