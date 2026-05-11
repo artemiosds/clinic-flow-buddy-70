@@ -204,6 +204,10 @@ export const normalizeBpaData = (raw: any): BpaLine => {
   if (sexoRaw.startsWith('M')) sexo = 'M';
   else if (sexoRaw.startsWith('F')) sexo = 'F';
 
+  const isMed = isProfissionalMedico(profCd);
+  const sigtapFinal = (raw.codigo_sigtap || '').replace(/\D/g, '');
+  const cidFinal = (raw.cid || cd.cid || '').replace(/[^A-Z0-9]/g, '').slice(0, 4);
+
   return {
     id: raw.id,
     data: raw.data_atendimento || raw.data,
@@ -214,11 +218,11 @@ export const normalizeBpaData = (raw: any): BpaLine => {
     unidade_id: raw.unidade_id,
     unidade_nome: raw.unidade_nome,
     cnes_unidade: (unitCd.cnes || '').replace(/\D/g, '').slice(0, 7),
-    cbo_profissional: (profCd.cbo_codigo || '').replace(/\D/g, '').slice(0, 6),
+    cbo_profissional: (profCd.cbo_codigo || profCd.cbo || '').replace(/\D/g, '').slice(0, 6),
     cns_profissional: (profCd.cns || '').replace(/\D/g, '').slice(0, 15),
     procedimento_id: raw.procedimento_id || '',
-    procedimento_nome: raw.procedimento_nome || (isCboMedico(profCd.cbo_codigo) ? 'Consulta Médica' : '—'),
-    codigo_sigtap: (raw.codigo_sigtap || '').replace(/\D/g, '').length === 10 ? raw.codigo_sigtap : (isCboMedico(profCd.cbo_codigo) ? '0301010072' : ''),
+    procedimento_nome: raw.procedimento_nome || (isMed ? 'Consulta Médica' : '—'),
+    codigo_sigtap: sigtapFinal.length === 10 ? sigtapFinal : (isMed ? '0301010072' : ''),
     paciente_cns: (raw.paciente_cns || '').replace(/\D/g, ''),
     paciente_cpf: (raw.paciente_cpf || '').replace(/\D/g, ''),
     paciente_nascimento: raw.paciente_nascimento,
@@ -229,10 +233,15 @@ export const normalizeBpaData = (raw: any): BpaLine => {
     paciente_nacionalidade: cd.nacionalidade_codigo || '010',
     paciente_etnia: (cd.etnia_codigo || '').replace(/\D/g, ''),
     carater_atendimento: cd.carater_atendimento || '01',
-    cid: (raw.cid || cd.cid || '').replace(/[^A-Z0-9]/g, '').slice(0, 4),
+    cid: cidFinal,
     autorizacao: (cd.numero_autorizacao || '').replace(/[^A-Z0-9]/g, '').slice(0, 13),
     fonte_procedimento: raw.fonte_procedimento,
     fonte_cid: raw.fonte_cid,
+    // Novos campos
+    is_medico: isMed,
+    profissao_profissional: profCd.profissao || profCd.cargo || profCd.funcao || '—',
+    procedimento_dispensa_motivo: isMed && !sigtapFinal ? 'Dispensado para profissão médica' : undefined,
+    cid_dispensa_motivo: isMed && !cidFinal ? 'Dispensado para profissão médica' : undefined,
   };
 };
 
@@ -254,17 +263,18 @@ export const exportBpaToXlsx = (lines: BpaLine[], competencia: string) => {
       'NASCIMENTO': l.paciente_nascimento,
       'SEXO': l.paciente_sexo,
       'MUNICIPIO IBGE': l.paciente_municipio_ibge,
+      'PROFISSIONAL': l.profissional_nome,
+      'PROFISSÃO': l.profissao_profissional,
+      'CBO': l.cbo_profissional,
+      'É MÉDICO?': l.is_medico ? 'Sim' : 'Não',
       'PROCEDIMENTO': l.procedimento_nome,
       'SIGTAP': l.codigo_sigtap,
-      'PROFISSIONAL': l.profissional_nome,
-      'CBO': l.cbo_profissional,
-      'CNS PROFISSIONAL': l.cns_profissional,
+      'MOTIVO DISPENSA PROC': l.procedimento_dispensa_motivo || '—',
+      'CID': l.cid,
+      'MOTIVO DISPENSA CID': l.cid_dispensa_motivo || '—',
       'CNES UNIDADE': l.cnes_unidade,
       'UNIDADE': l.unidade_nome,
-      'CARÁTER': l.carater_atendimento,
-      'CID': l.cid,
-      'AUTORIZAÇÃO': l.autorizacao,
-      'PRONTUARIO_ID': l.id.split('_')[0], // Se id for composto
+      'PRONTUARIO_ID': l.id.split('_')[0], 
     };
   });
 
@@ -274,15 +284,17 @@ export const exportBpaToXlsx = (lines: BpaLine[], competencia: string) => {
 
   // Ajusta largura das colunas
   const colWidths = [
-    { wch: 10 }, { wch: 30 }, { wch: 15 }, { wch: 30 }, { wch: 15 },
-    { wch: 12 }, { wch: 12 }, { wch: 6 }, { wch: 15 }, { wch: 30 },
-    { wch: 12 }, { wch: 25 }, { wch: 8 }, { wch: 15 }, { wch: 12 },
-    { wch: 20 }, { wch: 8 }, { wch: 6 }, { wch: 15 }
+    { wch: 10 }, { wch: 30 }, { wch: 15 }, { wch: 15 }, { wch: 12 },
+    { wch: 30 }, { wch: 15 }, { wch: 15 }, { wch: 12 }, { wch: 6 },
+    { wch: 15 }, { wch: 25 }, { wch: 20 }, { wch: 10 }, { wch: 10 },
+    { wch: 30 }, { wch: 12 }, { wch: 30 }, { wch: 8 }, { wch: 30 },
+    { wch: 15 }, { wch: 20 }, { wch: 20 }
   ];
   ws['!cols'] = colWidths;
 
   XLSX.writeFile(wb, `CONFERENCIA_BPA_${competencia}.xlsx`);
 };
+
 
 /**
  * Chama a Edge Function para gerar o TXT final
