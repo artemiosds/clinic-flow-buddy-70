@@ -239,13 +239,21 @@ const BpaProducao: React.FC = () => {
 
       if (profIds.length) {
         const { data: profs } = await (supabase as any)
-          .from('funcionarios').select('id, custom_data').in('id', profIds);
-        const pm: typeof profMap = {};
+          .from('funcionarios')
+          .select('id, custom_data, profissao, cargo')
+          .in('id', profIds);
+        const pm: any = {};
         (profs || []).forEach((f: any) => {
-          pm[f.id] = { cbo: (f.custom_data || {}).cbo_codigo || '' };
+          pm[f.id] = { 
+            cbo: (f.custom_data || {}).cbo_codigo || '',
+            profissao: f.profissao || '',
+            cargo: f.cargo || '',
+            custom_data: f.custom_data || {}
+          };
         });
         setProfMap(pm);
       } else setProfMap({});
+
     } catch (err) {
       console.error('load bpa error', err);
       toast.error('Erro ao carregar prontuários');
