@@ -2420,7 +2420,14 @@ const ProntuarioPage: React.FC = () => {
                   )}
                   {/* Dynamic fields from config */}
                   <div className={`rounded-lg border p-3 ${colorClass}`}>
-                    <h4 className="text-sm font-semibold text-foreground mb-3">{tipoTitle}</h4>
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="text-sm font-semibold text-foreground">{tipoTitle}</h4>
+                      {selectedProcIds.length > 0 && (
+                        <Badge variant="outline" className="text-[10px] bg-primary/5 text-primary border-primary/20">
+                          {selectedProcIds.length} procedimento(s) vinculado(s) ao paciente
+                        </Badge>
+                      )}
+                    </div>
                     {hasDynamic ? (
                       <DynamicProntuarioFields
                         campos={camposDinamicos}
