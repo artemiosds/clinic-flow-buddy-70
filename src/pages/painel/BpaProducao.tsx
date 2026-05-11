@@ -536,7 +536,7 @@ const BpaProducao: React.FC = () => {
                     const prof = profMap[l.profissional_id];
                     const v = validateRow(l);
                     const ok = v.isValid;
-                    const isMed = isCboMedico(prof?.cbo || '');
+                    const isMed = isProfissionalMedico(prof);
                     return (
                       <TableRow key={l.key} className={cn(!ok && "bg-destructive/5")}>
                         <TableCell>
