@@ -879,22 +879,45 @@ const ProntuarioPage: React.FC = () => {
       .sort((a, b) => b.data_atendimento.localeCompare(a.data_atendimento));
   }, [form.paciente_id, prontuarios, editId]);
 
-  // Carrega histórico de procedimentos do paciente (sugestões)
+  // Carrega histórico de procedimentos do paciente (sugestões) de forma global
   useEffect(() => {
     if (!form.paciente_id) { setPacienteProcHistory([]); return; }
     (async () => {
-      const { data } = await (supabase as any)
-        .from("prontuario_procedimentos")
-        .select("procedimento_id, prontuarios!inner(paciente_id, data_atendimento)")
-        .eq("prontuarios.paciente_id", form.paciente_id)
-        .order("criado_em", { ascending: false })
-        .limit(50);
+      // Busca tanto em prontuario_procedimentos quanto em procedimentos_realizados para máxima confiabilidade
+      const [prontRes, globalRes] = await Promise.all([
+        (supabase as any)
+          .from("prontuario_procedimentos")
+          .select("procedimento_id, prontuarios!inner(paciente_id, data_atendimento)")
+          .eq("prontuarios.paciente_id", form.paciente_id)
+          .order("criado_em", { ascending: false })
+          .limit(50),
+        (supabase as any)
+          .from("procedimentos_realizados")
+          .select("procedimento_id, data_realizacao")
+          .eq("paciente_id", form.paciente_id)
+          .order("data_realizacao", { ascending: false })
+          .limit(50)
+      ]);
+
       const seen = new Map<string, { id: string; nome: string; ultima: string }>();
-      (data || []).forEach((r: any) => {
-        const proc = procedimentos.find((p) => p.id === r.procedimento_id);
+      
+      // Combina os resultados
+      const combined = [
+        ...(prontRes.data || []).map((r: any) => ({ 
+          pid: r.procedimento_id, 
+          dt: r.prontuarios?.data_atendimento 
+        })),
+        ...(globalRes.data || []).map((r: any) => ({ 
+          pid: r.procedimento_id, 
+          dt: r.data_realizacao 
+        }))
+      ];
+
+      combined.forEach((r: any) => {
+        const proc = procedimentos.find((p) => p.id === r.pid);
         if (proc && !seen.has(proc.id)) {
-          const dt = r.prontuarios?.data_atendimento || '';
-          const ultima = dt ? new Date(dt).toLocaleDateString('pt-BR') : '';
+          const dt = r.dt || '';
+          const ultima = dt ? new Date(dt + "T12:00:00").toLocaleDateString('pt-BR') : '';
           seen.set(proc.id, { id: proc.id, nome: proc.nome, ultima });
         }
       });
