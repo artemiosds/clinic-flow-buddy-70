@@ -241,20 +241,18 @@ const BpaProducao: React.FC = () => {
   // Pendências previstas para a competência/unidade do modal (preview)
   const modalPreview = useMemo(() => {
     if (!modalOpen) return { validos: 0, pendentes: 0, total: 0 };
-    const filtroUni = modalUnidade || '';
     const filtroComp = modalCompetencia;
     let validos = 0, pendentes = 0, total = 0;
     linhas.forEach((l) => {
       const lComp = (l.data || '').replace(/-/g, '').slice(0, 6);
       if (filtroComp && lComp !== filtroComp) return;
-      // unidade não está em LinhaBPA — usamos prontuario filter via mapa
       total += 1;
       const v = validateRow(l);
-      if (v.identificacao && v.cbo && v.sigtap && v.nome && v.dataNasc) validos++; else pendentes++;
+      if (v.isValid) validos++; else pendentes++;
     });
     return { validos, pendentes, total };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [modalOpen, modalUnidade, modalCompetencia, linhas, pacMap, profMap]);
+  }, [modalOpen, modalUnidade, modalCompetencia, linhas, pacMap, profMap, unidades]);
 
   const handleGenerate = async () => {
     if (modalCompetencia.length !== 6) {
