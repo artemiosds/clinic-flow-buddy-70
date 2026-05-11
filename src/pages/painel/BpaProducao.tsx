@@ -181,27 +181,27 @@ const BpaProducao: React.FC = () => {
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [competencia, unidadeFiltro]);
 
-  const validateRow = (l: LinhaBPA): ValidationFlags => {
+  const validateRow = (l: LinhaBPA): { isValid: boolean; errors: string[] } => {
     const pac = pacMap[l.paciente_id];
     const prof = profMap[l.profissional_id];
     const uni = unidades.find(u => u.id === l.unidade_id);
     
-    const cns = (pac?.cns || '').replace(/\D/g, '');
-    const cpf = (pac?.cpf || '').replace(/\D/g, '');
-    const cbo = (prof?.cbo || '').replace(/\D/g, '');
-    const sigtap = (l.codigo_sigtap || '').replace(/\D/g, '');
-    const cnes = String((uni as any)?.custom_data?.cnes || '').replace(/\D/g, '');
-    
-    const exigeSigtap = !isCboMedico(cbo);
-    const pacCd = (pac as any)?.custom_data || {};
-    const ibge = String(pacCd.municipio_ibge || pacCd.codigo_ibge_municipio || '').replace(/\D/g, '');
+    const bpaLine = normalizeBpaData({
+      ...l,
+      paciente_custom: (pac as any)?.custom_data || {},
+      paciente_sexo: (pac as any)?.sexo || '',
+      paciente_nascimento: pac?.data_nascimento || '',
+      paciente_cns: pac?.cns || '',
+      paciente_cpf: pac?.cpf || '',
+      profissional_custom: (prof as any)?.custom_data || prof,
+      unidade_custom: (uni as any)?.custom_data || {},
+      unidade_nome: uni?.nome || '',
+    });
 
+    const v = validateBpaLine(bpaLine);
     return {
-      identificacao: cns.length === 15 || cpf.length === 11,
-      cbo: cbo.length === 6,
-      sigtap: !exigeSigtap || sigtap.length === 10,
-      nome: !!(pac?.nome && pac.nome.trim().length >= 3),
-      dataNasc: !!(pac?.data_nascimento && pac.data_nascimento.trim().length > 0),
+      isValid: v.isValid,
+      errors: v.errors
     };
   };
 
@@ -209,11 +209,11 @@ const BpaProducao: React.FC = () => {
     let validos = 0, pendentes = 0;
     linhas.forEach((l) => {
       const v = validateRow(l);
-      if (v.identificacao && v.cbo && v.sigtap && v.nome && v.dataNasc) validos++; else pendentes++;
+      if (v.isValid) validos++; else pendentes++;
     });
     return { total: linhas.length, validos, pendentes };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [linhas, pacMap, profMap]);
+  }, [linhas, pacMap, profMap, unidades]);
 
   const getCnesFromUnidade = (uniId: string): string => {
     if (!uniId) return '';
