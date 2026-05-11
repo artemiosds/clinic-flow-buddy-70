@@ -304,14 +304,14 @@ Deno.serve(async (req) => {
 
 
     for (const item of items) {
-      const { pront, vinc } = item;
+      const { pront, codigo_sigtap, nome_procedimento, cid } = item;
       totalAtendimentos += 1;
 
       const motivosBloqueio: string[] = [];
       const pac: any = pacMap.get(pront.paciente_id);
       const prof: any = profMap.get(pront.profissional_id);
       const uni: any = uniMap.get(pront.unidade_id);
-      const proc: any = vinc ? procMap.get(vinc.procedimento_id) : null;
+
 
       // Identificação obrigatória do paciente
       if (!pac) motivosBloqueio.push('Paciente não encontrado');
