@@ -329,7 +329,7 @@ const BpaProducao: React.FC = () => {
             BPA-Produção
           </h1>
           <p className="text-muted-foreground text-sm">
-            Gerado a partir dos prontuários finalizados (1 procedimento = 1 linha BPA-I)
+            Gerado a partir dos prontuários finalizados (TXT compatível com BPAMag/DATASUS)
           </p>
         </div>
         <Button onClick={openGenerateModal} className="bg-primary text-primary-foreground gap-2">
@@ -530,7 +530,7 @@ const BpaProducao: React.FC = () => {
           <DialogHeader>
             <DialogTitle>Gerar arquivo BPA-I</DialogTitle>
             <DialogDescription>
-              Layout oficial SIA/SUS. Linhas com Nome, CNS/CPF, CBO, CNES ou Data Nasc. ausentes serão puladas. Médicos (CBO 225*) podem gerar sem SIGTAP. Raça/Cor e Nacionalidade são auto-preenchidas (99/010) quando vazias.
+              Geração de arquivo TXT oficial para importação no BPAMag. Linhas com Nome, CNS/CPF, CBO, CNES ou Data Nasc. ausentes serão marcadas como pendentes. Médicos (CBO 225*) podem gerar sem SIGTAP (usa código de consulta clínica).
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-2">

@@ -310,7 +310,8 @@ Deno.serve(async (req) => {
       // 158-161 Etnia (4)
       // 162-164 Nacionalidade (3)
       // ...
-      // Versão simplificada compatível: usamos os 60 caracteres principais para validação.
+      // Versão oficial compatível com BPAMag (Layout BPA Magnético)
+      // Cada linha deve ter exatamente 178 caracteres (mais o CRLF no final)
 
       const dtNasc = formatDate(pac.data_nascimento);
       const dtAtend = formatDate(pront.data_atendimento);
@@ -329,15 +330,15 @@ Deno.serve(async (req) => {
         if (idade < 0 || idade > 130) idade = 0;
       }
 
-      // CNS do profissional (do cadastro funcionarios.custom_data.cns ou vazio)
+      // CNS do profissional
       const cnsProf = padNum(String((prof.custom_data || {}).cns || ''), 15);
 
-      // CNS do paciente — se vazio, preencher com 0 (e usar CPF no campo nome/observações conforme regra interna)
-      const cnsPac = cns.length === 15 ? cns : padNum(cpf || '0', 15);
+      // CNS do paciente — se vazio, preencher com 0 (o BPAMag valida se CNS ou CPF estão ok)
+      const cnsPac = cns.length === 15 ? cns : padNum(0, 15);
 
-      // Linha BPA-I tipo 03 (formato simplificado — 150 colunas fixas)
+      // Linha BPA-I tipo 03 (formato oficial 178 colunas)
       const linha =
-        '03' +                                  // 01-02 Tipo
+        '03' +                                  // 01-02 Tipo Registro
         padNum(cnes, 7) +                       // 03-09 CNES
         padNum(competencia, 6) +                // 10-15 Competência
         cnsProf +                               // 16-30 CNS profissional
@@ -351,16 +352,16 @@ Deno.serve(async (req) => {
         municipio +                             // 76-81 Município IBGE
         padText(cid, 4) +                       // 82-85 CID-10
         padNum(idade, 3) +                      // 86-88 Idade
-        padNum(1, 6) +                          // 89-94 Quantidade (default 1)
+        padNum(1, 6) +                          // 89-94 Quantidade
         carater +                               // 95-96 Caráter atendimento
         autorizacao +                           // 97-109 Nº autorização
-        'BPA' +                                 // 110-112 Origem
+        'BPA' +                                 // 110-112 Origem (BPA)
         padText(pac.nome, 30) +                 // 113-142 Nome paciente
         dtNasc +                                // 143-150 Data nascimento
         raca +                                  // 151-152 Raça/Cor
         padText(etnia, 4) +                     // 153-156 Etnia
         padNum(nacionalidade, 3) +              // 157-159 Nacionalidade
-        padText(cpf, 11) +                      // 160-170 CPF (extensão local)
+        padText(cpf, 11) +                      // 160-170 CPF
         padNum(cep, 8);                         // 171-178 CEP
 
       linhasBpa.push(linha);
