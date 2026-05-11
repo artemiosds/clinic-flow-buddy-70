@@ -167,7 +167,7 @@ Deno.serve(async (req) => {
     // 1. Prontuários do período (somente finalizados — todos no schema atual já são finalizados ao salvar)
     let prontQuery = supabase
       .from('prontuarios')
-      .select('id, paciente_id, paciente_nome, profissional_id, profissional_nome, data_atendimento, unidade_id')
+      .select('id, paciente_id, paciente_nome, profissional_id, profissional_nome, data_atendimento, unidade_id, custom_data, cid')
       .gte('data_atendimento', dataInicio)
       .lte('data_atendimento', dataFim)
       .order('data_atendimento', { ascending: true });
