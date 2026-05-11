@@ -607,8 +607,9 @@ const BpaProducao: React.FC = () => {
           <DialogHeader>
             <DialogTitle>Gerar arquivo BPA-I</DialogTitle>
             <DialogDescription>
-              Geração de arquivo TXT oficial para importação no BPAMag. Linhas com Nome, CNS/CPF, CBO, CNES ou Data Nasc. ausentes serão marcadas como pendentes. Médicos (CBO 225*) podem gerar sem SIGTAP (usa código de consulta clínica).
+              Geração de arquivo TXT oficial para importação no BPAMag. Linhas com Nome, CNS/CPF, CBO, CNES ou Data Nasc. ausentes serão marcadas como pendentes. Profissionais médicos possuem dispensa de Procedimento e CID obrigatórios.
             </DialogDescription>
+
           </DialogHeader>
           <div className="space-y-3 py-2">
             <div>
