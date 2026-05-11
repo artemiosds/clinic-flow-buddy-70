@@ -284,14 +284,22 @@ Deno.serve(async (req) => {
       const cnes = cnesOverride || cnesUni;
       if (!cnes || cnes.length !== 7) motivosBloqueio.push('CNES da unidade inválido (7 dígitos)');
 
-      // SIGTAP — obrigatório apenas para não-médicos
+      // SIGTAP e CID — obrigatórios apenas para não-médicos
+      const isMed = isProfissionalMedico(prof);
       const sigtap = proc ? onlyDigits(proc.codigo_sigtap || '') : '';
-      const exigeSigtap = !isMedico(cboDigits);
-      if (exigeSigtap) {
+      
+      if (!isMed) {
         if (!proc || !sigtap || sigtap.length !== 10) {
           motivosBloqueio.push('Código SIGTAP obrigatório (10 dígitos)');
         }
+        
+        // Verifica CID para não-médicos (simplificado: se não tem no prontuário ou no custom_data)
+        const pacCid = String(pacCustom.cid || pront.cid || '').trim();
+        if (!pacCid || pacCid.length < 3) {
+          motivosBloqueio.push('Código CID obrigatório não informado');
+        }
       }
+
 
       if (motivosBloqueio.length > 0) {
         pendentes.push({
