@@ -342,19 +342,19 @@ Deno.serve(async (req) => {
 
       // SIGTAP e CID — obrigatórios apenas para não-médicos
       const isMed = isProfissionalMedico(prof);
-      const sigtap = proc ? onlyDigits(proc.codigo_sigtap || '') : '';
+      const sigtapRaw = (codigo_sigtap || '').replace(/\D/g, '');
       
       if (!isMed) {
-        if (!proc || !sigtap || sigtap.length !== 10) {
+        if (!sigtapRaw || sigtapRaw.length !== 10) {
           motivosBloqueio.push('Código SIGTAP obrigatório (10 dígitos)');
         }
         
-        // Verifica CID para não-médicos (simplificado: se não tem no prontuário ou no custom_data)
-        const pacCid = String(pacCustom.cid || pront.cid || '').trim();
-        if (!pacCid || pacCid.length < 3) {
+        const cidValido = (cid || '').trim();
+        if (!cidValido || cidValido.length < 3) {
           motivosBloqueio.push('Código CID obrigatório não informado');
         }
       }
+
 
 
       if (motivosBloqueio.length > 0) {
