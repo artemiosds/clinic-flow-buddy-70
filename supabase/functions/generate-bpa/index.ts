@@ -71,7 +71,46 @@ const formatDate = (d: string) => {
 };
 
 // CBOs de médicos (família 225*) — médicos podem registrar atendimento sem SIGTAP
-const isMedico = (cbo: string) => onlyDigits(cbo).startsWith('225');
+const isMedicoCbo = (cbo: string) => {
+  const c = onlyDigits(cbo);
+  return c.startsWith('225') || c.startsWith('2231');
+};
+
+const isProfissionalMedico = (prof: any): boolean => {
+  if (!prof) return false;
+  
+  // 1. CBO
+  const cbo = onlyDigits((prof.custom_data || {}).cbo_codigo || prof.cbo || '');
+  if (isMedicoCbo(cbo)) return true;
+
+  // 2. Normalizar e verificar campos de texto
+  const normalize = (val: any) => {
+    if (!val || typeof val !== 'string') return '';
+    return val
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim();
+  };
+
+  const keywords = ['medico', 'medica'];
+  const valuesToCheck = [
+    prof.profissao,
+    prof.cargo,
+    prof.funcao,
+    prof.especialidade,
+    prof.custom_data?.profissao,
+    prof.custom_data?.cargo,
+    prof.custom_data?.funcao,
+    prof.custom_data?.carimbo?.profissao
+  ];
+
+  return valuesToCheck.some(val => {
+    const normalized = normalize(val);
+    return keywords.some(k => normalized.includes(k));
+  });
+};
+
 
 // ─── Hash de controle do header BPA (algoritmo padrão DATASUS) ───────────────
 // Soma simples do conteúdo das linhas, módulo 1111, mapeado em a-z + 0-9
@@ -128,7 +167,7 @@ Deno.serve(async (req) => {
     // 1. Prontuários do período (somente finalizados — todos no schema atual já são finalizados ao salvar)
     let prontQuery = supabase
       .from('prontuarios')
-      .select('id, paciente_id, paciente_nome, profissional_id, profissional_nome, data_atendimento, unidade_id')
+      .select('id, paciente_id, paciente_nome, profissional_id, profissional_nome, data_atendimento, unidade_id, custom_data, cid')
       .gte('data_atendimento', dataInicio)
       .lte('data_atendimento', dataFim)
       .order('data_atendimento', { ascending: true });
@@ -136,7 +175,12 @@ Deno.serve(async (req) => {
 
     const { data: prontuarios, error: prontErr } = await prontQuery;
     if (prontErr) throw prontErr;
-    const prots = prontuarios || [];
+    
+    const statusFinalizados = ['finalizado', 'concluido', 'concluído', 'realizado', 'atendido', 'atendimento_finalizado', 'prontuario_finalizado', 'fechado'];
+    const prots = (prontuarios || []).filter((p: any) => {
+      const status = (p.custom_data?.status || '').toLowerCase();
+      return !status || statusFinalizados.includes(status);
+    });
 
     if (prots.length === 0) {
       return new Response(
@@ -145,21 +189,26 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 2. Procedimentos vinculados aos prontuários
+    // 2. PTS Ativos para complementação
+    const pacIds = [...new Set(prots.map((p: any) => p.paciente_id).filter(Boolean))];
+    const { data: ptsData } = await supabase
+      .from('pts')
+      .select('id, patient_id, status, pts_cid(cid_codigo), pts_sigtap(procedimento_codigo, procedimento_nome)')
+      .in('patient_id', pacIds)
+      .in('status', ['ativo', 'em_andamento', 'finalizado', 'concluido', 'concluído']);
+    
+    const ptsByPac = new Map();
+    (ptsData || []).forEach((p: any) => {
+      if (!ptsByPac.has(p.patient_id)) ptsByPac.set(p.patient_id, []);
+      ptsByPac.get(p.patient_id).push(p);
+    });
+
+    // 3. Procedimentos vinculados aos prontuários
     const prontIds = prots.map((p: any) => p.id);
     const { data: vincs } = await supabase
       .from('prontuario_procedimentos')
-      .select('prontuario_id, procedimento_id')
+      .select('prontuario_id, procedimento_id, nome_procedimento, codigo_sigtap, cid')
       .in('prontuario_id', prontIds);
-
-    const procIds = [...new Set((vincs || []).map((v: any) => v.procedimento_id))];
-    const { data: procsData } = procIds.length
-      ? await supabase
-          .from('procedimentos')
-          .select('id, nome, codigo_sigtap')
-          .in('id', procIds)
-      : { data: [] as any[] };
-    const procMap = new Map((procsData || []).map((p: any) => [p.id, p]));
 
     const vincsByProntuario = new Map<string, any[]>();
     (vincs || []).forEach((v: any) => {
@@ -168,7 +217,8 @@ Deno.serve(async (req) => {
       vincsByProntuario.set(v.prontuario_id, arr);
     });
 
-    // 3. Pacientes / Profissionais / Unidades
+    // 4. Pacientes / Profissionais / Unidades
+
     const pacIds = [...new Set(prots.map((p: any) => p.paciente_id).filter(Boolean))];
     const profIds = [...new Set(prots.map((p: any) => p.profissional_id).filter(Boolean))];
     const uniIds = [...new Set(prots.map((p: any) => p.unidade_id).filter(Boolean))];
@@ -178,7 +228,7 @@ Deno.serve(async (req) => {
         ? supabase.from('pacientes').select('id, nome, cpf, cns, data_nascimento, custom_data').in('id', pacIds)
         : Promise.resolve({ data: [] }),
       profIds.length
-        ? supabase.from('funcionarios').select('id, nome, custom_data').in('id', profIds)
+        ? supabase.from('funcionarios').select('id, nome, custom_data, profissao, cargo').in('id', profIds)
         : Promise.resolve({ data: [] }),
       uniIds.length
         ? supabase.from('unidades').select('id, nome, custom_data').in('id', uniIds)
@@ -196,27 +246,72 @@ Deno.serve(async (req) => {
     let folha = 1;
     let seq = 0;
 
-    // Itens a processar: 1 por (prontuario, procedimento) — para médico sem proc, 1 linha "consulta"
-    type Item = { pront: any; vinc: any | null };
-    const items: Item[] = [];
-    for (const pront of prots as any[]) {
-      const procsDoProntuario = vincsByProntuario.get(pront.id) || [];
-      if (procsDoProntuario.length === 0) {
-        items.push({ pront, vinc: null });
-      } else {
-        for (const v of procsDoProntuario) items.push({ pront, vinc: v });
+    // Itens a processar: 1 por (prontuario, procedimento) 
+    const items: any[] = [];
+    const protsComProc = new Set();
+
+    (vincs || []).forEach((v: any) => {
+      const pront = prots.find((p: any) => p.id === v.prontuario_id);
+      if (!pront) return;
+      protsComProc.add(pront.id);
+      
+      // Resolver CID: 1. Proc Prontuario -> 2. Prontuario Header -> 3. PTS
+      let finalCid = v.cid || pront.cid;
+      if (!finalCid) {
+        const pacPts = ptsByPac.get(pront.paciente_id) || [];
+        const ptsWithCid = pacPts.find((p: any) => p.pts_cid && p.pts_cid.length > 0);
+        if (ptsWithCid) finalCid = ptsWithCid.pts_cid[0].cid_codigo;
       }
-    }
+
+      items.push({
+        pront,
+        codigo_sigtap: (v.codigo_sigtap || '').replace(/\D/g, '').length === 10 ? v.codigo_sigtap : '',
+        nome_procedimento: v.nome_procedimento || '—',
+        cid: finalCid
+      });
+    });
+
+    // Prontuários SEM procedimento — tentar buscar no PTS ou marcar pendente
+    prots.forEach((pront: any) => {
+      if (!protsComProc.has(pront.id)) {
+        const pacPts = ptsByPac.get(pront.paciente_id) || [];
+        const ptsWithProc = pacPts.find((p: any) => p.pts_sigtap && p.pts_sigtap.length > 0);
+        
+        let finalCid = pront.cid;
+        if (!finalCid) {
+          const ptsWithCid = pacPts.find((p: any) => p.pts_cid && p.pts_cid.length > 0);
+          if (ptsWithCid) finalCid = ptsWithCid.pts_cid[0].cid_codigo;
+        }
+
+        if (ptsWithProc) {
+          const pSigtap = ptsWithProc.pts_sigtap[0];
+          items.push({
+            pront,
+            codigo_sigtap: (pSigtap.procedimento_codigo || '').replace(/\D/g, '').length === 10 ? pSigtap.procedimento_codigo : '',
+            nome_procedimento: pSigtap.procedimento_nome,
+            cid: finalCid
+          });
+        } else {
+          items.push({
+            pront,
+            codigo_sigtap: '',
+            nome_procedimento: '— sem procedimento (Prontuário/PTS) —',
+            cid: finalCid
+          });
+        }
+      }
+    });
+
 
     for (const item of items) {
-      const { pront, vinc } = item;
+      const { pront, codigo_sigtap, nome_procedimento, cid } = item;
       totalAtendimentos += 1;
 
       const motivosBloqueio: string[] = [];
       const pac: any = pacMap.get(pront.paciente_id);
       const prof: any = profMap.get(pront.profissional_id);
       const uni: any = uniMap.get(pront.unidade_id);
-      const proc: any = vinc ? procMap.get(vinc.procedimento_id) : null;
+
 
       // Identificação obrigatória do paciente
       if (!pac) motivosBloqueio.push('Paciente não encontrado');
@@ -245,21 +340,29 @@ Deno.serve(async (req) => {
       const cnes = cnesOverride || cnesUni;
       if (!cnes || cnes.length !== 7) motivosBloqueio.push('CNES da unidade inválido (7 dígitos)');
 
-      // SIGTAP — obrigatório apenas para não-médicos
-      const sigtap = proc ? onlyDigits(proc.codigo_sigtap || '') : '';
-      const exigeSigtap = !isMedico(cboDigits);
-      if (exigeSigtap) {
-        if (!proc || !sigtap || sigtap.length !== 10) {
+      // SIGTAP e CID — obrigatórios apenas para não-médicos
+      const isMed = isProfissionalMedico(prof);
+      const sigtapRaw = (codigo_sigtap || '').replace(/\D/g, '');
+      
+      if (!isMed) {
+        if (!sigtapRaw || sigtapRaw.length !== 10) {
           motivosBloqueio.push('Código SIGTAP obrigatório (10 dígitos)');
         }
+        
+        const cidValido = (cid || '').trim();
+        if (!cidValido || cidValido.length < 3) {
+          motivosBloqueio.push('Código CID obrigatório não informado');
+        }
       }
+
+
 
       if (motivosBloqueio.length > 0) {
         pendentes.push({
           prontuario_id: pront.id,
           paciente_nome: pront.paciente_nome,
           profissional_nome: pront.profissional_nome,
-          procedimento_nome: proc ? proc.nome : (isMedico(cboDigits) ? 'Consulta médica' : '—'),
+          procedimento_nome: nome_procedimento || (isMed ? 'Consulta médica' : '—'),
           motivos: motivosBloqueio,
         });
         continue;
@@ -273,14 +376,16 @@ Deno.serve(async (req) => {
       const etnia = onlyDigits(pacCustom.etnia_codigo || '').padStart(4, '0').slice(-4);
       const municipio = padNum(pacCustom.municipio_ibge || pacCustom.codigo_ibge_municipio || '', 6);
       const cep = padNum(pacCustom.cep || '', 8);
-      const cid = String(pacCustom.cid || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
+      const cidFinal = String(cid || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
       const carater = padNum(pacCustom.carater_atendimento || '01', 2); // 01=Eletivo
       const autorizacao = padText(String(pacCustom.numero_autorizacao || ''), 13);
 
       // Para médico sem procedimento, usa código SIGTAP genérico de consulta médica (0301010072)
-      const sigtapFinal = sigtap.length === 10
-        ? sigtap
-        : (isMedico(cboDigits) ? '0301010072' : '0000000000'); // 0301010072 = Consulta médica em APS
+      const sigtapFinal = sigtapRaw.length === 10
+        ? sigtapRaw
+        : (isMed ? '0301010072' : '0000000000'); // 0301010072 = Consulta médica em APS
+
+
 
       seq += 1;
       if (seq > 99) { folha += 1; seq = 1; }
@@ -350,7 +455,7 @@ Deno.serve(async (req) => {
         cnsPac +                                // 60-74 CNS paciente
         sexo +                                  // 75 Sexo
         municipio +                             // 76-81 Município IBGE
-        padText(cid, 4) +                       // 82-85 CID-10
+        padText(cidFinal, 4) +                       // 82-85 CID-10
         padNum(idade, 3) +                      // 86-88 Idade
         padNum(1, 6) +                          // 89-94 Quantidade
         carater +                               // 95-96 Caráter atendimento

@@ -27,7 +27,8 @@ import {
   normalizeBpaData, 
   validateBpaLine, 
   exportBpaToXlsx, 
-  isCboMedico,
+  isProfissionalMedico,
+
   generateBpaTxt,
   LinhaBPA,
   ProntuarioRow,
@@ -238,13 +239,21 @@ const BpaProducao: React.FC = () => {
 
       if (profIds.length) {
         const { data: profs } = await (supabase as any)
-          .from('funcionarios').select('id, custom_data').in('id', profIds);
-        const pm: typeof profMap = {};
+          .from('funcionarios')
+          .select('id, custom_data, profissao, cargo')
+          .in('id', profIds);
+        const pm: any = {};
         (profs || []).forEach((f: any) => {
-          pm[f.id] = { cbo: (f.custom_data || {}).cbo_codigo || '' };
+          pm[f.id] = { 
+            cbo: (f.custom_data || {}).cbo_codigo || '',
+            profissao: f.profissao || '',
+            cargo: f.cargo || '',
+            custom_data: f.custom_data || {}
+          };
         });
         setProfMap(pm);
       } else setProfMap({});
+
     } catch (err) {
       console.error('load bpa error', err);
       toast.error('Erro ao carregar prontuários');
@@ -267,7 +276,7 @@ const BpaProducao: React.FC = () => {
       paciente_nascimento: pac?.data_nascimento || '',
       paciente_cns: pac?.cns || '',
       paciente_cpf: pac?.cpf || '',
-      profissional_custom: (prof as any)?.custom_data || prof,
+      profissional_custom: prof, // Agora prof já contém profissao, cargo, cbo e custom_data
       unidade_custom: (uni as any)?.custom_data || {},
       unidade_nome: uni?.nome || '',
     });
@@ -278,6 +287,7 @@ const BpaProducao: React.FC = () => {
       errors: v.errors
     };
   };
+
 
   const stats = useMemo(() => {
     let validos = 0, pendentes = 0;
@@ -441,7 +451,8 @@ const BpaProducao: React.FC = () => {
                     paciente_nascimento: pac?.data_nascimento || '',
                     paciente_cns: pac?.cns || '',
                     paciente_cpf: pac?.cpf || '',
-                    profissional_custom: (prof as any)?.custom_data || prof,
+                    profissional_custom: prof,
+
                     unidade_custom: (uni as any)?.custom_data || {},
                     unidade_nome: uni?.nome || '',
                   });
@@ -525,7 +536,7 @@ const BpaProducao: React.FC = () => {
                     const prof = profMap[l.profissional_id];
                     const v = validateRow(l);
                     const ok = v.isValid;
-                    const isMed = isCboMedico(prof?.cbo || '');
+                    const isMed = isProfissionalMedico(prof);
                     return (
                       <TableRow key={l.key} className={cn(!ok && "bg-destructive/5")}>
                         <TableCell>
@@ -557,8 +568,10 @@ const BpaProducao: React.FC = () => {
                           )}
                         </TableCell>
                         <TableCell className={cn("text-xs font-mono", !ok && v.errors.some(e => e.includes('SIGTAP')) && "text-destructive")}>
-                          {l.codigo_sigtap || (isMed ? <span className="text-muted-foreground italic">opcional</span> : <span className="italic">faltando</span>)}
+                          {l.codigo_sigtap || (isMed ? <Badge variant="outline" className="text-primary border-primary/20 text-[9px] font-normal uppercase">Opcional Médico</Badge> : <span className="italic text-destructive">faltando</span>)}
                         </TableCell>
+
+
                         <TableCell>
                           <div className="flex flex-col gap-1">
                             {ok ? (
@@ -594,8 +607,9 @@ const BpaProducao: React.FC = () => {
           <DialogHeader>
             <DialogTitle>Gerar arquivo BPA-I</DialogTitle>
             <DialogDescription>
-              Geração de arquivo TXT oficial para importação no BPAMag. Linhas com Nome, CNS/CPF, CBO, CNES ou Data Nasc. ausentes serão marcadas como pendentes. Médicos (CBO 225*) podem gerar sem SIGTAP (usa código de consulta clínica).
+              Geração de arquivo TXT oficial para importação no BPAMag. Linhas com Nome, CNS/CPF, CBO, CNES ou Data Nasc. ausentes serão marcadas como pendentes. Profissionais médicos possuem dispensa de Procedimento e CID obrigatórios.
             </DialogDescription>
+
           </DialogHeader>
           <div className="space-y-3 py-2">
             <div>
@@ -659,8 +673,9 @@ const BpaProducao: React.FC = () => {
                     {modalPreview.pendentes} registro(s) possuem pendências obrigatórias e serão ignorados.
                   </span>
                   <span className="text-[10px] opacity-80 pl-4">
-                    Campos obrigatórios: Nome, CNS/CPF, CBO, CNES, SIGTAP, Sexo e Município IBGE.
+                    Campos obrigatórios: Nome, CNS/CPF, CBO, CNES, SIGTAP (exceto médicos), CID (exceto médicos), Sexo e Município.
                   </span>
+
                 </p>
               )}
             </div>
