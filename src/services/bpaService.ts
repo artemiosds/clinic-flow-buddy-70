@@ -14,7 +14,8 @@ export interface ProntuarioRow {
 
 export interface LinhaBPA {
   key: string;                // prontuario_id + proc_id
-  prontuario_id: string;
+  prontuario_id?: string;
+  pts_id?: string;
   paciente_id: string;
   paciente_nome: string;
   profissional_id: string;
@@ -23,6 +24,9 @@ export interface LinhaBPA {
   data: string;
   procedimento_nome: string;
   codigo_sigtap: string;
+  cid?: string;
+  fonte_procedimento: "prontuario" | "pts" | "tratamento";
+  fonte_cid?: "prontuario" | "pts" | "atendimento";
 }
 
 export interface ValidationFlags {
@@ -60,6 +64,8 @@ export interface BpaLine {
   carater_atendimento: string;
   cid: string;
   autorizacao: string;
+  fonte_procedimento?: string;
+  fonte_cid?: string;
 }
 
 export interface BpaValidation {
@@ -152,7 +158,7 @@ export const normalizeBpaData = (raw: any): BpaLine => {
 
   return {
     id: raw.id,
-    data: raw.data_atendimento,
+    data: raw.data_atendimento || raw.data,
     paciente_id: raw.paciente_id,
     paciente_nome: raw.paciente_nome,
     profissional_id: raw.profissional_id,
@@ -177,6 +183,8 @@ export const normalizeBpaData = (raw: any): BpaLine => {
     carater_atendimento: cd.carater_atendimento || '01',
     cid: (raw.cid || cd.cid || '').replace(/[^A-Z0-9]/g, '').slice(0, 4),
     autorizacao: (cd.numero_autorizacao || '').replace(/[^A-Z0-9]/g, '').slice(0, 13),
+    fonte_procedimento: raw.fonte_procedimento,
+    fonte_cid: raw.fonte_cid,
   };
 };
 
@@ -189,6 +197,8 @@ export const exportBpaToXlsx = (lines: BpaLine[], competencia: string) => {
     return {
       'STATUS': v.isValid ? 'OK' : 'PENDENTE',
       'PENDÊNCIAS': v.errors.join('; '),
+      'FONTE PROC': l.fonte_procedimento,
+      'FONTE CID': l.fonte_cid || '—',
       'DATA ATENDIMENTO': l.data,
       'PACIENTE': l.paciente_nome,
       'CNS PACIENTE': l.paciente_cns,
@@ -206,6 +216,7 @@ export const exportBpaToXlsx = (lines: BpaLine[], competencia: string) => {
       'CARÁTER': l.carater_atendimento,
       'CID': l.cid,
       'AUTORIZAÇÃO': l.autorizacao,
+      'PRONTUARIO_ID': l.id.split('_')[0], // Se id for composto
     };
   });
 
