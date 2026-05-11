@@ -215,12 +215,12 @@ const BpaProducao: React.FC = () => {
       setLinhas(result);
 
       // 4. Auxiliares
-      const pacIds = [...new Set(prots.map((p) => p.paciente_id).filter(Boolean))];
+      const uniquePacIds = [...new Set(prots.map((p) => p.paciente_id).filter(Boolean))];
       const profIds = [...new Set(prots.map((p) => p.profissional_id).filter(Boolean))];
 
-      if (pacIds.length) {
+      if (uniquePacIds.length) {
         const { data: pacs } = await (supabase as any)
-          .from('pacientes').select('id, nome, cpf, cns, data_nascimento, custom_data').in('id', pacIds);
+          .from('pacientes').select('id, nome, cpf, cns, data_nascimento, custom_data').in('id', uniquePacIds);
         const pm: typeof pacMap = {};
         (pacs || []).forEach((p: any) => {
           const cd = p.custom_data || {};
