@@ -451,7 +451,8 @@ const BpaProducao: React.FC = () => {
                     paciente_nascimento: pac?.data_nascimento || '',
                     paciente_cns: pac?.cns || '',
                     paciente_cpf: pac?.cpf || '',
-                    profissional_custom: (prof as any)?.custom_data || prof,
+                    profissional_custom: prof,
+
                     unidade_custom: (uni as any)?.custom_data || {},
                     unidade_nome: uni?.nome || '',
                   });
