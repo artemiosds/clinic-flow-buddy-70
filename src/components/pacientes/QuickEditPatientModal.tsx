@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Loader2, Save, User, MapPin, Phone, FileHeart } from "lucide-react";
+import { Loader2, Save, User, MapPin, Phone, FileHeart, AlertCircle, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import MunicipioIbgeCombobox from "@/components/MunicipioIbgeCombobox";
@@ -16,7 +16,8 @@ import { useData } from "@/contexts/DataContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { updatePacienteCadastro } from "@/lib/pacienteService";
 import UnidadeSelect from "./UnidadeSelect";
-
+import { calcularPendenciasPaciente } from "@/lib/pacientePendencias";
+import { Badge } from "@/components/ui/badge";
 
 interface Props {
   open: boolean;
@@ -64,34 +65,21 @@ const QuickEditPatientModal: React.FC<Props> = ({ open, onOpenChange, pacienteId
     setSaving(true);
     
     try {
-      // Usar a função centralizada de atualização
       const updatedData = await updatePacienteCadastro(pacienteId, form, "QuickEditModal");
       
       setDirty(false);
       lastSavedFormRef.current = JSON.stringify(updatedData);
       setForm(updatedData);
       
-      // Invalidação massiva de caches para garantir sincronização total
       queryClient.invalidateQueries({ queryKey: ["pacientes"] });
       queryClient.invalidateQueries({ queryKey: ["paciente"] });
       queryClient.invalidateQueries({ queryKey: ["pacientes-pendencias"] });
       queryClient.invalidateQueries({ queryKey: ["pacientes-paginated"] });
-      queryClient.invalidateQueries({ queryKey: ["pendencias_cadastrais"] });
-      queryClient.invalidateQueries({ queryKey: ["conferir_dados_paciente"] });
-      queryClient.invalidateQueries({ queryKey: ["agenda"] });
-      queryClient.invalidateQueries({ queryKey: ["fila_espera"] });
-      queryClient.invalidateQueries({ queryKey: ["prontuario"] });
-      queryClient.invalidateQueries({ queryKey: ["ficha_cadastral"] });
-      queryClient.invalidateQueries({ queryKey: ["bpa"] });
-      queryClient.invalidateQueries({ queryKey: ["relatorios"] });
-      queryClient.invalidateQueries({ queryKey: ["paciente_by_id"] });
 
-
-      // Atualizar contexto global
       await refreshPacientes();
 
       if (manual) {
-        toast.success("Cadastro atualizado com sucesso no banco de dados.");
+        toast.success("Dados cadastrais salvos com sucesso.");
         onSaved();
       }
     } catch (error: any) {
@@ -107,77 +95,173 @@ const QuickEditPatientModal: React.FC<Props> = ({ open, onOpenChange, pacienteId
     setDirty(true);
   };
   
-  // Debounced Auto-save
   useEffect(() => {
     if (!dirty || !pacienteId || saving) return;
-
     const timer = setTimeout(() => {
       handleSave(false);
     }, 2000); 
-
     return () => clearTimeout(timer);
   }, [form, dirty, pacienteId, saving, handleSave]);
 
   const sanitizeUpper = (v: string) => (v || "").toUpperCase();
 
+  const pendencias = useMemo(() => {
+    if (!form || Object.keys(form).length === 0) return { labels: [], score: 0 };
+    return calcularPendenciasPaciente(form);
+  }, [form]);
+
+  const isCritical = (type: string) => {
+    const criticalMap: Record<string, string[]> = {
+      "identificacao": ["nome", "nome_mae", "data_nascimento", "sexo", "cpf", "cns"],
+      "endereco": ["endereco", "bairro", "municipio"],
+      "sus": ["raca_cor"]
+    };
+    
+    if (type === "identificacao") {
+      return !form.nome || !form.nome_mae || !form.data_nascimento || !form.sexo || !form.cpf || !form.cns;
+    }
+    if (type === "endereco") {
+      return !form.endereco || !form.bairro || !form.municipio;
+    }
+    if (type === "sus") {
+      return !form.raca_cor;
+    }
+    return false;
+  };
 
   return (
     <Dialog open={open} onOpenChange={(val) => {
       if (!val) {
-        // Se estiver sujo, tenta salvar uma última vez antes de fechar
         if (dirty) handleSave(false);
         onSaved();
       }
       onOpenChange(val);
     }}>
-      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
-        <DialogHeader className="p-6 pb-2">
-          <DialogTitle className="flex items-center gap-2">
-            <User className="w-5 h-5 text-primary" />
-            Edição Rápida: {form.nome || "Paciente"}
-          </DialogTitle>
+      <DialogContent className="max-w-3xl max-h-[95vh] flex flex-col p-0 overflow-hidden border-none shadow-2xl">
+        <DialogHeader className="p-8 pb-4 bg-slate-50/80 border-b">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-primary/10 rounded-2xl">
+                <User className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <DialogTitle className="text-2xl font-bold tracking-tight">
+                  Atualização Cadastral
+                </DialogTitle>
+                <p className="text-slate-500 font-medium">{form.nome || "Paciente"}</p>
+              </div>
+            </div>
+            <div className="flex flex-col items-end gap-1.5">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Completude</span>
+                <span className="text-sm font-bold text-primary">{pendencias.score}%</span>
+              </div>
+              <div className="w-32 h-2 bg-slate-200 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-primary transition-all duration-500"
+                  style={{ width: `${pendencias.score}%` }}
+                />
+              </div>
+            </div>
+          </div>
+          
+          {pendencias.labels.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              <span className="text-[10px] font-bold text-slate-400 uppercase pt-1">Pendentes:</span>
+              {pendencias.labels.map((l, i) => (
+                <Badge key={i} variant="secondary" className="bg-red-50 text-red-600 border-red-100 text-[10px] px-2 py-0">
+                  {l}
+                </Badge>
+              ))}
+            </div>
+          )}
         </DialogHeader>
 
         {loading ? (
-          <div className="flex items-center justify-center p-20">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <div className="flex flex-col items-center justify-center p-24 gap-4">
+            <Loader2 className="w-10 h-10 animate-spin text-primary/40" />
+            <p className="text-sm text-slate-400 font-medium">Carregando formulário...</p>
           </div>
         ) : (
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
-            <TabsList className="grid grid-cols-4 mx-6">
-              <TabsTrigger value="identificacao" className="flex items-center gap-1.5">
-                <User className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Identificação</span>
-              </TabsTrigger>
-              <TabsTrigger value="endereco" className="flex items-center gap-1.5">
-                <MapPin className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Endereço</span>
-              </TabsTrigger>
-              <TabsTrigger value="contato" className="flex items-center gap-1.5">
-                <Phone className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Contato</span>
-              </TabsTrigger>
-              <TabsTrigger value="sus" className="flex items-center gap-1.5">
-                <FileHeart className="w-3.5 h-3.5" /> <span className="hidden sm:inline">SUS</span>
-              </TabsTrigger>
-            </TabsList>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0 bg-white">
+            <div className="px-8 border-b">
+              <TabsList className="h-14 w-full justify-start gap-8 bg-transparent p-0 border-none">
+                <TabsTrigger 
+                  value="identificacao" 
+                  className="h-14 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 flex items-center gap-2 text-slate-500 data-[state=active]:text-primary font-semibold transition-all"
+                >
+                  <User className="w-4 h-4" /> 
+                  Identificação
+                  {isCritical("identificacao") && <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />}
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="endereco" 
+                  className="h-14 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 flex items-center gap-2 text-slate-500 data-[state=active]:text-primary font-semibold transition-all"
+                >
+                  <MapPin className="w-4 h-4" /> 
+                  Endereço
+                  {isCritical("endereco") && <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />}
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="contato" 
+                  className="h-14 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 flex items-center gap-2 text-slate-500 data-[state=active]:text-primary font-semibold transition-all"
+                >
+                  <Phone className="w-4 h-4" /> 
+                  Contato
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="sus" 
+                  className="h-14 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 flex items-center gap-2 text-slate-500 data-[state=active]:text-primary font-semibold transition-all"
+                >
+                  <FileHeart className="w-4 h-4" /> 
+                  SUS / Complementares
+                  {isCritical("sus") && <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />}
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
-            <div className="flex-1 overflow-y-auto p-6 pt-2">
-              <TabsContent value="identificacao" className="space-y-4 mt-0">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="md:col-span-2">
-                    <Label>Nome Completo</Label>
-                    <Input value={form.nome || ""} onChange={e => set("nome", sanitizeUpper(e.target.value))} />
+            <div className="flex-1 overflow-y-auto px-8 py-6 custom-scrollbar">
+              <TabsContent value="identificacao" className="space-y-6 mt-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                  <div className="md:col-span-2 space-y-2">
+                    <Label className="text-slate-600 font-bold flex items-center gap-1.5">
+                      Nome Completo <span className="text-red-500">*</span>
+                    </Label>
+                    <Input 
+                      className={`h-11 border-slate-200 focus:border-primary transition-all ${!form.nome ? 'bg-red-50/30' : ''}`}
+                      value={form.nome || ""} 
+                      onChange={e => set("nome", sanitizeUpper(e.target.value))} 
+                    />
                   </div>
-                  <div className="md:col-span-2">
-                    <Label>Nome da Mãe</Label>
-                    <Input value={form.nome_mae || ""} onChange={e => set("nome_mae", sanitizeUpper(e.target.value))} />
+                  <div className="md:col-span-2 space-y-2">
+                    <Label className="text-slate-600 font-bold flex items-center gap-1.5">
+                      Nome da Mãe <span className="text-red-500">*</span>
+                    </Label>
+                    <Input 
+                      className={`h-11 border-slate-200 focus:border-primary transition-all ${!form.nome_mae ? 'bg-red-50/30' : ''}`}
+                      value={form.nome_mae || ""} 
+                      onChange={e => set("nome_mae", sanitizeUpper(e.target.value))} 
+                    />
                   </div>
-                  <div>
-                    <Label>Data de Nascimento</Label>
-                    <Input type="date" value={form.data_nascimento || ""} onChange={e => set("data_nascimento", e.target.value)} />
+                  <div className="space-y-2">
+                    <Label className="text-slate-600 font-bold flex items-center gap-1.5">
+                      Data de Nascimento <span className="text-red-500">*</span>
+                    </Label>
+                    <Input 
+                      type="date" 
+                      className={`h-11 border-slate-200 focus:border-primary transition-all ${!form.data_nascimento ? 'bg-red-50/30' : ''}`}
+                      value={form.data_nascimento || ""} 
+                      onChange={e => set("data_nascimento", e.target.value)} 
+                    />
                   </div>
-                  <div>
-                    <Label>Sexo</Label>
+                  <div className="space-y-2">
+                    <Label className="text-slate-600 font-bold flex items-center gap-1.5">
+                      Sexo <span className="text-red-500">*</span>
+                    </Label>
                     <Select value={form.sexo || ""} onValueChange={v => set("sexo", v)}>
-                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectTrigger className={`h-11 border-slate-200 ${!form.sexo ? 'bg-red-50/30' : ''}`}>
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="M">Masculino</SelectItem>
                         <SelectItem value="F">Feminino</SelectItem>
@@ -185,32 +269,52 @@ const QuickEditPatientModal: React.FC<Props> = ({ open, onOpenChange, pacienteId
                       </SelectContent>
                     </Select>
                   </div>
-                  <div>
-                    <Label>CPF</Label>
-                    <Input value={form.cpf || ""} onChange={e => set("cpf", e.target.value)} placeholder="000.000.000-00" />
+                  <div className="space-y-2">
+                    <Label className="text-slate-600 font-bold flex items-center gap-1.5">
+                      CPF <span className="text-red-500">*</span>
+                    </Label>
+                    <Input 
+                      className={`h-11 border-slate-200 focus:border-primary transition-all ${!form.cpf ? 'bg-red-50/30' : ''}`}
+                      value={form.cpf || ""} 
+                      onChange={e => set("cpf", e.target.value)} 
+                      placeholder="000.000.000-00" 
+                    />
                   </div>
-                  <div>
-                    <Label>CNS</Label>
-                    <Input value={maskCNS(form.cns || "")} onChange={e => set("cns", e.target.value)} placeholder="000 0000 0000 0000" />
+                  <div className="space-y-2">
+                    <Label className="text-slate-600 font-bold flex items-center gap-1.5">
+                      CNS <span className="text-red-500">*</span>
+                    </Label>
+                    <Input 
+                      className={`h-11 border-slate-200 focus:border-primary transition-all ${!form.cns ? 'bg-red-50/30' : ''}`}
+                      value={maskCNS(form.cns || "")} 
+                      onChange={e => set("cns", e.target.value)} 
+                      placeholder="000 0000 0000 0000" 
+                    />
                   </div>
                 </div>
               </TabsContent>
 
-              <TabsContent value="endereco" className="space-y-4 mt-0">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label>CEP</Label>
-                    <Input value={form.cep || ""} onChange={e => set("cep", e.target.value)} />
+              <TabsContent value="endereco" className="space-y-6 mt-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                  <div className="space-y-2">
+                    <Label className="text-slate-600 font-bold">CEP</Label>
+                    <Input 
+                      className="h-11 border-slate-200 focus:border-primary"
+                      value={form.cep || ""} 
+                      onChange={e => set("cep", e.target.value)} 
+                    />
                   </div>
-                  <div>
-                    <Label>Município</Label>
+                  <div className="space-y-2">
+                    <Label className="text-slate-600 font-bold flex items-center gap-1.5">
+                      Município <span className="text-red-500">*</span>
+                    </Label>
                     <MunicipioIbgeCombobox 
                       value={form.municipio || ""} 
                       onChange={(label) => set("municipio", label)} 
                     />
                   </div>
-                  <div className="md:col-span-2">
-                    <Label>Tipo de Logradouro (DNE)</Label>
+                  <div className="md:col-span-2 space-y-2">
+                    <Label className="text-slate-600 font-bold">Tipo de Logradouro (DNE)</Label>
                     <LogradouroDneAutocomplete 
                       value={form.tipo_logradouro || ""}
                       codigo={form.tipo_logradouro_codigo || ""}
@@ -220,50 +324,77 @@ const QuickEditPatientModal: React.FC<Props> = ({ open, onOpenChange, pacienteId
                       }}
                     />
                   </div>
-                  <div className="md:col-span-2">
-                    <Label>Logradouro</Label>
-                    <Input value={form.endereco || ""} onChange={e => set("endereco", sanitizeUpper(e.target.value))} />
+                  <div className="md:col-span-2 space-y-2">
+                    <Label className="text-slate-600 font-bold flex items-center gap-1.5">
+                      Logradouro <span className="text-red-500">*</span>
+                    </Label>
+                    <Input 
+                      className={`h-11 border-slate-200 focus:border-primary transition-all ${!form.endereco ? 'bg-red-50/30' : ''}`}
+                      value={form.endereco || ""} 
+                      onChange={e => set("endereco", sanitizeUpper(e.target.value))} 
+                    />
                   </div>
-                  <div>
-                    <Label>Número</Label>
-                    <Input value={form.numero || ""} onChange={e => set("numero", e.target.value)} />
+                  <div className="space-y-2">
+                    <Label className="text-slate-600 font-bold">Número</Label>
+                    <Input 
+                      className="h-11 border-slate-200 focus:border-primary"
+                      value={form.numero || ""} 
+                      onChange={e => set("numero", e.target.value)} 
+                    />
                   </div>
-                  <div>
-                    <Label>Bairro</Label>
-                    <Input value={form.bairro || ""} onChange={e => set("bairro", sanitizeUpper(e.target.value))} />
+                  <div className="space-y-2">
+                    <Label className="text-slate-600 font-bold flex items-center gap-1.5">
+                      Bairro <span className="text-red-500">*</span>
+                    </Label>
+                    <Input 
+                      className={`h-11 border-slate-200 focus:border-primary transition-all ${!form.bairro ? 'bg-red-50/30' : ''}`}
+                      value={form.bairro || ""} 
+                      onChange={e => set("bairro", sanitizeUpper(e.target.value))} 
+                    />
                   </div>
                 </div>
               </TabsContent>
 
-              <TabsContent value="contato" className="space-y-4 mt-0">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label>Telefone Principal</Label>
+              <TabsContent value="contato" className="space-y-6 mt-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                  <div className="space-y-2">
+                    <Label className="text-slate-600 font-bold">Telefone Principal</Label>
                     <Input 
+                      className="h-11 border-slate-200 focus:border-primary"
                       value={applyPhoneMask(form.telefone || "")} 
                       onChange={e => set("telefone", e.target.value)} 
                     />
                   </div>
-                  <div>
-                    <Label>Telefone Secundário</Label>
+                  <div className="space-y-2">
+                    <Label className="text-slate-600 font-bold">Telefone Secundário</Label>
                     <Input 
+                      className="h-11 border-slate-200 focus:border-primary"
                       value={applyPhoneMask(form.telefone_secundario || "")} 
                       onChange={e => set("telefone_secundario", e.target.value)} 
                     />
                   </div>
-                  <div className="md:col-span-2">
-                    <Label>E-mail</Label>
-                    <Input type="email" value={form.email || ""} onChange={e => set("email", e.target.value.toLowerCase())} />
+                  <div className="md:col-span-2 space-y-2">
+                    <Label className="text-slate-600 font-bold">E-mail</Label>
+                    <Input 
+                      type="email" 
+                      className="h-11 border-slate-200 focus:border-primary"
+                      value={form.email || ""} 
+                      onChange={e => set("email", e.target.value.toLowerCase())} 
+                    />
                   </div>
                 </div>
               </TabsContent>
 
-              <TabsContent value="sus" className="space-y-4 mt-0">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label>Raça / Cor (IBGE)</Label>
+              <TabsContent value="sus" className="space-y-6 mt-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                  <div className="space-y-2">
+                    <Label className="text-slate-600 font-bold flex items-center gap-1.5">
+                      Raça / Cor (IBGE) <span className="text-red-500">*</span>
+                    </Label>
                     <Select value={form.raca_cor || ""} onValueChange={v => set("raca_cor", v)}>
-                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectTrigger className={`h-11 border-slate-200 ${!form.raca_cor ? 'bg-red-50/30' : ''}`}>
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="branca">Branca</SelectItem>
                         <SelectItem value="preta">Preta</SelectItem>
@@ -274,35 +405,54 @@ const QuickEditPatientModal: React.FC<Props> = ({ open, onOpenChange, pacienteId
                       </SelectContent>
                     </Select>
                   </div>
-                  <div>
-                    <Label>Nacionalidade</Label>
-                    <Input value={form.nacionalidade || "Brasil"} onChange={e => set("nacionalidade", sanitizeUpper(e.target.value))} />
+                  <div className="space-y-2">
+                    <Label className="text-slate-600 font-bold">Nacionalidade</Label>
+                    <Input 
+                      className="h-11 border-slate-200 focus:border-primary"
+                      value={form.nacionalidade || "Brasil"} 
+                      onChange={e => set("nacionalidade", sanitizeUpper(e.target.value))} 
+                    />
                   </div>
-                  <div className="md:col-span-2">
-                    <Label>Unidade Vinculada</Label>
+                  <div className="md:col-span-2 space-y-2">
+                    <Label className="text-slate-600 font-bold">Unidade Vinculada (Opcional)</Label>
                     <UnidadeSelect 
                       value={form.unidade_id === "" ? "none" : (form.unidade_id || "")} 
                       onValueChange={v => set("unidade_id", v === "none" ? "" : v)} 
                     />
+                    <p className="text-[10px] text-slate-400">Vínculo administrativo secundário para esta central.</p>
                   </div>
                 </div>
               </TabsContent>
-
             </div>
           </Tabs>
         )}
 
-        <DialogFooter className="p-6 border-t bg-muted/20">
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
-            Cancelar
-          </Button>
-          <Button onClick={() => handleSave(true)} disabled={saving}>
-            {saving ? (
-              <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Salvando...</>
+        <DialogFooter className="p-8 border-t bg-slate-50/80 flex items-center justify-between sm:justify-between">
+          <div className="flex items-center gap-3 text-slate-400">
+            {dirty ? (
+              <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider animate-pulse">
+                <div className="w-2 h-2 rounded-full bg-amber-400" />
+                Alterações não salvas
+              </div>
             ) : (
-              <><Save className="w-4 h-4 mr-2" /> Salvar Alterações</>
+              <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-emerald-500">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                Dados sincronizados
+              </div>
             )}
-          </Button>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" className="font-semibold text-slate-500 hover:bg-slate-200/50" onClick={() => onOpenChange(false)} disabled={saving}>
+              Fechar
+            </Button>
+            <Button className="font-bold shadow-lg shadow-primary/20 h-11 px-8" onClick={() => handleSave(true)} disabled={saving}>
+              {saving ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Salvando...</>
+              ) : (
+                <><Save className="w-4 h-4 mr-2" /> Salvar Agora</>
+              )}
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
