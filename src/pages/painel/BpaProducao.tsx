@@ -450,7 +450,7 @@ const BpaProducao: React.FC = () => {
                     const pac = pacMap[l.paciente_id];
                     const prof = profMap[l.profissional_id];
                     const v = validateRow(l);
-                    const ok = v.identificacao && v.cbo && v.sigtap && v.nome && v.dataNasc;
+                    const ok = v.isValid;
                     const isMed = isCboMedico(prof?.cbo || '');
                     return (
                       <TableRow key={l.key} className={cn(!ok && "bg-destructive/5")}>
@@ -460,20 +460,20 @@ const BpaProducao: React.FC = () => {
                             : <AlertCircle className="w-4 h-4 text-destructive" />}
                         </TableCell>
                         <TableCell className="text-xs whitespace-nowrap">{l.data}</TableCell>
-                        <TableCell className={cn("font-medium", !v.nome && "text-destructive")}>
+                        <TableCell className={cn("font-medium", !ok && v.errors.some(e => e.includes('Nome')) && "text-destructive")}>
                           {l.paciente_nome || <span className="italic">faltando</span>}
                         </TableCell>
-                        <TableCell className={cn("text-xs font-mono", !v.identificacao && "text-destructive")}>
+                        <TableCell className={cn("text-xs font-mono", !ok && v.errors.some(e => e.includes('CNS') || e.includes('CPF')) && "text-destructive")}>
                           <div className="flex flex-col">
                             <span>{pac?.cns || <span className="italic opacity-50">sem cns</span>}</span>
                             <span className="text-[10px] opacity-70">{pac?.cpf || <span className="italic opacity-50">sem cpf</span>}</span>
                           </div>
                         </TableCell>
-                        <TableCell className={cn("text-xs", !v.dataNasc && "text-destructive italic")}>
+                        <TableCell className={cn("text-xs", !ok && v.errors.some(e => e.includes('nascimento')) && "text-destructive italic")}>
                           {pac?.data_nascimento ? new Date(pac.data_nascimento + 'T12:00:00').toLocaleDateString('pt-BR') : 'faltando'}
                         </TableCell>
                         <TableCell className="text-xs">{l.profissional_nome}</TableCell>
-                        <TableCell className={cn("text-xs font-mono", !v.cbo && "text-destructive")}>
+                        <TableCell className={cn("text-xs font-mono", !ok && v.errors.some(e => e.includes('CBO')) && "text-destructive")}>
                           {prof?.cbo || <span className="italic">faltando</span>}
                         </TableCell>
                         <TableCell className="text-xs">
@@ -482,13 +482,27 @@ const BpaProducao: React.FC = () => {
                             <Badge className="ml-1 bg-primary/10 text-primary border-0 text-[9px]">consulta</Badge>
                           )}
                         </TableCell>
-                        <TableCell className={cn("text-xs font-mono", !v.sigtap && "text-destructive")}>
+                        <TableCell className={cn("text-xs font-mono", !ok && v.errors.some(e => e.includes('SIGTAP')) && "text-destructive")}>
                           {l.codigo_sigtap || (isMed ? <span className="text-muted-foreground italic">opcional</span> : <span className="italic">faltando</span>)}
                         </TableCell>
                         <TableCell>
-                          {ok
-                            ? <Badge className="bg-success/10 text-success border-0 text-[10px]">OK</Badge>
-                            : <Badge className="bg-destructive/10 text-destructive border-0 text-[10px]">PENDENTE</Badge>}
+                          <div className="flex flex-col gap-1">
+                            {ok ? (
+                              <Badge className="bg-success/10 text-success border-0 text-[10px] w-fit">OK</Badge>
+                            ) : (
+                              <>
+                                <Badge className="bg-destructive/10 text-destructive border-0 text-[10px] w-fit">PENDENTE</Badge>
+                                <div className="text-[9px] text-destructive leading-tight max-w-[150px]">
+                                  {v.errors.map((err, i) => (
+                                    <div key={i} className="flex gap-1">
+                                      <span>•</span>
+                                      <span>{err}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
