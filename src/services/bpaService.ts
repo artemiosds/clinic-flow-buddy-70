@@ -66,6 +66,11 @@ export interface BpaLine {
   autorizacao: string;
   fonte_procedimento?: string;
   fonte_cid?: string;
+  // Novos campos para controle médico
+  profissao_profissional?: string;
+  is_medico?: boolean;
+  procedimento_dispensa_motivo?: string;
+  cid_dispensa_motivo?: string;
 }
 
 export interface BpaValidation {
@@ -77,6 +82,45 @@ export const isCboMedico = (cbo: string) => {
   const c = (cbo || '').replace(/\D/g, '');
   return c.startsWith('225') || c.startsWith('2231'); // Médicos
 };
+
+export const isProfissionalMedico = (profData: any): boolean => {
+  if (!profData) return false;
+  
+  // 1. Verificar CBO primeiro
+  const cbo = (profData.cbo_codigo || profData.cbo || '').replace(/\D/g, '');
+  if (isCboMedico(cbo)) return true;
+
+  // 2. Normalizar e verificar campos de texto
+  const normalize = (val: any) => {
+    if (!val || typeof val !== 'string') return '';
+    return val
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "") // Remove acentos
+      .trim();
+  };
+
+  const keywords = ['medico', 'medica'];
+  
+  // Campos a verificar
+  const valuesToCheck = [
+    profData.profissao,
+    profData.profissao_profissional,
+    profData.cargo,
+    profData.funcao,
+    profData.especialidade,
+    profData.custom_data?.profissao,
+    profData.custom_data?.cargo,
+    profData.custom_data?.funcao,
+    profData.custom_data?.carimbo?.profissao
+  ];
+
+  return valuesToCheck.some(val => {
+    const normalized = normalize(val);
+    return keywords.some(k => normalized.includes(k));
+  });
+};
+
 
 /**
  * Valida uma linha de produção BPA-I
