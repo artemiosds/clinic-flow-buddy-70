@@ -71,17 +71,27 @@ const BpaProducao: React.FC = () => {
       const dataFim = `${ano}-${mes}-${String(ultDia).padStart(2, '0')}`;
 
       // 1. Prontuários do período
+      // BPA exige prontuários finalizados.
       let q = (supabase as any)
         .from('prontuarios')
-        .select('id, paciente_id, paciente_nome, profissional_id, profissional_nome, data_atendimento, unidade_id')
+        .select('id, paciente_id, paciente_nome, profissional_id, profissional_nome, data_atendimento, unidade_id, custom_data')
         .gte('data_atendimento', dataInicio)
         .lte('data_atendimento', dataFim)
         .order('data_atendimento', { ascending: false });
+      
       if (unidadeFiltro && unidadeFiltro !== 'all') q = q.eq('unidade_id', unidadeFiltro);
 
       const { data: prontuarios, error } = await q;
       if (error) throw error;
-      const prots = (prontuarios || []) as ProntuarioRow[];
+      
+      // Filtragem por status: finalizado, concluido, concluído, realizado, atendido, etc.
+      const statusFinalizados = ['finalizado', 'concluido', 'concluído', 'realizado', 'atendido', 'atendimento_finalizado', 'prontuario_finalizado', 'fechado'];
+      
+      const prots = (prontuarios || []).filter((p: any) => {
+        const status = (p.custom_data?.status || '').toLowerCase();
+        // Se não tiver status definido no custom_data, consideramos válido por enquanto para não sumir com tudo se o campo estiver vazio
+        return !status || statusFinalizados.includes(status);
+      }) as ProntuarioRow[];
 
       if (prots.length === 0) {
         setLinhas([]);
