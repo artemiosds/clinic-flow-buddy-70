@@ -567,9 +567,9 @@ const BpaProducao: React.FC = () => {
                             <Badge className="ml-1 bg-primary/10 text-primary border-0 text-[9px]">consulta</Badge>
                           )}
                         </TableCell>
-                        <TableCell className={cn("text-xs font-mono", !ok && v.errors.some(e => e.includes('SIGTAP')) && "text-destructive")}>
-                          {l.codigo_sigtap || (isMed ? <span className="text-muted-foreground italic">opcional</span> : <span className="italic">faltando</span>)}
+                          {l.codigo_sigtap || (isMed ? <Badge variant="outline" className="text-primary border-primary/20 text-[9px] font-normal uppercase">Opcional Médico</Badge> : <span className="italic text-destructive">faltando</span>)}
                         </TableCell>
+
                         <TableCell>
                           <div className="flex flex-col gap-1">
                             {ok ? (
