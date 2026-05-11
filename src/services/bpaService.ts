@@ -14,7 +14,8 @@ export interface ProntuarioRow {
 
 export interface LinhaBPA {
   key: string;                // prontuario_id + proc_id
-  prontuario_id: string;
+  prontuario_id?: string;
+  pts_id?: string;
   paciente_id: string;
   paciente_nome: string;
   profissional_id: string;
@@ -23,6 +24,9 @@ export interface LinhaBPA {
   data: string;
   procedimento_nome: string;
   codigo_sigtap: string;
+  cid?: string;
+  fonte_procedimento: "prontuario" | "pts" | "tratamento";
+  fonte_cid?: "prontuario" | "pts" | "atendimento";
 }
 
 export interface ValidationFlags {
@@ -189,6 +193,8 @@ export const exportBpaToXlsx = (lines: BpaLine[], competencia: string) => {
     return {
       'STATUS': v.isValid ? 'OK' : 'PENDENTE',
       'PENDÊNCIAS': v.errors.join('; '),
+      'FONTE PROC': l.fonte_procedimento,
+      'FONTE CID': l.fonte_cid || '—',
       'DATA ATENDIMENTO': l.data,
       'PACIENTE': l.paciente_nome,
       'CNS PACIENTE': l.paciente_cns,
@@ -206,6 +212,7 @@ export const exportBpaToXlsx = (lines: BpaLine[], competencia: string) => {
       'CARÁTER': l.carater_atendimento,
       'CID': l.cid,
       'AUTORIZAÇÃO': l.autorizacao,
+      'PRONTUARIO_ID': l.id.split('_')[0], // Se id for composto
     };
   });
 
