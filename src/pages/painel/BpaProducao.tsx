@@ -673,8 +673,9 @@ const BpaProducao: React.FC = () => {
                     {modalPreview.pendentes} registro(s) possuem pendências obrigatórias e serão ignorados.
                   </span>
                   <span className="text-[10px] opacity-80 pl-4">
-                    Campos obrigatórios: Nome, CNS/CPF, CBO, CNES, SIGTAP, Sexo e Município IBGE.
+                    Campos obrigatórios: Nome, CNS/CPF, CBO, CNES, SIGTAP (exceto médicos), CID (exceto médicos), Sexo e Município.
                   </span>
+
                 </p>
               )}
             </div>
