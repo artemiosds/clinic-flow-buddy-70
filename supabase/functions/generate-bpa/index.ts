@@ -306,7 +306,7 @@ Deno.serve(async (req) => {
           prontuario_id: pront.id,
           paciente_nome: pront.paciente_nome,
           profissional_nome: pront.profissional_nome,
-          procedimento_nome: proc ? proc.nome : (isMedico(cboDigits) ? 'Consulta médica' : '—'),
+          procedimento_nome: proc ? proc.nome : (isMed ? 'Consulta médica' : '—'),
           motivos: motivosBloqueio,
         });
         continue;
