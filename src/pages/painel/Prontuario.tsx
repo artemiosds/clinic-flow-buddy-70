@@ -2548,11 +2548,11 @@ const ProntuarioPage: React.FC = () => {
                               onCheckedChange={(c) => {
                                 setSelectedProcIds((prev) => {
                                   if (c) {
-                                    const proc = procedimentos.find(p => p.id === proc.id);
-                                    if (proc && (proc.id || '').replace(/\D/g, '').length !== 10) {
+                                    const p = procedimentos.find(p => p.id === proc.id);
+                                    if (p && (p.id || '').replace(/\D/g, '').length !== 10) {
                                       toast.warning("Este procedimento não possui um código SIGTAP de 10 dígitos e será ignorado no BPA-I.");
                                     }
-                                    return [...prev, proc.id];
+                                    return Array.from(new Set([...prev, proc.id]));
                                   }
                                   return prev.filter((id) => id !== proc.id);
                                 });
