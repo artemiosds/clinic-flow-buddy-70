@@ -685,7 +685,7 @@ const ProntuarioPage: React.FC = () => {
     if (!prontuarioId) return;
 
     try {
-      // 1. Limpa procedimentos antigos
+      // 1. Limpa procedimentos antigos DO PRONTUÁRIO ATUAL
       const { error: deleteError } = await (supabase as any)
         .from("prontuario_procedimentos")
         .delete()
@@ -696,7 +696,7 @@ const ProntuarioPage: React.FC = () => {
         throw new Error("Não foi possível atualizar a lista de procedimentos.");
       }
 
-      // 2. Se houver novos procedimentos, insere
+      // 2. Se houver novos procedimentos selecionados, insere-os vinculados ao PRONTUÁRIO
       if (selectedProcIds.length > 0) {
         const links = buildProntuarioProcedimentoLinks(prontuarioId, profissionalId);
         const { error: insertError } = await (supabase as any)
@@ -705,11 +705,48 @@ const ProntuarioPage: React.FC = () => {
 
         if (insertError) {
           console.error("[Prontuario] Erro ao inserir novos procedimentos:", insertError);
-          // Detalhar o erro para ajudar no debug
           if (insertError.code === '42501') {
             throw new Error("Permissão negada (RLS) para salvar procedimentos.");
           }
           throw new Error("Erro ao vincular procedimentos ao prontuário.");
+        }
+      }
+
+      // 3. PERSISTÊNCIA GLOBAL: Garante que os procedimentos selecionados existam na tabela global 'procedimentos_realizados' para o PACIENTE
+      // Isso atende à regra de negócio de vínculo global e persistente ao paciente.
+      if (selectedProcIds.length > 0 && form.paciente_id) {
+        const globalRecords = selectedProcIds.map(pid => {
+          const proc = procedimentos.find(p => p.id === pid);
+          const codigosCids = selectedCidsByProc[pid] || [];
+          const cidsCatalogo = cidsByProc[pid] || [];
+          const cidsPayload = codigosCids.map(codigo => {
+            const found = cidsCatalogo.find(c => c.codigo === codigo);
+            return { codigo, descricao: found?.descricao || '' };
+          });
+          const primaryCid = codigosCids.length > 0 ? codigosCids[0] : null;
+
+          return {
+            paciente_id: form.paciente_id,
+            procedimento_id: pid,
+            profissional_id: profissionalId || user?.id,
+            unidade_id: user?.unidadeId,
+            data_realizacao: form.data_atendimento || new Date().toISOString().split('T')[0],
+            codigo_sigtap: proc?.id || pid,
+            nome_procedimento: proc?.nome || 'Procedimento',
+            cid_principal: primaryCid,
+            detalhes_cids: cidsPayload.length > 0 ? JSON.stringify(cidsPayload) : null,
+            prontuario_id: prontuarioId,
+            origem: 'prontuario'
+          };
+        });
+
+        // Upsert na tabela global para garantir vínculo persistente
+        const { error: globalError } = await (supabase as any)
+          .from("procedimentos_realizados")
+          .upsert(globalRecords, { onConflict: 'paciente_id,procedimento_id,data_realizacao' });
+        
+        if (globalError) {
+          console.warn("[Prontuario] Aviso ao salvar histórico global (procedimentos_realizados):", globalError);
         }
       }
     } catch (err: any) {
