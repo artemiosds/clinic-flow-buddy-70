@@ -851,6 +851,35 @@ const ProntuarioPage: React.FC = () => {
           hora_atendimento: horaInicio || "",
           tipo_registro: tipoRegistro,
         });
+        
+        // Regra de Negócio: Ao abrir um NOVO prontuário, se já houver procedimentos globais salvos para o paciente nesta data, carrega-os automaticamente.
+        const loadGlobalForNewProntuario = async () => {
+          const { data: globalProc } = await (supabase as any)
+            .from("procedimentos_realizados")
+            .select("*")
+            .eq("paciente_id", pacienteId)
+            .eq("data_realizacao", data || new Date().toISOString().split("T")[0]);
+
+          if (globalProc && globalProc.length > 0) {
+            setSelectedProcIds(globalProc.map((gp: any) => gp.procedimento_id));
+            const cidsByProcMap: Record<string, { codigo: string; descricao: string }[]> = {};
+            const selectedCidsMap: Record<string, string[]> = {};
+            globalProc.forEach((gp: any) => {
+              if (gp.detalhes_cids) {
+                try {
+                  const cids = JSON.parse(gp.detalhes_cids);
+                  cidsByProcMap[gp.procedimento_id] = cids;
+                  selectedCidsMap[gp.procedimento_id] = cids.map((c: any) => c.codigo);
+                  loadCidsForProc(gp.procedimento_id); // Garante catálogo carregado
+                } catch {}
+              }
+            });
+            setCidsByProc(m => ({ ...m, ...cidsByProcMap }));
+            setSelectedCidsByProc(m => ({ ...m, ...selectedCidsMap }));
+          }
+        };
+        loadGlobalForNewProntuario();
+
         setDialogOpen(true);
       }
       if (horaInicio) {
