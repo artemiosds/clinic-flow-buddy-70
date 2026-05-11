@@ -610,16 +610,41 @@ const ProntuarioPage: React.FC = () => {
   };
 
   const loadProntuarioProcedimentos = async (prontuarioId: string) => {
-    const { data } = await (supabase as any)
+    // 1. Busca procedimentos específicos deste prontuário
+    const { data: prontProc } = await (supabase as any)
       .from("prontuario_procedimentos")
       .select("*")
       .eq("prontuario_id", prontuarioId);
-    if (data) {
-      setSelectedProcIds(data.map((d: any) => d.procedimento_id));
-      // Restaura CIDs vinculados a partir do JSON salvo em observacao
+
+    // 2. Busca histórico global do paciente para garantir que procedimentos globais reapareçam (Regra de Negócio)
+    // Se o prontuário está em edição ou visualização, queremos ver os procedimentos que foram vinculados a ele.
+    // Mas a regra diz: "aparecer em todas as datas... em todos os prontuários".
+    // Então vamos mesclar o que é do prontuário com o que é global para este paciente na data do atendimento.
+    const { data: globalProc } = await (supabase as any)
+      .from("procedimentos_realizados")
+      .select("*")
+      .eq("paciente_id", form.paciente_id)
+      .eq("data_realizacao", form.data_atendimento);
+
+    const combinedData = [...(prontProc || [])];
+    
+    // Adiciona globais que não estão no prontuário (para manter consistência visual entre datas)
+    if (globalProc) {
+      globalProc.forEach((gp: any) => {
+        if (!combinedData.some(cp => cp.procedimento_id === gp.procedimento_id)) {
+          combinedData.push({
+            procedimento_id: gp.procedimento_id,
+            observacao: gp.detalhes_cids ? JSON.stringify({ cids: JSON.parse(gp.detalhes_cids) }) : ''
+          });
+        }
+      });
+    }
+
+    if (combinedData.length > 0) {
+      setSelectedProcIds(combinedData.map((d: any) => d.procedimento_id));
       const cidsByProcMap: Record<string, { codigo: string; descricao: string }[]> = {};
       const selectedCidsMap: Record<string, string[]> = {};
-      data.forEach((d: any) => {
+      combinedData.forEach((d: any) => {
         try {
           const parsed = d.observacao ? JSON.parse(d.observacao) : null;
           const cids: { codigo: string; descricao: string }[] = Array.isArray(parsed?.cids) ? parsed.cids : [];
@@ -627,7 +652,7 @@ const ProntuarioPage: React.FC = () => {
             cidsByProcMap[d.procedimento_id] = cids;
             selectedCidsMap[d.procedimento_id] = cids.map((c) => c.codigo);
           }
-        } catch { /* observação não-JSON: ignora */ }
+        } catch { /* ignora */ }
       });
       if (Object.keys(cidsByProcMap).length > 0) {
         setCidsByProc((m) => ({ ...m, ...cidsByProcMap }));
