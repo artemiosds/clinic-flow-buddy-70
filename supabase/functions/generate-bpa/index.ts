@@ -175,7 +175,12 @@ Deno.serve(async (req) => {
 
     const { data: prontuarios, error: prontErr } = await prontQuery;
     if (prontErr) throw prontErr;
-    const prots = prontuarios || [];
+    
+    const statusFinalizados = ['finalizado', 'concluido', 'concluído', 'realizado', 'atendido', 'atendimento_finalizado', 'prontuario_finalizado', 'fechado'];
+    const prots = (prontuarios || []).filter((p: any) => {
+      const status = (p.custom_data?.status || '').toLowerCase();
+      return !status || statusFinalizados.includes(status);
+    });
 
     if (prots.length === 0) {
       return new Response(
@@ -184,21 +189,26 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 2. Procedimentos vinculados aos prontuários
+    // 2. PTS Ativos para complementação
+    const pacIds = [...new Set(prots.map((p: any) => p.paciente_id).filter(Boolean))];
+    const { data: ptsData } = await supabase
+      .from('pts')
+      .select('id, patient_id, status, pts_cid(cid_codigo), pts_sigtap(procedimento_codigo, procedimento_nome)')
+      .in('patient_id', pacIds)
+      .in('status', ['ativo', 'em_andamento', 'finalizado', 'concluido', 'concluído']);
+    
+    const ptsByPac = new Map();
+    (ptsData || []).forEach((p: any) => {
+      if (!ptsByPac.has(p.patient_id)) ptsByPac.set(p.patient_id, []);
+      ptsByPac.get(p.patient_id).push(p);
+    });
+
+    // 3. Procedimentos vinculados aos prontuários
     const prontIds = prots.map((p: any) => p.id);
     const { data: vincs } = await supabase
       .from('prontuario_procedimentos')
-      .select('prontuario_id, procedimento_id')
+      .select('prontuario_id, procedimento_id, nome_procedimento, codigo_sigtap, cid')
       .in('prontuario_id', prontIds);
-
-    const procIds = [...new Set((vincs || []).map((v: any) => v.procedimento_id))];
-    const { data: procsData } = procIds.length
-      ? await supabase
-          .from('procedimentos')
-          .select('id, nome, codigo_sigtap')
-          .in('id', procIds)
-      : { data: [] as any[] };
-    const procMap = new Map((procsData || []).map((p: any) => [p.id, p]));
 
     const vincsByProntuario = new Map<string, any[]>();
     (vincs || []).forEach((v: any) => {
@@ -207,7 +217,8 @@ Deno.serve(async (req) => {
       vincsByProntuario.set(v.prontuario_id, arr);
     });
 
-    // 3. Pacientes / Profissionais / Unidades
+    // 4. Pacientes / Profissionais / Unidades
+
     const pacIds = [...new Set(prots.map((p: any) => p.paciente_id).filter(Boolean))];
     const profIds = [...new Set(prots.map((p: any) => p.profissional_id).filter(Boolean))];
     const uniIds = [...new Set(prots.map((p: any) => p.unidade_id).filter(Boolean))];
