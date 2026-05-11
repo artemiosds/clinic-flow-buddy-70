@@ -246,17 +246,62 @@ Deno.serve(async (req) => {
     let folha = 1;
     let seq = 0;
 
-    // Itens a processar: 1 por (prontuario, procedimento) — para médico sem proc, 1 linha "consulta"
-    type Item = { pront: any; vinc: any | null };
-    const items: Item[] = [];
-    for (const pront of prots as any[]) {
-      const procsDoProntuario = vincsByProntuario.get(pront.id) || [];
-      if (procsDoProntuario.length === 0) {
-        items.push({ pront, vinc: null });
-      } else {
-        for (const v of procsDoProntuario) items.push({ pront, vinc: v });
+    // Itens a processar: 1 por (prontuario, procedimento) 
+    const items: any[] = [];
+    const protsComProc = new Set();
+
+    (vincs || []).forEach((v: any) => {
+      const pront = prots.find((p: any) => p.id === v.prontuario_id);
+      if (!pront) return;
+      protsComProc.add(pront.id);
+      
+      // Resolver CID: 1. Proc Prontuario -> 2. Prontuario Header -> 3. PTS
+      let finalCid = v.cid || pront.cid;
+      if (!finalCid) {
+        const pacPts = ptsByPac.get(pront.paciente_id) || [];
+        const ptsWithCid = pacPts.find((p: any) => p.pts_cid && p.pts_cid.length > 0);
+        if (ptsWithCid) finalCid = ptsWithCid.pts_cid[0].cid_codigo;
       }
-    }
+
+      items.push({
+        pront,
+        codigo_sigtap: (v.codigo_sigtap || '').replace(/\D/g, '').length === 10 ? v.codigo_sigtap : '',
+        nome_procedimento: v.nome_procedimento || '—',
+        cid: finalCid
+      });
+    });
+
+    // Prontuários SEM procedimento — tentar buscar no PTS ou marcar pendente
+    prots.forEach((pront: any) => {
+      if (!protsComProc.has(pront.id)) {
+        const pacPts = ptsByPac.get(pront.paciente_id) || [];
+        const ptsWithProc = pacPts.find((p: any) => p.pts_sigtap && p.pts_sigtap.length > 0);
+        
+        let finalCid = pront.cid;
+        if (!finalCid) {
+          const ptsWithCid = pacPts.find((p: any) => p.pts_cid && p.pts_cid.length > 0);
+          if (ptsWithCid) finalCid = ptsWithCid.pts_cid[0].cid_codigo;
+        }
+
+        if (ptsWithProc) {
+          const pSigtap = ptsWithProc.pts_sigtap[0];
+          items.push({
+            pront,
+            codigo_sigtap: (pSigtap.procedimento_codigo || '').replace(/\D/g, '').length === 10 ? pSigtap.procedimento_codigo : '',
+            nome_procedimento: pSigtap.procedimento_nome,
+            cid: finalCid
+          });
+        } else {
+          items.push({
+            pront,
+            codigo_sigtap: '',
+            nome_procedimento: '— sem procedimento (Prontuário/PTS) —',
+            cid: finalCid
+          });
+        }
+      }
+    });
+
 
     for (const item of items) {
       const { pront, vinc } = item;
