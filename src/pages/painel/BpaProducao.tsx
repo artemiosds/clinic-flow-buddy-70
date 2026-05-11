@@ -71,17 +71,27 @@ const BpaProducao: React.FC = () => {
       const dataFim = `${ano}-${mes}-${String(ultDia).padStart(2, '0')}`;
 
       // 1. Prontuários do período
+      // BPA exige prontuários finalizados.
       let q = (supabase as any)
         .from('prontuarios')
-        .select('id, paciente_id, paciente_nome, profissional_id, profissional_nome, data_atendimento, unidade_id')
+        .select('id, paciente_id, paciente_nome, profissional_id, profissional_nome, data_atendimento, unidade_id, custom_data')
         .gte('data_atendimento', dataInicio)
         .lte('data_atendimento', dataFim)
         .order('data_atendimento', { ascending: false });
+      
       if (unidadeFiltro && unidadeFiltro !== 'all') q = q.eq('unidade_id', unidadeFiltro);
 
       const { data: prontuarios, error } = await q;
       if (error) throw error;
-      const prots = (prontuarios || []) as ProntuarioRow[];
+      
+      // Filtragem por status: finalizado, concluido, concluído, realizado, atendido, etc.
+      const statusFinalizados = ['finalizado', 'concluido', 'concluído', 'realizado', 'atendido', 'atendimento_finalizado', 'prontuario_finalizado', 'fechado'];
+      
+      const prots = (prontuarios || []).filter((p: any) => {
+        const status = (p.custom_data?.status || '').toLowerCase();
+        // Se não tiver status definido no custom_data, consideramos válido por enquanto para não sumir com tudo se o campo estiver vazio
+        return !status || statusFinalizados.includes(status);
+      }) as ProntuarioRow[];
 
       if (prots.length === 0) {
         setLinhas([]);
@@ -181,27 +191,27 @@ const BpaProducao: React.FC = () => {
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [competencia, unidadeFiltro]);
 
-  const validateRow = (l: LinhaBPA): ValidationFlags => {
+  const validateRow = (l: LinhaBPA): { isValid: boolean; errors: string[] } => {
     const pac = pacMap[l.paciente_id];
     const prof = profMap[l.profissional_id];
     const uni = unidades.find(u => u.id === l.unidade_id);
     
-    const cns = (pac?.cns || '').replace(/\D/g, '');
-    const cpf = (pac?.cpf || '').replace(/\D/g, '');
-    const cbo = (prof?.cbo || '').replace(/\D/g, '');
-    const sigtap = (l.codigo_sigtap || '').replace(/\D/g, '');
-    const cnes = String((uni as any)?.custom_data?.cnes || '').replace(/\D/g, '');
-    
-    const exigeSigtap = !isCboMedico(cbo);
-    const pacCd = (pac as any)?.custom_data || {};
-    const ibge = String(pacCd.municipio_ibge || pacCd.codigo_ibge_municipio || '').replace(/\D/g, '');
+    const bpaLine = normalizeBpaData({
+      ...l,
+      paciente_custom: (pac as any)?.custom_data || {},
+      paciente_sexo: (pac as any)?.sexo || '',
+      paciente_nascimento: pac?.data_nascimento || '',
+      paciente_cns: pac?.cns || '',
+      paciente_cpf: pac?.cpf || '',
+      profissional_custom: (prof as any)?.custom_data || prof,
+      unidade_custom: (uni as any)?.custom_data || {},
+      unidade_nome: uni?.nome || '',
+    });
 
+    const v = validateBpaLine(bpaLine);
     return {
-      identificacao: cns.length === 15 || cpf.length === 11,
-      cbo: cbo.length === 6,
-      sigtap: !exigeSigtap || sigtap.length === 10,
-      nome: !!(pac?.nome && pac.nome.trim().length >= 3),
-      dataNasc: !!(pac?.data_nascimento && pac.data_nascimento.trim().length > 0),
+      isValid: v.isValid,
+      errors: v.errors
     };
   };
 
@@ -209,11 +219,11 @@ const BpaProducao: React.FC = () => {
     let validos = 0, pendentes = 0;
     linhas.forEach((l) => {
       const v = validateRow(l);
-      if (v.identificacao && v.cbo && v.sigtap && v.nome && v.dataNasc) validos++; else pendentes++;
+      if (v.isValid) validos++; else pendentes++;
     });
     return { total: linhas.length, validos, pendentes };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [linhas, pacMap, profMap]);
+  }, [linhas, pacMap, profMap, unidades]);
 
   const getCnesFromUnidade = (uniId: string): string => {
     if (!uniId) return '';
@@ -241,20 +251,18 @@ const BpaProducao: React.FC = () => {
   // Pendências previstas para a competência/unidade do modal (preview)
   const modalPreview = useMemo(() => {
     if (!modalOpen) return { validos: 0, pendentes: 0, total: 0 };
-    const filtroUni = modalUnidade || '';
     const filtroComp = modalCompetencia;
     let validos = 0, pendentes = 0, total = 0;
     linhas.forEach((l) => {
       const lComp = (l.data || '').replace(/-/g, '').slice(0, 6);
       if (filtroComp && lComp !== filtroComp) return;
-      // unidade não está em LinhaBPA — usamos prontuario filter via mapa
       total += 1;
       const v = validateRow(l);
-      if (v.identificacao && v.cbo && v.sigtap && v.nome && v.dataNasc) validos++; else pendentes++;
+      if (v.isValid) validos++; else pendentes++;
     });
     return { validos, pendentes, total };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [modalOpen, modalUnidade, modalCompetencia, linhas, pacMap, profMap]);
+  }, [modalOpen, modalUnidade, modalCompetencia, linhas, pacMap, profMap, unidades]);
 
   const handleGenerate = async () => {
     if (modalCompetencia.length !== 6) {
@@ -452,7 +460,7 @@ const BpaProducao: React.FC = () => {
                     const pac = pacMap[l.paciente_id];
                     const prof = profMap[l.profissional_id];
                     const v = validateRow(l);
-                    const ok = v.identificacao && v.cbo && v.sigtap && v.nome && v.dataNasc;
+                    const ok = v.isValid;
                     const isMed = isCboMedico(prof?.cbo || '');
                     return (
                       <TableRow key={l.key} className={cn(!ok && "bg-destructive/5")}>
@@ -462,20 +470,20 @@ const BpaProducao: React.FC = () => {
                             : <AlertCircle className="w-4 h-4 text-destructive" />}
                         </TableCell>
                         <TableCell className="text-xs whitespace-nowrap">{l.data}</TableCell>
-                        <TableCell className={cn("font-medium", !v.nome && "text-destructive")}>
+                        <TableCell className={cn("font-medium", !ok && v.errors.some(e => e.includes('Nome')) && "text-destructive")}>
                           {l.paciente_nome || <span className="italic">faltando</span>}
                         </TableCell>
-                        <TableCell className={cn("text-xs font-mono", !v.identificacao && "text-destructive")}>
+                        <TableCell className={cn("text-xs font-mono", !ok && v.errors.some(e => e.includes('CNS') || e.includes('CPF')) && "text-destructive")}>
                           <div className="flex flex-col">
                             <span>{pac?.cns || <span className="italic opacity-50">sem cns</span>}</span>
                             <span className="text-[10px] opacity-70">{pac?.cpf || <span className="italic opacity-50">sem cpf</span>}</span>
                           </div>
                         </TableCell>
-                        <TableCell className={cn("text-xs", !v.dataNasc && "text-destructive italic")}>
+                        <TableCell className={cn("text-xs", !ok && v.errors.some(e => e.includes('nascimento')) && "text-destructive italic")}>
                           {pac?.data_nascimento ? new Date(pac.data_nascimento + 'T12:00:00').toLocaleDateString('pt-BR') : 'faltando'}
                         </TableCell>
                         <TableCell className="text-xs">{l.profissional_nome}</TableCell>
-                        <TableCell className={cn("text-xs font-mono", !v.cbo && "text-destructive")}>
+                        <TableCell className={cn("text-xs font-mono", !ok && v.errors.some(e => e.includes('CBO')) && "text-destructive")}>
                           {prof?.cbo || <span className="italic">faltando</span>}
                         </TableCell>
                         <TableCell className="text-xs">
@@ -484,13 +492,27 @@ const BpaProducao: React.FC = () => {
                             <Badge className="ml-1 bg-primary/10 text-primary border-0 text-[9px]">consulta</Badge>
                           )}
                         </TableCell>
-                        <TableCell className={cn("text-xs font-mono", !v.sigtap && "text-destructive")}>
+                        <TableCell className={cn("text-xs font-mono", !ok && v.errors.some(e => e.includes('SIGTAP')) && "text-destructive")}>
                           {l.codigo_sigtap || (isMed ? <span className="text-muted-foreground italic">opcional</span> : <span className="italic">faltando</span>)}
                         </TableCell>
                         <TableCell>
-                          {ok
-                            ? <Badge className="bg-success/10 text-success border-0 text-[10px]">OK</Badge>
-                            : <Badge className="bg-destructive/10 text-destructive border-0 text-[10px]">PENDENTE</Badge>}
+                          <div className="flex flex-col gap-1">
+                            {ok ? (
+                              <Badge className="bg-success/10 text-success border-0 text-[10px] w-fit">OK</Badge>
+                            ) : (
+                              <>
+                                <Badge className="bg-destructive/10 text-destructive border-0 text-[10px] w-fit">PENDENTE</Badge>
+                                <div className="text-[9px] text-destructive leading-tight max-w-[150px]">
+                                  {v.errors.map((err, i) => (
+                                    <div key={i} className="flex gap-1">
+                                      <span>•</span>
+                                      <span>{err}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
@@ -567,9 +589,14 @@ const BpaProducao: React.FC = () => {
                 </div>
               </div>
               {modalPreview.pendentes > 0 && (
-                <p className="text-[11px] text-destructive flex items-start gap-1 pt-1">
-                  <AlertCircle className="w-3 h-3 mt-0.5 shrink-0" />
-                  {modalPreview.pendentes} registro(s) com Nome, CNS/CPF, CBO, CNES ou Data de Nascimento ausentes serão ignorados.
+                <p className="text-[11px] text-destructive flex flex-col gap-0.5 pt-1">
+                  <span className="flex items-start gap-1">
+                    <AlertCircle className="w-3 h-3 mt-0.5 shrink-0" />
+                    {modalPreview.pendentes} registro(s) possuem pendências obrigatórias e serão ignorados.
+                  </span>
+                  <span className="text-[10px] opacity-80 pl-4">
+                    Campos obrigatórios: Nome, CNS/CPF, CBO, CNES, SIGTAP, Sexo e Município IBGE.
+                  </span>
                 </p>
               )}
             </div>

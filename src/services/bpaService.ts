@@ -67,7 +67,10 @@ export interface BpaValidation {
   errors: string[];
 }
 
-export const isCboMedico = (cbo: string) => (cbo || '').replace(/\D/g, '').startsWith('225');
+export const isCboMedico = (cbo: string) => {
+  const c = (cbo || '').replace(/\D/g, '');
+  return c.startsWith('225') || c.startsWith('2231'); // Médicos
+};
 
 /**
  * Valida uma linha de produção BPA-I
@@ -81,18 +84,37 @@ export const validateBpaLine = (line: BpaLine): BpaValidation => {
   const sigtap = (line.codigo_sigtap || '').replace(/\D/g, '');
   const cnes = (line.cnes_unidade || '').replace(/\D/g, '');
   
-  if (!line.paciente_nome?.trim()) errors.push('Nome do paciente ausente');
-  if (!line.paciente_nascimento) errors.push('Data de nascimento ausente');
-  if (cns.length !== 15 && cpf.length !== 11) errors.push('Identificação inválida (CNS 15 dígitos ou CPF 11 dígitos)');
-  if (!line.paciente_sexo) errors.push('Sexo não informado');
-  if (!line.paciente_municipio_ibge) errors.push('Código IBGE do município ausente');
+  if (!line.paciente_nome?.trim()) errors.push('Paciente: Nome ausente');
+  if (!line.paciente_nascimento) errors.push('Paciente: Data de nascimento ausente');
   
-  if (!cbo) errors.push('CBO do profissional não cadastrado');
-  if (!cnes || cnes.length < 7) errors.push('CNES da unidade inválido (7 dígitos)');
+  if (cns.length !== 15 && cpf.length !== 11) {
+    errors.push('Paciente: CNS (15 dgt) ou CPF (11 dgt) obrigatório');
+  }
   
-  // No BPA-I, o código SIGTAP é obrigatório para TODOS os registros exportados.
-  if (!sigtap || sigtap.length !== 10) {
-    errors.push('Código SIGTAP de 10 dígitos é obrigatório para produção BPA-I');
+  if (!line.paciente_sexo || (line.paciente_sexo !== 'M' && line.paciente_sexo !== 'F')) {
+    errors.push('Paciente: Sexo (M/F) inválido ou ausente');
+  }
+  
+  if (!line.paciente_municipio_ibge) {
+    errors.push('Paciente: Código IBGE do município ausente');
+  }
+
+  if (!cbo) {
+    errors.push('Profissional: CBO não cadastrado');
+  } else if (cbo.length !== 6) {
+    errors.push(`Profissional: CBO deve ter 6 dígitos (atual: ${cbo})`);
+  }
+
+  if (!cnes) {
+    errors.push('Unidade: Sem CNES cadastrado');
+  } else if (cnes.length !== 7) {
+    errors.push(`Unidade: CNES deve ter 7 dígitos (atual: ${cnes})`);
+  }
+  
+  if (!sigtap) {
+    errors.push('Procedimento: Código SIGTAP ausente');
+  } else if (sigtap.length !== 10) {
+    errors.push(`Procedimento: SIGTAP deve ter 10 dígitos (atual: ${sigtap})`);
   }
 
   return {
