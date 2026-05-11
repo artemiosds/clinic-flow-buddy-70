@@ -579,9 +579,14 @@ const BpaProducao: React.FC = () => {
                 </div>
               </div>
               {modalPreview.pendentes > 0 && (
-                <p className="text-[11px] text-destructive flex items-start gap-1 pt-1">
-                  <AlertCircle className="w-3 h-3 mt-0.5 shrink-0" />
-                  {modalPreview.pendentes} registro(s) com Nome, CNS/CPF, CBO, CNES ou Data de Nascimento ausentes serão ignorados.
+                <p className="text-[11px] text-destructive flex flex-col gap-0.5 pt-1">
+                  <span className="flex items-start gap-1">
+                    <AlertCircle className="w-3 h-3 mt-0.5 shrink-0" />
+                    {modalPreview.pendentes} registro(s) possuem pendências obrigatórias e serão ignorados.
+                  </span>
+                  <span className="text-[10px] opacity-80 pl-4">
+                    Campos obrigatórios: Nome, CNS/CPF, CBO, CNES, SIGTAP, Sexo e Município IBGE.
+                  </span>
                 </p>
               )}
             </div>
