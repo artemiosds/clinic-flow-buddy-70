@@ -455,7 +455,7 @@ Deno.serve(async (req) => {
         cnsPac +                                // 60-74 CNS paciente
         sexo +                                  // 75 Sexo
         municipio +                             // 76-81 Município IBGE
-        padText(cid, 4) +                       // 82-85 CID-10
+        padText(cidFinal, 4) +                       // 82-85 CID-10
         padNum(idade, 3) +                      // 86-88 Idade
         padNum(1, 6) +                          // 89-94 Quantidade
         carater +                               // 95-96 Caráter atendimento
