@@ -64,6 +64,8 @@ export interface BpaLine {
   carater_atendimento: string;
   cid: string;
   autorizacao: string;
+  fonte_procedimento?: string;
+  fonte_cid?: string;
 }
 
 export interface BpaValidation {
@@ -156,7 +158,7 @@ export const normalizeBpaData = (raw: any): BpaLine => {
 
   return {
     id: raw.id,
-    data: raw.data_atendimento,
+    data: raw.data_atendimento || raw.data,
     paciente_id: raw.paciente_id,
     paciente_nome: raw.paciente_nome,
     profissional_id: raw.profissional_id,
@@ -181,6 +183,8 @@ export const normalizeBpaData = (raw: any): BpaLine => {
     carater_atendimento: cd.carater_atendimento || '01',
     cid: (raw.cid || cd.cid || '').replace(/[^A-Z0-9]/g, '').slice(0, 4),
     autorizacao: (cd.numero_autorizacao || '').replace(/[^A-Z0-9]/g, '').slice(0, 13),
+    fonte_procedimento: raw.fonte_procedimento,
+    fonte_cid: raw.fonte_cid,
   };
 };
 
