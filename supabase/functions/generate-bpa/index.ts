@@ -381,9 +381,10 @@ Deno.serve(async (req) => {
       const autorizacao = padText(String(pacCustom.numero_autorizacao || ''), 13);
 
       // Para médico sem procedimento, usa código SIGTAP genérico de consulta médica (0301010072)
-      const sigtapFinal = sigtap.length === 10
-        ? sigtap
+      const sigtapFinal = sigtapRaw.length === 10
+        ? sigtapRaw
         : (isMed ? '0301010072' : '0000000000'); // 0301010072 = Consulta médica em APS
+
 
 
       seq += 1;
