@@ -376,7 +376,7 @@ Deno.serve(async (req) => {
       const etnia = onlyDigits(pacCustom.etnia_codigo || '').padStart(4, '0').slice(-4);
       const municipio = padNum(pacCustom.municipio_ibge || pacCustom.codigo_ibge_municipio || '', 6);
       const cep = padNum(pacCustom.cep || '', 8);
-      const cid = String(pacCustom.cid || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
+      const cidFinal = String(cid || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
       const carater = padNum(pacCustom.carater_atendimento || '01', 2); // 01=Eletivo
       const autorizacao = padText(String(pacCustom.numero_autorizacao || ''), 13);
 
