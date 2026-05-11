@@ -161,24 +161,27 @@ export const validateBpaLine = (line: BpaLine): BpaValidation => {
     errors.push(`Unidade: CNES deve ter 7 dígitos (atual: ${cnes})`);
   }
   
-  const isMed = isCboMedico(cbo);
+  const isMed = line.is_medico;
+  
   if (!isMed) {
     if (!sigtap) {
       errors.push('Procedimento: Código SIGTAP ausente');
     } else if (sigtap.length !== 10) {
       errors.push(`Procedimento: SIGTAP deve ter 10 dígitos (atual: ${sigtap})`);
     }
+
+    if (!line.cid || line.cid.length < 3) {
+      errors.push('Procedimento: CID obrigatório não informado');
+    }
   } else {
-    // Para médicos, se tiver SIGTAP, valida. Se não tiver, o backend usará 0301010072
+    // Para médicos, se tiver SIGTAP, valida o tamanho se preenchido.
     if (sigtap && sigtap.length !== 10) {
       errors.push(`Procedimento: SIGTAP deve ter 10 dígitos (atual: ${sigtap})`);
     }
-  }
-
-  // Validação de CID se o procedimento exigir (lógica simplificada: se tiver campo CID na linha mas estiver vazio)
-  // Nota: Alguns procedimentos exigem CID no BPA-I. Por enquanto validamos se está presente se informado.
-  if (line.cid && line.cid.length < 3) {
-    errors.push('Procedimento: CID informado é inválido');
+    // CID opcional para médicos
+    if (line.cid && line.cid.length < 3) {
+      errors.push('Procedimento: CID informado é inválido');
+    }
   }
 
   return {
@@ -186,6 +189,7 @@ export const validateBpaLine = (line: BpaLine): BpaValidation => {
     errors
   };
 };
+
 
 /**
  * Normaliza os dados para o formato BPA
