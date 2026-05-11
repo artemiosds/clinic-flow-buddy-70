@@ -84,7 +84,7 @@ export const validateBpaLine = (line: BpaLine): BpaValidation => {
   const sigtap = (line.codigo_sigtap || '').replace(/\D/g, '');
   const cnes = (line.cnes_unidade || '').replace(/\D/g, '');
   
-  if (!line.paciente_nome?.trim()) errors.push('Paciente: Nome ausente');
+  if (!line.paciente_nome?.trim() || line.paciente_nome.length < 3) errors.push('Paciente: Nome ausente ou muito curto');
   if (!line.paciente_nascimento) errors.push('Paciente: Data de nascimento ausente');
   
   if (cns.length !== 15 && cpf.length !== 11) {
@@ -95,8 +95,8 @@ export const validateBpaLine = (line: BpaLine): BpaValidation => {
     errors.push('Paciente: Sexo (M/F) inválido ou ausente');
   }
   
-  if (!line.paciente_municipio_ibge) {
-    errors.push('Paciente: Código IBGE do município ausente');
+  if (!line.paciente_municipio_ibge || line.paciente_municipio_ibge.length < 6) {
+    errors.push('Paciente: Código IBGE do município ausente ou inválido');
   }
 
   if (!cbo) {
@@ -111,10 +111,24 @@ export const validateBpaLine = (line: BpaLine): BpaValidation => {
     errors.push(`Unidade: CNES deve ter 7 dígitos (atual: ${cnes})`);
   }
   
-  if (!sigtap) {
-    errors.push('Procedimento: Código SIGTAP ausente');
-  } else if (sigtap.length !== 10) {
-    errors.push(`Procedimento: SIGTAP deve ter 10 dígitos (atual: ${sigtap})`);
+  const isMed = isCboMedico(cbo);
+  if (!isMed) {
+    if (!sigtap) {
+      errors.push('Procedimento: Código SIGTAP ausente');
+    } else if (sigtap.length !== 10) {
+      errors.push(`Procedimento: SIGTAP deve ter 10 dígitos (atual: ${sigtap})`);
+    }
+  } else {
+    // Para médicos, se tiver SIGTAP, valida. Se não tiver, o backend usará 0301010072
+    if (sigtap && sigtap.length !== 10) {
+      errors.push(`Procedimento: SIGTAP deve ter 10 dígitos (atual: ${sigtap})`);
+    }
+  }
+
+  // Validação de CID se o procedimento exigir (lógica simplificada: se tiver campo CID na linha mas estiver vazio)
+  // Nota: Alguns procedimentos exigem CID no BPA-I. Por enquanto validamos se está presente se informado.
+  if (line.cid && line.cid.length < 3) {
+    errors.push('Procedimento: CID informado é inválido');
   }
 
   return {
