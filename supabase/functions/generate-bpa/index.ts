@@ -71,7 +71,46 @@ const formatDate = (d: string) => {
 };
 
 // CBOs de médicos (família 225*) — médicos podem registrar atendimento sem SIGTAP
-const isMedico = (cbo: string) => onlyDigits(cbo).startsWith('225');
+const isMedicoCbo = (cbo: string) => {
+  const c = onlyDigits(cbo);
+  return c.startsWith('225') || c.startsWith('2231');
+};
+
+const isProfissionalMedico = (prof: any): boolean => {
+  if (!prof) return false;
+  
+  // 1. CBO
+  const cbo = onlyDigits((prof.custom_data || {}).cbo_codigo || prof.cbo || '');
+  if (isMedicoCbo(cbo)) return true;
+
+  // 2. Normalizar e verificar campos de texto
+  const normalize = (val: any) => {
+    if (!val || typeof val !== 'string') return '';
+    return val
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim();
+  };
+
+  const keywords = ['medico', 'medica'];
+  const valuesToCheck = [
+    prof.profissao,
+    prof.cargo,
+    prof.funcao,
+    prof.especialidade,
+    prof.custom_data?.profissao,
+    prof.custom_data?.cargo,
+    prof.custom_data?.funcao,
+    prof.custom_data?.carimbo?.profissao
+  ];
+
+  return valuesToCheck.some(val => {
+    const normalized = normalize(val);
+    return keywords.some(k => normalized.includes(k));
+  });
+};
+
 
 // ─── Hash de controle do header BPA (algoritmo padrão DATASUS) ───────────────
 // Soma simples do conteúdo das linhas, módulo 1111, mapeado em a-z + 0-9
