@@ -610,16 +610,41 @@ const ProntuarioPage: React.FC = () => {
   };
 
   const loadProntuarioProcedimentos = async (prontuarioId: string) => {
-    const { data } = await (supabase as any)
+    // 1. Busca procedimentos específicos deste prontuário
+    const { data: prontProc } = await (supabase as any)
       .from("prontuario_procedimentos")
       .select("*")
       .eq("prontuario_id", prontuarioId);
-    if (data) {
-      setSelectedProcIds(data.map((d: any) => d.procedimento_id));
-      // Restaura CIDs vinculados a partir do JSON salvo em observacao
+
+    // 2. Busca histórico global do paciente para garantir que procedimentos globais reapareçam (Regra de Negócio)
+    // Se o prontuário está em edição ou visualização, queremos ver os procedimentos que foram vinculados a ele.
+    // Mas a regra diz: "aparecer em todas as datas... em todos os prontuários".
+    // Então vamos mesclar o que é do prontuário com o que é global para este paciente na data do atendimento.
+    const { data: globalProc } = await (supabase as any)
+      .from("procedimentos_realizados")
+      .select("*")
+      .eq("paciente_id", form.paciente_id)
+      .eq("data_realizacao", form.data_atendimento);
+
+    const combinedData = [...(prontProc || [])];
+    
+    // Adiciona globais que não estão no prontuário (para manter consistência visual entre datas)
+    if (globalProc) {
+      globalProc.forEach((gp: any) => {
+        if (!combinedData.some(cp => cp.procedimento_id === gp.procedimento_id)) {
+          combinedData.push({
+            procedimento_id: gp.procedimento_id,
+            observacao: gp.detalhes_cids ? JSON.stringify({ cids: JSON.parse(gp.detalhes_cids) }) : ''
+          });
+        }
+      });
+    }
+
+    if (combinedData.length > 0) {
+      setSelectedProcIds(combinedData.map((d: any) => d.procedimento_id));
       const cidsByProcMap: Record<string, { codigo: string; descricao: string }[]> = {};
       const selectedCidsMap: Record<string, string[]> = {};
-      data.forEach((d: any) => {
+      combinedData.forEach((d: any) => {
         try {
           const parsed = d.observacao ? JSON.parse(d.observacao) : null;
           const cids: { codigo: string; descricao: string }[] = Array.isArray(parsed?.cids) ? parsed.cids : [];
@@ -627,7 +652,7 @@ const ProntuarioPage: React.FC = () => {
             cidsByProcMap[d.procedimento_id] = cids;
             selectedCidsMap[d.procedimento_id] = cids.map((c) => c.codigo);
           }
-        } catch { /* observação não-JSON: ignora */ }
+        } catch { /* ignora */ }
       });
       if (Object.keys(cidsByProcMap).length > 0) {
         setCidsByProc((m) => ({ ...m, ...cidsByProcMap }));
@@ -685,7 +710,7 @@ const ProntuarioPage: React.FC = () => {
     if (!prontuarioId) return;
 
     try {
-      // 1. Limpa procedimentos antigos
+      // 1. Limpa procedimentos antigos DO PRONTUÁRIO ATUAL
       const { error: deleteError } = await (supabase as any)
         .from("prontuario_procedimentos")
         .delete()
@@ -696,7 +721,7 @@ const ProntuarioPage: React.FC = () => {
         throw new Error("Não foi possível atualizar a lista de procedimentos.");
       }
 
-      // 2. Se houver novos procedimentos, insere
+      // 2. Se houver novos procedimentos selecionados, insere-os vinculados ao PRONTUÁRIO
       if (selectedProcIds.length > 0) {
         const links = buildProntuarioProcedimentoLinks(prontuarioId, profissionalId);
         const { error: insertError } = await (supabase as any)
@@ -705,11 +730,48 @@ const ProntuarioPage: React.FC = () => {
 
         if (insertError) {
           console.error("[Prontuario] Erro ao inserir novos procedimentos:", insertError);
-          // Detalhar o erro para ajudar no debug
           if (insertError.code === '42501') {
             throw new Error("Permissão negada (RLS) para salvar procedimentos.");
           }
           throw new Error("Erro ao vincular procedimentos ao prontuário.");
+        }
+      }
+
+      // 3. PERSISTÊNCIA GLOBAL: Garante que os procedimentos selecionados existam na tabela global 'procedimentos_realizados' para o PACIENTE
+      // Isso atende à regra de negócio de vínculo global e persistente ao paciente.
+      if (selectedProcIds.length > 0 && form.paciente_id) {
+        const globalRecords = selectedProcIds.map(pid => {
+          const proc = procedimentos.find(p => p.id === pid);
+          const codigosCids = selectedCidsByProc[pid] || [];
+          const cidsCatalogo = cidsByProc[pid] || [];
+          const cidsPayload = codigosCids.map(codigo => {
+            const found = cidsCatalogo.find(c => c.codigo === codigo);
+            return { codigo, descricao: found?.descricao || '' };
+          });
+          const primaryCid = codigosCids.length > 0 ? codigosCids[0] : null;
+
+          return {
+            paciente_id: form.paciente_id,
+            procedimento_id: pid,
+            profissional_id: profissionalId || user?.id,
+            unidade_id: user?.unidadeId,
+            data_realizacao: form.data_atendimento || new Date().toISOString().split('T')[0],
+            codigo_sigtap: proc?.id || pid,
+            nome_procedimento: proc?.nome || 'Procedimento',
+            cid_principal: primaryCid,
+            detalhes_cids: cidsPayload.length > 0 ? JSON.stringify(cidsPayload) : null,
+            prontuario_id: prontuarioId,
+            origem: 'prontuario'
+          };
+        });
+
+        // Upsert na tabela global para garantir vínculo persistente
+        const { error: globalError } = await (supabase as any)
+          .from("procedimentos_realizados")
+          .upsert(globalRecords, { onConflict: 'paciente_id,procedimento_id,data_realizacao' });
+        
+        if (globalError) {
+          console.warn("[Prontuario] Aviso ao salvar histórico global (procedimentos_realizados):", globalError);
         }
       }
     } catch (err: any) {
@@ -789,6 +851,35 @@ const ProntuarioPage: React.FC = () => {
           hora_atendimento: horaInicio || "",
           tipo_registro: tipoRegistro,
         });
+        
+        // Regra de Negócio: Ao abrir um NOVO prontuário, se já houver procedimentos globais salvos para o paciente nesta data, carrega-os automaticamente.
+        const loadGlobalForNewProntuario = async () => {
+          const { data: globalProc } = await (supabase as any)
+            .from("procedimentos_realizados")
+            .select("*")
+            .eq("paciente_id", pacienteId)
+            .eq("data_realizacao", data || new Date().toISOString().split("T")[0]);
+
+          if (globalProc && globalProc.length > 0) {
+            setSelectedProcIds(globalProc.map((gp: any) => gp.procedimento_id));
+            const cidsByProcMap: Record<string, { codigo: string; descricao: string }[]> = {};
+            const selectedCidsMap: Record<string, string[]> = {};
+            globalProc.forEach((gp: any) => {
+              if (gp.detalhes_cids) {
+                try {
+                  const cids = JSON.parse(gp.detalhes_cids);
+                  cidsByProcMap[gp.procedimento_id] = cids;
+                  selectedCidsMap[gp.procedimento_id] = cids.map((c: any) => c.codigo);
+                  loadCidsForProc(gp.procedimento_id); // Garante catálogo carregado
+                } catch {}
+              }
+            });
+            setCidsByProc(m => ({ ...m, ...cidsByProcMap }));
+            setSelectedCidsByProc(m => ({ ...m, ...selectedCidsMap }));
+          }
+        };
+        loadGlobalForNewProntuario();
+
         setDialogOpen(true);
       }
       if (horaInicio) {
@@ -842,22 +933,45 @@ const ProntuarioPage: React.FC = () => {
       .sort((a, b) => b.data_atendimento.localeCompare(a.data_atendimento));
   }, [form.paciente_id, prontuarios, editId]);
 
-  // Carrega histórico de procedimentos do paciente (sugestões)
+  // Carrega histórico de procedimentos do paciente (sugestões) de forma global
   useEffect(() => {
     if (!form.paciente_id) { setPacienteProcHistory([]); return; }
     (async () => {
-      const { data } = await (supabase as any)
-        .from("prontuario_procedimentos")
-        .select("procedimento_id, prontuarios!inner(paciente_id, data_atendimento)")
-        .eq("prontuarios.paciente_id", form.paciente_id)
-        .order("criado_em", { ascending: false })
-        .limit(50);
+      // Busca tanto em prontuario_procedimentos quanto em procedimentos_realizados para máxima confiabilidade
+      const [prontRes, globalRes] = await Promise.all([
+        (supabase as any)
+          .from("prontuario_procedimentos")
+          .select("procedimento_id, prontuarios!inner(paciente_id, data_atendimento)")
+          .eq("prontuarios.paciente_id", form.paciente_id)
+          .order("criado_em", { ascending: false })
+          .limit(50),
+        (supabase as any)
+          .from("procedimentos_realizados")
+          .select("procedimento_id, data_realizacao")
+          .eq("paciente_id", form.paciente_id)
+          .order("data_realizacao", { ascending: false })
+          .limit(50)
+      ]);
+
       const seen = new Map<string, { id: string; nome: string; ultima: string }>();
-      (data || []).forEach((r: any) => {
-        const proc = procedimentos.find((p) => p.id === r.procedimento_id);
+      
+      // Combina os resultados
+      const combined = [
+        ...(prontRes.data || []).map((r: any) => ({ 
+          pid: r.procedimento_id, 
+          dt: r.prontuarios?.data_atendimento 
+        })),
+        ...(globalRes.data || []).map((r: any) => ({ 
+          pid: r.procedimento_id, 
+          dt: r.data_realizacao 
+        }))
+      ];
+
+      combined.forEach((r: any) => {
+        const proc = procedimentos.find((p) => p.id === r.pid);
         if (proc && !seen.has(proc.id)) {
-          const dt = r.prontuarios?.data_atendimento || '';
-          const ultima = dt ? new Date(dt).toLocaleDateString('pt-BR') : '';
+          const dt = r.dt || '';
+          const ultima = dt ? new Date(dt + "T12:00:00").toLocaleDateString('pt-BR') : '';
           seen.set(proc.id, { id: proc.id, nome: proc.nome, ultima });
         }
       });
@@ -2306,7 +2420,14 @@ const ProntuarioPage: React.FC = () => {
                   )}
                   {/* Dynamic fields from config */}
                   <div className={`rounded-lg border p-3 ${colorClass}`}>
-                    <h4 className="text-sm font-semibold text-foreground mb-3">{tipoTitle}</h4>
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="text-sm font-semibold text-foreground">{tipoTitle}</h4>
+                      {selectedProcIds.length > 0 && (
+                        <Badge variant="outline" className="text-[10px] bg-primary/5 text-primary border-primary/20">
+                          {selectedProcIds.length} procedimento(s) vinculado(s) ao paciente
+                        </Badge>
+                      )}
+                    </div>
                     {hasDynamic ? (
                       <DynamicProntuarioFields
                         campos={camposDinamicos}
@@ -2427,11 +2548,11 @@ const ProntuarioPage: React.FC = () => {
                               onCheckedChange={(c) => {
                                 setSelectedProcIds((prev) => {
                                   if (c) {
-                                    const proc = procedimentos.find(p => p.id === proc.id);
-                                    if (proc && (proc.id || '').replace(/\D/g, '').length !== 10) {
+                                    const p = procedimentos.find(p => p.id === proc.id);
+                                    if (p && (p.id || '').replace(/\D/g, '').length !== 10) {
                                       toast.warning("Este procedimento não possui um código SIGTAP de 10 dígitos e será ignorado no BPA-I.");
                                     }
-                                    return [...prev, proc.id];
+                                    return Array.from(new Set([...prev, proc.id]));
                                   }
                                   return prev.filter((id) => id !== proc.id);
                                 });
