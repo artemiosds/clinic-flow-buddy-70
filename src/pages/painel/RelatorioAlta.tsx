@@ -90,6 +90,7 @@ const RelatorioAlta: React.FC = () => {
   /* ── multiprofissional state ─── */
   const [modalidades, setModalidades] = useState<string[]>([]);
   const [cid10, setCid10] = useState("");
+  const [cidDesc, setCidDesc] = useState("");
   const [cifFuncoes, setCifFuncoes] = useState("");
   const [cifAtividades, setCifAtividades] = useState("");
   const [cifFatores, setCifFatores] = useState("");
@@ -107,6 +108,7 @@ const RelatorioAlta: React.FC = () => {
 
   /* ── individual state ─── */
   const [indDiagCid, setIndDiagCid] = useState("");
+  const [indCidDesc, setIndCidDesc] = useState("");
   const [indCif, setIndCif] = useState("");
   const [indObjetivos, setIndObjetivos] = useState("");
   const [indIntervencoes, setIndIntervencoes] = useState("");
@@ -123,6 +125,29 @@ const RelatorioAlta: React.FC = () => {
   const [indSessoes, setIndSessoes] = useState(0);
   const [indPeriodoInicio, setIndPeriodoInicio] = useState("");
   const [indPeriodoFim, setIndPeriodoFim] = useState("");
+
+  /* ── CID Search state ─── */
+  const [cidSearch, setCidSearch] = useState("");
+  const [cidOptions, setCidOptions] = useState<{codigo: string, descricao: string}[]>([]);
+  const [isSearchingCid, setIsSearchingCid] = useState(false);
+
+  useEffect(() => {
+    if (cidSearch.length < 3) {
+      setCidOptions([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setIsSearchingCid(true);
+      const { data } = await supabase
+        .from('cid10_codigos')
+        .select('codigo, descricao')
+        .or(`codigo.ilike.%${cidSearch}%,descricao.ilike.%${cidSearch}%`)
+        .limit(10);
+      if (data) setCidOptions(data);
+      setIsSearchingCid(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [cidSearch]);
 
   /* ── auto-load professional data when patient selected ─── */
   useEffect(() => {
