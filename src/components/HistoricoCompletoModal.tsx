@@ -385,6 +385,214 @@ const EventDetail: React.FC<{ event: FullEvent }> = ({ event }) => {
   );
 };
 
+const RelatorioAltaDetail: React.FC<{ event: FullEvent; pacienteNome: string }> = ({ event, pacienteNome }) => {
+  const item = event.rawProntuario;
+  if (!item || !item.observacoes) return null;
+
+  try {
+    const data = JSON.parse(item.observacoes);
+    const isMulti = item.tipo_registro === "alta_multiprofissional";
+
+    const handlePrint = async () => {
+      const title = isMulti ? "RELATÓRIO DE ALTA MULTIPROFISSIONAL" : "RELATÓRIO DE ALTA INDIVIDUAL";
+      let body = "";
+
+      if (!isMulti) {
+        const motivoLabel = data.motivo === "objetivos_atingidos" ? "Alta por objetivos atingidos" : 
+                           data.motivo === "abandono" ? "Abandono" : 
+                           data.motivo === "encaminhamento" ? "Encaminhamento" : 
+                           data.motivo === "transferencia" ? "Transferência" : 
+                           data.motivo === "outros" ? "Outros" : data.motivo;
+
+        const metasLabel = data.metas === "totalmente" ? "Totalmente atingidas" : 
+                          data.metas === "parcialmente" ? "Parcialmente atingidas" : 
+                          data.metas === "nao_atingidas" ? "Não atingidas" : data.metas;
+
+        body = `
+          <div class="section">
+            <div class="section-title">1. IDENTIFICAÇÃO DO PACIENTE</div>
+            <div class="info-grid">
+              <div><span class="info-label">Paciente:</span> <span class="info-value">${pacienteNome}</span></div>
+              <div><span class="info-label">Data Nasc:</span> <span class="info-value">${data.dataNascimento ? formatDateBR(data.dataNascimento) : "—"}</span></div>
+              <div><span class="info-label">CNS:</span> <span class="info-value">${data.pacienteCns || "—"}</span></div>
+              <div><span class="info-label">Prontuário/ID:</span> <span class="info-value">${item.id.slice(0, 8)}</span></div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">2. IDENTIFICAÇÃO DO ATENDIMENTO</div>
+            <div class="info-grid">
+              <div><span class="info-label">Profissional:</span> <span class="info-value">${item.profissional_nome}</span></div>
+              <div><span class="info-label">Modalidade:</span> <span class="info-value">${data.modalidade || "—"}</span></div>
+              <div><span class="info-label">Data de Alta:</span> <span class="info-value">${data.dataAlta ? formatDateBR(data.dataAlta) : formatDateBR(item.data_atendimento)}</span></div>
+              <div><span class="info-label">Período:</span> <span class="info-value">${data.periodoInicio ? formatDateBR(data.periodoInicio) : "—"} a ${data.periodoFim ? formatDateBR(data.periodoFim) : "—"}</span></div>
+              <div><span class="info-label">Sessões:</span> <span class="info-value">${data.sessoes || "0"}</span></div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">3. DIAGNÓSTICO</div>
+            <div class="field"><span class="field-label">CID-10:</span><div class="field-value"><strong>${data.diagCid || "—"}</strong> ${data.cidDesc ? ` - ${data.cidDesc}` : ""}</div></div>
+            ${data.cif ? `<div class="field"><span class="field-label">CIF:</span><div class="field-value">${data.cif}</div></div>` : ""}
+          </div>
+
+          <div class="section">
+            <div class="section-title">4. OBJETIVOS TERAPÊUTICOS</div>
+            <div class="field-value">${data.objetivos || "—"}</div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">5. INTERVENÇÕES / PROCEDIMENTOS REALIZADOS</div>
+            <div class="field-value">${data.intervencoes || "—"}</div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">6. EVOLUÇÃO CLÍNICA E FUNCIONAL</div>
+            <div class="field-value">${data.evolucao || "—"}</div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">7. METAS ATINGIDAS</div>
+            <div class="field-value">${metasLabel || "—"}</div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">8. MOTIVO DA ALTA</div>
+            <div class="field-value">${motivoLabel || "—"}</div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">9. ORIENTAÇÕES E ENCAMINHAMENTOS</div>
+            <div class="field-value">${data.orientacoes || data.encaminhamento || "—"}</div>
+          </div>
+
+          <div class="signature" style="margin-top:50px">
+            <div class="signature-line"></div>
+            <div class="name">${item.profissional_nome}</div>
+          </div>
+        `;
+      } else {
+        body = `
+          <div class="section">
+            <div class="section-title">1. IDENTIFICAÇÃO DO PACIENTE</div>
+            <div class="info-grid">
+              <div><span class="info-label">Paciente:</span> <span class="info-value">${pacienteNome}</span></div>
+              <div><span class="info-label">Data de Alta:</span> <span class="info-value">${data.dataAlta ? formatDateBR(data.dataAlta) : formatDateBR(item.data_atendimento)}</span></div>
+              <div style="grid-column: span 2;"><span class="info-label">Modalidades:</span> <span class="info-value">${data.modalidades?.join(', ') || "—"}</span></div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">2. DIAGNÓSTICO</div>
+            <div class="field"><span class="field-label">CID-10:</span><div class="field-value"><strong>${data.cid10 || "—"}</strong> ${data.cidDesc ? ` - ${data.cidDesc}` : ""}</div></div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">3. SEÇÕES PROFISSIONAIS</div>
+            ${data.profissionais?.map((p: any) => `
+              <div style="margin-bottom: 20px; border: 1px solid #e2e8f0; padding: 12px; border-radius: 4px; page-break-inside: avoid;">
+                <strong>${p.profissional_nome} (${p.profissao || "—"})</strong><br/>
+                <div style="font-size: 10pt; margin-top: 5px; text-align: justify;">${p.evolucao || "—"}</div>
+              </div>
+            `).join('')}
+          </div>
+
+          <div class="section">
+            <div class="section-title">4. CONCLUSÃO E ORIENTAÇÕES</div>
+            ${data.motivoAlta ? `<div class="field"><span class="field-label">Motivo da Alta:</span><div class="field-value">${data.motivoAlta}</div></div>` : ""}
+            ${data.condicaoFuncional ? `<div class="field"><span class="field-label">Condição Funcional:</span><div class="field-value">${data.condicaoFuncional}</div></div>` : ""}
+            ${data.orientacoesUsuario ? `<div class="field"><span class="field-label">Orientações:</span><div class="field-value">${data.orientacoesUsuario}</div></div>` : ""}
+          </div>
+
+          <div style="margin-top: 60px; display: flex; justify-content: center; page-break-inside: avoid;">
+            <div class="signature">
+              <div class="signature-line" style="width: 300px;"></div>
+              <div class="name">Coordenação / Responsável Técnico</div>
+              <div class="role">CER II — Oriximiná-PA</div>
+            </div>
+          </div>
+        `;
+      }
+
+      await openPrintDocument(title, body, {
+        "Paciente": pacienteNome,
+        "Data": formatDateBR(item.data_atendimento),
+        "Profissional": item.profissional_nome || "-"
+      });
+    };
+
+    return (
+      <div className="mt-3 space-y-4 border-t pt-3 animate-in fade-in-0 slide-in-from-top-1 duration-200">
+        <div className="flex justify-between items-center">
+          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 uppercase text-[10px] font-bold">
+            {isMulti ? "Relatório de Alta Multiprofissional" : "Relatório de Alta Individual"}
+          </Badge>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" className="h-7 text-[10px] gap-1" onClick={(e) => { e.stopPropagation(); handlePrint(); }}>
+              <Printer className="w-3 h-3" /> Imprimir
+            </Button>
+            <Button size="sm" variant="outline" className="h-7 text-[10px] gap-1" onClick={(e) => { e.stopPropagation(); handlePrint(); }}>
+              <Download className="w-3 h-3" /> Baixar PDF
+            </Button>
+          </div>
+        </div>
+
+        {!isMulti ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <div className="space-y-2">
+              <div><span className="text-muted-foreground block uppercase font-bold text-[9px]">Diagnóstico (CID-10)</span>{data.diagCid} {data.cidDesc && `- ${data.cidDesc}`}</div>
+              {data.cif && <div><span className="text-muted-foreground block uppercase font-bold text-[9px]">CIF</span>{data.cif}</div>}
+              <div><span className="text-muted-foreground block uppercase font-bold text-[9px]">Período</span>{formatDateBR(data.periodoInicio)} a {formatDateBR(data.periodoFim)}</div>
+              <div><span className="text-muted-foreground block uppercase font-bold text-[9px]">Modalidade</span>{data.modalidade || "—"}</div>
+            </div>
+            <div className="space-y-2">
+              <div><span className="text-muted-foreground block uppercase font-bold text-[9px]">Sessões Realizadas</span>{data.sessoes || 0}</div>
+              <div><span className="text-muted-foreground block uppercase font-bold text-[9px]">Metas</span>{data.metas === "totalmente" ? "Totalmente atingidas" : data.metas === "parcialmente" ? "Parcialmente atingidas" : "Não atingidas"}</div>
+              <div><span className="text-muted-foreground block uppercase font-bold text-[9px]">Motivo da Alta</span>{data.motivo}</div>
+            </div>
+            <div className="md:col-span-2 space-y-2">
+              {data.objetivos && <div><span className="text-muted-foreground block uppercase font-bold text-[9px]">Objetivos Terapêuticos</span><p className="whitespace-pre-wrap">{data.objetivos}</p></div>}
+              {data.intervencoes && <div><span className="text-muted-foreground block uppercase font-bold text-[9px]">Intervenções / Procedimentos</span><p className="whitespace-pre-wrap">{data.intervencoes}</p></div>}
+              {data.evolucao && <div><span className="text-muted-foreground block uppercase font-bold text-[9px]">Evolução Clínica</span><p className="whitespace-pre-wrap">{data.evolucao}</p></div>}
+              {data.orientacoes && <div><span className="text-muted-foreground block uppercase font-bold text-[9px]">Orientações</span><p className="whitespace-pre-wrap">{data.orientacoes}</p></div>}
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4 text-xs">
+            <div className="grid grid-cols-2 gap-4 bg-muted/30 p-3 rounded-lg">
+              <div><span className="text-muted-foreground block uppercase font-bold text-[9px]">CID-10</span>{data.cid10} {data.cidDesc && `- ${data.cidDesc}`}</div>
+              <div><span className="text-muted-foreground block uppercase font-bold text-[9px]">Modalidades</span>{data.modalidades?.join(', ')}</div>
+              <div><span className="text-muted-foreground block uppercase font-bold text-[9px]">Motivo da Alta</span>{data.motivoAlta}</div>
+              <div><span className="text-muted-foreground block uppercase font-bold text-[9px]">Nível Independência</span>{data.nivelIndep}</div>
+            </div>
+            
+            <div className="space-y-3">
+              <h4 className="text-[10px] font-bold uppercase border-b pb-1">Seções Profissionais</h4>
+              {data.profissionais?.map((prof: any) => (
+                <div key={prof.profissional_id} className="border rounded-md p-3 space-y-2 bg-background/50">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-bold text-sm text-primary">{prof.profissional_nome}</p>
+                      <p className="text-[9px] text-muted-foreground uppercase">{prof.profissao} — {prof.conselho}</p>
+                    </div>
+                    <Badge variant="secondary" className="text-[9px]">{prof.sessoes} sessões</Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground"><strong>Evolução:</strong> {prof.evolucao}</p>
+                </div>
+              ))}
+            </div>
+
+            {data.condicaoFuncional && <div><span className="text-muted-foreground block uppercase font-bold text-[9px]">Condição Funcional</span>{data.condicaoFuncional}</div>}
+            {data.orientacoesUsuario && <div><span className="text-muted-foreground block uppercase font-bold text-[9px]">Orientações ao Usuário</span>{data.orientacoesUsuario}</div>}
+          </div>
+        )}
+      </div>
+    );
+  } catch (e) {
+    return <div className="mt-3 p-3 bg-destructive/10 text-destructive text-xs rounded-md">Erro ao processar dados do relatório.</div>;
+  }
+};
+
 // ── Main Component ─────────────────────────────────────────
 export const HistoricoCompletoModal: React.FC<Props> = ({
   open, onOpenChange, pacienteId, pacienteNome, unidades, currentProfissionalId, onViewProntuario,
