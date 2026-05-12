@@ -16,9 +16,11 @@ import { BuscaPaciente } from "@/components/BuscaPaciente";
 import { toast } from "sonner";
 import {
   FileText, Users, User, ArrowLeft, Printer, FileDown, CheckCircle,
-  Save, Send, ClipboardList, Stethoscope, Heart, Activity
+  Save, Send, ClipboardList, Stethoscope, Heart, Activity, Search
 } from "lucide-react";
 import { openPrintDocument } from "@/lib/printLayout";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 
 /* ── types ─────────────────────────────────────────── */
 interface ProfSection {
