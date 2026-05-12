@@ -500,6 +500,21 @@ const RelatorioAlta: React.FC = () => {
     const unidade = user?.unidadeId || "";
     const dataAlt = type === "multi" ? dataAlta : indDataAlta;
 
+    const dataObj = type === "multi" ? {
+      modalidades, cid10, cidDesc, cifFuncoes, cifAtividades, cifFatores,
+      profissionais: profSections, motivoAlta, motivoDetalhe,
+      condicaoFuncional, nivelIndep, orientacoesUsuario, orientacoesUbs,
+      encaminhamentos, freqAps, dataAlta
+    } : {
+      diagCid: indDiagCid, cidDesc: indCidDesc, cif: indCif, objetivos: indObjetivos,
+      intervencoes: indIntervencoes, evolucao: indEvolucao,
+      metas: indMetas, metasJust: indMetasJust, ta: indTA,
+      motivo: indMotivo, motivoDet: indMotivoDet,
+      orientacoes: indOrientacoes, encaminhamento: indEncaminhamento,
+      modalidade: indModalidade, sessoes: indSessoes,
+      periodoInicio: indPeriodoInicio, periodoFim: indPeriodoFim, dataAlta: indDataAlta
+    };
+
     const record = {
       paciente_id: pacienteId,
       paciente_nome: paciente?.nome || "",
@@ -508,23 +523,10 @@ const RelatorioAlta: React.FC = () => {
       unidade_id: unidade,
       data_atendimento: dataAlt,
       tipo_registro: type === "multi" ? "alta_multiprofissional" : "alta_individual",
-      observacoes: JSON.stringify(type === "multi" ? {
-        modalidades, cid10, cifFuncoes, cifAtividades, cifFatores,
-        profissionais: profSections, motivoAlta, motivoDetalhe,
-        condicaoFuncional, nivelIndep, orientacoesUsuario, orientacoesUbs,
-        encaminhamentos, freqAps
-      } : {
-        diagCid: indDiagCid, cif: indCif, objetivos: indObjetivos,
-        intervencoes: indIntervencoes, evolucao: indEvolucao,
-        metas: indMetas, metasJust: indMetasJust, ta: indTA,
-        motivo: indMotivo, motivoDet: indMotivoDet,
-        orientacoes: indOrientacoes, encaminhamento: indEncaminhamento,
-        modalidade: indModalidade, sessoes: indSessoes,
-        periodoInicio: indPeriodoInicio, periodoFim: indPeriodoFim
-      }),
+      observacoes: JSON.stringify(dataObj),
       evolucao: type === "multi"
-        ? `Relatório de Alta Multiprofissional — ${MOTIVOS_ALTA.find(m => m.value === motivoAlta)?.label || ""}`
-        : `Relatório de Alta Individual — ${MOTIVOS_ALTA.find(m => m.value === indMotivo)?.label || ""}`,
+        ? `RELATÓRIO DE ALTA MULTIPROFISSIONAL: ${MOTIVOS_ALTA.find(m => m.value === motivoAlta)?.label || ""}`
+        : `RELATÓRIO DE ALTA INDIVIDUAL: ${MOTIVOS_ALTA.find(m => m.value === indMotivo)?.label || ""}`,
     };
 
     const { error } = await supabase.from("prontuarios").insert(record);
@@ -534,6 +536,49 @@ const RelatorioAlta: React.FC = () => {
       toast.success("Relatório de alta salvo no prontuário");
     }
   };
+
+  const BuscaCIDField = ({ value, onChange, descValue, onDescChange }: { value: string, onChange: (v: string) => void, descValue: string, onDescChange: (v: string) => void }) => (
+    <div className="space-y-1">
+      <Label className="text-xs">CID-10</Label>
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button variant="outline" className="w-full justify-between h-8 text-sm font-normal px-2">
+            <span className="truncate">{value ? `${value} - ${descValue || '...'}` : "Buscar CID-10..."}</span>
+            <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[400px] p-0" align="start">
+          <Command shouldFilter={false}>
+            <CommandInput 
+              placeholder="Digite o código ou descrição (mín. 3 letras)..." 
+              onValueChange={setCidSearch}
+            />
+            <CommandList>
+              {isSearchingCid && <div className="p-4 text-center text-sm text-muted-foreground">Buscando...</div>}
+              {!isSearchingCid && cidOptions.length === 0 && cidSearch.length >= 3 && <CommandEmpty>Nenhum CID encontrado.</CommandEmpty>}
+              <CommandGroup>
+                {cidOptions.map((opt) => (
+                  <CommandItem
+                    key={opt.codigo}
+                    value={opt.codigo}
+                    onSelect={() => {
+                      onChange(opt.codigo);
+                      onDescChange(opt.descricao);
+                      setCidOptions([]);
+                      setCidSearch("");
+                    }}
+                  >
+                    <span className="font-bold mr-2">{opt.codigo}</span>
+                    <span className="truncate">{opt.descricao}</span>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
 
   /* ── MODE SELECTOR ─── */
   if (modo === "selector") {
