@@ -500,20 +500,7 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
               </SheetHeader>
               <Separator className="my-4" />
               <div className="space-y-4 text-sm">
-                {viewerItem.queixa_principal && (
-                  <Section label="Queixa principal" value={viewerItem.queixa_principal} />
-                )}
-                {viewerItem.evolucao && <Section label="Evolução / SOAP" value={viewerItem.evolucao} />}
-                {viewerItem.conduta && <Section label="Conduta" value={viewerItem.conduta} />}
-                {viewerItem.procedimentos_texto && (
-                  <Section label="Procedimentos" value={viewerItem.procedimentos_texto} />
-                )}
-                {viewerItem.outro_procedimento && (
-                  <Section label="Outro procedimento" value={viewerItem.outro_procedimento} />
-                )}
-                {viewerItem.indicacao_retorno && (
-                  <Section label="Indicação de retorno" value={viewerItem.indicacao_retorno} />
-                )}
+                {renderContent(viewerItem)}
               </div>
               <Separator className="my-4" />
               <div className="flex flex-wrap justify-end gap-2">
