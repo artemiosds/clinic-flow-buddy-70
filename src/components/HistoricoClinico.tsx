@@ -352,18 +352,93 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
       </body></html>`;
   };
 
-  const handlePrint = (item: ProntuarioItem & { unidadeNome?: string }) => {
-    const win = window.open("", "_blank", "width=900,height=700");
-    if (!win) {
-      toast.error("Permita pop-ups para imprimir");
-      return;
+  const handlePrint = async (item: ProntuarioItem & { unidadeNome?: string }) => {
+    const title = item.tipo_registro === "alta_individual" 
+      ? "Relatório de Alta Individual" 
+      : item.tipo_registro === "alta_multiprofissional" 
+        ? "Relatório de Alta Multiprofissional" 
+        : "Prontuário Clínico";
+    
+    // We build a simplified body because openPrintDocument adds the header/footer
+    let body = '';
+    
+    if (item.tipo_registro === "alta_individual" || item.tipo_registro === "alta_multiprofissional") {
+      try {
+        const data = JSON.parse(item.observacoes);
+        if (item.tipo_registro === "alta_individual") {
+          body = `
+            <div class="info-grid">
+              <div><span class="info-label">Paciente:</span> <span class="info-value">${pacienteNome}</span></div>
+              <div><span class="info-label">Data de Alta:</span> <span class="info-value">${data.dataAlta ? formatDateBR(data.dataAlta) : formatDateBR(item.data_atendimento)}</span></div>
+              <div><span class="info-label">Profissional:</span> <span class="info-value">${item.profissional_nome}</span></div>
+              <div><span class="info-label">Modalidade:</span> <span class="info-value">${data.modalidade || "—"}</span></div>
+            </div>
+            <div class="section">
+              <div class="section-title">Diagnóstico</div>
+              <div class="field"><span class="field-label">CID-10:</span><div class="field-value"><strong>${data.diagCid || "—"}</strong> ${data.cidDesc ? ` - ${data.cidDesc}` : ""}</div></div>
+              ${data.cif ? `<div class="field"><span class="field-label">CIF:</span><div class="field-value">${data.cif}</div></div>` : ""}
+            </div>
+            <div class="section">
+              <div class="section-title">Evolução e Atendimento</div>
+              <div class="field"><span class="field-label">Período:</span><div class="field-value">${data.periodoInicio ? formatDateBR(data.periodoInicio) : "—"} a ${data.periodoFim ? formatDateBR(data.periodoFim) : "—"}</div></div>
+              <div class="field"><span class="field-label">Sessões:</span><div class="field-value">${data.sessoes || "0"}</div></div>
+              <div class="field"><span class="field-label">Evolução:</span><div class="field-value">${data.evolucao || "—"}</div></div>
+            </div>
+            <div class="signature" style="margin-top:50px">
+              <div class="signature-line"></div>
+              <div class="name">${item.profissional_nome}</div>
+            </div>
+          `;
+        } else {
+          body = `
+            <div class="info-grid">
+              <div><span class="info-label">Paciente:</span> <span class="info-value">${pacienteNome}</span></div>
+              <div><span class="info-label">Data de Alta:</span> <span class="info-value">${data.dataAlta ? formatDateBR(data.dataAlta) : formatDateBR(item.data_atendimento)}</span></div>
+              <div><span class="info-label">Modalidades:</span> <span class="info-value">${data.modalidades?.join(', ') || "—"}</span></div>
+            </div>
+            <div class="section">
+              <div class="section-title">Diagnóstico</div>
+              <div class="field"><span class="field-label">CID-10:</span><div class="field-value"><strong>${data.cid10 || "—"}</strong> ${data.cidDesc ? ` - ${data.cidDesc}` : ""}</div></div>
+            </div>
+            <div class="section">
+              <div class="section-title">Seções Profissionais</div>
+              ${data.profissionais?.map((p: any) => `
+                <div style="margin-bottom: 20px; border: 1px solid #e2e8f0; padding: 12px; border-radius: 4px; page-break-inside: avoid;">
+                  <strong>${p.profissional_nome} (${p.profissao})</strong><br/>
+                  <div style="font-size: 10pt; margin-top: 5px;">${p.evolucao || "—"}</div>
+                </div>
+              `).join('')}
+            </div>
+          `;
+        }
+      } catch (e) {
+        console.error("Erro ao processar JSON para impressão:", e);
+      }
+    } else {
+      const row = (label: string, val?: string) =>
+        val ? `<div class="section"><div class="section-title">${label}</div><p>${String(val).replace(/\n/g, "<br/>")}</p></div>` : "";
+      
+      body = `
+        <div class="doc-content">
+          ${row("Queixa principal", item.queixa_principal)}
+          ${row("Evolução / SOAP", item.evolucao)}
+          ${row("Conduta", item.conduta)}
+          ${row("Procedimentos", item.procedimentos_texto)}
+          ${row("Outro procedimento", item.outro_procedimento)}
+          ${row("Indicação de retorno", item.indicacao_retorno)}
+        </div>
+        <div class="signature" style="margin-top:50px">
+          <div class="signature-line"></div>
+          <div class="name">${item.profissional_nome || ""}</div>
+        </div>
+      `;
     }
-    win.document.write(buildProntuarioHTML(item));
-    win.document.close();
-    setTimeout(() => {
-      win.focus();
-      win.print();
-    }, 300);
+
+    await openPrintDocument(title, body, {
+      "Paciente": pacienteNome,
+      "Data": formatDateBR(item.data_atendimento),
+      "Profissional": item.profissional_nome || "-"
+    });
   };
 
   const handleDownloadPDF = (item: ProntuarioItem & { unidadeNome?: string }) => {
