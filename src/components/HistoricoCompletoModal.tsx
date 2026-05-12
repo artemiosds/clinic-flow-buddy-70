@@ -829,7 +829,11 @@ export const HistoricoCompletoModal: React.FC<Props> = ({
                         </div>
                       </div>
 
-                      {isExpanded && <EventDetail event={event} />}
+                      {isExpanded && (event.type === "alta" || event.rawProntuario?.tipo_registro?.includes("alta")) ? (
+                        <RelatorioAltaDetail event={event} pacienteNome={pacienteNome} />
+                      ) : isExpanded && (
+                        <EventDetail event={event} />
+                      )}
                     </div>
                   );
                 })}
