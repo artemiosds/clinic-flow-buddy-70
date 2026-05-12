@@ -9,6 +9,8 @@ export const TIPO_REGISTRO_LABELS: Record<string, string> = {
   urgencia: "Urgência",
   procedimento: "Procedimento",
   alta: "Alta",
+  alta_individual: "Relatório de Alta Individual",
+  alta_multiprofissional: "Relatório de Alta Multiprofissional",
   falta: "Falta",
   consulta: "1ª Consulta", // Legacy mapping
 };
