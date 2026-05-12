@@ -70,6 +70,80 @@ function formatDateBR(isoDate: string): string {
   return new Date(`${isoDate}T12:00:00`).toLocaleDateString("pt-BR");
 }
 
+const renderContent = (item: ProntuarioItem) => {
+  if (item.tipo_registro === "alta_individual" || item.tipo_registro === "alta_multiprofissional") {
+    try {
+      const data = JSON.parse(item.observacoes);
+      if (item.tipo_registro === "alta_individual") {
+        return (
+          <div className="space-y-4">
+            <Badge variant="outline" className="mb-2 bg-primary/10 text-primary border-primary/20">RELATÓRIO DE ALTA INDIVIDUAL</Badge>
+            <div className="grid grid-cols-2 gap-4 text-xs bg-muted/30 p-3 rounded-lg">
+              <div><span className="text-muted-foreground block uppercase font-bold text-[10px]">CID-10</span>{data.diagCid} {data.cidDesc && `- ${data.cidDesc}`}</div>
+              <div><span className="text-muted-foreground block uppercase font-bold text-[10px]">Período</span>{data.periodoInicio && new Date(data.periodoInicio + 'T12:00:00').toLocaleDateString('pt-BR')} a {data.periodoFim && new Date(data.periodoFim + 'T12:00:00').toLocaleDateString('pt-BR')}</div>
+              <div><span className="text-muted-foreground block uppercase font-bold text-[10px]">Sessões</span>{data.sessoes}</div>
+              <div><span className="text-muted-foreground block uppercase font-bold text-[10px]">Modalidade</span>{data.modalidade}</div>
+            </div>
+            {data.objetivos && <Section label="Objetivos Terapêuticos" value={data.objetivos} />}
+            {data.intervencoes && <Section label="Intervenções / Procedimentos" value={data.intervencoes} />}
+            {data.evolucao && <Section label="Evolução Clínica e Funcional" value={data.evolucao} />}
+            <div className="grid grid-cols-2 gap-4">
+              <Section label="Metas" value={data.metas === "totalmente" ? "Totalmente atingidas" : data.metas === "parcialmente" ? "Parcialmente atingidas" : "Não atingidas"} />
+              {data.ta && <Section label="Tecnologia Assistiva" value={data.ta} />}
+            </div>
+            <Section label="Motivo da Alta" value={data.motivo} />
+            {data.orientacoes && <Section label="Orientações" value={data.orientacoes} />}
+          </div>
+        );
+      } else {
+        return (
+          <div className="space-y-4">
+            <Badge variant="outline" className="mb-2 bg-primary/10 text-primary border-primary/20">RELATÓRIO DE ALTA MULTIPROFISSIONAL</Badge>
+            <div className="grid grid-cols-2 gap-4 text-xs bg-muted/30 p-3 rounded-lg">
+              <div><span className="text-muted-foreground block uppercase font-bold text-[10px]">CID-10</span>{data.cid10} {data.cidDesc && `- ${data.cidDesc}`}</div>
+              <div><span className="text-muted-foreground block uppercase font-bold text-[10px]">Modalidades</span>{data.modalidades?.join(', ')}</div>
+              <div><span className="text-muted-foreground block uppercase font-bold text-[10px]">Nível Independência</span>{data.nivelIndep}</div>
+              <div><span className="text-muted-foreground block uppercase font-bold text-[10px]">Motivo Alta</span>{data.motivoAlta}</div>
+            </div>
+            
+            <div className="space-y-4 mt-4">
+              <h4 className="text-xs font-bold uppercase border-b pb-1">Seções Profissionais</h4>
+              {data.profissionais?.map((prof: any) => (
+                <div key={prof.profissional_id} className="border rounded-md p-3 space-y-2 bg-background/50">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-bold text-sm text-primary">{prof.profissional_nome}</p>
+                      <p className="text-[10px] text-muted-foreground uppercase">{prof.profissao} — {prof.conselho}</p>
+                    </div>
+                    <Badge variant="secondary" className="text-[10px]">{prof.sessoes} sessões</Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground line-clamp-3"><strong>Evolução:</strong> {prof.evolucao}</p>
+                </div>
+              ))}
+            </div>
+
+            {data.condicaoFuncional && <Section label="Condição Funcional" value={data.condicaoFuncional} />}
+            {data.orientacoesUsuario && <Section label="Orientações ao Usuário/Família" value={data.orientacoesUsuario} />}
+          </div>
+        );
+      }
+    } catch (e) {
+      console.error("Erro ao processar JSON de relatório de alta:", e);
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      {item.queixa_principal && <Section label="Queixa principal" value={item.queixa_principal} />}
+      {item.evolucao && <Section label="Evolução / SOAP" value={item.evolucao} />}
+      {item.conduta && <Section label="Conduta" value={item.conduta} />}
+      {item.procedimentos_texto && <Section label="Procedimentos" value={item.procedimentos_texto} />}
+      {item.outro_procedimento && <Section label="Outro procedimento" value={item.outro_procedimento} />}
+      {item.indicacao_retorno && <Section label="Indicação de retorno" value={item.indicacao_retorno} />}
+    </div>
+  );
+};
+
 export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, currentProfissionalId, unidades }) => {
   const [prontuarios, setProntuarios] = useState<ProntuarioItem[]>([]);
   const [episodios, setEpisodios] = useState<EpisodioItem[]>([]);
