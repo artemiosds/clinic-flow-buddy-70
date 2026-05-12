@@ -19,7 +19,7 @@ import {
 import { toast } from "sonner";
 import HistoricoCompletoModal from "@/components/HistoricoCompletoModal";
 import GerarDocumentoModal from "@/components/GerarDocumentoModal";
-import { buildInstitutionalCSS } from "@/lib/printLayout";
+import { buildInstitutionalCSS, openPrintDocument } from "@/lib/printLayout";
 
 interface ProntuarioItem {
   id: string;
@@ -35,6 +35,8 @@ interface ProntuarioItem {
   outro_procedimento: string;
   unidade_id: string;
   episodio_id: string | null;
+  tipo_registro: string;
+  observacoes: string;
 }
 
 interface EpisodioItem {
@@ -55,18 +57,92 @@ interface Props {
   unidades: { id: string; nome: string }[];
 }
 
-// Helpers
-function safeData<T>(result: { data: T | null; error: any }, context: string): T {
-  if (result.error) {
-    console.error(`[Historico] Erro em ${context}:`, result.error);
-    return [] as unknown as T;
-  }
-  return result.data ?? ([] as unknown as T);
-}
-
 function formatDateBR(isoDate: string): string {
+  if (!isoDate) return "—";
   return new Date(`${isoDate}T12:00:00`).toLocaleDateString("pt-BR");
 }
+
+const Section: React.FC<{ label: string; value: string }> = ({ label, value }) => (
+  <div className="mb-2">
+    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide mb-0.5">{label}</p>
+    <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{value || "—"}</p>
+  </div>
+);
+
+const renderContent = (item: ProntuarioItem) => {
+  if (item.tipo_registro === "alta_individual" || item.tipo_registro === "alta_multiprofissional") {
+    try {
+      const data = JSON.parse(item.observacoes);
+      if (item.tipo_registro === "alta_individual") {
+        return (
+          <div className="space-y-4">
+            <Badge variant="outline" className="mb-2 bg-primary/10 text-primary border-primary/20">RELATÓRIO DE ALTA INDIVIDUAL</Badge>
+            <div className="grid grid-cols-2 gap-4 text-xs bg-muted/30 p-3 rounded-lg">
+              <div><span className="text-muted-foreground block uppercase font-bold text-[10px]">CID-10</span>{data.diagCid} {data.cidDesc && `- ${data.cidDesc}`}</div>
+              <div><span className="text-muted-foreground block uppercase font-bold text-[10px]">Período</span>{formatDateBR(data.periodoInicio)} a {formatDateBR(data.periodoFim)}</div>
+              <div><span className="text-muted-foreground block uppercase font-bold text-[10px]">Sessões</span>{data.sessoes}</div>
+              <div><span className="text-muted-foreground block uppercase font-bold text-[10px]">Modalidade</span>{data.modalidade}</div>
+            </div>
+            {data.objetivos && <Section label="Objetivos Terapêuticos" value={data.objetivos} />}
+            {data.intervencoes && <Section label="Intervenções / Procedimentos" value={data.intervencoes} />}
+            {data.evolucao && <Section label="Evolução Clínica e Funcional" value={data.evolucao} />}
+            <div className="grid grid-cols-2 gap-4">
+              <Section label="Metas" value={data.metas === "totalmente" ? "Totalmente atingidas" : data.metas === "parcialmente" ? "Parcialmente atingidas" : "Não atingidas"} />
+              {data.ta && <Section label="Tecnologia Assistiva" value={data.ta} />}
+            </div>
+            <Section label="Motivo da Alta" value={data.motivo} />
+            {data.orientacoes && <Section label="Orientações" value={data.orientacoes} />}
+          </div>
+        );
+      } else {
+        return (
+          <div className="space-y-4">
+            <Badge variant="outline" className="mb-2 bg-primary/10 text-primary border-primary/20">RELATÓRIO DE ALTA MULTIPROFISSIONAL</Badge>
+            <div className="grid grid-cols-2 gap-4 text-xs bg-muted/30 p-3 rounded-lg">
+              <div><span className="text-muted-foreground block uppercase font-bold text-[10px]">CID-10</span>{data.cid10} {data.cidDesc && `- ${data.cidDesc}`}</div>
+              <div><span className="text-muted-foreground block uppercase font-bold text-[10px]">Modalidades</span>{data.modalidades?.join(', ')}</div>
+              <div><span className="text-muted-foreground block uppercase font-bold text-[10px]">Nível Independência</span>{data.nivelIndep}</div>
+              <div><span className="text-muted-foreground block uppercase font-bold text-[10px]">Motivo Alta</span>{data.motivoAlta}</div>
+            </div>
+            
+            <div className="space-y-4 mt-4">
+              <h4 className="text-xs font-bold uppercase border-b pb-1">Seções Profissionais</h4>
+              {data.profissionais?.map((prof: any) => (
+                <div key={prof.profissional_id} className="border rounded-md p-3 space-y-2 bg-background/50">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-bold text-sm text-primary">{prof.profissional_nome}</p>
+                      <p className="text-[10px] text-muted-foreground uppercase">{prof.profissao} — {prof.conselho}</p>
+                    </div>
+                    <Badge variant="secondary" className="text-[10px]">{prof.sessoes} sessões</Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground"><strong>Evolução:</strong> {prof.evolucao}</p>
+                </div>
+              ))}
+            </div>
+
+            {data.condicaoFuncional && <Section label="Condição Funcional" value={data.condicaoFuncional} />}
+            {data.orientacoesUsuario && <Section label="Orientações ao Usuário/Família" value={data.orientacoesUsuario} />}
+          </div>
+        );
+      }
+    } catch (e) {
+      console.error("Erro ao processar JSON de relatório de alta:", e);
+      return <div className="p-4 bg-destructive/10 text-destructive rounded-md">Erro ao carregar dados estruturados do relatório.</div>;
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      {item.queixa_principal && <Section label="Queixa principal" value={item.queixa_principal} />}
+      {item.evolucao && <Section label="Evolução / SOAP" value={item.evolucao} />}
+      {item.conduta && <Section label="Conduta" value={item.conduta} />}
+      {item.procedimentos_texto && <Section label="Procedimentos" value={item.procedimentos_texto} />}
+      {item.outro_procedimento && <Section label="Outro procedimento" value={item.outro_procedimento} />}
+      {item.indicacao_retorno && <Section label="Indicação de retorno" value={item.indicacao_retorno} />}
+    </div>
+  );
+};
 
 export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, currentProfissionalId, unidades }) => {
   const [prontuarios, setProntuarios] = useState<ProntuarioItem[]>([]);
@@ -96,7 +172,7 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
         supabase
           .from("prontuarios")
           .select(
-            "id,data_atendimento,hora_atendimento,profissional_nome,profissional_id,queixa_principal,evolucao,conduta,indicacao_retorno,procedimentos_texto,outro_procedimento,unidade_id,episodio_id",
+            "id,data_atendimento,hora_atendimento,profissional_nome,profissional_id,queixa_principal,evolucao,conduta,indicacao_retorno,procedimentos_texto,outro_procedimento,unidade_id,episodio_id,tipo_registro,observacoes",
           )
           .eq("paciente_id", pacienteId)
           .order("data_atendimento", { ascending: false }),
@@ -133,9 +209,7 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
     };
   }, [loadData]);
 
-  // Mapa de unidades (O(1) lookup)
   const unidadeMap = useMemo(() => new Map(unidades.map((u) => [u.id, u.nome])), [unidades]);
-
   const episodioMap = useMemo(() => new Map(episodios.map((e) => [e.id, e])), [episodios]);
 
   const timeline = useMemo(() => {
@@ -145,6 +219,99 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
       episodioTitulo: episodioMap.get(p.episodio_id || "")?.titulo || "",
     }));
   }, [prontuarios, unidadeMap, episodioMap]);
+
+  const handlePrint = async (item: ProntuarioItem) => {
+    const title = item.tipo_registro === "alta_individual" 
+      ? "Relatório de Alta Individual" 
+      : item.tipo_registro === "alta_multiprofissional" 
+        ? "Relatório de Alta Multiprofissional" 
+        : "Prontuário Clínico";
+    
+    let body = '';
+    
+    if (item.tipo_registro === "alta_individual" || item.tipo_registro === "alta_multiprofissional") {
+      try {
+        const data = JSON.parse(item.observacoes);
+        if (item.tipo_registro === "alta_individual") {
+          body = `
+            <div class="info-grid">
+              <div><span class="info-label">Paciente:</span> <span class="info-value">${pacienteNome}</span></div>
+              <div><span class="info-label">Data de Alta:</span> <span class="info-value">${data.dataAlta ? formatDateBR(data.dataAlta) : formatDateBR(item.data_atendimento)}</span></div>
+              <div><span class="info-label">Profissional:</span> <span class="info-value">${item.profissional_nome}</span></div>
+              <div><span class="info-label">Modalidade:</span> <span class="info-value">${data.modalidade || "—"}</span></div>
+            </div>
+            <div class="section">
+              <div class="section-title">Diagnóstico</div>
+              <div class="field"><span class="field-label">CID-10:</span><div class="field-value"><strong>${data.diagCid || "—"}</strong> ${data.cidDesc ? ` - ${data.cidDesc}` : ""}</div></div>
+              ${data.cif ? `<div class="field"><span class="field-label">CIF:</span><div class="field-value">${data.cif}</div></div>` : ""}
+            </div>
+            <div class="section">
+              <div class="section-title">Evolução e Atendimento</div>
+              <div class="field"><span class="field-label">Período:</span><div class="field-value">${data.periodoInicio ? formatDateBR(data.periodoInicio) : "—"} a ${data.periodoFim ? formatDateBR(data.periodoFim) : "—"}</div></div>
+              <div class="field"><span class="field-label">Sessões:</span><div class="field-value">${data.sessoes || "0"}</div></div>
+              <div class="field"><span class="field-label">Evolução:</span><div class="field-value">${data.evolucao || "—"}</div></div>
+            </div>
+            <div class="signature" style="margin-top:50px">
+              <div class="signature-line"></div>
+              <div class="name">${item.profissional_nome}</div>
+            </div>
+          `;
+        } else {
+          body = `
+            <div class="info-grid">
+              <div><span class="info-label">Paciente:</span> <span class="info-value">${pacienteNome}</span></div>
+              <div><span class="info-label">Data de Alta:</span> <span class="info-value">${data.dataAlta ? formatDateBR(data.dataAlta) : formatDateBR(item.data_atendimento)}</span></div>
+              <div><span class="info-label">Modalidades:</span> <span class="info-value">${data.modalidades?.join(', ') || "—"}</span></div>
+            </div>
+            <div class="section">
+              <div class="section-title">Diagnóstico</div>
+              <div class="field"><span class="field-label">CID-10:</span><div class="field-value"><strong>${data.cid10 || "—"}</strong> ${data.cidDesc ? ` - ${data.cidDesc}` : ""}</div></div>
+            </div>
+            <div class="section">
+              <div class="section-title">Seções Profissionais</div>
+              ${data.profissionais?.map((p: any) => `
+                <div style="margin-bottom: 20px; border: 1px solid #e2e8f0; padding: 12px; border-radius: 4px; page-break-inside: avoid;">
+                  <strong>${p.profissional_nome} (${p.profissao})</strong><br/>
+                  <div style="font-size: 10pt; margin-top: 5px;">${p.evolucao || "—"}</div>
+                </div>
+              `).join('')}
+            </div>
+          `;
+        }
+      } catch (e) {
+        console.error("Erro ao processar JSON para impressão:", e);
+      }
+    } else {
+      const row = (label: string, val?: string) =>
+        val ? `<div class="section"><div class="section-title">${label}</div><p>${String(val).replace(/\n/g, "<br/>")}</p></div>` : "";
+      
+      body = `
+        <div class="doc-content">
+          ${row("Queixa principal", item.queixa_principal)}
+          ${row("Evolução / SOAP", item.evolucao)}
+          ${row("Conduta", item.conduta)}
+          ${row("Procedimentos", item.procedimentos_texto)}
+          ${row("Outro procedimento", item.outro_procedimento)}
+          ${row("Indicação de retorno", item.indicacao_retorno)}
+        </div>
+        <div class="signature" style="margin-top:50px">
+          <div class="signature-line"></div>
+          <div class="name">${item.profissional_nome || ""}</div>
+        </div>
+      `;
+    }
+
+    await openPrintDocument(title, body, {
+      "Paciente": pacienteNome,
+      "Data": formatDateBR(item.data_atendimento),
+      "Profissional": item.profissional_nome || "-"
+    });
+  };
+
+  const handleDownloadPDF = (item: ProntuarioItem) => {
+    handlePrint(item);
+    toast.info("Use 'Salvar como PDF' na janela de impressão");
+  };
 
   if (loading) {
     return (
@@ -170,75 +337,8 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
 
   const activeEpisodios = episodios.filter((e) => e.status === "ativo");
 
-  const buildProntuarioHTML = (item: ProntuarioItem & { unidadeNome?: string }) => {
-    const css = buildInstitutionalCSS();
-    const row = (label: string, val?: string) =>
-      val ? `<div class="section"><h3>${label}</h3><p>${String(val).replace(/\n/g, "<br/>")}</p></div>` : "";
-    return `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Prontuário ${pacienteNome}</title>${css}</head>
-      <body>
-        <h1 style="margin:0 0 4px">Prontuário Clínico</h1>
-        <div class="doc-meta">
-          <strong>Paciente:</strong> ${pacienteNome} &nbsp;|&nbsp;
-          <strong>Data:</strong> ${formatDateBR(item.data_atendimento)} ${item.hora_atendimento || ""} &nbsp;|&nbsp;
-          <strong>Profissional:</strong> ${item.profissional_nome || "-"}
-          ${item.unidadeNome ? `&nbsp;|&nbsp; <strong>Unidade:</strong> ${item.unidadeNome}` : ""}
-        </div>
-        ${row("Queixa principal", item.queixa_principal)}
-        ${row("Evolução / SOAP", item.evolucao)}
-        ${row("Conduta", item.conduta)}
-        ${row("Procedimentos", item.procedimentos_texto)}
-        ${row("Outro procedimento", item.outro_procedimento)}
-        ${row("Indicação de retorno", item.indicacao_retorno)}
-        <div style="margin-top:48px; border-top:1px solid #333; padding-top:8px; text-align:center;">
-          ${item.profissional_nome || ""}
-        </div>
-      </body></html>`;
-  };
-
-  const handlePrint = (item: ProntuarioItem & { unidadeNome?: string }) => {
-    const win = window.open("", "_blank", "width=900,height=700");
-    if (!win) {
-      toast.error("Permita pop-ups para imprimir");
-      return;
-    }
-    win.document.write(buildProntuarioHTML(item));
-    win.document.close();
-    setTimeout(() => {
-      win.focus();
-      win.print();
-    }, 300);
-  };
-
-  const handleDownloadPDF = (item: ProntuarioItem & { unidadeNome?: string }) => {
-    // Browser print → "Save as PDF" — uses same institutional layout
-    handlePrint(item);
-    toast.info("Use 'Salvar como PDF' na janela de impressão");
-  };
-
-  const handleExportJSON = (item: ProntuarioItem) => {
-    const blob = new Blob([JSON.stringify(item, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `prontuario_${pacienteNome.replace(/\s+/g, "_")}_${item.data_atendimento}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success("JSON exportado");
-  };
-
-  const handleCopyLink = async (item: ProntuarioItem) => {
-    const url = `${window.location.origin}/painel/prontuario?pacienteId=${pacienteId}&prontuarioId=${item.id}`;
-    try {
-      await navigator.clipboard.writeText(url);
-      toast.success("Link copiado");
-    } catch {
-      toast.error("Não foi possível copiar o link");
-    }
-  };
-
   return (
     <div className="space-y-4">
-      {/* Toolbar */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
           <FileText className="w-4 h-4 text-primary" /> Histórico Clínico
@@ -271,7 +371,6 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
         </div>
       </div>
 
-      {/* Tratamentos ativos */}
       {activeEpisodios.length > 0 && (
         <div className="space-y-2">
           <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
@@ -287,7 +386,7 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
                       <p className="font-semibold text-sm text-foreground">{ep.titulo}</p>
                       <p className="text-xs text-muted-foreground">
                         {ep.profissional_nome} • Início:{" "}
-                        {new Date(ep.data_inicio + "T12:00:00").toLocaleDateString("pt-BR")}
+                        {formatDateBR(ep.data_inicio)}
                       </p>
                     </div>
                     <Badge variant="outline" className="text-xs">
@@ -302,7 +401,6 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
         </div>
       )}
 
-      {/* Timeline */}
       <div className="space-y-2">
         <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
           <FileText className="w-4 h-4 text-muted-foreground" /> Linha do Tempo ({timeline.length} registro(s))
@@ -338,63 +436,31 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
                                   {item.episodioTitulo}
                                 </Badge>
                               )}
+                              {item.tipo_registro?.includes('alta') && (
+                                <Badge className="text-[10px] bg-amber-100 text-amber-700 border-amber-200">ALTA</Badge>
+                              )}
                             </div>
                             <p className="text-sm text-foreground mt-0.5">
                               {item.profissional_nome}
                               {isOwn && <span className="text-xs text-primary ml-1">(você)</span>}
                             </p>
                             {item.unidadeNome && <p className="text-xs text-muted-foreground">{item.unidadeNome}</p>}
-                            {item.procedimentos_texto && (
-                              <p className="text-xs text-muted-foreground mt-1">
-                                <strong>Procedimentos:</strong> {item.procedimentos_texto}
-                              </p>
-                            )}
-                            {item.queixa_principal && !expanded && (
+                            {item.evolucao && !expanded && (
                               <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
-                                QP: {item.queixa_principal}
+                                {item.evolucao}
                               </p>
                             )}
                           </div>
                           <div className="flex items-center gap-1 shrink-0">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-7 w-7 p-0"
-                              onClick={() => setViewerItem(item)}
-                              aria-label="Visualizar prontuário"
-                              title="Visualizar"
-                            >
+                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setViewerItem(item)} title="Visualizar">
                               <Eye className="w-3.5 h-3.5 text-primary" />
                             </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-7 w-7 p-0"
-                              onClick={() => setHistoricoOpen(true)}
-                              aria-label="Histórico do paciente"
-                              title="Histórico do paciente"
-                            >
-                              <History className="w-3.5 h-3.5 text-primary" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-7 w-7 p-0"
-                              onClick={() => handleDownloadPDF(item)}
-                              aria-label="Baixar PDF"
-                              title="Baixar PDF"
-                            >
+                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleDownloadPDF(item)} title="Baixar PDF">
                               <FileDown className="w-3.5 h-3.5 text-primary" />
                             </Button>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-7 w-7 p-0"
-                                  aria-label="Mais ações"
-                                  title="Mais ações"
-                                >
+                                <Button size="sm" variant="ghost" className="h-7 w-7 p-0" title="Mais ações">
                                   <MoreVertical className="w-3.5 h-3.5" />
                                 </Button>
                               </DropdownMenuTrigger>
@@ -402,68 +468,24 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
                                 <DropdownMenuItem onClick={() => handlePrint(item)}>
                                   <Printer className="w-3.5 h-3.5 mr-2" /> Imprimir
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleExportJSON(item)}>
-                                  <Download className="w-3.5 h-3.5 mr-2" /> Exportar JSON
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleCopyLink(item)}>
-                                  <Link2 className="w-3.5 h-3.5 mr-2" /> Copiar link
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={() => { setViewerItem(item); setTimeout(() => setDocModalOpen(true), 100); }}>
                                   <FileSignature className="w-3.5 h-3.5 mr-2" /> Gerar documento
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
-                            {item.queixa_principal && (
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-7 w-7 p-0"
-                                onClick={() => setExpandedId(expanded ? null : item.id)}
-                                aria-label={expanded ? "Recolher" : "Expandir"}
-                                aria-expanded={expanded}
-                              >
-                                {expanded ? (
-                                  <ChevronUp className="w-3.5 h-3.5" />
-                                ) : (
-                                  <ChevronDown className="w-3.5 h-3.5" />
-                                )}
-                              </Button>
-                            )}
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 w-7 p-0"
+                              onClick={() => setExpandedId(expanded ? null : item.id)}
+                            >
+                              {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                            </Button>
                           </div>
                         </div>
                         {expanded && (
                           <div className="mt-2 space-y-1 text-xs border-t pt-2">
-                            {item.queixa_principal && (
-                              <p>
-                                <strong>Queixa:</strong> {item.queixa_principal}
-                              </p>
-                            )}
-                            {item.evolucao && (
-                              <p>
-                                <strong>Evolução:</strong> {item.evolucao}
-                              </p>
-                            )}
-                            {item.conduta && (
-                              <p>
-                                <strong>Conduta:</strong> {item.conduta}
-                              </p>
-                            )}
-                            {item.outro_procedimento && (
-                              <p>
-                                <strong>Outro procedimento:</strong> {item.outro_procedimento}
-                              </p>
-                            )}
-                            {item.indicacao_retorno && (
-                              <p>
-                                <strong>Retorno:</strong> {item.indicacao_retorno}
-                              </p>
-                            )}
-                            {!isOwn && (
-                              <p className="text-warning italic mt-1">
-                                Prontuário de outro profissional (somente leitura)
-                              </p>
-                            )}
+                            {renderContent(item)}
                           </div>
                         )}
                       </CardContent>
@@ -476,7 +498,6 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
         )}
       </div>
 
-      {/* Drawer de visualização rápida */}
       <Sheet open={!!viewerItem} onOpenChange={(o) => !o && setViewerItem(null)}>
         <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
           {viewerItem && (
@@ -484,48 +505,24 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
               <SheetHeader>
                 <SheetTitle className="flex items-center gap-2">
                   <FileText className="w-5 h-5 text-primary" />
-                  Prontuário — {formatDateBR(viewerItem.data_atendimento)}
-                  {viewerItem.hora_atendimento && (
-                    <span className="text-sm text-muted-foreground font-normal">{viewerItem.hora_atendimento}</span>
-                  )}
+                  Registro — {formatDateBR(viewerItem.data_atendimento)}
                 </SheetTitle>
                 <SheetDescription>
                   {viewerItem.profissional_nome}
-                  {viewerItem.profissional_id === currentProfissionalId && (
-                    <span className="text-primary ml-1">(você)</span>
-                  )}
                 </SheetDescription>
               </SheetHeader>
               <Separator className="my-4" />
-              <div className="space-y-4 text-sm">
-                {viewerItem.queixa_principal && (
-                  <Section label="Queixa principal" value={viewerItem.queixa_principal} />
-                )}
-                {viewerItem.evolucao && <Section label="Evolução / SOAP" value={viewerItem.evolucao} />}
-                {viewerItem.conduta && <Section label="Conduta" value={viewerItem.conduta} />}
-                {viewerItem.procedimentos_texto && (
-                  <Section label="Procedimentos" value={viewerItem.procedimentos_texto} />
-                )}
-                {viewerItem.outro_procedimento && (
-                  <Section label="Outro procedimento" value={viewerItem.outro_procedimento} />
-                )}
-                {viewerItem.indicacao_retorno && (
-                  <Section label="Indicação de retorno" value={viewerItem.indicacao_retorno} />
-                )}
+              <div className="space-y-4">
+                {renderContent(viewerItem)}
               </div>
               <Separator className="my-4" />
               <div className="flex flex-wrap justify-end gap-2">
-                <Button variant="outline" size="sm" onClick={() => setViewerItem(null)}>
-                  Fechar
-                </Button>
+                <Button variant="outline" size="sm" onClick={() => setViewerItem(null)}>Fechar</Button>
                 <Button variant="outline" size="sm" onClick={() => handlePrint(viewerItem)}>
                   <Printer className="w-3.5 h-3.5 mr-1" /> Imprimir
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => handleDownloadPDF(viewerItem)}>
                   <FileDown className="w-3.5 h-3.5 mr-1" /> Baixar PDF
-                </Button>
-                <Button size="sm" onClick={() => { setViewerItem(null); setDocModalOpen(true); }}>
-                  <FileSignature className="w-3.5 h-3.5 mr-1" /> Gerar documento
                 </Button>
               </div>
             </>
@@ -550,10 +547,3 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
     </div>
   );
 };
-
-const Section: React.FC<{ label: string; value: string }> = ({ label, value }) => (
-  <div>
-    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">{label}</p>
-    <p className="text-foreground whitespace-pre-wrap leading-relaxed">{value}</p>
-  </div>
-);
