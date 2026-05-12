@@ -222,7 +222,16 @@ const RelatorioAlta: React.FC = () => {
 
     // Pre-fill CID from patient
     const pat = pacientes.find(p => p.id === pid);
-    if (pat?.cid) setCid10(pat.cid);
+    if (pat?.cid) {
+      setCid10(pat.cid);
+      // Try to find description
+      const { data } = await supabase
+        .from('cid10_codigos')
+        .select('descricao')
+        .eq('codigo', pat.cid)
+        .maybeSingle();
+      if (data) setCidDesc(data.descricao);
+    }
   };
 
   const loadIndividualData = async (pid: string) => {
