@@ -931,10 +931,12 @@ const RelatorioAlta: React.FC = () => {
       <Card>
         <CardHeader className="pb-3"><CardTitle className="text-sm">2. Diagnóstico</CardTitle></CardHeader>
         <CardContent className="space-y-3">
-          <div>
-            <Label className="text-xs">CID-10</Label>
-            <Input value={indDiagCid} onChange={e => setIndDiagCid(e.target.value)} placeholder="Código ou descrição" className="h-8 text-sm" />
-          </div>
+          <BuscaCIDField 
+            value={indDiagCid} 
+            onChange={setIndDiagCid} 
+            descValue={indCidDesc} 
+            onDescChange={setIndCidDesc} 
+          />
           <div>
             <Label className="text-xs">CIF</Label>
             <Textarea value={indCif} onChange={e => setIndCif(e.target.value)} rows={2} className="text-sm" />
