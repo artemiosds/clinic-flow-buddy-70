@@ -305,43 +305,57 @@ const RelatorioAlta: React.FC = () => {
 
     let html = `
       <div class="info-grid">
-        <div><span class="info-label">Paciente</span><br/><span class="info-value">${p.nome}</span></div>
-        <div><span class="info-label">Data Nasc.</span><br/><span class="info-value">${fmt(p.dataNascimento)} (${calcIdade(p.dataNascimento)})</span></div>
-        <div><span class="info-label">CNS</span><br/><span class="info-value">${p.cns || "—"}</span></div>
-        <div><span class="info-label">CPF</span><br/><span class="info-value">${p.cpf || "—"}</span></div>
-        <div><span class="info-label">Responsável</span><br/><span class="info-value">${p.nomeMae || "—"}</span></div>
-        <div><span class="info-label">Data de Alta</span><br/><span class="info-value">${fmt(dataAlta)}</span></div>
-        <div><span class="info-label">Modalidades</span><br/><span class="info-value">${modalidades.join(", ") || "—"}</span></div>
-        <div><span class="info-label">Data Admissão</span><br/><span class="info-value">${fmt(p.criadoEm || "")}</span></div>
+        <div><span class="info-label">Paciente:</span> <span class="info-value">${p.nome}</span></div>
+        <div><span class="info-label">CNS:</span> <span class="info-value">${p.cns || "—"}</span></div>
+        <div><span class="info-label">CPF:</span> <span class="info-value">${p.cpf || "—"}</span></div>
+        <div><span class="info-label">Data Nasc:</span> <span class="info-value">${fmt(p.dataNascimento)} (${calcIdade(p.dataNascimento)})</span></div>
+        <div><span class="info-label">Mãe/Resp:</span> <span class="info-value">${p.nomeMae || "—"}</span></div>
+        <div><span class="info-label">Data Alta:</span> <span class="info-value">${fmt(dataAlta)}</span></div>
+        <div style="grid-column: span 2;"><span class="info-label">Modalidades:</span> <span class="info-value">${modalidades.join(", ") || "—"}</span></div>
       </div>
 
-      <h2>Diagnóstico</h2>
       <div class="section">
-        <div class="field"><span class="field-label">CID-10</span><div class="field-value">${cid10 || "—"}</div></div>
-        <div class="field"><span class="field-label">CIF — Funções do Corpo</span><div class="field-value">${cifFuncoes || "—"}</div></div>
-        <div class="field"><span class="field-label">CIF — Atividades e Participação</span><div class="field-value">${cifAtividades || "—"}</div></div>
-        <div class="field"><span class="field-label">CIF — Fatores Ambientais</span><div class="field-value">${cifFatores || "—"}</div></div>
+        <div class="section-title">1. Diagnóstico e Funcionalidade</div>
+        <div class="field">
+          <span class="field-label">CID-10:</span>
+          <div class="field-value"><strong>${cid10}</strong> ${cidDesc ? ` — ${cidDesc}` : ""}</div>
+        </div>
+        ${cifFuncoes ? `<div class="field"><span class="field-label">CIF — Funções do Corpo:</span><div class="field-value">${cifFuncoes}</div></div>` : ""}
+        ${cifAtividades ? `<div class="field"><span class="field-label">CIF — Atividades e Participação:</span><div class="field-value">${cifAtividades}</div></div>` : ""}
+        ${cifFatores ? `<div class="field"><span class="field-label">CIF — Fatores Ambientais:</span><div class="field-value">${cifFatores}</div></div>` : ""}
       </div>
+
+      <div class="section-title">2. Evolução por Área / Especialidade</div>
     `;
 
     profSections.forEach(s => {
       html += `
-        <h2>${s.profissao || "Profissional"} — ${s.profissional_nome}</h2>
-        <div class="section">
-          <div class="field"><span class="field-label">Período</span><div class="field-value">${fmt(s.periodo_inicio)} a ${fmt(s.periodo_fim)}</div></div>
-          <div class="field"><span class="field-label">Sessões realizadas</span><div class="field-value">${s.sessoes}</div></div>
-          <div class="field"><span class="field-label">Objetivos terapêuticos</span><div class="field-value">${s.objetivos || "—"}</div></div>
-          <div class="field"><span class="field-label">Intervenções/Procedimentos</span><div class="field-value">${s.intervencoes || "—"}</div></div>
-          <div class="field"><span class="field-label">Evolução clínica e funcional</span><div class="field-value">${s.evolucao || "—"}</div></div>
-          <div class="field"><span class="field-label">Metas</span><div class="field-value">${
-            s.metas_status === "totalmente" ? "Totalmente atingidas" :
-            s.metas_status === "parcialmente" ? "Parcialmente atingidas" : "Não atingidas"
-          }${s.metas_justificativa ? ` — ${s.metas_justificativa}` : ""}</div></div>
-          ${s.tecnologia_assistiva ? `<div class="field"><span class="field-label">Tecnologia Assistiva</span><div class="field-value">${s.tecnologia_assistiva}</div></div>` : ""}
-          <div class="signature" style="margin-top:20px">
-            <div class="signature-line"></div>
-            <div class="name">${s.profissional_nome}</div>
-            <div class="role">${s.profissao} — ${s.conselho}</div>
+        <div style="margin-bottom: 20px; border: 1px solid #e2e8f0; padding: 12px; border-radius: 4px; page-break-inside: avoid;">
+          <h3 style="color: #0369a1; font-size: 11pt; margin-top: 0; border-bottom: 1px solid #bae6fd; padding-bottom: 4px;">
+            ${s.profissao || "Profissional"} — ${s.profissional_nome}
+          </h3>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; font-size: 9pt;">
+            <div><strong>Período:</strong> ${fmt(s.periodo_inicio)} a ${fmt(s.periodo_fim)}</div>
+            <div><strong>Total de Sessões:</strong> ${s.sessoes}</div>
+          </div>
+          
+          ${s.objetivos ? `<div class="field"><span class="field-label">Objetivos Terapêuticos:</span><div class="field-value">${s.objetivos}</div></div>` : ""}
+          ${s.intervencoes ? `<div class="field"><span class="field-label">Intervenções / Procedimentos:</span><div class="field-value">${s.intervencoes}</div></div>` : ""}
+          ${s.evolucao ? `<div class="field"><span class="field-label">Evolução Clínica e Funcional:</span><div class="field-value">${s.evolucao}</div></div>` : ""}
+          
+          <div class="field">
+            <span class="field-label">Metas:</span>
+            <div class="field-value">
+              ${s.metas_status === "totalmente" ? "Totalmente atingidas" : s.metas_status === "parcialmente" ? "Parcialmente atingidas" : "Não atingidas"}
+              ${s.metas_justificativa ? `<br/><small>Justificativa: ${s.metas_justificativa}</small>` : ""}
+            </div>
+          </div>
+          ${s.tecnologia_assistiva ? `<div class="field"><span class="field-label">Tecnologia Assistiva Concedida:</span><div class="field-value">${s.tecnologia_assistiva}</div></div>` : ""}
+          
+          <div class="signature" style="margin-top:15px; text-align: right;">
+            <div class="signature-line" style="margin-left: auto; margin-right: 0; width: 220px;"></div>
+            <div class="name" style="font-size: 9pt;">${s.profissional_nome}</div>
+            <div class="role" style="font-size: 8pt;">${s.profissao} — ${s.conselho}</div>
           </div>
         </div>
       `;
@@ -349,29 +363,36 @@ const RelatorioAlta: React.FC = () => {
 
     const motivoLabel = MOTIVOS_ALTA.find(m => m.value === motivoAlta)?.label || motivoAlta;
     html += `
-      <h2>Motivo da Alta</h2>
       <div class="section">
-        <div class="field-value">${motivoLabel}${motivoDetalhe ? ` — ${motivoDetalhe}` : ""}</div>
+        <div class="section-title">3. Motivo da Alta e Condição Final</div>
+        <div class="field">
+          <span class="field-label">Motivo da Alta:</span>
+          <div class="field-value">${motivoLabel}${motivoDetalhe ? ` — ${motivoDetalhe}` : ""}</div>
+        </div>
+        <div class="field">
+          <span class="field-label">Condição Funcional na Alta:</span>
+          <div class="field-value">${condicaoFuncional || "—"}</div>
+        </div>
+        <div class="field">
+          <span class="field-label">Nível de Independência:</span>
+          <div class="field-value">${nivelIndep || "—"}</div>
+        </div>
       </div>
 
-      <h2>Condição Funcional na Alta</h2>
       <div class="section">
-        <div class="field"><span class="field-label">Descrição</span><div class="field-value">${condicaoFuncional || "—"}</div></div>
-        <div class="field"><span class="field-label">Nível de independência</span><div class="field-value">${nivelIndep || "—"}</div></div>
+        <div class="section-title">4. Orientações e Encaminhamentos</div>
+        ${orientacoesUsuario ? `<div class="field"><span class="field-label">Orientações ao Usuário/Família:</span><div class="field-value">${orientacoesUsuario}</div></div>` : ""}
+        ${orientacoesUbs ? `<div class="field"><span class="field-label">Orientações para UBS/ESF:</span><div class="field-value">${orientacoesUbs}</div></div>` : ""}
+        ${encaminhamentos.length > 0 ? `<div class="field"><span class="field-label">Encaminhamentos Efetuados:</span><div class="field-value">${encaminhamentos.join(", ")}</div></div>` : ""}
+        ${freqAps ? `<div class="field"><span class="field-label">Frequência Recomendada na APS:</span><div class="field-value">${freqAps}</div></div>` : ""}
       </div>
 
-      <h2>Plano Pós-Alta</h2>
-      <div class="section">
-        <div class="field"><span class="field-label">Orientações ao usuário/família</span><div class="field-value">${orientacoesUsuario || "—"}</div></div>
-        <div class="field"><span class="field-label">Orientações para UBS/ESF</span><div class="field-value">${orientacoesUbs || "—"}</div></div>
-        <div class="field"><span class="field-label">Encaminhamentos</span><div class="field-value">${encaminhamentos.join(", ") || "—"}</div></div>
-        <div class="field"><span class="field-label">Frequência recomendada na APS</span><div class="field-value">${freqAps || "—"}</div></div>
-      </div>
-
-      <div class="signature" style="margin-top:40px">
-        <div class="signature-line"></div>
-        <div class="name">Responsável Técnico (RT)</div>
-        <div class="role">Assinatura e Carimbo</div>
+      <div style="margin-top: 40px; display: flex; justify-content: center; page-break-inside: avoid;">
+        <div class="signature">
+          <div class="signature-line" style="width: 300px;"></div>
+          <div class="name">Responsável Técnico / Coordenação</div>
+          <div class="role">CER II — Oriximiná-PA</div>
+        </div>
       </div>
     `;
 
@@ -385,57 +406,64 @@ const RelatorioAlta: React.FC = () => {
     const profNome = user?.nome || "";
     const profissao = func?.profissao || user?.cargo || "";
     const conselho = func ? `${func.tipoConselho} ${func.numeroConselho}/${func.ufConselho}` : "";
-
     const motivoLabel = MOTIVOS_ALTA.find(m => m.value === indMotivo)?.label || indMotivo;
 
     return `
       <div class="info-grid">
-        <div><span class="info-label">Paciente</span><br/><span class="info-value">${p.nome}</span></div>
-        <div><span class="info-label">Data Nasc.</span><br/><span class="info-value">${fmt(p.dataNascimento)} (${calcIdade(p.dataNascimento)})</span></div>
-        <div><span class="info-label">CNS</span><br/><span class="info-value">${p.cns || "—"}</span></div>
-        <div><span class="info-label">CPF</span><br/><span class="info-value">${p.cpf || "—"}</span></div>
-        <div><span class="info-label">Responsável</span><br/><span class="info-value">${p.nomeMae || "—"}</span></div>
-        <div><span class="info-label">Data de Alta</span><br/><span class="info-value">${fmt(indDataAlta)}</span></div>
-        <div><span class="info-label">Profissional</span><br/><span class="info-value">${profNome} — ${profissao}</span></div>
-        <div><span class="info-label">Conselho</span><br/><span class="info-value">${conselho}</span></div>
+        <div><span class="info-label">Paciente:</span> <span class="info-value">${p.nome}</span></div>
+        <div><span class="info-label">CNS:</span> <span class="info-value">${p.cns || "—"}</span></div>
+        <div><span class="info-label">CPF:</span> <span class="info-value">${p.cpf || "—"}</span></div>
+        <div><span class="info-label">Data Nasc:</span> <span class="info-value">${fmt(p.dataNascimento)} (${calcIdade(p.dataNascimento)})</span></div>
+        <div><span class="info-label">Profissional:</span> <span class="info-value">${profNome}</span></div>
+        <div><span class="info-label">Conselho:</span> <span class="info-value">${conselho}</span></div>
+        <div><span class="info-label">Data de Alta:</span> <span class="info-value">${fmt(indDataAlta)}</span></div>
+        <div><span class="info-label">Modalidade:</span> <span class="info-value">${indModalidade || "—"}</span></div>
       </div>
 
-      <h2>Diagnóstico</h2>
       <div class="section">
-        <div class="field"><span class="field-label">CID-10</span><div class="field-value">${indDiagCid || "—"}</div></div>
-        <div class="field"><span class="field-label">CIF</span><div class="field-value">${indCif || "—"}</div></div>
+        <div class="section-title">1. Diagnóstico e Atendimento</div>
+        <div class="field">
+          <span class="field-label">CID-10:</span>
+          <div class="field-value"><strong>${indDiagCid}</strong> ${indCidDesc ? ` — ${indCidDesc}` : ""}</div>
+        </div>
+        ${indCif ? `<div class="field"><span class="field-label">CIF:</span><div class="field-value">${indCif}</div></div>` : ""}
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
+          <div><strong>Período de Acompanhamento:</strong> ${fmt(indPeriodoInicio)} a ${fmt(indPeriodoFim)}</div>
+          <div><strong>Sessões Realizadas:</strong> ${indSessoes}</div>
+        </div>
       </div>
 
-      <h2>Atendimento</h2>
       <div class="section">
-        <div class="field"><span class="field-label">Período</span><div class="field-value">${fmt(indPeriodoInicio)} a ${fmt(indPeriodoFim)}</div></div>
-        <div class="field"><span class="field-label">Sessões realizadas</span><div class="field-value">${indSessoes}</div></div>
-        <div class="field"><span class="field-label">Modalidade</span><div class="field-value">${indModalidade || "—"}</div></div>
+        <div class="section-title">2. Evolução Clínica e Funcional</div>
+        ${indObjetivos ? `<div class="field"><span class="field-label">Objetivos Terapêuticos:</span><div class="field-value">${indObjetivos}</div></div>` : ""}
+        ${indIntervencoes ? `<div class="field"><span class="field-label">Intervenções / Procedimentos:</span><div class="field-value">${indIntervencoes}</div></div>` : ""}
+        ${indEvolucao ? `<div class="field"><span class="field-label">Evolução Clínica e Funcional:</span><div class="field-value">${indEvolucao}</div></div>` : ""}
+        <div class="field">
+          <span class="field-label">Metas:</span>
+          <div class="field-value">
+            ${indMetas === "totalmente" ? "Totalmente atingidas" : indMetas === "parcialmente" ? "Parcialmente atingidas" : "Não atingidas"}
+            ${indMetasJust ? `<br/><small>Justificativa: ${indMetasJust}</small>` : ""}
+          </div>
+        </div>
+        ${indTA ? `<div class="field"><span class="field-label">Tecnologia Assistiva:</span><div class="field-value">${indTA}</div></div>` : ""}
       </div>
 
-      <h2>Evolução Clínica</h2>
       <div class="section">
-        <div class="field"><span class="field-label">Objetivos terapêuticos</span><div class="field-value">${indObjetivos || "—"}</div></div>
-        <div class="field"><span class="field-label">Intervenções/Procedimentos</span><div class="field-value">${indIntervencoes || "—"}</div></div>
-        <div class="field"><span class="field-label">Evolução clínica e funcional</span><div class="field-value">${indEvolucao || "—"}</div></div>
-        <div class="field"><span class="field-label">Metas</span><div class="field-value">${
-          indMetas === "totalmente" ? "Totalmente atingidas" :
-          indMetas === "parcialmente" ? "Parcialmente atingidas" : "Não atingidas"
-        }${indMetasJust ? ` — ${indMetasJust}` : ""}</div></div>
-        ${indTA ? `<div class="field"><span class="field-label">Tecnologia Assistiva</span><div class="field-value">${indTA}</div></div>` : ""}
+        <div class="section-title">3. Conclusão e Orientações</div>
+        <div class="field">
+          <span class="field-label">Motivo da Alta:</span>
+          <div class="field-value">${motivoLabel}${indMotivoDet ? ` — ${indMotivoDet}` : ""}</div>
+        </div>
+        ${indOrientacoes ? `<div class="field"><span class="field-label">Orientações:</span><div class="field-value">${indOrientacoes}</div></div>` : ""}
+        ${indEncaminhamento ? `<div class="field"><span class="field-label">Encaminhamentos:</span><div class="field-value">${indEncaminhamento}</div></div>` : ""}
       </div>
 
-      <h2>Alta</h2>
-      <div class="section">
-        <div class="field"><span class="field-label">Motivo</span><div class="field-value">${motivoLabel}${indMotivoDet ? ` — ${indMotivoDet}` : ""}</div></div>
-        <div class="field"><span class="field-label">Orientações</span><div class="field-value">${indOrientacoes || "—"}</div></div>
-        <div class="field"><span class="field-label">Encaminhamentos</span><div class="field-value">${indEncaminhamento || "—"}</div></div>
-      </div>
-
-      <div class="signature" style="margin-top:50px">
-        <div class="signature-line"></div>
-        <div class="name">${profNome}</div>
-        <div class="role">${profissao} — ${conselho}</div>
+      <div style="margin-top: 60px; display: flex; justify-content: center; page-break-inside: avoid;">
+        <div class="signature">
+          <div class="signature-line" style="width: 300px;"></div>
+          <div class="name">${profNome}</div>
+          <div class="role">${profissao} — ${conselho}</div>
+        </div>
       </div>
     `;
   };
@@ -444,8 +472,9 @@ const RelatorioAlta: React.FC = () => {
     if (type === "multi") {
       const errs = validateMulti();
       if (errs.length > 0) { toast.error(errs[0]); return; }
-      openPrintDocument("Relatório de Alta — Multiprofissional", buildMultiPrintBody(), {
-        Paciente: paciente?.nome || "", "Data Alta": fmt(dataAlta)
+      openPrintDocument("Relatório de Alta Multiprofissional", buildMultiPrintBody(), {
+        "Paciente": paciente?.nome || "",
+        "Data de Alta": fmt(dataAlta)
       });
     } else {
       const errs = validateInd();
@@ -454,7 +483,10 @@ const RelatorioAlta: React.FC = () => {
       openPrintDocument(
         `Relatório de Alta — ${func?.profissao || "Individual"}`,
         buildIndPrintBody(),
-        { Paciente: paciente?.nome || "", "Data Alta": fmt(indDataAlta) }
+        {
+          "Paciente": paciente?.nome || "",
+          "Data de Alta": fmt(indDataAlta)
+        }
       );
     }
   };
