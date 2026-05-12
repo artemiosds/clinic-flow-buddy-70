@@ -35,10 +35,11 @@ function fmtDate(iso: string | undefined): string {
 
 function safe(str: string | undefined | null): string {
   if (!str) return "";
+  const trimmed = str.trim();
   // try to parse JSON shaped fields and stringify nicely
-  if (str.trim().startsWith("{") || str.trim().startsWith("[")) {
+  if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
     try {
-      const parsed = JSON.parse(str);
+      const parsed = JSON.parse(trimmed);
       if (parsed?.medicamentos && Array.isArray(parsed.medicamentos)) {
         return parsed.medicamentos
           .map((m: any, i: number) => `${i + 1}. ${m.nome} — ${m.dosagem || ""} ${m.via || ""} ${m.posologia || ""} ${m.duracao || ""}`)
@@ -48,6 +49,11 @@ function safe(str: string | undefined | null): string {
         return parsed.exames
           .map((e: any) => `• ${e.nome}${e.codigo_sus ? ` (${e.codigo_sus})` : ""}${e.indicacao ? ` — ${e.indicacao}` : ""}`)
           .join("\n");
+      }
+      
+      // Handle Relatório de Alta data inside observacoes
+      if (parsed?.diagCid || parsed?.cid10 || parsed?.profissionais || parsed?.motivoAlta || parsed?.motivo) {
+        return "Este é um Relatório de Alta. Por favor, use a opção 'Imprimir' ou visualize os detalhes estruturados.";
       }
     } catch { /* not JSON */ }
   }
