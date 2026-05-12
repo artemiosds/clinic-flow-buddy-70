@@ -35,6 +35,8 @@ interface ProntuarioItem {
   outro_procedimento: string;
   unidade_id: string;
   episodio_id: string | null;
+  tipo_registro: string;
+  observacoes: string;
 }
 
 interface EpisodioItem {
