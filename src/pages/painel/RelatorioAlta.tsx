@@ -258,7 +258,15 @@ const RelatorioAlta: React.FC = () => {
     setIndSessoes(sessions?.length || pronts?.length || 0);
 
     const pat = pacientes.find(p => p.id === pid);
-    if (pat?.cid) setIndDiagCid(pat.cid);
+    if (pat?.cid) {
+      setIndDiagCid(pat.cid);
+      const { data } = await supabase
+        .from('cid10_codigos')
+        .select('descricao')
+        .eq('codigo', pat.cid)
+        .maybeSingle();
+      if (data) setIndCidDesc(data.descricao);
+    }
   };
 
   const updateProfSection = (profId: string, field: keyof ProfSection, value: any) => {
