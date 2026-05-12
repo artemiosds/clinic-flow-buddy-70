@@ -221,36 +221,87 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
   }, [prontuarios, unidadeMap, episodioMap]);
 
   const handlePrint = async (item: ProntuarioItem) => {
+    const isRelatorio = item.tipo_registro === "alta_individual" || item.tipo_registro === "alta_multiprofissional";
     const title = item.tipo_registro === "alta_individual" 
-      ? "Relatório de Alta Individual" 
+      ? "RELATÓRIO DE ALTA INDIVIDUAL" 
       : item.tipo_registro === "alta_multiprofissional" 
-        ? "Relatório de Alta Multiprofissional" 
+        ? "RELATÓRIO DE ALTA MULTIPROFISSIONAL" 
         : "Prontuário Clínico";
     
     let body = '';
     
-    if (item.tipo_registro === "alta_individual" || item.tipo_registro === "alta_multiprofissional") {
+    if (isRelatorio) {
       try {
         const data = JSON.parse(item.observacoes);
         if (item.tipo_registro === "alta_individual") {
+          const motivoLabel = data.motivo === "objetivos_atingidos" ? "Alta por objetivos atingidos" : 
+                             data.motivo === "abandono" ? "Abandono" : 
+                             data.motivo === "encaminhamento" ? "Encaminhamento" : 
+                             data.motivo === "transferencia" ? "Transferência" : 
+                             data.motivo === "outros" ? "Outros" : data.motivo;
+
+          const metasLabel = data.metas === "totalmente" ? "Totalmente atingidas" : 
+                            data.metas === "parcialmente" ? "Parcialmente atingidas" : 
+                            data.metas === "nao_atingidas" ? "Não atingidas" : data.metas;
+
           body = `
-            <div class="info-grid">
-              <div><span class="info-label">Paciente:</span> <span class="info-value">${pacienteNome}</span></div>
-              <div><span class="info-label">Data de Alta:</span> <span class="info-value">${data.dataAlta ? formatDateBR(data.dataAlta) : formatDateBR(item.data_atendimento)}</span></div>
-              <div><span class="info-label">Profissional:</span> <span class="info-value">${item.profissional_nome}</span></div>
-              <div><span class="info-label">Modalidade:</span> <span class="info-value">${data.modalidade || "—"}</span></div>
-            </div>
             <div class="section">
-              <div class="section-title">Diagnóstico</div>
+              <div class="section-title">1. IDENTIFICAÇÃO DO PACIENTE</div>
+              <div class="info-grid">
+                <div><span class="info-label">Paciente:</span> <span class="info-value">${pacienteNome}</span></div>
+                <div><span class="info-label">Data Nasc:</span> <span class="info-value">${data.dataNascimento ? formatDateBR(data.dataNascimento) : "—"}</span></div>
+                <div><span class="info-label">CNS:</span> <span class="info-value">${data.pacienteCns || "—"}</span></div>
+                <div><span class="info-label">Prontuário/ID:</span> <span class="info-value">${item.id.slice(0, 8)}</span></div>
+              </div>
+            </div>
+
+            <div class="section">
+              <div class="section-title">2. IDENTIFICAÇÃO DO ATENDIMENTO</div>
+              <div class="info-grid">
+                <div><span class="info-label">Profissional:</span> <span class="info-value">${item.profissional_nome}</span></div>
+                <div><span class="info-label">Modalidade:</span> <span class="info-value">${data.modalidade || "—"}</span></div>
+                <div><span class="info-label">Data de Alta:</span> <span class="info-value">${data.dataAlta ? formatDateBR(data.dataAlta) : formatDateBR(item.data_atendimento)}</span></div>
+                <div><span class="info-label">Período:</span> <span class="info-value">${data.periodoInicio ? formatDateBR(data.periodoInicio) : "—"} a ${data.periodoFim ? formatDateBR(data.periodoFim) : "—"}</span></div>
+                <div><span class="info-label">Sessões:</span> <span class="info-value">${data.sessoes || "0"}</span></div>
+              </div>
+            </div>
+
+            <div class="section">
+              <div class="section-title">3. DIAGNÓSTICO</div>
               <div class="field"><span class="field-label">CID-10:</span><div class="field-value"><strong>${data.diagCid || "—"}</strong> ${data.cidDesc ? ` - ${data.cidDesc}` : ""}</div></div>
               ${data.cif ? `<div class="field"><span class="field-label">CIF:</span><div class="field-value">${data.cif}</div></div>` : ""}
             </div>
+
             <div class="section">
-              <div class="section-title">Evolução e Atendimento</div>
-              <div class="field"><span class="field-label">Período:</span><div class="field-value">${data.periodoInicio ? formatDateBR(data.periodoInicio) : "—"} a ${data.periodoFim ? formatDateBR(data.periodoFim) : "—"}</div></div>
-              <div class="field"><span class="field-label">Sessões:</span><div class="field-value">${data.sessoes || "0"}</div></div>
-              <div class="field"><span class="field-label">Evolução:</span><div class="field-value">${data.evolucao || "—"}</div></div>
+              <div class="section-title">4. OBJETIVOS TERAPÊUTICOS</div>
+              <div class="field-value">${data.objetivos || "—"}</div>
             </div>
+
+            <div class="section">
+              <div class="section-title">5. INTERVENÇÕES / PROCEDIMENTOS REALIZADOS</div>
+              <div class="field-value">${data.intervencoes || "—"}</div>
+            </div>
+
+            <div class="section">
+              <div class="section-title">6. EVOLUÇÃO CLÍNICA E FUNCIONAL</div>
+              <div class="field-value">${data.evolucao || "—"}</div>
+            </div>
+
+            <div class="section">
+              <div class="section-title">7. METAS ATINGIDAS</div>
+              <div class="field-value">${metasLabel || "—"}</div>
+            </div>
+
+            <div class="section">
+              <div class="section-title">8. MOTIVO DA ALTA</div>
+              <div class="field-value">${motivoLabel || "—"}</div>
+            </div>
+
+            <div class="section">
+              <div class="section-title">9. ORIENTAÇÕES E ENCAMINHAMENTOS</div>
+              <div class="field-value">${data.orientacoes || data.encaminhamento || "—"}</div>
+            </div>
+
             <div class="signature" style="margin-top:50px">
               <div class="signature-line"></div>
               <div class="name">${item.profissional_nome}</div>
@@ -258,32 +309,53 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
           `;
         } else {
           body = `
-            <div class="info-grid">
-              <div><span class="info-label">Paciente:</span> <span class="info-value">${pacienteNome}</span></div>
-              <div><span class="info-label">Data de Alta:</span> <span class="info-value">${data.dataAlta ? formatDateBR(data.dataAlta) : formatDateBR(item.data_atendimento)}</span></div>
-              <div><span class="info-label">Modalidades:</span> <span class="info-value">${data.modalidades?.join(', ') || "—"}</span></div>
-            </div>
             <div class="section">
-              <div class="section-title">Diagnóstico</div>
+              <div class="section-title">1. IDENTIFICAÇÃO DO PACIENTE</div>
+              <div class="info-grid">
+                <div><span class="info-label">Paciente:</span> <span class="info-value">${pacienteNome}</span></div>
+                <div><span class="info-label">Data de Alta:</span> <span class="info-value">${data.dataAlta ? formatDateBR(data.dataAlta) : formatDateBR(item.data_atendimento)}</span></div>
+                <div style="grid-column: span 2;"><span class="info-label">Modalidades:</span> <span class="info-value">${data.modalidades?.join(', ') || "—"}</span></div>
+              </div>
+            </div>
+
+            <div class="section">
+              <div class="section-title">2. DIAGNÓSTICO</div>
               <div class="field"><span class="field-label">CID-10:</span><div class="field-value"><strong>${data.cid10 || "—"}</strong> ${data.cidDesc ? ` - ${data.cidDesc}` : ""}</div></div>
             </div>
+
             <div class="section">
-              <div class="section-title">Seções Profissionais</div>
+              <div class="section-title">3. SEÇÕES PROFISSIONAIS</div>
               ${data.profissionais?.map((p: any) => `
                 <div style="margin-bottom: 20px; border: 1px solid #e2e8f0; padding: 12px; border-radius: 4px; page-break-inside: avoid;">
-                  <strong>${p.profissional_nome} (${p.profissao})</strong><br/>
-                  <div style="font-size: 10pt; margin-top: 5px;">${p.evolucao || "—"}</div>
+                  <strong>${p.profissional_nome} (${p.profissao || "—"})</strong><br/>
+                  <div style="font-size: 10pt; margin-top: 5px; text-align: justify;">${p.evolucao || "—"}</div>
                 </div>
               `).join('')}
+            </div>
+
+            <div class="section">
+              <div class="section-title">4. CONCLUSÃO E ORIENTAÇÕES</div>
+              ${data.motivoAlta ? `<div class="field"><span class="field-label">Motivo da Alta:</span><div class="field-value">${data.motivoAlta}</div></div>` : ""}
+              ${data.condicaoFuncional ? `<div class="field"><span class="field-label">Condição Funcional:</span><div class="field-value">${data.condicaoFuncional}</div></div>` : ""}
+              ${data.orientacoesUsuario ? `<div class="field"><span class="field-label">Orientações:</span><div class="field-value">${data.orientacoesUsuario}</div></div>` : ""}
+            </div>
+
+            <div style="margin-top: 60px; display: flex; justify-content: center; page-break-inside: avoid;">
+              <div class="signature">
+                <div class="signature-line" style="width: 300px;"></div>
+                <div class="name">Coordenação / Responsável Técnico</div>
+                <div class="role">CER II — Oriximiná-PA</div>
+              </div>
             </div>
           `;
         }
       } catch (e) {
         console.error("Erro ao processar JSON para impressão:", e);
+        body = `<div class="p-4 bg-destructive/10 text-destructive rounded-md">Erro ao processar dados do relatório para impressão.</div>`;
       }
     } else {
       const row = (label: string, val?: string) =>
-        val ? `<div class="section"><div class="section-title">${label}</div><p>${String(val).replace(/\n/g, "<br/>")}</p></div>` : "";
+        val ? `<div class="section"><div class="section-title">${label}</div><div class="section-content">${String(val).replace(/\n/g, "<br/>")}</div></div>` : "";
       
       body = `
         <div class="doc-content">
@@ -310,7 +382,7 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
 
   const handleDownloadPDF = (item: ProntuarioItem) => {
     handlePrint(item);
-    toast.info("Use 'Salvar como PDF' na janela de impressão");
+    toast.info("Aguarde a janela de impressão para salvar como PDF");
   };
 
   if (loading) {
