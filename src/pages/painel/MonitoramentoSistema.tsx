@@ -37,8 +37,14 @@ const MonitoramentoSistema = () => {
   const fetchStats = async () => {
     setLoading(true);
     try {
+      // Garantir que a sessão esteja fresca antes de chamar a Edge Function
+      const { data: { session } } = await supabase.auth.getSession();
+      
       const { data, error } = await supabase.functions.invoke('system-monitoring-check', {
-        body: { action: 'check-system' }
+        body: { action: 'check-system' },
+        headers: session?.access_token ? {
+          Authorization: `Bearer ${session.access_token}`
+        } : {}
       });
       
       if (error) {
@@ -90,8 +96,13 @@ const MonitoramentoSistema = () => {
 
     setLoading(true);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
       const { data, error } = await supabase.functions.invoke('system-cleanup-execute', {
-        body: { type, days, confirmation: 'LIMPAR' }
+        body: { type, days, confirmation: 'LIMPAR' },
+        headers: session?.access_token ? {
+          Authorization: `Bearer ${session.access_token}`
+        } : {}
       });
       if (error) throw error;
       toast.success(`${data.count} registros limpos com sucesso!`);
