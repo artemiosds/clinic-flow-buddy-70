@@ -320,9 +320,9 @@ const ProfissionaisExternos: React.FC = () => {
   });
 
   // For quota dialog: filter out professionals that already have a quota for this external
-  const availableForQuota = profissionaisInternos.filter((f: any) =>
+  const availableForQuota = useMemo(() => profissionaisInternos.filter((f: any) =>
     !quotas.some(q => q.profissional_externo_id === selectedExternoId && q.profissional_interno_id === f.id)
-  );
+  ), [profissionaisInternos, quotas, selectedExternoId]);
 
   return (
     <div className="space-y-4 animate-fade-in">
