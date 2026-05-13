@@ -30,6 +30,7 @@ const MonitoramentoSistema = () => {
   const [stats, setStats] = useState<any>(null);
   const [cleanupConfirmText, setCleanupConfirmText] = useState('');
   const [activeTab, setActiveTab] = useState('geral');
+  const [cleanupLogs, setCleanupLogs] = useState<any[]>([]);
 
   const isMaster = user?.role?.toLowerCase().trim() === 'master' || user?.usuario === 'admin.sms';
 
