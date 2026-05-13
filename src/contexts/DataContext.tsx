@@ -40,9 +40,17 @@ export interface TurnoInfoResult {
   horaInicio: string;
   horaFim: string;
   vagasTotal: number;
+  vagasInternas: number;
+  vagasExternasReservadas: number;
+  vagasInternasOcupadas: number;
+  vagasExternasOcupadas: number;
+  vagasInternasLivres: number;
+  vagasExternasLivres: number;
   vagasOcupadas: number;
   vagasLivres: number;
   lotado: boolean;
+  lotadoInterno: boolean;
+  lotadoExterno: boolean;
 }
 
 interface BloqueioAgenda {
