@@ -397,7 +397,7 @@ const MonitoramentoSistema = () => {
                 <CardDescription>Monitoramento de armazenamento de arquivos.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {stats?.storageStats ? stats.storageStats.map((bucket: any) => (
+                {stats?.storage?.stats ? stats.storage.stats.map((bucket: any) => (
                   <div key={bucket.id} className="p-4 border border-border/50 rounded-lg flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded bg-muted flex items-center justify-center">
