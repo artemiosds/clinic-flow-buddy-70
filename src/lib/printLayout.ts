@@ -168,6 +168,8 @@ export function buildInstitutionalCSS(): string {
     text-justify: inter-word;
     font-size: 11pt;
     line-height: 1.5;
+    word-break: break-word;
+    hyphens: auto;
   }
 
   /* SUMMARY CARDS */
