@@ -88,8 +88,8 @@ const MonitoramentoSistema = () => {
     }
   }, [isMaster]);
 
-  const handleCleanup = async (type: string, days: number = 90) => {
-    if (cleanupConfirmText !== 'LIMPAR') {
+  const handleCleanup = async (type: string, days: number = 90, dryRun: boolean = false) => {
+    if (!dryRun && cleanupConfirmText !== 'LIMPAR') {
       toast.error('Digite LIMPAR para confirmar a exclusão');
       return;
     }
@@ -98,20 +98,54 @@ const MonitoramentoSistema = () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       
+      const payload = { 
+        cleanup_type: type === 'logs' ? 'logs_old' : (type === 'notifications' ? 'notifications_old' : type), 
+        filters: { older_than_days: days },
+        dry_run: dryRun,
+        confirmation_text: dryRun ? undefined : 'LIMPAR'
+      };
+
       const { data, error } = await supabase.functions.invoke('system-cleanup-execute', {
-        body: { type, days, confirmation: 'LIMPAR' },
+        body: payload,
         headers: session?.access_token ? {
           Authorization: `Bearer ${session.access_token}`
         } : {}
       });
-      if (error) throw error;
-      toast.success(`${data.count} registros limpos com sucesso!`);
-      fetchStats();
-      fetchCleanupLogs();
-      setCleanupConfirmText('');
+
+      // Se houver erro retornado pela função (mesmo que venha no data.error se não disparar o catch do invoke)
+      if (error) {
+        let errorMsg = 'Erro na Edge Function';
+        try {
+          // Tentar extrair a mensagem real se o erro for um objeto de resposta
+          const errorData = await error.context?.json();
+          errorMsg = errorData?.error || errorData?.message || error.message;
+        } catch (e) {
+          errorMsg = error.message;
+        }
+        
+        toast.error(`Falha: ${errorMsg}`);
+        throw error;
+      }
+
+      if (data?.success === false) {
+        toast.error(data.error || 'Erro ao executar limpeza');
+        return;
+      }
+
+      if (dryRun) {
+        toast.info(data.message || `Análise concluída: ${data.estimated_items} itens identificados.`);
+      } else {
+        toast.success(data.message || `${data.deleted_items} registros limpos com sucesso!`);
+        setCleanupConfirmText('');
+        fetchStats();
+        fetchCleanupLogs();
+      }
     } catch (err: any) {
-      console.error(err);
-      toast.error('Erro ao executar limpeza: ' + err.message);
+      console.error('Cleanup Error:', err);
+      // O toast de erro já foi disparado acima para erros específicos
+      if (!err.message?.includes('invoke')) {
+        toast.error('Erro de conexão ou permissão.');
+      }
     } finally {
       setLoading(false);
     }
