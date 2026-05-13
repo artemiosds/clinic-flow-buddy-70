@@ -39,11 +39,22 @@ const MonitoramentoSistema = () => {
       const { data, error } = await supabase.functions.invoke('system-monitoring', {
         body: { action: 'check-system' }
       });
-      if (error) throw error;
+      
+      if (error) {
+        // Detailed error for Master to help debug
+        if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
+          toast.error('Erro de autenticação na Edge Function.');
+        } else if (error.message?.includes('403') || error.message?.includes('Forbidden')) {
+          toast.error('Acesso negado: Perfil sem permissão administrativa.');
+        } else {
+          toast.error('Erro na Edge Function: ' + error.message);
+        }
+        throw error;
+      }
+      
       setStats(data);
     } catch (err: any) {
-      console.error(err);
-      toast.error('Erro ao coletar dados de monitoramento: ' + err.message);
+      console.error('Monitoring Fetch Error:', err);
     } finally {
       setLoading(false);
     }

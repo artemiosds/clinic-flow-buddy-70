@@ -17,12 +17,20 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    const authHeader = req.headers.get("Authorization")!;
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "No authorization header" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const token = authHeader.replace("Bearer ", "");
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
 
     if (userError || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      console.error("Auth error:", userError);
+      return new Response(JSON.stringify({ error: "Unauthorized", details: userError }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -33,7 +41,11 @@ serve(async (req) => {
       .from("funcionarios")
       .select("role, usuario")
       .eq("id", user.id)
-      .single();
+      .maybeSingle();
+
+    if (funcError) {
+      console.error("Func check error:", funcError);
+    }
 
     const isMaster = funcionario && (funcionario.role?.toLowerCase().trim() === 'master' || funcionario.usuario === 'admin.sms');
 
@@ -44,7 +56,8 @@ serve(async (req) => {
       });
     }
 
-    const { action } = await req.json();
+    const body = await req.json();
+    const { action } = body;
 
     if (action === "check-system") {
       // 1. Table stats
@@ -55,56 +68,81 @@ serve(async (req) => {
         'configuracoes'
       ];
 
-      const tableStats = await Promise.all(tablesToMonitor.map(async (table) => {
-        const { count, error } = await supabaseClient
-          .from(table)
-          .select("*", { count: 'exact', head: true });
-        
-        // Stats for last 7 and 30 days if created_at exists
-        let last7 = 0;
-        let last30 = 0;
-        
+      const tableStats = [];
+      for (const table of tablesToMonitor) {
         try {
-          const sevenDaysAgo = new Date();
-          sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-          const { count: c7 } = await supabaseClient
+          console.log(`Checking table: ${table}`);
+          const { count, error } = await supabaseClient
             .from(table)
-            .select("*", { count: 'exact', head: true })
-            .gte('created_at', sevenDaysAgo.toISOString());
-          last7 = c7 || 0;
+            .select("*", { count: 'exact', head: true });
+          
+          if (error) {
+            console.error(`Error counting table ${table}:`, error);
+          }
 
-          const thirtyDaysAgo = new Date();
-          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-          const { count: c30 } = await supabaseClient
-            .from(table)
-            .select("*", { count: 'exact', head: true })
-            .gte('created_at', thirtyDaysAgo.toISOString());
-          last30 = c30 || 0;
-        } catch (e) {
-          // If created_at doesn't exist, just return 0
+          // Stats for last 7 and 30 days if created_at exists
+          let last7 = 0;
+          let last30 = 0;
+          
+          try {
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            const { count: c7 } = await supabaseClient
+              .from(table)
+              .select("*", { count: 'exact', head: true })
+              .gte('created_at', sevenDaysAgo.toISOString());
+            last7 = c7 || 0;
+
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            const { count: c30 } = await supabaseClient
+              .from(table)
+              .select("*", { count: 'exact', head: true })
+              .gte('created_at', thirtyDaysAgo.toISOString());
+            last30 = c30 || 0;
+          } catch (e) {
+            // Probably created_at doesn't exist
+          }
+
+          tableStats.push({
+            table,
+            count: count || 0,
+            last7,
+            last30,
+            status: (count || 0) > 100000 ? 'atencao' : 'normal'
+          });
+        } catch (err) {
+          console.error(`Exception on table ${table}:`, err);
+          tableStats.push({
+            table,
+            count: 0,
+            last7: 0,
+            last30: 0,
+            status: 'erro'
+          });
         }
-
-        return {
-          table,
-          count: count || 0,
-          last7,
-          last30,
-          status: (count || 0) > 100000 ? 'atencao' : 'normal'
-        };
-      }));
+      }
 
       // 2. Storage stats
-      const { data: buckets, error: bucketError } = await supabaseClient.storage.listBuckets();
-      
-      const storageStats = await Promise.all((buckets || []).map(async (bucket) => {
-        const { data: files, error: fileError } = await supabaseClient.storage.from(bucket.id).list();
-        return {
-          id: bucket.id,
-          name: bucket.name,
-          fileCount: files?.length || 0,
-          public: bucket.public
-        };
-      }));
+      let storageStats = [];
+      try {
+        const { data: buckets, error: bucketError } = await supabaseClient.storage.listBuckets();
+        if (bucketError) {
+          console.error("Bucket list error:", bucketError);
+        } else {
+          storageStats = await Promise.all((buckets || []).map(async (bucket) => {
+            const { data: files, error: fileError } = await supabaseClient.storage.from(bucket.id).list("", { limit: 1 });
+            return {
+              id: bucket.id,
+              name: bucket.name,
+              fileCount: files?.length || 0,
+              public: bucket.public
+            };
+          }));
+        }
+      } catch (err) {
+        console.error("Storage stats exception:", err);
+      }
 
       return new Response(JSON.stringify({
         status: "online",
@@ -117,7 +155,7 @@ serve(async (req) => {
     }
 
     if (action === "cleanup") {
-      const { type, days } = await req.json();
+      const { type, days } = body;
       
       let result;
       if (type === "logs") {
@@ -153,6 +191,7 @@ serve(async (req) => {
     });
 
   } catch (error) {
+    console.error("Global edge function error:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
