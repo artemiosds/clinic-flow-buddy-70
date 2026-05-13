@@ -4167,6 +4167,7 @@ export type Database = {
         Returns: Json
       }
       exec_sql: { Args: { sql_query: string }; Returns: Json }
+      get_system_stats: { Args: never; Returns: Json }
       get_treatment_cycles_paginated: {
         Args: {
           p_only_own_professional?: boolean
