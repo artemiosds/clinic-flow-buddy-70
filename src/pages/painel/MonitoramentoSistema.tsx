@@ -102,18 +102,19 @@ const MonitoramentoSistema = () => {
       <PageHeader 
         title="Monitoramento do Sistema" 
         subtitle="Acompanhe a saúde geral do sistema, banco de dados e armazenamento."
-      >
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={fetchStats} disabled={loading}>
-            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Atualizar análise
-          </Button>
-          <Button variant="outline" size="sm">
-            <Download className="w-4 h-4 mr-2" />
-            Exportar relatório
-          </Button>
-        </div>
-      </PageHeader>
+        actions={
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={fetchStats} disabled={loading}>
+              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              Atualizar análise
+            </Button>
+            <Button variant="outline" size="sm">
+              <Download className="w-4 h-4 mr-2" />
+              Exportar relatório
+            </Button>
+          </div>
+        }
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card className="shadow-sm border-0 bg-sidebar/50">
