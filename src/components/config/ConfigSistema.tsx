@@ -13,6 +13,7 @@ import { AparenciaSection } from './sistema/AparenciaSection';
 import { LgpdSection } from './sistema/LgpdSection';
 
 const CONFIG_KEY = 'config_sistema';
+import { useNavigate } from 'react-router-dom';
 
 export interface SistemaConfig {
   instituicao: { nome: string; cer: string; cnpj: string; endereco: string; telefone: string; email: string; logoUrl: string };
