@@ -82,7 +82,7 @@ serve(async (req) => {
     if (!isMaster) {
       return new Response(JSON.stringify({ 
         success: false, 
-        error: "Acesso negado. Apenas Gestor Master pode executar limpeza." 
+        error: "Acesso negado. Apenas MASTER pode executar limpeza." 
       }), { 
         status: 403, 
         headers: { ...corsHeaders, "Content-Type": "application/json" } 

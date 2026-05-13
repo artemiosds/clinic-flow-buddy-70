@@ -83,7 +83,7 @@ serve(async (req) => {
       return jsonResponse({ 
         success: false, 
         function: "system-monitoring-check",
-        error: "Acesso negado. Apenas Gestor Master pode acessar o monitoramento." 
+        error: "Acesso negado. Apenas MASTER pode acessar o monitoramento." 
       }, 403);
     }
 
