@@ -792,9 +792,17 @@ const ProfissionaisExternos: React.FC = () => {
                               <td className="px-4 py-3 text-center text-primary">{q.vagas_usadas}</td>
                               <td className="px-4 py-3 text-center text-success">{q.vagas_total - q.vagas_usadas}</td>
                               <td className="px-4 py-3 text-center">
-                                <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => handleDeleteQuota(q.id)}>
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
+                                <div className="flex items-center justify-center gap-1">
+                                  <Button size="icon" variant="ghost" className="h-8 w-8 text-primary" onClick={() => handleEditQuota(q)}>
+                                    <Pencil className="w-4 h-4" />
+                                  </Button>
+                                  <Button size="icon" variant="ghost" className={`h-8 w-8 ${q.ativo ? 'text-destructive' : 'text-success'}`} onClick={() => handleToggleQuotaActive(q)}>
+                                    {q.ativo ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                  </Button>
+                                  <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => handleDeleteQuota(q.id)}>
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </div>
                               </td>
                             </tr>
                           );
