@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "system-monitoring": {
+      "verify_jwt": true
+    }
+  }
+}

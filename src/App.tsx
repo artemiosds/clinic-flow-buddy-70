@@ -88,6 +88,7 @@ const BpaProducao                 = lazyRetry(() => import("./pages/painel/BpaPr
 const AdminCredentials            = lazyRetry(() => import("./pages/painel/AdminCredentials"));
 const ArquivoDigital              = lazyRetry(() => import("./pages/ArquivoDigital"));
 const PacienteAtualizacaoCadastral = lazyRetry(() => import("./pages/painel/PacienteAtualizacaoCadastral"));
+const MonitoramentoSistema = lazyRetry(() => import("./pages/painel/MonitoramentoSistema"));
 
 const LoginExterno                = lazyRetry(() => import("./pages/LoginExterno"));
 const AgendamentoExterno          = lazyRetry(() => import("./pages/AgendamentoExterno"));
@@ -233,6 +234,7 @@ const App = () => (
                     <Route path="bpa-producao" element={<ModuleRoute modulo="bpa_producao"><BpaProducao /></ModuleRoute>} />
                     <Route path="admin-credentials" element={<ModuleRoute modulo="sistema" masterOnly><AdminCredentials /></ModuleRoute>} />
                     <Route path="arquivo-digital" element={<ModuleRoute modulo="arquivo_digital"><ArquivoDigital /></ModuleRoute>} />
+                    <Route path="monitoramento" element={<ModuleRoute modulo="sistema" masterOnly><MonitoramentoSistema /></ModuleRoute>} />
                   </Route>
 
                   <Route path="*" element={<NotFound />} />

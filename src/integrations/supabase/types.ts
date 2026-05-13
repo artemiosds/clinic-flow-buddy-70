@@ -3352,6 +3352,39 @@ export type Database = {
         }
         Relationships: []
       }
+      system_cleanup_logs: {
+        Row: {
+          cleanup_type: string
+          created_at: string | null
+          created_by: string | null
+          details: Json | null
+          error_message: string | null
+          id: string
+          items_count: number | null
+          status: string
+        }
+        Insert: {
+          cleanup_type: string
+          created_at?: string | null
+          created_by?: string | null
+          details?: Json | null
+          error_message?: string | null
+          id?: string
+          items_count?: number | null
+          status: string
+        }
+        Update: {
+          cleanup_type?: string
+          created_at?: string | null
+          created_by?: string | null
+          details?: Json | null
+          error_message?: string | null
+          id?: string
+          items_count?: number | null
+          status?: string
+        }
+        Relationships: []
+      }
       system_config: {
         Row: {
           configuracoes: Json
@@ -3367,6 +3400,123 @@ export type Database = {
           configuracoes?: Json
           id?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      system_monitoring_alerts: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          recommendation: string | null
+          resolved: boolean | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          source: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          recommendation?: string | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity: string
+          source?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          recommendation?: string | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          source?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
+      system_monitoring_settings: {
+        Row: {
+          api_url: string | null
+          config: Json | null
+          coolify_url: string | null
+          created_at: string | null
+          hosting_type: string | null
+          id: string
+          monitoring_enabled: boolean | null
+          public_url: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          api_url?: string | null
+          config?: Json | null
+          coolify_url?: string | null
+          created_at?: string | null
+          hosting_type?: string | null
+          id?: string
+          monitoring_enabled?: boolean | null
+          public_url?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          api_url?: string | null
+          config?: Json | null
+          coolify_url?: string | null
+          created_at?: string | null
+          hosting_type?: string | null
+          id?: string
+          monitoring_enabled?: boolean | null
+          public_url?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      system_monitoring_snapshots: {
+        Row: {
+          alertas_count: number | null
+          created_at: string | null
+          created_by: string | null
+          db_status: string | null
+          hosting_status: string | null
+          id: string
+          payload: Json | null
+          status_geral: string
+          storage_status: string | null
+          total_arquivos: number | null
+          total_registros: number | null
+        }
+        Insert: {
+          alertas_count?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          db_status?: string | null
+          hosting_status?: string | null
+          id?: string
+          payload?: Json | null
+          status_geral: string
+          storage_status?: string | null
+          total_arquivos?: number | null
+          total_registros?: number | null
+        }
+        Update: {
+          alertas_count?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          db_status?: string | null
+          hosting_status?: string | null
+          id?: string
+          payload?: Json | null
+          status_geral?: string
+          storage_status?: string | null
+          total_arquivos?: number | null
+          total_registros?: number | null
         }
         Relationships: []
       }
