@@ -471,8 +471,50 @@ const ProfissionaisExternos: React.FC = () => {
         <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Adicionar Quotas</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Selecione os profissionais internos e defina a quantidade de vagas para cada um.
+            <div className="grid grid-cols-2 gap-3 pb-3 border-b">
+              <div className="col-span-2">
+                <Label className="text-xs">Unidade Destino</Label>
+                <Select value={bodyQuota.unidade_id} onValueChange={v => setBodyQuota(p => ({ ...p, unidade_id: v }))}>
+                  <SelectTrigger className="h-8"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>{unidadesVisiveis.map((u: any) => <SelectItem key={u.id} value={u.id}>{u.nome}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs">Turno</Label>
+                <Select value={bodyQuota.turno} onValueChange={v => setBodyQuota(p => ({ ...p, turno: v }))}>
+                  <SelectTrigger className="h-8"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Manhã">Manhã</SelectItem>
+                    <SelectItem value="Tarde">Tarde</SelectItem>
+                    <SelectItem value="Noite">Noite</SelectItem>
+                    <SelectItem value="Integral">Integral</SelectItem>
+                    <SelectItem value="Personalizado">Personalizado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs">Especialidade</Label>
+                <Input className="h-8" value={bodyQuota.especialidade} onChange={e => setBodyQuota(p => ({ ...p, especialidade: e.target.value }))} />
+              </div>
+              <div>
+                <Label className="text-xs">Hora Início</Label>
+                <Input type="time" className="h-8" value={bodyQuota.hora_inicio} onChange={e => setBodyQuota(p => ({ ...p, hora_inicio: e.target.value }))} />
+              </div>
+              <div>
+                <Label className="text-xs">Hora Fim</Label>
+                <Input type="time" className="h-8" value={bodyQuota.hora_fim} onChange={e => setBodyQuota(p => ({ ...p, hora_fim: e.target.value }))} />
+              </div>
+              <div>
+                <Label className="text-xs">Início</Label>
+                <Input type="date" className="h-8" value={bodyQuota.periodo_inicio} onChange={e => setBodyQuota(p => ({ ...p, periodo_inicio: e.target.value }))} />
+              </div>
+              <div>
+                <Label className="text-xs">Fim</Label>
+                <Input type="date" className="h-8" value={bodyQuota.periodo_fim} onChange={e => setBodyQuota(p => ({ ...p, periodo_fim: e.target.value }))} />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Selecione os profissionais internos que receberão estas cotas:
             </p>
 
             {availableForQuota.length === 0 ? (
