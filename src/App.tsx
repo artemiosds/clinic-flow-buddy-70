@@ -88,6 +88,7 @@ const BpaProducao                 = lazyRetry(() => import("./pages/painel/BpaPr
 const AdminCredentials            = lazyRetry(() => import("./pages/painel/AdminCredentials"));
 const ArquivoDigital              = lazyRetry(() => import("./pages/ArquivoDigital"));
 const PacienteAtualizacaoCadastral = lazyRetry(() => import("./pages/painel/PacienteAtualizacaoCadastral"));
+const MonitoramentoSistema = lazyRetry(() => import("./pages/painel/MonitoramentoSistema"));
 
 const LoginExterno                = lazyRetry(() => import("./pages/LoginExterno"));
 const AgendamentoExterno          = lazyRetry(() => import("./pages/AgendamentoExterno"));
