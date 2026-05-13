@@ -96,8 +96,13 @@ const MonitoramentoSistema = () => {
 
     setLoading(true);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
       const { data, error } = await supabase.functions.invoke('system-cleanup-execute', {
-        body: { type, days, confirmation: 'LIMPAR' }
+        body: { type, days, confirmation: 'LIMPAR' },
+        headers: session?.access_token ? {
+          Authorization: `Bearer ${session.access_token}`
+        } : {}
       });
       if (error) throw error;
       toast.success(`${data.count} registros limpos com sucesso!`);
