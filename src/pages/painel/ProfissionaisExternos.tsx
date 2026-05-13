@@ -362,6 +362,36 @@ const ProfissionaisExternos: React.FC = () => {
                       </div>
                       <p className="text-sm text-muted-foreground">{ext.email}</p>
                       {unidade && <p className="text-xs text-muted-foreground">Unidade: {unidade.nome}</p>}
+                      
+                      <div className="flex flex-wrap gap-2 mt-3">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="h-8 text-[11px] gap-1.5"
+                          onClick={() => openDetails(ext, "cotas")}
+                        >
+                          <Ticket className="w-3.5 h-3.5" />
+                          Cotas Ativas: {extQuotas.length}
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="h-8 text-[11px] gap-1.5"
+                          onClick={() => openDetails(ext, "cotas")}
+                        >
+                          <Search className="w-3.5 h-3.5" />
+                          Vagas Livres: {extQuotas.reduce((acc, q) => acc + (q.vagas_total - q.vagas_usadas), 0)}/{extQuotas.reduce((acc, q) => acc + q.vagas_total, 0)}
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="h-8 text-[11px] gap-1.5"
+                          onClick={() => openDetails(ext, "agenda")}
+                        >
+                          <CalendarIcon className="w-3.5 h-3.5" />
+                          Agenda
+                        </Button>
+                      </div>
                     </div>
                     {canManage && (
                       <div className="flex gap-1">
