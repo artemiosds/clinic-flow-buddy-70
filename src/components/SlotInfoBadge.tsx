@@ -31,7 +31,6 @@ export const SlotInfoBadge = React.forwardRef<HTMLElement, SlotInfoBadgeProps>((
     if (allDisps.length === 0) return null;
 
     const isTurnoMode = allDisps.some(d => d.vagasPorHora === 0);
-
     const active = agendamentos.filter(
       a => a.profissionalId === profissionalId &&
         a.unidadeId === unidadeId &&
@@ -39,9 +38,7 @@ export const SlotInfoBadge = React.forwardRef<HTMLElement, SlotInfoBadgeProps>((
         !['cancelado', 'falta'].includes(a.status),
     );
 
-    const dayOccupied = active.length;
     const dayTotal = allDisps.reduce((sum, d) => sum + d.vagasPorDia, 0);
-    const dayAvailable = Math.max(0, dayTotal - dayOccupied);
     const availableSlotOptions = getAvailableSlots(profissionalId, unidadeId, date).length;
 
     let hourOccupied: number | undefined;
@@ -53,7 +50,22 @@ export const SlotInfoBadge = React.forwardRef<HTMLElement, SlotInfoBadgeProps>((
       hourTotal = disp.vagasPorHora;
     }
 
-    return { dayOccupied, dayTotal, dayAvailable, hourOccupied, hourTotal, availableSlotOptions, isTurnoMode };
+    const dayOccupied = active.length;
+    const dayAvailable = Math.max(0, dayTotal - dayOccupied);
+
+    // Calc aggregated info for all turnos
+    const totalVagasInternas = turnoData.reduce((s, t) => s + t.vagasInternas, 0);
+    const totalInternasOcupadas = turnoData.reduce((s, t) => s + t.vagasInternasOcupadas, 0);
+    const totalExternasReservadas = turnoData.reduce((s, t) => s + t.vagasExternasReservadas, 0);
+    const totalExternasOcupadas = turnoData.reduce((s, t) => s + t.vagasExternasOcupadas, 0);
+
+    return { 
+      dayOccupied, dayTotal, dayAvailable, 
+      hourOccupied, hourTotal, availableSlotOptions, 
+      isTurnoMode,
+      totalVagasInternas, totalInternasOcupadas,
+      totalExternasReservadas, totalExternasOcupadas
+    };
   }, [profissionalId, unidadeId, date, hora, agendamentos, disponibilidades, getAvailableSlots]);
 
   if (!info) return null;
@@ -64,41 +76,62 @@ export const SlotInfoBadge = React.forwardRef<HTMLElement, SlotInfoBadgeProps>((
   const hasAvailableSlotOptions = info.availableSlotOptions > 0;
   const hasNoRemainingSlotOptions = !isFull && !hasAvailableSlotOptions;
 
-  // Turno mode: show per-turno breakdown
   if (info.isTurnoMode && turnoData.length > 0 && !compact) {
-    const totalOcupadas = turnoData.reduce((s, t) => s + t.vagasOcupadas, 0);
-    const totalVagas = turnoData.reduce((s, t) => s + t.vagasTotal, 0);
     return (
-      <div ref={ref as React.Ref<HTMLDivElement>} className={cn('space-y-1.5', className)}>
-        <span className="text-xs font-medium text-muted-foreground">
-          📊 {totalOcupadas} de {totalVagas} vagas ocupadas no dia
-        </span>
-        <div className="flex flex-col gap-1">
+      <div ref={ref as React.Ref<HTMLDivElement>} className={cn('space-y-2', className)}>
+        {info.totalExternasReservadas > 0 && (
+          <div className="p-2 rounded-lg bg-primary/5 border border-primary/20 text-[11px] mb-2">
+            <p className="font-medium flex items-center gap-1 text-primary">
+              📌 {info.totalExternasReservadas} vagas reservadas para agendamento externo.
+            </p>
+            <p className="text-muted-foreground mt-0.5">
+              Capacidade Recepção: {info.totalVagasInternas} vagas ({info.totalInternasOcupadas} usadas)
+            </p>
+          </div>
+        )}
+        
+        <div className="flex flex-col gap-1.5">
           {turnoData.map((t) => {
             const pct = t.vagasTotal > 0 ? (t.vagasOcupadas / t.vagasTotal) * 100 : 0;
             return (
               <div
                 key={t.turnoId}
                 className={cn(
-                  'flex items-center gap-2 text-xs px-2.5 py-1.5 rounded-lg border',
+                  'flex flex-col gap-1 p-2 rounded-lg border',
                   t.lotado
                     ? 'bg-destructive/5 border-destructive/20 text-destructive'
-                    : pct > 60
+                    : pct > 80
                       ? 'bg-warning/5 border-warning/20 text-warning'
                       : 'bg-success/5 border-success/20 text-success',
                 )}
               >
-                <span>{t.nome === 'Manhã' ? '🌅' : t.nome === 'Tarde' ? '🌆' : '🌙'}</span>
-                <span className="font-medium">{t.nome}</span>
-                <span className="text-muted-foreground">{t.horaInicio}–{t.horaFim}</span>
-                <span className="ml-auto font-semibold">
-                  {t.vagasLivres} de {t.vagasTotal} livres
-                </span>
-                {t.lotado && (
-                  <span className="text-[10px] font-bold bg-destructive/10 text-destructive px-1.5 py-0.5 rounded-full">
-                    Lotado
-                  </span>
-                )}
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="text-sm">{t.nome === 'Manhã' ? '🌅' : t.nome === 'Tarde' ? '🌆' : '🌙'}</span>
+                  <span className="font-bold uppercase tracking-tight">{t.nome}</span>
+                  <span className="text-muted-foreground ml-auto">{t.horaInicio}–{t.horaFim}</span>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-2 mt-1">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-muted-foreground uppercase font-semibold">Internas (Recepção)</span>
+                    <span className="text-[11px] font-medium">
+                      {t.vagasInternasOcupadas} de {t.vagasInternas} usadas
+                    </span>
+                  </div>
+                  {t.vagasExternasReservadas > 0 && (
+                    <div className="flex flex-col border-l pl-2">
+                      <span className="text-[10px] text-primary/70 uppercase font-semibold">Externas (Cotas)</span>
+                      <span className="text-[11px] font-medium">
+                        {t.vagasExternasOcupadas} de {t.vagasExternasReservadas} usadas
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between mt-1 pt-1 border-t border-current/10">
+                   <span className="text-[10px] font-bold uppercase">Total Livres:</span>
+                   <span className="text-xs font-bold">{t.vagasLivres}</span>
+                </div>
               </div>
             );
           })}
