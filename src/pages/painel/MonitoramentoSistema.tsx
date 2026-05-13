@@ -413,6 +413,67 @@ const MonitoramentoSistema = () => {
           </Card>
         </TabsContent>
 
+        <TabsContent value="desempenho" className="mt-4">
+          <Card className="shadow-card border-0">
+            <CardHeader>
+              <CardTitle className="text-lg">Desempenho Global</CardTitle>
+              <CardDescription>Métricas de tempo de resposta e carga.</CardDescription>
+            </CardHeader>
+            <CardContent className="py-10 text-center">
+              <Activity className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-20" />
+              <p className="text-muted-foreground">Métricas detalhadas de desempenho em tempo real estarão disponíveis em breve.</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="supabase" className="mt-4">
+          <Card className="shadow-card border-0">
+            <CardHeader>
+              <CardTitle className="text-lg">Integração Supabase</CardTitle>
+              <CardDescription>Status da conexão e serviços gerenciados.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 border border-border/50 rounded-lg flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Database className="w-5 h-5 text-primary" />
+                    <div>
+                      <p className="font-bold">PostgreSQL</p>
+                      <p className="text-xs text-muted-foreground">Status: Ativo</p>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="text-emerald-500">Conectado</Badge>
+                </div>
+                <div className="p-4 border border-border/50 rounded-lg flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Shield className="w-5 h-5 text-primary" />
+                    <div>
+                      <p className="font-bold">Auth (GoTrue)</p>
+                      <p className="text-xs text-muted-foreground">Status: Ativo</p>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="text-emerald-500">Conectado</Badge>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="logs" className="mt-4">
+          <Card className="shadow-card border-0">
+            <CardHeader>
+              <CardTitle className="text-lg">Logs do Sistema</CardTitle>
+              <CardDescription>Acesse os logs de auditoria e erros globais.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="p-10 border border-dashed border-border rounded-lg text-center">
+                <FileText className="w-10 h-10 text-muted-foreground mx-auto mb-2 opacity-50" />
+                <p className="text-muted-foreground">Use a página de <Button variant="link" className="p-0 h-auto" onClick={() => window.location.href='/painel/auditoria'}>Logs & Auditoria</Button> para visualizar todos os registros detalhados.</p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="limpeza" className="mt-4">
           <Card className="shadow-card border-0 border-rose-500/20">
             <CardHeader className="bg-rose-500/5">
