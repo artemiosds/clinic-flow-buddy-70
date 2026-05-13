@@ -782,23 +782,11 @@ const AgendamentoExterno: React.FC = () => {
             </Button>
           </div>
         </DialogContent>
-      </Dialog>
-              <div><Label>Telefone</Label><Input value={patientForm.telefone} onChange={e => setPatientForm(p => ({ ...p, telefone: e.target.value }))} /></div>
-            </div>
-            <div><Label>E-mail</Label><Input type="email" value={patientForm.email} onChange={e => setPatientForm(p => ({ ...p, email: e.target.value }))} /></div>
-            <div><Label>Endereço</Label><Input value={patientForm.endereco} onChange={e => setPatientForm(p => ({ ...p, endereco: e.target.value }))} /></div>
-            <div className="grid grid-cols-2 gap-3">
-              <div><Label>Nome da Mãe</Label><Input value={patientForm.nome_mae} onChange={e => setPatientForm(p => ({ ...p, nome_mae: e.target.value }))} /></div>
-              <div><Label>Município</Label><Input value={patientForm.municipio} onChange={e => setPatientForm(p => ({ ...p, municipio: e.target.value }))} /></div>
-            </div>
-            <div><Label>Observações</Label><Input value={patientForm.observacoes} onChange={e => setPatientForm(p => ({ ...p, observacoes: e.target.value }))} /></div>
-            <Button onClick={handleSavePatient} disabled={savingPatient} className="w-full bg-primary text-primary-foreground">
-              {savingPatient && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-              {isEditingPatient ? "Salvar Alterações" : "Cadastrar Paciente"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+    </div>
+  );
+};
+
+export default AgendamentoExterno;
     </div>
   );
 };
