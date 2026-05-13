@@ -87,21 +87,34 @@ function footer(doc: jsPDF) {
 }
 
 function addSection(doc: jsPDF, label: string, value: string, startY: number): number {
-  if (!value) return startY;
-  if (startY > doc.internal.pageSize.getHeight() - 30) {
+  if (!value || !value.trim()) return startY;
+  
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = 14;
+  const contentWidth = pageWidth - (margin * 2);
+  
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  const lines = doc.splitTextToSize(value.trim(), contentWidth);
+  const sectionHeight = 5 + (lines.length * 5) + 8; // title(5) + lines + padding(8)
+
+  if (startY + sectionHeight > pageHeight - 20) {
     doc.addPage();
     startY = 30;
   }
+
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
   doc.setTextColor(42, 111, 151);
-  doc.text(label.toUpperCase(), 14, startY);
-  doc.setTextColor(0, 0, 0);
+  doc.text(label.toUpperCase(), margin, startY);
+  
+  doc.setTextColor(30, 30, 30);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
-  const lines = doc.splitTextToSize(value, doc.internal.pageSize.getWidth() - 28);
-  doc.text(lines, 14, startY + 5);
-  return startY + 5 + lines.length * 5 + 4;
+  doc.text(lines, margin, startY + 6);
+  
+  return startY + 6 + (lines.length * 5) + 6;
 }
 
 export function downloadProntuarioPdf(p: ProntuarioLike, clinica = "Secretaria Municipal de Saúde — Oriximiná") {
