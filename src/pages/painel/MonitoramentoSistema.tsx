@@ -61,6 +61,20 @@ const MonitoramentoSistema = () => {
     }
   };
 
+  const fetchCleanupLogs = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('system_cleanup_logs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(5);
+      if (error) throw error;
+      setCleanupLogs(data || []);
+    } catch (err) {
+      console.error('Error fetching cleanup logs:', err);
+    }
+  };
+
   useEffect(() => {
     if (isMaster) {
       fetchStats();
