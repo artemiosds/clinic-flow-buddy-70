@@ -48,15 +48,23 @@ const MonitoramentoSistema = () => {
       });
       
       if (error) {
-        // Detailed error for Master to help debug
-        if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
-          toast.error('Erro de autenticação na Edge Function.');
-        } else if (error.message?.includes('403') || error.message?.includes('Forbidden')) {
-          toast.error('Acesso negado: Perfil sem permissão administrativa.');
-        } else {
-          toast.error('Erro na Edge Function: ' + error.message);
+        console.error('Edge Function Invoke Error:', error);
+        let errorMsg = 'Erro na Edge Function system-monitoring-check';
+        
+        try {
+          const errorData = await error.context?.json();
+          errorMsg = errorData?.error || errorData?.message || error.message;
+        } catch (e) {
+          errorMsg = error.message || 'Falha ao processar resposta de erro.';
         }
-        throw error;
+        
+        toast.error(`Falha no Monitoramento: ${errorMsg}`);
+        return;
+      }
+
+      if (data?.success === false) {
+        toast.error(`Monitoramento: ${data.error || 'Erro desconhecido'}`);
+        return;
       }
       
       setStats(data);
