@@ -114,7 +114,6 @@ const ProfissionaisExternos: React.FC = () => {
   });
   const [savingQuota, setSavingQuota] = useState(false);
 
-  const [selectedProfForAgenda, setSelectedProfForAgenda] = useState<string | null>(null);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [selectedExtForDetails, setSelectedExtForDetails] = useState<ExternalProf | null>(null);
   const [detailsTab, setDetailsTab] = useState("cotas");
