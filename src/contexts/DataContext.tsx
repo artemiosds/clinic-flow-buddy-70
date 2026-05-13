@@ -12,6 +12,7 @@ import {
   Configuracoes,
   Procedimento,
   EpisodioClinico,
+  QuotaExterna,
 } from "@/types";
 
 const inlineSetores = [
@@ -117,6 +118,7 @@ interface DataContextType {
   funcionarios: User[];
   disponibilidades: Disponibilidade[];
   bloqueios: BloqueioAgenda[];
+  quotasExternas: QuotaExterna[];
   configuracoes: Configuracoes;
   addAgendamento: (ag: Agendamento) => Promise<void>;
   updateAgendamento: (id: string, data: Partial<Agendamento>) => Promise<void>;
@@ -170,6 +172,7 @@ interface DataContextType {
   searchPacientes: (query: string) => Promise<Paciente[]>;
   refreshFila: () => Promise<void>;
   refreshBloqueios: () => Promise<void>;
+  refreshQuotasExternas: () => Promise<void>;
   logAction: (input: {
     acao: string;
     entidade: string;
@@ -248,6 +251,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [funcionarios, setFuncionarios] = useState<User[]>([]);
   const [disponibilidades, setDisponibilidades] = useState<Disponibilidade[]>([]);
   const [bloqueios, setBloqueios] = useState<BloqueioAgenda[]>([]);
+  const [quotasExternas, setQuotasExternas] = useState<QuotaExterna[]>([]);
   const [configuracoes, setConfiguracoes] = useState<Configuracoes>(defaultConfiguracoes);
 
   const agendamentosRef = useRef(agendamentos);
@@ -256,6 +260,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   disponibilidadesRef.current = disponibilidades;
   const bloqueiosRef = useRef(bloqueios);
   bloqueiosRef.current = bloqueios;
+  const quotasExternasRef = useRef(quotasExternas);
+  quotasExternasRef.current = quotasExternas;
   const filaRef = useRef(fila);
   filaRef.current = fila;
   const funcionariosRef = useRef(funcionarios);
