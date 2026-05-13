@@ -18,9 +18,6 @@ import { CalendarioDisponibilidade, type DayInfo } from "@/components/Calendario
 import { todayLocalStr } from "@/lib/utils";
 import CadastroPacienteForm, { PacienteFormData, emptyPacienteForm } from "@/components/CadastroPacienteForm";
 import { savePacienteCadastro } from "@/lib/pacienteShared";
-import { format } from "date-fns";
-import { CalendarioDisponibilidade, type DayInfo } from "@/components/CalendarioDisponibilidade";
-import { todayLocalStr } from "@/lib/utils";
 
 interface ExternalUser {
   id: string;
@@ -289,7 +286,7 @@ const AgendamentoExterno: React.FC = () => {
       endereco: p.endereco || "",
       nomeMae: p.nome_mae || "",
       municipio: p.municipio || "Oriximiná",
-      observacoes: p.observacoes || "",
+      descricaoClinica: p.observacoes || "",
       sexo: p.sexo || "I",
       naturalidade: p.naturalidade || "",
       nacionalidade: p.nacionalidade || "Brasileira",
