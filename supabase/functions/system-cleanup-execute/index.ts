@@ -12,17 +12,24 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return new Response(JSON.stringify({ error: "Configuração incompleta" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
 
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) return new Response(JSON.stringify({ error: "Não autorizado" }), { status: 401, headers: corsHeaders });
+    if (!authHeader) return new Response(JSON.stringify({ error: "Não autorizado" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     const token = authHeader.replace("Bearer ", "");
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
-    if (userError || !user) return new Response(JSON.stringify({ error: "Sessão inválida" }), { status: 401, headers: corsHeaders });
+    if (userError || !user) return new Response(JSON.stringify({ error: "Sessão inválida" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     // Validar perfil MASTER
     const { data: funcionario } = await supabaseClient
@@ -32,7 +39,7 @@ serve(async (req) => {
       .maybeSingle();
 
     const isMaster = funcionario && (funcionario.role?.toLowerCase().trim() === 'master' || funcionario.usuario === 'admin.sms');
-    if (!isMaster) return new Response(JSON.stringify({ error: "Acesso negado" }), { status: 403, headers: corsHeaders });
+    if (!isMaster) return new Response(JSON.stringify({ error: "Acesso negado" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     const body = await req.json();
     const { type, days, confirmation } = body;
@@ -49,18 +56,16 @@ serve(async (req) => {
     cutoff.setDate(cutoff.getDate() - (days || 90));
 
     if (type === "logs") {
-      // Limpeza de logs de auditoria (não críticos)
       const { count, error } = await supabaseClient
         .from("logs_auditoria")
         .delete({ count: 'exact' })
         .lt("created_at", cutoff.toISOString())
-        .not("acao", "ilike", "%EXCLUSAO%") // Segurança extra: não apagar logs de exclusão
-        .not("acao", "ilike", "%PRONTUARIO%"); // Segurança extra: não apagar logs de prontuário
+        .not("acao", "ilike", "%EXCLUSAO%")
+        .not("acao", "ilike", "%PRONTUARIO%");
       
       if (error) throw error;
       itemsCount = count || 0;
     } else if (type === "notifications") {
-      // Limpeza de notificações lidas antigas
       const { count, error } = await supabaseClient
         .from("notificacoes")
         .delete({ count: 'exact' })
@@ -70,10 +75,9 @@ serve(async (req) => {
       if (error) throw error;
       itemsCount = count || 0;
     } else {
-      return new Response(JSON.stringify({ error: "Tipo de limpeza inválido" }), { status: 400, headers: corsHeaders });
+      return new Response(JSON.stringify({ error: "Tipo de limpeza inválido" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Registrar log de limpeza
     await supabaseClient.from("system_cleanup_logs").insert({
       cleanup_type: type,
       items_count: itemsCount,
