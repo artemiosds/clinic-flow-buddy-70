@@ -4288,6 +4288,15 @@ export type Database = {
         }
         Returns: Json
       }
+      handle_treatment_early_discharge: {
+        Args: {
+          p_cycle_id: string
+          p_final_notes?: string
+          p_professional_id: string
+          p_reason: string
+        }
+        Returns: undefined
+      }
       has_staff_role: { Args: { _role: string }; Returns: boolean }
       iniciar_atendimento: {
         Args: { p_agendamento_id: string; p_profissional_id: string }

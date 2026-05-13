@@ -1630,52 +1630,15 @@ const Tratamentos: React.FC = () => {
     }
     setDischargeLoading(true);
     try {
-      // 1. Register discharge
-      await supabase.from("patient_discharges").insert({
-        cycle_id: selectedCycle.id,
-        patient_id: selectedCycle.patient_id,
-        professional_id: user?.id || "",
-        discharge_date: new Date().toISOString().split("T")[0],
-        reason: dischargeForm.reason,
-        final_notes: dischargeForm.final_notes,
+      // Usar RPC para garantir consistência e limpeza de duplicidades no backend
+      const { error } = await supabase.rpc('handle_treatment_early_discharge', {
+        p_cycle_id: selectedCycle.id,
+        p_professional_id: user?.id || "",
+        p_reason: dischargeForm.reason,
+        p_final_notes: dischargeForm.final_notes
       });
 
-      // 2. Update cycle status
-      await supabase.from("treatment_cycles").update({ status: "finalizado_alta" }).eq("id", selectedCycle.id);
-
-      // 3. Cancel ONLY future appointments of this professional for this patient
-      const today = new Date().toISOString().split("T")[0];
-      const { data: futureAppts } = await supabase
-        .from("agendamentos")
-        .select("id")
-        .eq("paciente_id", selectedCycle.patient_id)
-        .eq("profissional_id", user?.id || "")
-        .gt("data", today)
-        .not("status", "in", '("cancelado","falta","remarcado")');
-
-      const cancelledCount = futureAppts?.length || 0;
-
-      if (futureAppts && futureAppts.length > 0) {
-        const ids = futureAppts.map((a) => a.id);
-        await supabase
-          .from("agendamentos")
-          .update({ status: "cancelado", observacoes: "Alta pelo profissional" })
-          .in("id", ids);
-
-        // Cancel pending sessions linked to those appointments
-        await supabase
-          .from("treatment_sessions")
-          .update({ status: "cancelada" })
-          .eq("cycle_id", selectedCycle.id)
-          .in("appointment_id", ids);
-      }
-
-      // 4. Cancel remaining pending sessions of this cycle
-      await supabase
-        .from("treatment_sessions")
-        .update({ status: "cancelada" })
-        .eq("cycle_id", selectedCycle.id)
-        .in("status", ["pendente_agendamento", "agendada"]);
+      if (error) throw error;
 
       await logAction({
         acao: "alta_paciente",
@@ -1686,22 +1649,17 @@ const Tratamentos: React.FC = () => {
         detalhes: {
           paciente: selectedCycle.patient_id,
           motivo: dischargeForm.reason,
-          agendamentos_cancelados: cancelledCount,
         },
       });
 
-      toast.success(
-        cancelledCount > 0
-          ? `Alta realizada. ${cancelledCount} agendamento(s) deste profissional cancelado(s).`
-          : "Alta registrada com sucesso!"
-      );
+      toast.success("Alta registrada com sucesso. Agendamentos futuros vinculados a este tratamento foram removidos.");
       setDischargeOpen(false);
       setDischargeForm({ reason: "", final_notes: "" });
       setDischargeFutureCount(0);
       loadData(true);
     } catch (err: any) {
-      console.error(err);
-      toast.error("Erro ao registrar alta: " + err.message);
+      console.error("Error discharging patient:", err);
+      toast.error("Erro ao registrar alta: " + (err.message || "Erro desconhecido"));
     } finally {
       setDischargeLoading(false);
     }
