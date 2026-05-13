@@ -302,7 +302,7 @@ const MonitoramentoSistema = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {stats?.tableStats?.map((table: any) => (
+                    {stats?.tableStats ? stats.tableStats.map((table: any) => (
                       <TableRow key={table.table}>
                         <TableCell className="font-medium">{table.table}</TableCell>
                         <TableCell className="text-right font-mono">{table.count.toLocaleString('pt-BR')}</TableCell>
