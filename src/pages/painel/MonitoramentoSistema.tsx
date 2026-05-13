@@ -48,15 +48,23 @@ const MonitoramentoSistema = () => {
       });
       
       if (error) {
-        // Detailed error for Master to help debug
-        if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
-          toast.error('Erro de autenticação na Edge Function.');
-        } else if (error.message?.includes('403') || error.message?.includes('Forbidden')) {
-          toast.error('Acesso negado: Perfil sem permissão administrativa.');
-        } else {
-          toast.error('Erro na Edge Function: ' + error.message);
+        console.error('Edge Function Invoke Error:', error);
+        let errorMsg = 'Erro na Edge Function system-monitoring-check';
+        
+        try {
+          const errorData = await error.context?.json();
+          errorMsg = errorData?.error || errorData?.message || error.message;
+        } catch (e) {
+          errorMsg = error.message || 'Falha ao processar resposta de erro.';
         }
-        throw error;
+        
+        toast.error(`Falha no Monitoramento: ${errorMsg}`);
+        return;
+      }
+
+      if (data?.success === false) {
+        toast.error(`Monitoramento: ${data.error || 'Erro desconhecido'}`);
+        return;
       }
       
       setStats(data);
@@ -112,19 +120,19 @@ const MonitoramentoSistema = () => {
         } : {}
       });
 
-      // Se houver erro retornado pela função (mesmo que venha no data.error se não disparar o catch do invoke)
       if (error) {
-        let errorMsg = 'Erro na Edge Function';
+        console.error('Edge Function Cleanup Error:', error);
+        let errorMsg = 'Erro na Edge Function system-cleanup-execute';
+        
         try {
-          // Tentar extrair a mensagem real se o erro for um objeto de resposta
           const errorData = await error.context?.json();
           errorMsg = errorData?.error || errorData?.message || error.message;
         } catch (e) {
-          errorMsg = error.message;
+          errorMsg = error.message || 'Falha ao processar resposta de erro.';
         }
         
-        toast.error(`Falha: ${errorMsg}`);
-        throw error;
+        toast.error(`Falha na Limpeza: ${errorMsg}`);
+        return;
       }
 
       if (data?.success === false) {
@@ -181,7 +189,7 @@ const MonitoramentoSistema = () => {
               <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
               Atualizar análise
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={() => toast.info('Exportação de relatório ainda não configurada.')}>
               <Download className="w-4 h-4 mr-2" />
               Exportar relatório
             </Button>
@@ -224,7 +232,7 @@ const MonitoramentoSistema = () => {
             </div>
             <div>
               <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Storage</p>
-              <p className="text-sm font-bold">{stats?.storageStats ? `${stats.storageStats.length} Buckets` : (loading ? 'Carregando...' : 'Nenhum')}</p>
+              <p className="text-sm font-bold">{stats?.storage?.stats ? `${stats.storage.stats.length} Buckets` : (loading ? 'Carregando...' : 'Nenhum')}</p>
             </div>
           </CardContent>
         </Card>
@@ -389,7 +397,7 @@ const MonitoramentoSistema = () => {
                 <CardDescription>Monitoramento de armazenamento de arquivos.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {stats?.storageStats ? stats.storageStats.map((bucket: any) => (
+                {stats?.storage?.stats ? stats.storage.stats.map((bucket: any) => (
                   <div key={bucket.id} className="p-4 border border-border/50 rounded-lg flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded bg-muted flex items-center justify-center">
@@ -400,7 +408,9 @@ const MonitoramentoSistema = () => {
                         <p className="text-xs text-muted-foreground">{bucket.fileCount} arquivos • {bucket.public ? 'Público' : 'Privado'}</p>
                       </div>
                     </div>
-                    <Badge variant="outline">Ativo</Badge>
+                    <Badge variant={bucket.status === 'erro' ? 'destructive' : 'outline'}>
+                      {bucket.status === 'erro' ? 'Erro' : 'Ativo'}
+                    </Badge>
                   </div>
                 )) : (
                   <p className="text-center text-muted-foreground py-10">
