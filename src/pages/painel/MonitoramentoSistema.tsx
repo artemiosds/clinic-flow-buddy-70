@@ -281,7 +281,7 @@ const MonitoramentoSistema = () => {
                         <TableCell className="text-right text-emerald-500">+{table.last7}</TableCell>
                         <TableCell className="text-right text-emerald-600">+{table.last30}</TableCell>
                         <TableCell className="text-center">
-                          <Badge variant={table.status === 'normal' ? 'outline' : 'warning'} className="capitalize">
+                          <Badge variant={table.status === 'normal' ? 'outline' : 'secondary'} className="capitalize">
                             {table.status}
                           </Badge>
                         </TableCell>
