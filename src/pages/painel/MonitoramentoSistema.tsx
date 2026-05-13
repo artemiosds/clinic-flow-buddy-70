@@ -96,6 +96,7 @@ const MonitoramentoSistema = () => {
       if (error) throw error;
       toast.success(`${data.count} registros limpos com sucesso!`);
       fetchStats();
+      fetchCleanupLogs();
       setCleanupConfirmText('');
     } catch (err: any) {
       console.error(err);
