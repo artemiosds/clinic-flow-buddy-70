@@ -408,7 +408,9 @@ const MonitoramentoSistema = () => {
                         <p className="text-xs text-muted-foreground">{bucket.fileCount} arquivos • {bucket.public ? 'Público' : 'Privado'}</p>
                       </div>
                     </div>
-                    <Badge variant="outline">Ativo</Badge>
+                    <Badge variant={bucket.status === 'erro' ? 'destructive' : 'outline'}>
+                      {bucket.status === 'erro' ? 'Erro' : 'Ativo'}
+                    </Badge>
                   </div>
                 )) : (
                   <p className="text-center text-muted-foreground py-10">
