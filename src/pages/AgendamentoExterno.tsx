@@ -330,6 +330,13 @@ const AgendamentoExterno: React.FC = () => {
       return;
     }
 
+    // Validar Turno
+    const shiftName = selectedHora < '12:00' ? 'Manhã' : selectedHora < '18:00' ? 'Tarde' : 'Noite';
+    if (quota.turno && quota.turno !== 'Integral' && quota.turno !== 'Personalizado' && quota.turno !== shiftName) {
+      toast.error(`Sua cota está reservada para o turno ${quota.turno}, mas você escolheu um horário da ${shiftName.toLowerCase()}.`);
+      return;
+    }
+
     setScheduling(true);
     try {
       const prof = professionals.find(p => p.id === selectedProfissional);

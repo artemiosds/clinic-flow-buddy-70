@@ -54,6 +54,7 @@ import {
   Building2,
   Phone,
   RefreshCw,
+  Info,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import DetalheDrawer, { Secao, Campo, StatusBadge, calcularIdade, formatarData } from "@/components/DetalheDrawer";
@@ -410,6 +411,26 @@ const Agenda: React.FC = () => {
 
   const isTurnoMode = newAgTurnoInfo.length > 0;
 
+  const quotaAlert = useMemo(() => {
+    if (!newAg.profissionalId || !newAg.hora || newAgTurnoInfo.length === 0) return null;
+    const t = newAgTurnoInfo.find(ti => newAg.hora >= ti.horaInicio && newAg.hora < ti.horaFim);
+    if (!t || t.vagasExternasReservadas === 0) return null;
+    return (
+      <div className="p-3 rounded-lg bg-primary/5 border border-primary/20 text-xs mt-2 animate-in fade-in slide-in-from-top-1">
+        <p className="font-semibold text-primary mb-1 flex items-center gap-1.5">
+          <Info className="w-3.5 h-3.5" /> Controle de Cotas Ativo
+        </p>
+        <p className="text-muted-foreground leading-relaxed">
+          {t.nome}: <strong>{t.vagasTotal} vagas totais</strong>. 
+          Destas, {t.vagasExternasReservadas} estão reservadas para externos e <strong>{t.vagasInternas}</strong> para recepção.
+        </p>
+        <p className="mt-1 font-medium text-foreground">
+          Uso Recepção: {t.vagasInternasOcupadas} de {t.vagasInternas} ({t.vagasInternasLivres} livres)
+        </p>
+      </div>
+    );
+  }, [newAg.profissionalId, newAg.hora, newAgTurnoInfo]);
+
   const newAgSlots = React.useMemo(() => {
     if (!newAg.profissionalId) return [];
     if (!selectedProfUnit) return [];
@@ -691,6 +712,34 @@ const Agenda: React.FC = () => {
       }
     }
     const canOverride = user && ["master", "coordenador"].includes(user.role);
+    
+    // Validar Cotas Externas vs Internas
+    const turnoAlvo = newAgTurnoInfo.find(t => newAg.hora >= t.horaInicio && newAg.hora < t.horaFim);
+    if (turnoAlvo && turnoAlvo.vagasExternasReservadas > 0 && turnoAlvo.lotadoInterno) {
+      const msg = `As vagas internas deste profissional para o turno ${turnoAlvo.nome} estão esgotadas (${turnoAlvo.vagasInternas} vagas). Existem vagas reservadas para agendamento externo.`;
+      if (!canOverride) {
+        toast.error(msg);
+        return;
+      }
+      const confirmou = window.confirm(`${msg}\n\nDeseja realizar um override Master e usar uma das vagas reservadas?`);
+      if (!confirmou) return;
+      
+      // Registrar override na auditoria
+      logAction({
+        acao: "override_cota_externa",
+        entidade: "agendamento",
+        modulo: "agenda",
+        user,
+        detalhes: {
+          profissional_id: newAg.profissionalId,
+          data: selectedDate,
+          hora: newAg.hora,
+          turno: turnoAlvo.nome,
+          motivo: "Vagas internas esgotadas, utilizando reserva externa",
+        }
+      });
+    }
+
     try {
       const { data: slotCheck } = await supabase.rpc("check_slot_availability", { p_profissional_id: newAg.profissionalId, p_unidade_id: prof.unidadeId, p_data: selectedDate, p_hora: newAg.hora });
       if (slotCheck && typeof slotCheck === "object" && "available" in slotCheck && !slotCheck.available) {
@@ -1144,6 +1193,7 @@ const Agenda: React.FC = () => {
                             />
                           </div>
                         )}
+                        {quotaAlert}
                       </div>
                       <Button
                         onClick={handleCreate}

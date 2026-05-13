@@ -73,7 +73,7 @@ type ModoDisponibilidade = 'por_hora' | 'por_turno';
 const CONFIG_KEY_MODOS = 'config_modos_disponibilidade';
 
 const Disponibilidade: React.FC = () => {
-  const { disponibilidades, addDisponibilidade, updateDisponibilidade, deleteDisponibilidade, funcionarios, unidades, salas, refreshFuncionarios, refreshDisponibilidades } = useData();
+  const { disponibilidades, addDisponibilidade, updateDisponibilidade, deleteDisponibilidade, funcionarios, unidades, salas, refreshFuncionarios, refreshDisponibilidades, quotasExternas } = useData();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editGroupIds, setEditGroupIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
@@ -320,6 +320,18 @@ const Disponibilidade: React.FC = () => {
           toast.error(`${diasSemanaFull[day.dayNum]}: Total/dia (${form.vagasPorDia}) excede máximo possível (${maxPossible}).`);
           return;
         }
+
+        // Validação Cotas Externas
+        const matchingQuotas = quotasExternas.filter(q => 
+          q.profissionalInternoId === form.profissionalId &&
+          q.ativo &&
+          rangesOverlap(form.dataInicio, form.dataFim, q.periodoInicio, q.periodoFim)
+        );
+        const totalQuotas = matchingQuotas.reduce((sum, q) => sum + q.vagasTotal, 0);
+        if (form.vagasPorDia < totalQuotas) {
+          toast.error(`${diasSemanaFull[day.dayNum]}: A capacidade total (${form.vagasPorDia}) não pode ser inferior à soma das cotas externas reservadas (${totalQuotas}).`);
+          return;
+        }
       }
 
       const overlapMsg = checkOverlap();
@@ -352,6 +364,24 @@ const Disponibilidade: React.FC = () => {
       // Por Turno
       const activeDays = turnoDays.map((td, i) => ({ ...td, dayNum: i })).filter(td => td.ativo && td.blocos.some(b => b.ativo));
       if (activeDays.length === 0) { toast.error('Ative pelo menos um dia com turnos ativos.'); return; }
+
+      // Validação Cotas Externas Impacto
+      for (const day of activeDays) {
+        for (const bloco of day.blocos.filter(b => b.ativo)) {
+          const shiftName = bloco.horaInicio < '12:00' ? 'Manhã' : bloco.horaInicio < '18:00' ? 'Tarde' : 'Noite';
+          const matchingQuotas = quotasExternas.filter(q => 
+            q.profissionalInternoId === form.profissionalId &&
+            q.ativo &&
+            rangesOverlap(form.dataInicio, form.dataFim, q.periodoInicio, q.periodoFim) &&
+            (q.turno === 'Integral' || q.turno === shiftName)
+          );
+          const totalQuotas = matchingQuotas.reduce((sum, q) => sum + q.vagasTotal, 0);
+          if (bloco.vagas < totalQuotas) {
+            toast.error(`${diasSemanaFull[day.dayNum]} (${bloco.nome}): A capacidade total (${bloco.vagas}) é inferior às cotas externas já configuradas para este período (${totalQuotas}).`);
+            return;
+          }
+        }
+      }
 
       const overlapMsg = checkOverlap();
       if (overlapMsg) { toast.error(overlapMsg); return; }
@@ -818,11 +848,23 @@ const Disponibilidade: React.FC = () => {
                               </div>
                             ) : (
                               <div className="space-y-2">
-                                {td.blocos.map((bloco) => (
-                                  <div 
-                                    key={bloco.id} 
-                                    className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 rounded-lg bg-card border border-border/60 hover:border-primary/30 transition-all group"
-                                  >
+                                 {td.blocos.map((bloco) => {
+                                   const shiftName = bloco.horaInicio < '12:00' ? 'Manhã' : bloco.horaInicio < '18:00' ? 'Tarde' : 'Noite';
+                                   const matchingQuotas = quotasExternas.filter(q => 
+                                     q.profissionalInternoId === form.profissionalId &&
+                                     q.ativo &&
+                                     rangesOverlap(form.dataInicio, form.dataFim, q.periodoInicio, q.periodoFim) &&
+                                     (q.turno === 'Integral' || q.turno === shiftName)
+                                   );
+                                   const totalQuotas = matchingQuotas.reduce((sum, q) => sum + q.vagasTotal, 0);
+                                   const vInternas = Math.max(0, bloco.vagas - totalQuotas);
+                                   
+                                   return (
+                                     <div 
+                                       key={bloco.id} 
+                                       className="flex flex-col gap-3 p-3 rounded-lg bg-card border border-border/60 hover:border-primary/30 transition-all group"
+                                     >
+                                       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                                     <div className="w-full sm:flex-1 space-y-1.5">
                                       <Label className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Nome do Turno</Label>
                                       <div className="flex items-center gap-2">
@@ -886,9 +928,25 @@ const Disponibilidade: React.FC = () => {
                                       >
                                         <Trash2 className="w-3.5 h-3.5" />
                                       </Button>
-                                    </div>
-                                  </div>
-                                ))}
+                                     </div>
+                                       </div>
+
+                                       {totalQuotas > 0 && (
+                                         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-1 py-1 bg-primary/5 rounded border border-primary/10">
+                                            <div className="flex items-center gap-1.5 text-[10px] font-bold text-primary uppercase">
+                                               <Info className="w-3 h-3" /> Impacto de Cotas
+                                            </div>
+                                            <div className="text-[10px] text-muted-foreground">
+                                               Reservadas Externas: <span className="font-bold text-foreground">{totalQuotas}</span>
+                                            </div>
+                                            <div className="text-[10px] text-muted-foreground">
+                                               Disponível Recepção: <span className="font-bold text-success">{vInternas}</span>
+                                            </div>
+                                         </div>
+                                       )}
+                                     </div>
+                                   );
+                                 })}
                               </div>
                             )}
                           </div>

@@ -324,3 +324,19 @@ export interface EpisodioClinico {
   criadoEm: string;
   atualizadoEm: string;
 }
+
+export interface QuotaExterna {
+  id: string;
+  profissionalExternoId: string;
+  profissionalInternoId: string;
+  unidadeId: string;
+  vagasTotal: number;
+  vagasUsadas: number;
+  turno: string;
+  horaInicio?: string;
+  horaFim?: string;
+  especialidade?: string;
+  periodoInicio: string;
+  periodoFim: string;
+  ativo: boolean;
+}
