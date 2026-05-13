@@ -320,9 +320,95 @@ const ProfissionaisExternos: React.FC = () => {
   };
 
   const handleDeleteQuota = async (quotaId: string) => {
-    await supabase.from("quotas_externas").delete().eq("id", quotaId);
-    toast.success("Quota removida.");
-    await loadExternos();
+    try {
+      const q = quotas.find(item => item.id === quotaId);
+      if (q && q.vagas_usadas > 0) {
+        const confirmou = window.confirm(`Esta cota possui ${q.vagas_usadas} agendamentos vinculados. Para preservar o histórico, ela será desativada em vez de excluída. Deseja continuar?`);
+        if (!confirmou) return;
+        
+        const { error } = await supabase.from("quotas_externas").update({ ativo: false }).eq("id", quotaId);
+        if (error) throw error;
+        toast.success("Cota desativada para preservar histórico.");
+      } else {
+        const { error } = await supabase.from("quotas_externas").delete().eq("id", quotaId);
+        if (error) throw error;
+        toast.success("Quota removida.");
+      }
+      await loadExternos();
+    } catch (err: any) {
+      console.error("[Funcionários Externos] Erro ao gerenciar cota", { cotaId: quotaId, error: err });
+      toast.error("Não foi possível processar a solicitação.");
+    }
+  };
+
+  const handleEditQuota = (q: QuotaRow) => {
+    setEditingQuotaId(q.id);
+    setQuotaEditForm({
+      vagas_total: q.vagas_total,
+      vagas_usadas: q.vagas_usadas,
+      turno: q.turno || "Integral",
+      especialidade: q.especialidade || "",
+      unidade_id: q.unidade_id || "",
+      hora_inicio: q.hora_inicio || "",
+      hora_fim: q.hora_fim || "",
+      periodo_inicio: q.periodo_inicio || "",
+      periodo_fim: q.periodo_fim || "",
+      ativo: q.ativo !== undefined ? (q as any).ativo : true,
+    });
+    setQuotaEditModalOpen(true);
+  };
+
+  const handleSaveQuotaEdit = async () => {
+    if (!editingQuotaId) return;
+    
+    if (quotaEditForm.vagas_total < quotaEditForm.vagas_usadas) {
+      toast.error(`Não é possível reduzir para ${quotaEditForm.vagas_total} vagas, pois já existem ${quotaEditForm.vagas_usadas} agendamentos vinculados a esta cota.`);
+      return;
+    }
+
+    setSavingQuota(true);
+    try {
+      const { error } = await supabase
+        .from("quotas_externas")
+        .update({
+          vagas_total: quotaEditForm.vagas_total,
+          turno: quotaEditForm.turno,
+          especialidade: quotaEditForm.especialidade,
+          unidade_id: quotaEditForm.unidade_id,
+          hora_inicio: quotaEditForm.hora_inicio || null,
+          hora_fim: quotaEditForm.hora_fim || null,
+          periodo_inicio: quotaEditForm.periodo_inicio,
+          periodo_fim: quotaEditForm.periodo_fim,
+          ativo: quotaEditForm.ativo,
+        })
+        .eq("id", editingQuotaId);
+
+      if (error) throw error;
+      toast.success("Cota atualizada com sucesso!");
+      setQuotaEditModalOpen(false);
+      await loadExternos();
+    } catch (err: any) {
+      console.error("[Funcionários Externos] Erro ao editar cota", { cotaId: editingQuotaId, error: err });
+      toast.error("Erro ao atualizar cota.");
+    } finally {
+      setSavingQuota(false);
+    }
+  };
+
+  const handleToggleQuotaActive = async (q: QuotaRow) => {
+    try {
+      const { error } = await supabase
+        .from("quotas_externas")
+        .update({ ativo: !(q as any).ativo })
+        .eq("id", q.id);
+      
+      if (error) throw error;
+      toast.success( (q as any).ativo ? "Cota desativada" : "Cota ativada");
+      await loadExternos();
+    } catch (err: any) {
+      console.error("[Funcionários Externos] Erro ao alternar status da cota", err);
+      toast.error("Erro ao alterar status.");
+    }
   };
 
   const profissionaisInternos = useMemo(() => funcionarios.filter((f: any) => f.role === "profissional" && f.ativo), [funcionarios]);
