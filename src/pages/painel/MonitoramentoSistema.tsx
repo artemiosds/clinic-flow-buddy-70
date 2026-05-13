@@ -101,7 +101,7 @@ const MonitoramentoSistema = () => {
     <div className="space-y-6">
       <PageHeader 
         title="Monitoramento do Sistema" 
-        description="Acompanhe a saúde geral do sistema, banco de dados e armazenamento."
+        subtitle="Acompanhe a saúde geral do sistema, banco de dados e armazenamento."
       >
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={fetchStats} disabled={loading}>
