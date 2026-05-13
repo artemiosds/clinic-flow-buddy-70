@@ -68,8 +68,10 @@ serve(async (req) => {
         'configuracoes'
       ];
 
-      const tableStats = await Promise.all(tablesToMonitor.map(async (table) => {
+      const tableStats = [];
+      for (const table of tablesToMonitor) {
         try {
+          console.log(`Checking table: ${table}`);
           const { count, error } = await supabaseClient
             .from(table)
             .select("*", { count: 'exact', head: true });
@@ -102,24 +104,24 @@ serve(async (req) => {
             // Probably created_at doesn't exist
           }
 
-          return {
+          tableStats.push({
             table,
             count: count || 0,
             last7,
             last30,
             status: (count || 0) > 100000 ? 'atencao' : 'normal'
-          };
+          });
         } catch (err) {
           console.error(`Exception on table ${table}:`, err);
-          return {
+          tableStats.push({
             table,
             count: 0,
             last7: 0,
             last30: 0,
             status: 'erro'
-          };
+          });
         }
-      }));
+      }
 
       // 2. Storage stats
       let storageStats = [];
