@@ -88,8 +88,8 @@ const MonitoramentoSistema = () => {
     }
   }, [isMaster]);
 
-  const handleCleanup = async (type: string, days: number = 90) => {
-    if (cleanupConfirmText !== 'LIMPAR') {
+  const handleCleanup = async (type: string, days: number = 90, dryRun: boolean = false) => {
+    if (!dryRun && cleanupConfirmText !== 'LIMPAR') {
       toast.error('Digite LIMPAR para confirmar a exclusão');
       return;
     }
@@ -98,20 +98,54 @@ const MonitoramentoSistema = () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       
+      const payload = { 
+        cleanup_type: type === 'logs' ? 'logs_old' : (type === 'notifications' ? 'notifications_old' : type), 
+        filters: { older_than_days: days },
+        dry_run: dryRun,
+        confirmation_text: dryRun ? undefined : 'LIMPAR'
+      };
+
       const { data, error } = await supabase.functions.invoke('system-cleanup-execute', {
-        body: { type, days, confirmation: 'LIMPAR' },
+        body: payload,
         headers: session?.access_token ? {
           Authorization: `Bearer ${session.access_token}`
         } : {}
       });
-      if (error) throw error;
-      toast.success(`${data.count} registros limpos com sucesso!`);
-      fetchStats();
-      fetchCleanupLogs();
-      setCleanupConfirmText('');
+
+      // Se houver erro retornado pela função (mesmo que venha no data.error se não disparar o catch do invoke)
+      if (error) {
+        let errorMsg = 'Erro na Edge Function';
+        try {
+          // Tentar extrair a mensagem real se o erro for um objeto de resposta
+          const errorData = await error.context?.json();
+          errorMsg = errorData?.error || errorData?.message || error.message;
+        } catch (e) {
+          errorMsg = error.message;
+        }
+        
+        toast.error(`Falha: ${errorMsg}`);
+        throw error;
+      }
+
+      if (data?.success === false) {
+        toast.error(data.error || 'Erro ao executar limpeza');
+        return;
+      }
+
+      if (dryRun) {
+        toast.info(data.message || `Análise concluída: ${data.estimated_items} itens identificados.`);
+      } else {
+        toast.success(data.message || `${data.deleted_items} registros limpos com sucesso!`);
+        setCleanupConfirmText('');
+        fetchStats();
+        fetchCleanupLogs();
+      }
     } catch (err: any) {
-      console.error(err);
-      toast.error('Erro ao executar limpeza: ' + err.message);
+      console.error('Cleanup Error:', err);
+      // O toast de erro já foi disparado acima para erros específicos
+      if (!err.message?.includes('invoke')) {
+        toast.error('Erro de conexão ou permissão.');
+      }
     } finally {
       setLoading(false);
     }
@@ -518,7 +552,12 @@ const MonitoramentoSistema = () => {
 
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="destructive" className="w-full">Limpar Logs ({'>'} 90 dias)</Button>
+                      <div className="flex gap-2 w-full">
+                        <Button variant="outline" className="flex-1" onClick={() => handleCleanup('logs', 90, true)} disabled={loading}>
+                          Analisar
+                        </Button>
+                        <Button variant="destructive" className="flex-1">Limpar Logs ({'>'} 90 dias)</Button>
+                      </div>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
@@ -571,7 +610,42 @@ const MonitoramentoSistema = () => {
                     <p>• Remove arquivos da pasta 'temp' com mais de 48h.</p>
                   </div>
 
-                  <Button variant="outline" className="w-full" disabled>Analisar e Limpar</Button>
+                        <Button variant="outline" className="w-full" onClick={() => handleCleanup('notifications_old', 30, true)} disabled={loading}>Analisar Notificações</Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="outline" className="w-full text-rose-500 hover:text-rose-600 border-rose-200" disabled={loading}>Limpar Notificações Lidas</Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle className="flex items-center gap-2">
+                                <ShieldAlert className="w-5 h-5 text-rose-500" />
+                                Confirmação de Limpeza
+                              </AlertDialogTitle>
+                              <AlertDialogDescription className="space-y-4">
+                                <p>Você está prestes a excluir definitivamente as notificações lidas com mais de 30 dias. Esta ação não pode ser desfeita.</p>
+                                <div className="space-y-2">
+                                  <Label className="text-foreground">Para continuar, digite <span className="font-bold text-rose-600">LIMPAR</span> abaixo:</Label>
+                                  <Input 
+                                    placeholder="Digite aqui..." 
+                                    value={cleanupConfirmText} 
+                                    onChange={(e) => setCleanupConfirmText(e.target.value.toUpperCase())}
+                                    className="border-rose-300 focus-visible:ring-rose-500"
+                                  />
+                                </div>
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel onClick={() => setCleanupConfirmText('')}>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction 
+                                className="bg-rose-600 hover:bg-rose-700 disabled:opacity-50"
+                                disabled={cleanupConfirmText !== 'LIMPAR' || loading}
+                                onClick={() => handleCleanup('notifications_old', 30, false)}
+                              >
+                                Confirmar Exclusão
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                 </div>
               </div>
 
