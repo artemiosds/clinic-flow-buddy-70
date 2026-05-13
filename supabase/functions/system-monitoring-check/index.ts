@@ -37,7 +37,11 @@ serve(async (req) => {
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
 
     if (userError || !user) {
-      return new Response(JSON.stringify({ error: "Sessão inválida" }), {
+      console.error("Auth error:", userError?.message || "User not found");
+      return new Response(JSON.stringify({ 
+        error: "Sessão inválida", 
+        details: userError?.message 
+      }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
