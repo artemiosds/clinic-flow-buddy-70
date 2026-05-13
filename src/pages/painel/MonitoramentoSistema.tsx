@@ -610,7 +610,42 @@ const MonitoramentoSistema = () => {
                     <p>• Remove arquivos da pasta 'temp' com mais de 48h.</p>
                   </div>
 
-                  <Button variant="outline" className="w-full" disabled>Analisar e Limpar</Button>
+                        <Button variant="outline" className="w-full" onClick={() => handleCleanup('notifications_old', 30, true)} disabled={loading}>Analisar Notificações</Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="outline" className="w-full text-rose-500 hover:text-rose-600 border-rose-200" disabled={loading}>Limpar Notificações Lidas</Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle className="flex items-center gap-2">
+                                <ShieldAlert className="w-5 h-5 text-rose-500" />
+                                Confirmação de Limpeza
+                              </AlertDialogTitle>
+                              <AlertDialogDescription className="space-y-4">
+                                <p>Você está prestes a excluir definitivamente as notificações lidas com mais de 30 dias. Esta ação não pode ser desfeita.</p>
+                                <div className="space-y-2">
+                                  <Label className="text-foreground">Para continuar, digite <span className="font-bold text-rose-600">LIMPAR</span> abaixo:</Label>
+                                  <Input 
+                                    placeholder="Digite aqui..." 
+                                    value={cleanupConfirmText} 
+                                    onChange={(e) => setCleanupConfirmText(e.target.value.toUpperCase())}
+                                    className="border-rose-300 focus-visible:ring-rose-500"
+                                  />
+                                </div>
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel onClick={() => setCleanupConfirmText('')}>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction 
+                                className="bg-rose-600 hover:bg-rose-700 disabled:opacity-50"
+                                disabled={cleanupConfirmText !== 'LIMPAR' || loading}
+                                onClick={() => handleCleanup('notifications_old', 30, false)}
+                              >
+                                Confirmar Exclusão
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                 </div>
               </div>
 
