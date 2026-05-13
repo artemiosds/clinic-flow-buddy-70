@@ -58,6 +58,7 @@ interface QuotaRow {
   vagas_usadas: number;
   periodo_inicio: string;
   periodo_fim: string;
+  ativo?: boolean;
 }
 
 const ProfissionaisExternos: React.FC = () => {
