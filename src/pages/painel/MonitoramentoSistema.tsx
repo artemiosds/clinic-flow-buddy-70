@@ -552,7 +552,12 @@ const MonitoramentoSistema = () => {
 
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="destructive" className="w-full">Limpar Logs ({'>'} 90 dias)</Button>
+                      <div className="flex gap-2 w-full">
+                        <Button variant="outline" className="flex-1" onClick={() => handleCleanup('logs', 90, true)} disabled={loading}>
+                          Analisar
+                        </Button>
+                        <Button variant="destructive" className="flex-1">Limpar Logs ({'>'} 90 dias)</Button>
+                      </div>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
