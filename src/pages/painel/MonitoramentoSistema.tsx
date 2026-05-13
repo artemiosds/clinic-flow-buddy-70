@@ -37,7 +37,7 @@ const MonitoramentoSistema = () => {
   const fetchStats = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('system-monitoring', {
+      const { data, error } = await supabase.functions.invoke('system-monitoring-check', {
         body: { action: 'check-system' }
       });
       
