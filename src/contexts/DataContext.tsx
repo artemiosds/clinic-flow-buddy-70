@@ -733,6 +733,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // errors and updates state independently, so partial failures don't block the app.
     void Promise.all([
       loadDisponibilidades(),
+      loadQuotasExternas(),
       loadPacientes(),
       loadAgendamentos(),
       loadFila(),
@@ -744,6 +745,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loadSalas,
     loadFuncionarios,
     loadDisponibilidades,
+    loadQuotasExternas,
     loadPacientes,
     loadAgendamentos,
     loadFila,
