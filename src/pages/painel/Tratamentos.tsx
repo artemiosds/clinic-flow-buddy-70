@@ -1641,9 +1641,15 @@ const Tratamentos: React.FC = () => {
       if (error) throw error;
 
       await logAction({
-        action: "discharge_patient",
-        table: "treatment_cycles",
-        details: `Alta antecipada no ciclo ${selectedCycle.id} (Paciente: ${selectedCycle.paciente_nome || selectedCycle.patient_id}). Motivo: ${dischargeForm.reason}`,
+        acao: "alta_paciente",
+        entidade: "treatment_cycle",
+        entidadeId: selectedCycle.id,
+        modulo: "tratamentos",
+        user,
+        detalhes: {
+          paciente: selectedCycle.patient_id,
+          motivo: dischargeForm.reason,
+        },
       });
 
       toast.success("Alta registrada com sucesso. Agendamentos futuros vinculados a este tratamento foram removidos.");
