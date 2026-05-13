@@ -90,8 +90,8 @@ const MonitoramentoSistema = () => {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('system-monitoring', {
-        body: { action: 'cleanup', type, days }
+      const { data, error } = await supabase.functions.invoke('system-cleanup-execute', {
+        body: { type, days, confirmation: 'LIMPAR' }
       });
       if (error) throw error;
       toast.success(`${data.count} registros limpos com sucesso!`);
