@@ -113,6 +113,20 @@ const ProfissionaisExternos: React.FC = () => {
     periodo_fim: `${new Date().getFullYear()}-12-31`,
   });
   const [savingQuota, setSavingQuota] = useState(false);
+  const [editingQuotaId, setEditingQuotaId] = useState<string | null>(null);
+  const [quotaEditModalOpen, setQuotaEditModalOpen] = useState(false);
+  const [quotaEditForm, setQuotaEditForm] = useState({
+    vagas_total: 5,
+    turno: "Integral",
+    especialidade: "",
+    unidade_id: "",
+    hora_inicio: "",
+    hora_fim: "",
+    periodo_inicio: "",
+    periodo_fim: "",
+    ativo: true,
+    vagas_usadas: 0,
+  });
 
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [selectedExtForDetails, setSelectedExtForDetails] = useState<ExternalProf | null>(null);
