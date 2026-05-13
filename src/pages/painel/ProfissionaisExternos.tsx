@@ -112,6 +112,41 @@ const ProfissionaisExternos: React.FC = () => {
   });
   const [savingQuota, setSavingQuota] = useState(false);
 
+  const [selectedProfForAgenda, setSelectedProfForAgenda] = useState<string | null>(null);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [selectedExtForDetails, setSelectedExtForDetails] = useState<ExternalProf | null>(null);
+  const [detailsTab, setDetailsTab] = useState("cotas");
+  const [extAgendamentos, setExtAgendamentos] = useState<any[]>([]);
+  const [loadingAgendamentos, setLoadingAgendamentos] = useState(false);
+
+  const loadAgendamentos = async (externoId: string) => {
+    setLoadingAgendamentos(true);
+    try {
+      const { data, error } = await supabase
+        .from("agendamentos")
+        .select("*")
+        .eq("agendado_por_externo", externoId)
+        .order("data", { ascending: false });
+      
+      if (error) throw error;
+      setExtAgendamentos(data || []);
+    } catch (err) {
+      console.error("[Funcionários Externos] Erro ao carregar agendamentos", err);
+      toast.error("Erro ao carregar agenda.");
+    } finally {
+      setLoadingAgendamentos(false);
+    }
+  };
+
+  const openDetails = (ext: ExternalProf, tab: string = "cotas") => {
+    setSelectedExtForDetails(ext);
+    setDetailsTab(tab);
+    setDetailsDialogOpen(true);
+    if (tab === "agenda") {
+      loadAgendamentos(ext.id);
+    }
+  };
+
   const loadExternos = useCallback(async () => {
     setLoading(true);
     try {
