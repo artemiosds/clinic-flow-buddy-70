@@ -782,11 +782,7 @@ const AgendamentoExterno: React.FC = () => {
             </Button>
           </div>
         </DialogContent>
-    </div>
-  );
-};
-
-export default AgendamentoExterno;
+      </Dialog>
     </div>
   );
 };
