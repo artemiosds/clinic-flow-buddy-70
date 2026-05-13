@@ -312,7 +312,7 @@ const ProfissionaisExternos: React.FC = () => {
     await loadExternos();
   };
 
-  const profissionaisInternos = funcionarios.filter((f: any) => f.role === "profissional" && f.ativo);
+  const profissionaisInternos = useMemo(() => funcionarios.filter((f: any) => f.role === "profissional" && f.active), [funcionarios]);
 
   const filteredExternos = externos.filter(e => {
     if (!searchTerm.trim()) return true;
