@@ -1762,6 +1762,10 @@ const ProntuarioPage: React.FC = () => {
     const unidadeNome = unidades.find((u) => u.id === p.unidade_id)?.nome || p.unidade_id;
     const sections = [
       { title: "Queixa Principal", content: p.queixa_principal },
+      { title: "S — Subjetivo", content: (p as any).soap_subjetivo },
+      { title: "O — Objetivo", content: (p as any).soap_objetivo },
+      { title: "A — Avaliação", content: (p as any).soap_avaliacao },
+      { title: "P — Plano", content: (p as any).soap_plano },
       { title: "Anamnese", content: p.anamnese },
       { title: "Sinais e Sintomas", content: p.sinais_sintomas },
       { title: "Exame Físico", content: p.exame_fisico },
@@ -1774,11 +1778,32 @@ const ProntuarioPage: React.FC = () => {
       { title: "Observações Gerais", content: p.observacoes },
       { title: "Indicação de Retorno", content: p.indicacao_retorno },
     ]
-      .filter((s) => s.content)
-      .map(
-        (s) =>
-          `<div class="section"><div class="section-title">${s.title}</div><div class="section-content">${s.content}</div></div>`,
-      )
+      .filter((s) => {
+        if (!s.content) return false;
+        const c = s.content.trim();
+        return c !== "" && c !== "{}" && c !== "[]";
+      })
+      .map((s) => {
+        let displayContent = s.content;
+        
+        // Formatar JSON se necessário (prescrição/exames)
+        if (displayContent.startsWith("{") || displayContent.startsWith("[")) {
+          try {
+            const parsed = JSON.parse(displayContent);
+            if (parsed.medicamentos && Array.isArray(parsed.medicamentos)) {
+              displayContent = parsed.medicamentos
+                .map((m: any, i: number) => `${i + 1}. ${m.nome} — ${m.dosagem || ""} ${m.via || ""} ${m.posologia || ""} ${m.duracao || ""}`)
+                .join("\n");
+            } else if (parsed.exames && Array.isArray(parsed.exames)) {
+              displayContent = parsed.exames
+                .map((e: any) => `• ${e.nome}${e.codigo_sus ? ` (${e.codigo_sus})` : ""}${e.indicacao ? ` — ${e.indicacao}` : ""}`)
+                .join("\n");
+            }
+          } catch (e) { /* não é JSON válido ou não é o formato esperado */ }
+        }
+
+        return `<div class="section"><div class="section-title">${s.title}</div><div class="section-content">${displayContent}</div></div>`;
+      })
       .join("");
     const body = `
       <div class="info-grid">

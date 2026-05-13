@@ -168,6 +168,8 @@ export function buildInstitutionalCSS(): string {
     text-justify: inter-word;
     font-size: 11pt;
     line-height: 1.5;
+    word-break: break-word;
+    hyphens: auto;
   }
 
   /* SUMMARY CARDS */
@@ -202,9 +204,9 @@ export function buildInstitutionalCSS(): string {
   .field-value { font-size: 11pt; margin-top: 2px; color: #1a1a1a; }
 
   /* SECTIONS (prontuário) */
-  .section { margin-bottom: 14px; }
-  .section-title { font-weight: 600; font-size: 10pt; text-transform: uppercase; color: #0369a1; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 6px; }
-  .section-content { font-size: 11pt; line-height: 1.5; white-space: pre-wrap; min-height: 18px; text-align: justify; }
+  .section { margin-bottom: 18px; page-break-inside: avoid; }
+  .section-title { font-weight: 700; font-size: 10pt; text-transform: uppercase; color: #0369a1; border-bottom: 1.5px solid #bae6fd; padding-bottom: 4px; margin-bottom: 8px; }
+  .section-content { font-size: 11pt; line-height: 1.6; white-space: pre-wrap; min-height: 18px; text-align: justify; color: #1e293b; }
 
   /* INFO GRID */
   .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; padding: 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; }
