@@ -154,7 +154,7 @@ const MonitoramentoSistema = () => {
               <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Status Geral</p>
               <div className="flex items-center gap-2">
                 <span className={`w-2 h-2 rounded-full ${getStatusColor(stats?.status)}`} />
-                <p className="text-sm font-bold capitalize">{stats?.status || 'Carregando...'}</p>
+                <p className="text-sm font-bold capitalize">{stats?.status || (loading ? 'Carregando...' : 'Offline')}</p>
               </div>
             </div>
           </CardContent>
