@@ -21,8 +21,23 @@ interface ExternalProf {
   auth_user_id: string | null;
   nome: string;
   email: string;
+  telefone?: string;
+  documento_registro?: string;
+  unidade_origem?: string;
+  responsavel?: string;
+  observacoes?: string;
   unidade_id: string;
   ativo: boolean;
+  permissoes?: {
+    can_schedule: boolean;
+    can_view_own: boolean;
+    can_cancel: boolean;
+    can_edit_patient: boolean;
+    can_create_patient: boolean;
+    can_select_patient: boolean;
+    can_attach_docs: boolean;
+    can_use_online_agenda: boolean;
+  };
   criado_em: string;
 }
 
@@ -30,7 +45,12 @@ interface QuotaRow {
   id: string;
   profissional_externo_id: string;
   profissional_interno_id: string;
+  especialidade?: string;
   unidade_id: string;
+  dia_semana?: number;
+  turno?: string;
+  hora_inicio?: string;
+  hora_fim?: string;
   vagas_total: number;
   vagas_usadas: number;
   periodo_inicio: string;
