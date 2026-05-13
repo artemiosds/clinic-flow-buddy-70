@@ -56,6 +56,7 @@ const SECTIONS = [
 ];
 
 const ConfigSistema: React.FC = () => {
+  const navigate = useNavigate();
   const { atualizarConfiguracao, configuracoes, loading: hookLoading } = useConfiguracao();
   const [config, setConfig] = useState<SistemaConfig>(DEFAULT);
   const [savedConfig, setSavedConfig] = useState<SistemaConfig>(DEFAULT);
