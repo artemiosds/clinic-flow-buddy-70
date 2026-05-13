@@ -684,7 +684,7 @@ const ProfissionaisExternos: React.FC = () => {
                             <tr key={q.id}>
                               <td className="px-4 py-3">
                                 <p className="font-medium">{prof?.nome || "—"}</p>
-                                <p className="text-xs text-muted-foreground">{q.especialidade || prof?.profissao}</p>
+                                <p className="text-xs text-muted-foreground">{q.especialidade || (prof as any)?.profissao}</p>
                               </td>
                               <td className="px-4 py-3">{q.turno}</td>
                               <td className="px-4 py-3 text-center font-semibold">{q.vagas_total}</td>
