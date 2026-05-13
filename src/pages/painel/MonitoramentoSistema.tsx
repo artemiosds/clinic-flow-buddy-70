@@ -32,7 +32,7 @@ const MonitoramentoSistema = () => {
   const [activeTab, setActiveTab] = useState('geral');
   const [cleanupLogs, setCleanupLogs] = useState<any[]>([]);
 
-  const isMaster = user?.role?.toLowerCase().trim() === 'master' || user?.usuario === 'admin.sms';
+  const isMaster = user?.role?.toLowerCase().trim() === 'master' || user?.usuario === 'admin.sms' || user?.role?.toLowerCase().trim() === 'gestor_master';
 
   const fetchStats = async () => {
     setLoading(true);
