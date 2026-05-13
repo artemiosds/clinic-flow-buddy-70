@@ -213,9 +213,12 @@ const MonitoramentoSistema = () => {
         <TabsList className="bg-muted/50 p-1">
           <TabsTrigger value="geral" className="gap-2"><BarChart3 className="w-4 h-4" /> Visão Geral</TabsTrigger>
           <TabsTrigger value="banco" className="gap-2"><Database className="w-4 h-4" /> Banco de Dados</TabsTrigger>
-          <TabsTrigger value="storage" className="gap-2"><HardDrive className="w-4 h-4" /> Storage</TabsTrigger>
+          <TabsTrigger value="storage" className="gap-2"><HardDrive className="w-4 h-4" /> Arquivos e Storage</TabsTrigger>
+          <TabsTrigger value="desempenho" className="gap-2"><Activity className="w-4 h-4" /> Desempenho</TabsTrigger>
           <TabsTrigger value="hospedagem" className="gap-2"><Server className="w-4 h-4" /> Hospedagem</TabsTrigger>
+          <TabsTrigger value="supabase" className="gap-2"><Shield className="w-4 h-4" /> Supabase</TabsTrigger>
           <TabsTrigger value="limpeza" className="gap-2"><Trash2 className="w-4 h-4" /> Limpeza Segura</TabsTrigger>
+          <TabsTrigger value="logs" className="gap-2"><FileText className="w-4 h-4" /> Logs</TabsTrigger>
         </TabsList>
 
         <TabsContent value="geral" className="mt-4 space-y-4">
