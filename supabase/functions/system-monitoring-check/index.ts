@@ -7,6 +7,8 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  console.log(`Request received: ${req.method} ${req.url}`);
+  
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -27,7 +29,8 @@ serve(async (req) => {
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Não autorizado" }), {
+      console.error("No Authorization header provided");
+      return new Response(JSON.stringify({ error: "Não autorizado: Token ausente" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -47,16 +50,27 @@ serve(async (req) => {
       });
     }
 
+    console.log(`Authenticated user: ${user.id}`);
+
     // Validar perfil MASTER no banco
-    const { data: funcionario } = await supabaseClient
+    const { data: funcionario, error: funcError } = await supabaseClient
       .from("funcionarios")
       .select("role, usuario")
       .eq("id", user.id)
       .maybeSingle();
 
+    if (funcError) {
+      console.error("Error fetching funcionario:", funcError);
+      return new Response(JSON.stringify({ error: "Erro ao validar permissões" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const isMaster = funcionario && (funcionario.role?.toLowerCase().trim() === 'master' || funcionario.usuario === 'admin.sms');
 
     if (!isMaster) {
+      console.error(`User ${user.id} is not a Master. Role: ${funcionario?.role}`);
       return new Response(JSON.stringify({ error: "Acesso negado: Somente Master pode monitorar o sistema" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -72,10 +86,13 @@ serve(async (req) => {
     // 2. Coletar estatísticas do Storage
     let storageStats = [];
     try {
-      const { data: buckets } = await supabaseClient.storage.listBuckets();
-      if (buckets) {
+      const { data: buckets, error: bucketsError } = await supabaseClient.storage.listBuckets();
+      if (bucketsError) {
+        console.error("Storage listBuckets error:", bucketsError);
+      } else if (buckets) {
         storageStats = await Promise.all(buckets.map(async (bucket) => {
-          const { data: files } = await supabaseClient.storage.from(bucket.id).list("", { limit: 1 });
+          const { data: files, error: filesError } = await supabaseClient.storage.from(bucket.id).list("", { limit: 1 });
+          if (filesError) console.error(`Error listing files for bucket ${bucket.name}:`, filesError);
           return {
             id: bucket.id,
             name: bucket.name,
@@ -85,7 +102,7 @@ serve(async (req) => {
         }));
       }
     } catch (err) {
-      console.error("Storage Error:", err);
+      console.error("Storage stats exception:", err);
     }
 
     return new Response(JSON.stringify({
@@ -98,6 +115,7 @@ serve(async (req) => {
     });
 
   } catch (error) {
+    console.error("Global error in monitoring function:", error);
     return new Response(JSON.stringify({ error: error.message || "Erro interno no servidor" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
