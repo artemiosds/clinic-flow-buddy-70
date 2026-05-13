@@ -52,6 +52,7 @@ const SECTIONS = [
   { id: 'backup', label: 'Backup', kw: ['backup', 'exportar', 'json', 'csv', 'pdf', 'restaurar', 'dados'] },
   { id: 'aparencia', label: 'Aparência', kw: ['tema', 'cor', 'fonte', 'aparencia', 'claro', 'escuro'] },
   { id: 'lgpd', label: 'LGPD', kw: ['lgpd', 'privacidade', 'retencao', 'anonimizar', 'conformidade', 'termo'] },
+  { id: 'monitoramento', label: 'Monitoramento', kw: ['status', 'saude', 'banco', 'storage', 'vps', 'logs', 'limpeza'] },
 ];
 
 const ConfigSistema: React.FC = () => {
