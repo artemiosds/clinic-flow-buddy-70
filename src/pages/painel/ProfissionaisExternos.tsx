@@ -58,6 +58,7 @@ interface QuotaRow {
   vagas_usadas: number;
   periodo_inicio: string;
   periodo_fim: string;
+  ativo?: boolean;
 }
 
 const ProfissionaisExternos: React.FC = () => {
@@ -113,6 +114,20 @@ const ProfissionaisExternos: React.FC = () => {
     periodo_fim: `${new Date().getFullYear()}-12-31`,
   });
   const [savingQuota, setSavingQuota] = useState(false);
+  const [editingQuotaId, setEditingQuotaId] = useState<string | null>(null);
+  const [quotaEditModalOpen, setQuotaEditModalOpen] = useState(false);
+  const [quotaEditForm, setQuotaEditForm] = useState({
+    vagas_total: 5,
+    turno: "Integral",
+    especialidade: "",
+    unidade_id: "",
+    hora_inicio: "",
+    hora_fim: "",
+    periodo_inicio: "",
+    periodo_fim: "",
+    ativo: true,
+    vagas_usadas: 0,
+  });
 
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [selectedExtForDetails, setSelectedExtForDetails] = useState<ExternalProf | null>(null);
@@ -306,9 +321,95 @@ const ProfissionaisExternos: React.FC = () => {
   };
 
   const handleDeleteQuota = async (quotaId: string) => {
-    await supabase.from("quotas_externas").delete().eq("id", quotaId);
-    toast.success("Quota removida.");
-    await loadExternos();
+    try {
+      const q = quotas.find(item => item.id === quotaId);
+      if (q && q.vagas_usadas > 0) {
+        const confirmou = window.confirm(`Esta cota possui ${q.vagas_usadas} agendamentos vinculados. Para preservar o histórico, ela será desativada em vez de excluída. Deseja continuar?`);
+        if (!confirmou) return;
+        
+        const { error } = await supabase.from("quotas_externas").update({ ativo: false }).eq("id", quotaId);
+        if (error) throw error;
+        toast.success("Cota desativada para preservar histórico.");
+      } else {
+        const { error } = await supabase.from("quotas_externas").delete().eq("id", quotaId);
+        if (error) throw error;
+        toast.success("Quota removida.");
+      }
+      await loadExternos();
+    } catch (err: any) {
+      console.error("[Funcionários Externos] Erro ao gerenciar cota", { cotaId: quotaId, error: err });
+      toast.error("Não foi possível processar a solicitação.");
+    }
+  };
+
+  const handleEditQuota = (q: QuotaRow) => {
+    setEditingQuotaId(q.id);
+    setQuotaEditForm({
+      vagas_total: q.vagas_total,
+      vagas_usadas: q.vagas_usadas,
+      turno: q.turno || "Integral",
+      especialidade: q.especialidade || "",
+      unidade_id: q.unidade_id || "",
+      hora_inicio: q.hora_inicio || "",
+      hora_fim: q.hora_fim || "",
+      periodo_inicio: q.periodo_inicio || "",
+      periodo_fim: q.periodo_fim || "",
+      ativo: q.ativo !== undefined ? (q as any).ativo : true,
+    });
+    setQuotaEditModalOpen(true);
+  };
+
+  const handleSaveQuotaEdit = async () => {
+    if (!editingQuotaId) return;
+    
+    if (quotaEditForm.vagas_total < quotaEditForm.vagas_usadas) {
+      toast.error(`Não é possível reduzir para ${quotaEditForm.vagas_total} vagas, pois já existem ${quotaEditForm.vagas_usadas} agendamentos vinculados a esta cota.`);
+      return;
+    }
+
+    setSavingQuota(true);
+    try {
+      const { error } = await supabase
+        .from("quotas_externas")
+        .update({
+          vagas_total: quotaEditForm.vagas_total,
+          turno: quotaEditForm.turno,
+          especialidade: quotaEditForm.especialidade,
+          unidade_id: quotaEditForm.unidade_id,
+          hora_inicio: quotaEditForm.hora_inicio || null,
+          hora_fim: quotaEditForm.hora_fim || null,
+          periodo_inicio: quotaEditForm.periodo_inicio,
+          periodo_fim: quotaEditForm.periodo_fim,
+          ativo: quotaEditForm.ativo,
+        })
+        .eq("id", editingQuotaId);
+
+      if (error) throw error;
+      toast.success("Cota atualizada com sucesso!");
+      setQuotaEditModalOpen(false);
+      await loadExternos();
+    } catch (err: any) {
+      console.error("[Funcionários Externos] Erro ao editar cota", { cotaId: editingQuotaId, error: err });
+      toast.error("Erro ao atualizar cota.");
+    } finally {
+      setSavingQuota(false);
+    }
+  };
+
+  const handleToggleQuotaActive = async (q: QuotaRow) => {
+    try {
+      const { error } = await supabase
+        .from("quotas_externas")
+        .update({ ativo: !(q as any).ativo })
+        .eq("id", q.id);
+      
+      if (error) throw error;
+      toast.success( (q as any).ativo ? "Cota desativada" : "Cota ativada");
+      await loadExternos();
+    } catch (err: any) {
+      console.error("[Funcionários Externos] Erro ao alternar status da cota", err);
+      toast.error("Erro ao alterar status.");
+    }
   };
 
   const profissionaisInternos = useMemo(() => funcionarios.filter((f: any) => f.role === "profissional" && f.ativo), [funcionarios]);
@@ -691,9 +792,17 @@ const ProfissionaisExternos: React.FC = () => {
                               <td className="px-4 py-3 text-center text-primary">{q.vagas_usadas}</td>
                               <td className="px-4 py-3 text-center text-success">{q.vagas_total - q.vagas_usadas}</td>
                               <td className="px-4 py-3 text-center">
-                                <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => handleDeleteQuota(q.id)}>
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
+                                <div className="flex items-center justify-center gap-1">
+                                  <Button size="icon" variant="ghost" className="h-8 w-8 text-primary" onClick={() => handleEditQuota(q)}>
+                                    <Pencil className="w-4 h-4" />
+                                  </Button>
+                                  <Button size="icon" variant="ghost" className={`h-8 w-8 ${q.ativo ? 'text-destructive' : 'text-success'}`} onClick={() => handleToggleQuotaActive(q)}>
+                                    {q.ativo ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                  </Button>
+                                  <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => handleDeleteQuota(q.id)}>
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </div>
                               </td>
                             </tr>
                           );
@@ -779,6 +888,79 @@ const ProfissionaisExternos: React.FC = () => {
           </Tabs>
         </DialogContent>
       </Dialog>
+      {/* Edit Quota Modal */}
+      <Dialog open={quotaEditModalOpen} onOpenChange={setQuotaEditModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar Cota</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="col-span-2">
+                <Label>Vagas Totais</Label>
+                <Input 
+                  type="number" 
+                  min={quotaEditForm.vagas_usadas} 
+                  value={quotaEditForm.vagas_total} 
+                  onChange={e => setQuotaEditForm(p => ({ ...p, vagas_total: Number(e.target.value) }))} 
+                />
+                <p className="text-[10px] text-muted-foreground mt-1">Usadas: {quotaEditForm.vagas_usadas} agendamentos</p>
+              </div>
+              
+              <div>
+                <Label>Turno</Label>
+                <Select value={quotaEditForm.turno} onValueChange={v => setQuotaEditForm(p => ({ ...p, turno: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Manhã">Manhã</SelectItem>
+                    <SelectItem value="Tarde">Tarde</SelectItem>
+                    <SelectItem value="Noite">Noite</SelectItem>
+                    <SelectItem value="Integral">Integral</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label>Especialidade</Label>
+                <Input value={quotaEditForm.especialidade} onChange={e => setQuotaEditForm(p => ({ ...p, especialidade: e.target.value }))} />
+              </div>
+
+              <div>
+                <Label>Hora Início</Label>
+                <Input type="time" value={quotaEditForm.hora_inicio} onChange={e => setQuotaEditForm(p => ({ ...p, hora_inicio: e.target.value }))} />
+              </div>
+              <div>
+                <Label>Hora Fim</Label>
+                <Input type="time" value={quotaEditForm.hora_fim} onChange={e => setQuotaEditForm(p => ({ ...p, hora_fim: e.target.value }))} />
+              </div>
+
+              <div>
+                <Label>Início Vigência</Label>
+                <Input type="date" value={quotaEditForm.periodo_inicio} onChange={e => setQuotaEditForm(p => ({ ...p, periodo_inicio: e.target.value }))} />
+              </div>
+              <div>
+                <Label>Fim Vigência</Label>
+                <Input type="date" value={quotaEditForm.periodo_fim} onChange={e => setQuotaEditForm(p => ({ ...p, periodo_fim: e.target.value }))} />
+              </div>
+              
+              <div className="col-span-2 flex items-center space-x-2 pt-2">
+                <Checkbox 
+                  id="quota-ativo" 
+                  checked={quotaEditForm.ativo} 
+                  onCheckedChange={v => setQuotaEditForm(p => ({ ...p, ativo: !!v }))} 
+                />
+                <Label htmlFor="quota-ativo" className="cursor-pointer">Cota Ativa</Label>
+              </div>
+            </div>
+            
+            <Button onClick={handleSaveQuotaEdit} disabled={savingQuota} className="w-full gradient-primary">
+              {savingQuota && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+              Salvar Alterações
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 };
