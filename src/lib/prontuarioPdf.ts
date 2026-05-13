@@ -124,33 +124,55 @@ export function downloadProntuarioPdf(p: ProntuarioLike, clinica = "Secretaria M
     },
   });
 
-  let y = (doc as any).lastAutoTable.finalY + 6;
+  let y = (doc as any).lastAutoTable.finalY + 8;
 
-  y = addSection(doc, "Queixa Principal", safe(p.queixa_principal), y);
-  y = addSection(doc, "S — Subjetivo", safe(p.soap_subjetivo), y);
-  y = addSection(doc, "O — Objetivo", safe(p.soap_objetivo), y);
-  y = addSection(doc, "A — Avaliação", safe(p.soap_avaliacao), y);
-  y = addSection(doc, "P — Plano", safe(p.soap_plano), y);
-  y = addSection(doc, "Anamnese", safe(p.anamnese), y);
-  y = addSection(doc, "Exame Físico", safe(p.exame_fisico), y);
-  y = addSection(doc, "Hipótese Diagnóstica", safe(p.hipotese), y);
-  y = addSection(doc, "Conduta", safe(p.conduta), y);
-  y = addSection(doc, "Procedimentos", safe(p.procedimentos_texto), y);
-  y = addSection(doc, "Prescrição", safe(p.prescricao), y);
-  y = addSection(doc, "Solicitação de Exames", safe(p.solicitacao_exames), y);
-  y = addSection(doc, "Evolução", safe(p.evolucao), y);
-  y = addSection(doc, "Observações", safe(p.observacoes), y);
+  const sections = [
+    { label: "Queixa Principal", value: p.queixa_principal },
+    { label: "S — Subjetivo", value: p.soap_subjetivo },
+    { label: "O — Objetivo", value: p.soap_objetivo },
+    { label: "A — Avaliação", value: p.soap_avaliacao },
+    { label: "P — Plano", value: p.soap_plano },
+    { label: "Anamnese", value: p.anamnese },
+    { label: "Exame Físico", value: p.exame_fisico },
+    { label: "Hipótese Diagnóstica", value: p.hipotese },
+    { label: "Conduta", value: p.conduta },
+    { label: "Procedimentos", value: p.procedimentos_texto },
+    { label: "Prescrição", value: p.prescricao },
+    { label: "Solicitação de Exames", value: p.solicitacao_exames },
+    { label: "Evolução", value: p.evolucao },
+    { label: "Observações", value: p.observacoes },
+  ];
+
+  sections.forEach(sec => {
+    const val = safe(sec.value);
+    if (val && val.trim()) {
+      y = addSection(doc, sec.label, val, y);
+    }
+  });
 
   // signature line
-  if (y > doc.internal.pageSize.getHeight() - 40) { doc.addPage(); y = 30; }
+  const pageHeight = doc.internal.pageSize.getHeight();
+  if (y > pageHeight - 40) {
+    doc.addPage();
+    y = 30;
+  }
+  
   doc.setDrawColor(150);
   doc.line(60, y + 20, doc.internal.pageSize.getWidth() - 60, y + 20);
-  doc.setFontSize(9);
-  doc.setTextColor(80);
-  doc.text(p.profissional_nome || "Profissional", doc.internal.pageSize.getWidth() / 2, y + 26, { align: "center" });
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(0, 0, 0);
+  doc.text(p.profissional_nome || "Profissional", doc.internal.pageSize.getWidth() / 2, y + 27, { align: "center" });
+  if (p.setor) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(100);
+    doc.text(p.setor, doc.internal.pageSize.getWidth() / 2, y + 32, { align: "center" });
+  }
 
   footer(doc);
-  doc.save(`prontuario_${(p.paciente_nome || "paciente").replace(/\s+/g, "_")}_${p.data_atendimento || ""}.pdf`);
+  const safeFileName = (p.paciente_nome || "paciente").replace(/[^a-z0-9]/gi, "_").toLowerCase();
+  doc.save(`prontuario_${safeFileName}_${p.data_atendimento || ""}.pdf`);
 }
 
 interface TimelineEntry {
