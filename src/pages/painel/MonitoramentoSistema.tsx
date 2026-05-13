@@ -78,6 +78,7 @@ const MonitoramentoSistema = () => {
   useEffect(() => {
     if (isMaster) {
       fetchStats();
+      fetchCleanupLogs();
     }
   }, [isMaster]);
 
