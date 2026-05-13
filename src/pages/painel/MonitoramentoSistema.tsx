@@ -319,11 +319,10 @@ const MonitoramentoSistema = () => {
                           </Button>
                         </TableCell>
                       </TableRow>
-                    ))}
-                    {!stats?.tableStats && (
+                    )) : (
                       <TableRow>
                         <TableCell colSpan={6} className="text-center py-10 text-muted-foreground italic">
-                          Carregando estatísticas das tabelas...
+                          {loading ? 'Carregando estatísticas das tabelas...' : 'Nenhuma informação disponível'}
                         </TableCell>
                       </TableRow>
                     )}
