@@ -320,6 +320,18 @@ const Disponibilidade: React.FC = () => {
           toast.error(`${diasSemanaFull[day.dayNum]}: Total/dia (${form.vagasPorDia}) excede máximo possível (${maxPossible}).`);
           return;
         }
+
+        // Validação Cotas Externas
+        const matchingQuotas = quotasExternas.filter(q => 
+          q.profissionalInternoId === form.profissionalId &&
+          q.ativo &&
+          rangesOverlap(form.dataInicio, form.dataFim, q.periodoInicio, q.periodoFim)
+        );
+        const totalQuotas = matchingQuotas.reduce((sum, q) => sum + q.vagasTotal, 0);
+        if (form.vagasPorDia < totalQuotas) {
+          toast.error(`${diasSemanaFull[day.dayNum]}: A capacidade total (${form.vagasPorDia}) não pode ser inferior à soma das cotas externas reservadas (${totalQuotas}).`);
+          return;
+        }
       }
 
       const overlapMsg = checkOverlap();
@@ -352,6 +364,24 @@ const Disponibilidade: React.FC = () => {
       // Por Turno
       const activeDays = turnoDays.map((td, i) => ({ ...td, dayNum: i })).filter(td => td.ativo && td.blocos.some(b => b.ativo));
       if (activeDays.length === 0) { toast.error('Ative pelo menos um dia com turnos ativos.'); return; }
+
+      // Validação Cotas Externas Impacto
+      for (const day of activeDays) {
+        for (const bloco of day.blocos.filter(b => b.ativo)) {
+          const shiftName = bloco.horaInicio < '12:00' ? 'Manhã' : bloco.horaInicio < '18:00' ? 'Tarde' : 'Noite';
+          const matchingQuotas = quotasExternas.filter(q => 
+            q.profissionalInternoId === form.profissionalId &&
+            q.ativo &&
+            rangesOverlap(form.dataInicio, form.dataFim, q.periodoInicio, q.periodoFim) &&
+            (q.turno === 'Integral' || q.turno === shiftName)
+          );
+          const totalQuotas = matchingQuotas.reduce((sum, q) => sum + q.vagasTotal, 0);
+          if (bloco.vagas < totalQuotas) {
+            toast.error(`${diasSemanaFull[day.dayNum]} (${bloco.nome}): A capacidade total (${bloco.vagas}) é inferior às cotas externas já configuradas para este período (${totalQuotas}).`);
+            return;
+          }
+        }
+      }
 
       const overlapMsg = checkOverlap();
       if (overlapMsg) { toast.error(overlapMsg); return; }
