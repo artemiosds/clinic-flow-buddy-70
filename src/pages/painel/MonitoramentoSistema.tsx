@@ -203,7 +203,7 @@ const MonitoramentoSistema = () => {
             </div>
             <div>
               <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Alertas</p>
-              <p className="text-sm font-bold">0 Críticos</p>
+              <p className="text-sm font-bold">{stats?.alert_count || 0} Ativos</p>
             </div>
           </CardContent>
         </Card>
