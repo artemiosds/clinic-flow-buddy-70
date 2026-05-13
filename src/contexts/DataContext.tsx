@@ -1736,7 +1736,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const dayOfWeek = isoDayOfWeek(date);
       const disps = disponibilidadesRef.current;
-      // Find ALL matching disponibilidades for this prof/unit/date
       const allDisps = disps.filter(
         (d) =>
           d.profissionalId === profissionalId &&
@@ -1750,6 +1749,15 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const key = `${profissionalId}|${unidadeId}|${date}`;
       const dayAppointments = appointmentsByDateProfUnitRef.current.get(key) || [];
 
+      // External quotas
+      const activeQuotas = quotasExternasRef.current.filter(q => 
+        q.profissionalInternoId === profissionalId &&
+        q.unidadeId === unidadeId &&
+        q.ativo &&
+        date >= q.periodoInicio &&
+        date <= q.periodoFim
+      );
+
       const turnoDisps = allDisps.filter((d) => d.vagasPorHora === 0);
       const horaDisps = allDisps.filter((d) => d.vagasPorHora > 0);
 
@@ -1757,17 +1765,27 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const ehHoje = date === todayStr;
       const limiteMinutos = ehHoje ? nowMinutesInBrazil() + 30 : -1;
 
-      // --- TURNO MODE: generate one slot per turno that still has capacity ---
+      // --- TURNO MODE ---
       for (const td of turnoDisps) {
         const turnoStart = td.horaInicio;
         const turnoEnd = td.horaFim;
-        // Count appointments whose hora falls within this turno range
-        const turnoAppCount = dayAppointments.filter(
-          (a) => a.hora >= turnoStart && a.hora < turnoEnd,
-        ).length;
-        if (turnoAppCount >= td.vagasPorDia) continue;
+        const nome = turnoStart < '12:00' ? 'Manhã' : turnoStart < '18:00' ? 'Tarde' : 'Noite';
 
-        // Parse start time for today check
+        const allInTurno = dayAppointments.filter(a => a.hora >= turnoStart && a.hora < turnoEnd);
+        const intInTurno = allInTurno.filter(a => a.origem !== 'externo');
+
+        // Reservas
+        const shiftQuotas = activeQuotas.filter(q => q.turno === 'Integral' || q.turno === nome);
+        const reservedExternas = shiftQuotas.reduce((sum, q) => sum + q.vagasTotal, 0);
+        
+        const capacityTotal = td.vagasPorDia;
+        const capacityInterna = Math.max(0, capacityTotal - reservedExternas);
+
+        // Reception can only use capacityInterna (unless isPublic/externo, which we'll handle if needed)
+        // If isPublic is false, we assume reception/internal
+        if (!isPublic && intInTurno.length >= capacityInterna) continue;
+        if (allInTurno.length >= capacityTotal) continue;
+
         const sh = parseInt(turnoStart.split(":")[0]);
         const sm = parseInt(turnoStart.split(":")[1] || "0");
         if (ehHoje && sh * 60 + sm <= limiteMinutos) continue;
@@ -1778,10 +1796,16 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
 
-      // --- HORA MODE: existing per-hour/per-slot logic ---
+      // --- HORA MODE ---
       if (horaDisps.length > 0) {
         const disp = horaDisps[0];
-        if (dayAppointments.length < disp.vagasPorDia) {
+        // For simplicity in hora mode, we count global day limit
+        const shiftQuotas = activeQuotas.filter(q => q.turno === 'Integral');
+        const reservedExternas = shiftQuotas.reduce((sum, q) => sum + q.vagasTotal, 0);
+        const capacityInterna = Math.max(0, disp.vagasPorDia - reservedExternas);
+        const intApps = dayAppointments.filter(a => a.origem !== 'externo');
+
+        if (dayAppointments.length < disp.vagasPorDia && (isPublic || intApps.length < capacityInterna)) {
           const hourCounts = new Map<string, number>();
           const slotCounts = new Map<string, number>();
           for (const a of dayAppointments) {
@@ -1849,21 +1873,47 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const key = `${profissionalId}|${unidadeId}|${date}`;
       const dayAppointments = appointmentsByDateProfUnitRef.current.get(key) || [];
+      
+      const activeQuotas = quotasExternasRef.current.filter(q => 
+        q.profissionalInternoId === profissionalId &&
+        q.unidadeId === unidadeId &&
+        q.ativo &&
+        date >= q.periodoInicio &&
+        date <= q.periodoFim
+      );
 
       return turnoDisps.map((td) => {
-        const count = dayAppointments.filter(
-          (a) => a.hora >= td.horaInicio && a.hora < td.horaFim,
-        ).length;
-        const nome = td.horaInicio < '12:00' ? 'Manhã' : td.horaInicio < '18:00' ? 'Tarde' : 'Noite';
+        const turnoStart = td.horaInicio;
+        const turnoEnd = td.horaFim;
+        const nome = turnoStart < '12:00' ? 'Manhã' : turnoStart < '18:00' ? 'Tarde' : 'Noite';
+
+        const allInTurno = dayAppointments.filter(a => a.hora >= td.horaInicio && a.hora < td.horaFim);
+        const extInTurno = allInTurno.filter(a => a.origem === 'externo');
+        const intInTurno = allInTurno.filter(a => a.origem !== 'externo');
+
+        const shiftQuotas = activeQuotas.filter(q => q.turno === 'Integral' || q.turno === nome);
+        const reservedExternas = shiftQuotas.reduce((sum, q) => sum + q.vagasTotal, 0);
+        
+        const capacityTotal = td.vagasPorDia;
+        const capacityInterna = Math.max(0, capacityTotal - reservedExternas);
+
         return {
-          turnoId: td.salaId || td.id, // salaId stores turno ID in turno mode
+          turnoId: td.salaId || td.id,
           nome,
           horaInicio: td.horaInicio,
           horaFim: td.horaFim,
-          vagasTotal: td.vagasPorDia,
-          vagasOcupadas: count,
-          vagasLivres: Math.max(0, td.vagasPorDia - count),
-          lotado: count >= td.vagasPorDia,
+          vagasTotal: capacityTotal,
+          vagasInternas: capacityInterna,
+          vagasExternasReservadas: reservedExternas,
+          vagasInternasOcupadas: intInTurno.length,
+          vagasExternasOcupadas: extInTurno.length,
+          vagasInternasLivres: Math.max(0, capacityInterna - intInTurno.length),
+          vagasExternasLivres: Math.max(0, reservedExternas - extInTurno.length),
+          vagasOcupadas: allInTurno.length,
+          vagasLivres: Math.max(0, capacityTotal - allInTurno.length),
+          lotado: allInTurno.length >= capacityTotal,
+          lotadoInterno: intInTurno.length >= capacityInterna,
+          lotadoExterno: extInTurno.length >= reservedExternas,
         };
       }).sort((a, b) => a.horaInicio.localeCompare(b.horaInicio));
     },
@@ -2038,6 +2088,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     refreshPacientes,
     refreshFila,
     refreshBloqueios,
+    refreshQuotasExternas: loadQuotasExternas,
     logAction,
     searchPacientes,
   };
@@ -2054,6 +2105,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       funcionarios,
       disponibilidades,
       bloqueios,
+      quotasExternas,
       configuracoes,
       ...stableFunctions.current,
     }),
@@ -2066,9 +2118,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       salas,
       setores,
       funcionarios,
-      disponibilidades,
-      bloqueios,
-      configuracoes,
+        disponibilidades,
+        bloqueios,
+        quotasExternas,
+        configuracoes,
     ],
   );
 
