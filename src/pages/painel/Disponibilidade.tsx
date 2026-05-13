@@ -73,7 +73,7 @@ type ModoDisponibilidade = 'por_hora' | 'por_turno';
 const CONFIG_KEY_MODOS = 'config_modos_disponibilidade';
 
 const Disponibilidade: React.FC = () => {
-  const { disponibilidades, addDisponibilidade, updateDisponibilidade, deleteDisponibilidade, funcionarios, unidades, salas, refreshFuncionarios, refreshDisponibilidades } = useData();
+  const { disponibilidades, addDisponibilidade, updateDisponibilidade, deleteDisponibilidade, funcionarios, unidades, salas, refreshFuncionarios, refreshDisponibilidades, quotasExternas } = useData();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editGroupIds, setEditGroupIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
