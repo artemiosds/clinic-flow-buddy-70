@@ -341,7 +341,7 @@ const MonitoramentoSistema = () => {
                 <CardDescription>Monitoramento de armazenamento de arquivos.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {stats?.storageStats?.map((bucket: any) => (
+                {stats?.storageStats ? stats.storageStats.map((bucket: any) => (
                   <div key={bucket.id} className="p-4 border border-border/50 rounded-lg flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded bg-muted flex items-center justify-center">
@@ -354,9 +354,10 @@ const MonitoramentoSistema = () => {
                     </div>
                     <Badge variant="outline">Ativo</Badge>
                   </div>
-                ))}
-                {!stats?.storageStats && (
-                  <p className="text-center text-muted-foreground py-10">Coletando dados do storage...</p>
+                )) : (
+                  <p className="text-center text-muted-foreground py-10">
+                    {loading ? 'Coletando dados do storage...' : 'Nenhum bucket encontrado'}
+                  </p>
                 )}
               </CardContent>
             </Card>
