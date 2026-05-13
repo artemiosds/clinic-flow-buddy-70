@@ -96,6 +96,7 @@ const menuGroups: MenuGroup[] = [
       { to: '/painel/permissoes', label: 'Permissões', icon: Lock, modulo: 'permissoes', roles_master_only: true },
       { to: '/painel/configuracoes-avancadas', label: 'Config. Avançadas', icon: Settings, modulo: 'configuracoes', roles_master_only: true },
       { to: '/painel/admin-credentials', label: 'Credenciais Supabase', icon: ShieldCheck, modulo: 'sistema', roles_master_only: true },
+      { to: '/painel/monitoramento', label: 'Monitoramento do Sistema', icon: Activity, modulo: 'sistema', roles_master_only: true },
     ]
   }
 ];
