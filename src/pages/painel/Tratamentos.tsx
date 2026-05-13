@@ -1649,38 +1649,11 @@ const Tratamentos: React.FC = () => {
       toast.success("Alta registrada com sucesso. Agendamentos futuros vinculados a este tratamento foram removidos.");
       setDischargeOpen(false);
       setDischargeForm({ reason: "", final_notes: "" });
-      loadData(true);
-    } catch (err) {
-      console.error("Error discharging patient:", err);
-      toast.error("Erro ao registrar alta.");
-    } finally {
-      setDischargeLoading(false);
-    }
-  };
-        acao: "alta_paciente",
-        entidade: "treatment_cycle",
-        entidadeId: selectedCycle.id,
-        modulo: "tratamentos",
-        user,
-        detalhes: {
-          paciente: selectedCycle.patient_id,
-          motivo: dischargeForm.reason,
-          agendamentos_cancelados: cancelledCount,
-        },
-      });
-
-      toast.success(
-        cancelledCount > 0
-          ? `Alta realizada. ${cancelledCount} agendamento(s) deste profissional cancelado(s).`
-          : "Alta registrada com sucesso!"
-      );
-      setDischargeOpen(false);
-      setDischargeForm({ reason: "", final_notes: "" });
       setDischargeFutureCount(0);
       loadData(true);
     } catch (err: any) {
-      console.error(err);
-      toast.error("Erro ao registrar alta: " + err.message);
+      console.error("Error discharging patient:", err);
+      toast.error("Erro ao registrar alta: " + (err.message || "Erro desconhecido"));
     } finally {
       setDischargeLoading(false);
     }
