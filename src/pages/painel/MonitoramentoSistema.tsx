@@ -414,7 +414,7 @@ const MonitoramentoSistema = () => {
 
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="destructive" className="w-full">Limpar Logs (> 90 dias)</Button>
+                      <Button variant="destructive" className="w-full">Limpar Logs ({'>'} 90 dias)</Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
