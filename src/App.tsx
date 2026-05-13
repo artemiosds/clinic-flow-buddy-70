@@ -234,6 +234,7 @@ const App = () => (
                     <Route path="bpa-producao" element={<ModuleRoute modulo="bpa_producao"><BpaProducao /></ModuleRoute>} />
                     <Route path="admin-credentials" element={<ModuleRoute modulo="sistema" masterOnly><AdminCredentials /></ModuleRoute>} />
                     <Route path="arquivo-digital" element={<ModuleRoute modulo="arquivo_digital"><ArquivoDigital /></ModuleRoute>} />
+                    <Route path="monitoramento" element={<ModuleRoute modulo="sistema" masterOnly><MonitoramentoSistema /></ModuleRoute>} />
                   </Route>
 
                   <Route path="*" element={<NotFound />} />
