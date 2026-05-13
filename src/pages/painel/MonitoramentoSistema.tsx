@@ -232,7 +232,7 @@ const MonitoramentoSistema = () => {
             </div>
             <div>
               <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Storage</p>
-              <p className="text-sm font-bold">{stats?.storageStats ? `${stats.storageStats.length} Buckets` : (loading ? 'Carregando...' : 'Nenhum')}</p>
+              <p className="text-sm font-bold">{stats?.storage?.stats ? `${stats.storage.stats.length} Buckets` : (loading ? 'Carregando...' : 'Nenhum')}</p>
             </div>
           </CardContent>
         </Card>
