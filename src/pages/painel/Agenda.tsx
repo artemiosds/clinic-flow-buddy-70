@@ -54,6 +54,7 @@ import {
   Building2,
   Phone,
   RefreshCw,
+  Info,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import DetalheDrawer, { Secao, Campo, StatusBadge, calcularIdade, formatarData } from "@/components/DetalheDrawer";
