@@ -155,6 +155,69 @@ export type Database = {
         }
         Relationships: []
       }
+      agendamentos_externos: {
+        Row: {
+          atualizado_em: string | null
+          cota_id: string | null
+          criado_em: string | null
+          data: string
+          hora: string
+          id: string
+          observacoes: string | null
+          paciente_id: string
+          profissional_destino_id: string
+          profissional_externo_id: string
+          status: string | null
+          turno: string | null
+          unidade_id: string
+        }
+        Insert: {
+          atualizado_em?: string | null
+          cota_id?: string | null
+          criado_em?: string | null
+          data: string
+          hora: string
+          id?: string
+          observacoes?: string | null
+          paciente_id: string
+          profissional_destino_id: string
+          profissional_externo_id: string
+          status?: string | null
+          turno?: string | null
+          unidade_id: string
+        }
+        Update: {
+          atualizado_em?: string | null
+          cota_id?: string | null
+          criado_em?: string | null
+          data?: string
+          hora?: string
+          id?: string
+          observacoes?: string | null
+          paciente_id?: string
+          profissional_destino_id?: string
+          profissional_externo_id?: string
+          status?: string | null
+          turno?: string | null
+          unidade_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agendamentos_externos_cota_id_fkey"
+            columns: ["cota_id"]
+            isOneToOne: false
+            referencedRelation: "quotas_externas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agendamentos_externos_profissional_externo_id_fkey"
+            columns: ["profissional_externo_id"]
+            isOneToOne: false
+            referencedRelation: "profissionais_externos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assinatura_eletronica_config: {
         Row: {
           ambiente: string
@@ -2575,33 +2638,57 @@ export type Database = {
           auth_user_id: string | null
           criado_em: string
           criado_por: string
+          documento_registro: string | null
           email: string
           id: string
           nome: string
+          observacoes: string | null
+          permissoes: Json | null
+          responsavel: string | null
+          telefone: string | null
+          token_acesso: string | null
           unidade_id: string
+          unidade_origem: string | null
           updated_at: string
+          validade_acesso: string | null
         }
         Insert: {
           ativo?: boolean
           auth_user_id?: string | null
           criado_em?: string
           criado_por?: string
+          documento_registro?: string | null
           email: string
           id?: string
           nome: string
+          observacoes?: string | null
+          permissoes?: Json | null
+          responsavel?: string | null
+          telefone?: string | null
+          token_acesso?: string | null
           unidade_id?: string
+          unidade_origem?: string | null
           updated_at?: string
+          validade_acesso?: string | null
         }
         Update: {
           ativo?: boolean
           auth_user_id?: string | null
           criado_em?: string
           criado_por?: string
+          documento_registro?: string | null
           email?: string
           id?: string
           nome?: string
+          observacoes?: string | null
+          permissoes?: Json | null
+          responsavel?: string | null
+          telefone?: string | null
+          token_acesso?: string | null
           unidade_id?: string
+          unidade_origem?: string | null
           updated_at?: string
+          validade_acesso?: string | null
         }
         Relationships: []
       }
@@ -3120,36 +3207,57 @@ export type Database = {
       }
       quotas_externas: {
         Row: {
+          ativo: boolean | null
           criado_em: string
+          dia_semana: number | null
+          duracao_padrao: number | null
+          especialidade: string | null
+          hora_fim: string | null
+          hora_inicio: string | null
           id: string
           periodo_fim: string
           periodo_inicio: string
           profissional_externo_id: string
           profissional_interno_id: string
+          turno: string | null
           unidade_id: string
           updated_at: string
           vagas_total: number
           vagas_usadas: number
         }
         Insert: {
+          ativo?: boolean | null
           criado_em?: string
+          dia_semana?: number | null
+          duracao_padrao?: number | null
+          especialidade?: string | null
+          hora_fim?: string | null
+          hora_inicio?: string | null
           id?: string
           periodo_fim?: string
           periodo_inicio?: string
           profissional_externo_id: string
           profissional_interno_id: string
+          turno?: string | null
           unidade_id?: string
           updated_at?: string
           vagas_total?: number
           vagas_usadas?: number
         }
         Update: {
+          ativo?: boolean | null
           criado_em?: string
+          dia_semana?: number | null
+          duracao_padrao?: number | null
+          especialidade?: string | null
+          hora_fim?: string | null
+          hora_inicio?: string | null
           id?: string
           periodo_fim?: string
           periodo_inicio?: string
           profissional_externo_id?: string
           profissional_interno_id?: string
+          turno?: string | null
           unidade_id?: string
           updated_at?: string
           vagas_total?: number

@@ -21,8 +21,24 @@ interface ExternalProf {
   auth_user_id: string | null;
   nome: string;
   email: string;
+  telefone?: string;
+  documento_registro?: string;
+  unidade_origem?: string;
+  responsavel?: string;
+  observacoes?: string;
   unidade_id: string;
   ativo: boolean;
+  validade_acesso?: string;
+  permissoes?: {
+    can_schedule: boolean;
+    can_view_own: boolean;
+    can_cancel: boolean;
+    can_edit_patient: boolean;
+    can_create_patient: boolean;
+    can_select_patient: boolean;
+    can_attach_docs: boolean;
+    can_use_online_agenda: boolean;
+  };
   criado_em: string;
 }
 
@@ -30,7 +46,12 @@ interface QuotaRow {
   id: string;
   profissional_externo_id: string;
   profissional_interno_id: string;
+  especialidade?: string;
   unidade_id: string;
+  dia_semana?: number;
+  turno?: string;
+  hora_inicio?: string;
+  hora_fim?: string;
   vagas_total: number;
   vagas_usadas: number;
   periodo_inicio: string;
@@ -51,7 +72,28 @@ const ProfissionaisExternos: React.FC = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [showSenha, setShowSenha] = useState(false);
-  const [form, setForm] = useState({ nome: "", email: "", senha: "", unidade_id: "" });
+  const [form, setForm] = useState({ 
+    nome: "", 
+    email: "", 
+    senha: "", 
+    unidade_id: "",
+    telefone: "",
+    documento_registro: "",
+    unidade_origem: "",
+    responsavel: "",
+    observacoes: "",
+    validade_acesso: "",
+    permissoes: {
+      can_schedule: true,
+      can_view_own: true,
+      can_cancel: true,
+      can_edit_patient: true,
+      can_create_patient: true,
+      can_select_patient: true,
+      can_attach_docs: false,
+      can_use_online_agenda: false
+    }
+  });
 
   // Quotas
   const [quotas, setQuotas] = useState<QuotaRow[]>([]);
@@ -59,6 +101,15 @@ const ProfissionaisExternos: React.FC = () => {
   const [selectedExternoId, setSelectedExternoId] = useState<string>("");
   const [selectedProfIds, setSelectedProfIds] = useState<string[]>([]);
   const [vagasPorProf, setVagasPorProf] = useState<Record<string, number>>({});
+  const [bodyQuota, setBodyQuota] = useState({
+    unidade_id: "",
+    especialidade: "",
+    turno: "Integral",
+    hora_inicio: "",
+    hora_fim: "",
+    periodo_inicio: new Date().toISOString().slice(0, 10),
+    periodo_fim: `${new Date().getFullYear()}-12-31`,
+  });
   const [savingQuota, setSavingQuota] = useState(false);
 
   const loadExternos = useCallback(async () => {
@@ -78,13 +129,35 @@ const ProfissionaisExternos: React.FC = () => {
 
   const openNew = () => {
     setEditId(null);
-    setForm({ nome: "", email: "", senha: "", unidade_id: "" });
+    setForm({ 
+      nome: "", email: "", senha: "", unidade_id: "",
+      telefone: "", documento_registro: "", unidade_origem: "",
+      responsavel: "", observacoes: "", validade_acesso: "",
+      permissoes: {
+        can_schedule: true, can_view_own: true, can_cancel: true,
+        can_edit_patient: true, can_create_patient: true,
+        can_select_patient: true, can_attach_docs: false,
+        can_use_online_agenda: false
+      }
+    });
     setDialogOpen(true);
   };
 
   const openEdit = (e: ExternalProf) => {
     setEditId(e.id);
-    setForm({ nome: e.nome, email: e.email, senha: "", unidade_id: e.unidade_id });
+    setForm({ 
+      nome: e.nome, email: e.email, senha: "", unidade_id: e.unidade_id,
+      telefone: e.telefone || "", documento_registro: e.documento_registro || "",
+      unidade_origem: e.unidade_origem || "", responsavel: e.responsavel || "",
+      observacoes: e.observacoes || "", 
+      validade_acesso: e.validade_acesso ? e.validade_acesso.slice(0, 10) : "",
+      permissoes: e.permissoes || {
+        can_schedule: true, can_view_own: true, can_cancel: true,
+        can_edit_patient: true, can_create_patient: true,
+        can_select_patient: true, can_attach_docs: false,
+        can_use_online_agenda: false
+      }
+    });
     setDialogOpen(true);
   };
 
@@ -93,7 +166,12 @@ const ProfissionaisExternos: React.FC = () => {
     setSaving(true);
     try {
       if (editId) {
-        const body: any = { action: "update", id: editId, nome: form.nome, email: form.email, unidade_id: form.unidade_id };
+        const body: any = { 
+          action: "update", 
+          id: editId, 
+          ...form 
+        };
+        delete body.senha;
         if (form.senha) body.senha = form.senha;
         const { data, error } = await supabase.functions.invoke("manage-external", { body });
         if (error || data?.error) { toast.error(data?.error || "Erro."); setSaving(false); return; }
@@ -101,7 +179,11 @@ const ProfissionaisExternos: React.FC = () => {
       } else {
         if (!form.senha) { toast.error("Senha obrigatória para novo cadastro."); setSaving(false); return; }
         const { data, error } = await supabase.functions.invoke("manage-external", {
-          body: { action: "create", nome: form.nome, email: form.email, senha: form.senha, unidade_id: form.unidade_id, criado_por: user?.id || "" },
+          body: { 
+            action: "create", 
+            ...form,
+            criado_por: user?.id || "" 
+          },
         });
         if (error || data?.error) { toast.error(data?.error || "Erro."); setSaving(false); return; }
         toast.success("Profissional externo cadastrado!");
@@ -162,17 +244,18 @@ const ProfissionaisExternos: React.FC = () => {
     }
     setSavingQuota(true);
     try {
-      const today = new Date().toISOString().slice(0, 10);
-      const endOfYear = `${new Date().getFullYear()}-12-31`;
-
       const inserts = selectedProfIds.map(profId => ({
         profissional_externo_id: selectedExternoId,
         profissional_interno_id: profId,
-        unidade_id: "",
+        unidade_id: bodyQuota.unidade_id || "",
+        especialidade: bodyQuota.especialidade || "",
         vagas_total: vagasPorProf[profId] || 5,
         vagas_usadas: 0,
-        periodo_inicio: today,
-        periodo_fim: endOfYear,
+        turno: bodyQuota.turno || "Integral",
+        hora_inicio: bodyQuota.hora_inicio || null,
+        hora_fim: bodyQuota.hora_fim || null,
+        periodo_inicio: bodyQuota.periodo_inicio || new Date().toISOString().slice(0, 10),
+        periodo_fim: bodyQuota.periodo_fim || `${new Date().getFullYear()}-12-31`,
       }));
 
       const { error } = await supabase.from("quotas_externas").insert(inserts);
@@ -278,28 +361,31 @@ const ProfissionaisExternos: React.FC = () => {
                   {/* Quotas for this external */}
                   {extQuotas.length > 0 && (
                     <div className="mt-3 pt-3 border-t">
-                      <p className="text-xs font-semibold text-muted-foreground mb-2">QUOTAS</p>
-                      <div className="space-y-1">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs font-semibold text-muted-foreground">COTAS E TURNOS</p>
+                        <Badge variant="outline" className="text-[10px]">{extQuotas.length} vinculada(s)</Badge>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {extQuotas.map(q => {
                           const prof = profissionaisInternos.find((f: any) => f.id === q.profissional_interno_id);
                           const restantes = q.vagas_total - q.vagas_usadas;
                           return (
-                            <div key={q.id} className="flex items-center justify-between p-2 rounded bg-accent/30 text-sm">
-                              <div>
-                                <span className="font-medium">{prof?.nome || "—"}</span>
-                                <span className="text-muted-foreground ml-2">
-                                  {(prof as any)?.profissao || ""}
-                                </span>
+                            <div key={q.id} className="flex flex-col p-2 rounded bg-accent/30 text-sm border border-border/50">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="font-medium truncate max-w-[150px]">{prof?.nome || "—"}</span>
+                                <div className="flex items-center gap-1">
+                                  {canManage && (
+                                    <Button size="icon" variant="ghost" className="h-5 w-5 hover:text-destructive" onClick={() => handleDeleteQuota(q.id)}>
+                                      <Trash2 className="w-3 h-3" />
+                                    </Button>
+                                  )}
+                                </div>
                               </div>
-                              <div className="flex items-center gap-2">
-                                <Badge variant={restantes > 0 ? "default" : "destructive"}>
-                                  {restantes}/{q.vagas_total} vagas
+                              <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                                <span>{q.turno || 'Integral'} {q.hora_inicio ? `(${q.hora_inicio.slice(0, 5)}-${q.hora_fim?.slice(0, 5)})` : ''}</span>
+                                <Badge variant={restantes > 0 ? "default" : "destructive"} className="h-4 text-[9px] px-1">
+                                  {restantes}/{q.vagas_total}
                                 </Badge>
-                                {canManage && (
-                                  <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => handleDeleteQuota(q.id)}>
-                                    <Trash2 className="w-3 h-3" />
-                                  </Button>
-                                )}
                               </div>
                             </div>
                           );
@@ -316,31 +402,67 @@ const ProfissionaisExternos: React.FC = () => {
 
       {/* Create/Edit External Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editId ? "Editar" : "Cadastrar"} Profissional Externo</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <div><Label>Nome *</Label><Input value={form.nome} onChange={e => setForm(p => ({ ...p, nome: e.target.value }))} /></div>
-            <div><Label>E-mail *</Label><Input type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} /></div>
-            <div>
-              <Label>{editId ? "Nova Senha (opcional)" : "Senha *"}</Label>
-              <div className="relative">
-                <Input type={showSenha ? "text" : "password"} value={form.senha} onChange={e => setForm(p => ({ ...p, senha: e.target.value }))} placeholder="Min. 6 caracteres" className="pr-10" />
-                <button type="button" onClick={() => setShowSenha(!showSenha)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                  {showSenha ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+            <div className="space-y-3">
+              <h3 className="font-semibold text-sm border-b pb-1">Dados Básicos</h3>
+              <div><Label>Nome *</Label><Input value={form.nome} onChange={e => setForm(p => ({ ...p, nome: e.target.value }))} /></div>
+              <div><Label>E-mail *</Label><Input type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} /></div>
+              <div><Label>Telefone</Label><Input value={form.telefone} onChange={e => setForm(p => ({ ...p, telefone: e.target.value }))} /></div>
+              <div><Label>Documento/Registro</Label><Input value={form.documento_registro} onChange={e => setForm(p => ({ ...p, documento_registro: e.target.value }))} /></div>
+              <div><Label>Unidade de Origem</Label><Input value={form.unidade_origem} onChange={e => setForm(p => ({ ...p, unidade_origem: e.target.value }))} /></div>
+              <div><Label>Responsável</Label><Input value={form.responsavel} onChange={e => setForm(p => ({ ...p, responsavel: e.target.value }))} /></div>
+              <div><Label>Observações</Label><Input value={form.observacoes} onChange={e => setForm(p => ({ ...p, observacoes: e.target.value }))} /></div>
+            </div>
+
+            <div className="space-y-3">
+              <h3 className="font-semibold text-sm border-b pb-1">Acesso e Permissões</h3>
+              <div>
+                <Label>{editId ? "Nova Senha (opcional)" : "Senha *"}</Label>
+                <div className="relative">
+                  <Input type={showSenha ? "text" : "password"} value={form.senha} onChange={e => setForm(p => ({ ...p, senha: e.target.value }))} placeholder="Min. 6 caracteres" className="pr-10" />
+                  <button type="button" onClick={() => setShowSenha(!showSenha)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                    {showSenha ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <Label>Unidade Destino</Label>
+                <Select value={form.unidade_id} onValueChange={v => setForm(p => ({ ...p, unidade_id: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>{unidadesVisiveis.map((u: any) => <SelectItem key={u.id} value={u.id}>{u.nome}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div><Label>Validade do Acesso</Label><Input type="date" value={form.validade_acesso} onChange={e => setForm(p => ({ ...p, validade_acesso: e.target.value }))} /></div>
+              
+              <div className="space-y-2 pt-2">
+                <p className="text-xs font-semibold text-muted-foreground">PERMISSÕES</p>
+                <div className="grid grid-cols-1 gap-2">
+                  {[
+                    { id: 'can_schedule', label: 'Pode agendar?' },
+                    { id: 'can_view_own', label: 'Ver próprios agendamentos?' },
+                    { id: 'can_cancel', label: 'Pode cancelar?' },
+                    { id: 'can_edit_patient', label: 'Editar paciente?' },
+                    { id: 'can_create_patient', label: 'Cadastrar paciente?' },
+                    { id: 'can_select_patient', label: 'Selecionar paciente?' },
+                  ].map(perm => (
+                    <div key={perm.id} className="flex items-center space-x-2">
+                      <Checkbox 
+                        id={perm.id} 
+                        checked={(form.permissoes as any)[perm.id]} 
+                        onCheckedChange={(v) => setForm(p => ({ ...p, permissoes: { ...p.permissoes, [perm.id]: !!v } }))}
+                      />
+                      <Label htmlFor={perm.id} className="text-sm cursor-pointer">{perm.label}</Label>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-            <div>
-              <Label>Unidade</Label>
-              <Select value={form.unidade_id} onValueChange={v => setForm(p => ({ ...p, unidade_id: v }))}>
-                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                <SelectContent>{unidadesVisiveis.map((u: any) => <SelectItem key={u.id} value={u.id}>{u.nome}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-            <Button onClick={handleSave} disabled={saving} className="w-full gradient-primary text-primary-foreground">
-              {saving && <Loader2 className="w-4 h-4 animate-spin mr-2" />} Salvar
-            </Button>
           </div>
+          <Button onClick={handleSave} disabled={saving} className="w-full gradient-primary text-primary-foreground">
+            {saving && <Loader2 className="w-4 h-4 animate-spin mr-2" />} Salvar
+          </Button>
         </DialogContent>
       </Dialog>
 
@@ -349,8 +471,50 @@ const ProfissionaisExternos: React.FC = () => {
         <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Adicionar Quotas</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Selecione os profissionais internos e defina a quantidade de vagas para cada um.
+            <div className="grid grid-cols-2 gap-3 pb-3 border-b">
+              <div className="col-span-2">
+                <Label className="text-xs">Unidade Destino</Label>
+                <Select value={bodyQuota.unidade_id} onValueChange={v => setBodyQuota(p => ({ ...p, unidade_id: v }))}>
+                  <SelectTrigger className="h-8"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>{unidadesVisiveis.map((u: any) => <SelectItem key={u.id} value={u.id}>{u.nome}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs">Turno</Label>
+                <Select value={bodyQuota.turno} onValueChange={v => setBodyQuota(p => ({ ...p, turno: v }))}>
+                  <SelectTrigger className="h-8"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Manhã">Manhã</SelectItem>
+                    <SelectItem value="Tarde">Tarde</SelectItem>
+                    <SelectItem value="Noite">Noite</SelectItem>
+                    <SelectItem value="Integral">Integral</SelectItem>
+                    <SelectItem value="Personalizado">Personalizado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs">Especialidade</Label>
+                <Input className="h-8" value={bodyQuota.especialidade} onChange={e => setBodyQuota(p => ({ ...p, especialidade: e.target.value }))} />
+              </div>
+              <div>
+                <Label className="text-xs">Hora Início</Label>
+                <Input type="time" className="h-8" value={bodyQuota.hora_inicio} onChange={e => setBodyQuota(p => ({ ...p, hora_inicio: e.target.value }))} />
+              </div>
+              <div>
+                <Label className="text-xs">Hora Fim</Label>
+                <Input type="time" className="h-8" value={bodyQuota.hora_fim} onChange={e => setBodyQuota(p => ({ ...p, hora_fim: e.target.value }))} />
+              </div>
+              <div>
+                <Label className="text-xs">Início</Label>
+                <Input type="date" className="h-8" value={bodyQuota.periodo_inicio} onChange={e => setBodyQuota(p => ({ ...p, periodo_inicio: e.target.value }))} />
+              </div>
+              <div>
+                <Label className="text-xs">Fim</Label>
+                <Input type="date" className="h-8" value={bodyQuota.periodo_fim} onChange={e => setBodyQuota(p => ({ ...p, periodo_fim: e.target.value }))} />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Selecione os profissionais internos que receberão estas cotas:
             </p>
 
             {availableForQuota.length === 0 ? (

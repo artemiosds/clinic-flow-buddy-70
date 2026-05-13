@@ -12,16 +12,28 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { LogOut, Search, Plus, CalendarDays, Clock, User, Loader2, CheckCircle, X, Pencil, Building2, AlertCircle, CalendarCheck, BarChart3, UserCheck } from "lucide-react";
+import { LogOut, Search, Plus, CalendarDays, Clock, User, Loader2, CheckCircle, X, Pencil, Building2, AlertCircle, CalendarCheck, BarChart3, UserCheck, MapPin, Phone, FileHeart } from "lucide-react";
 import { format } from "date-fns";
 import { CalendarioDisponibilidade, type DayInfo } from "@/components/CalendarioDisponibilidade";
 import { todayLocalStr } from "@/lib/utils";
+import CadastroPacienteForm, { PacienteFormData, emptyPacienteForm } from "@/components/CadastroPacienteForm";
+import { savePacienteCadastro } from "@/lib/pacienteShared";
 
 interface ExternalUser {
   id: string;
   nome: string;
   email: string;
   unidade_id: string;
+  permissoes?: {
+    can_schedule: boolean;
+    can_view_own: boolean;
+    can_cancel: boolean;
+    can_edit_patient: boolean;
+    can_create_patient: boolean;
+    can_select_patient: boolean;
+    can_attach_docs: boolean;
+    can_use_online_agenda: boolean;
+  };
 }
 
 interface Quota {
@@ -33,6 +45,9 @@ interface Quota {
   vagas_usadas: number;
   periodo_inicio: string;
   periodo_fim: string;
+  turno?: string;
+  hora_inicio?: string;
+  hora_fim?: string;
 }
 
 interface Professional {
@@ -66,12 +81,10 @@ const AgendamentoExterno: React.FC = () => {
   const [patientResults, setPatientResults] = useState<any[]>([]);
   const [selectedPatient, setSelectedPatient] = useState<any>(null);
   const [patientDialogOpen, setPatientDialogOpen] = useState(false);
-  const [patientForm, setPatientForm] = useState({
-    nome: "", cpf: "", cns: "", data_nascimento: "", telefone: "", email: "", endereco: "",
-    nome_mae: "", municipio: "", observacoes: "",
-  });
+  const [pForm, setPForm] = useState<PacienteFormData>(emptyPacienteForm);
   const [isEditingPatient, setIsEditingPatient] = useState(false);
   const [savingPatient, setSavingPatient] = useState(false);
+  const [pErrors, setPErrors] = useState<Record<string, string>>({});
 
   // Scheduling
   const [scheduling, setScheduling] = useState(false);
@@ -245,60 +258,58 @@ const AgendamentoExterno: React.FC = () => {
   };
 
   const openNewPatient = () => {
-    setPatientForm({ nome: "", cpf: "", cns: "", data_nascimento: "", telefone: "", email: "", endereco: "", nome_mae: "", municipio: "", observacoes: "" });
+    if (extUser?.permissoes?.can_create_patient === false) {
+      toast.error("Você não tem permissão para cadastrar novos pacientes.");
+      return;
+    }
+    setPForm(emptyPacienteForm);
     setIsEditingPatient(false);
+    setPErrors({});
     setPatientDialogOpen(true);
   };
 
   const openEditPatient = (p: any) => {
-    setPatientForm({
-      nome: p.nome || "", cpf: p.cpf || "", cns: p.cns || "", data_nascimento: p.data_nascimento || "",
-      telefone: p.telefone || "", email: p.email || "", endereco: p.endereco || "",
-      nome_mae: p.nome_mae || "", municipio: p.municipio || "", observacoes: p.observacoes || "",
-    });
+    if (extUser?.permissoes?.can_edit_patient === false) {
+      toast.error("Você não tem permissão para editar dados de pacientes.");
+      return;
+    }
     setIsEditingPatient(true);
+    setPErrors({});
+    setPForm({
+      ...emptyPacienteForm,
+      nome: p.nome || "",
+      cpf: p.cpf || "",
+      cns: p.cns || "",
+      dataNascimento: p.data_nascimento || "",
+      telefone: p.telefone || "",
+      email: p.email || "",
+      endereco: p.endereco || "",
+      nomeMae: p.nome_mae || "",
+      municipio: p.municipio || "Oriximiná",
+      descricaoClinica: p.observacoes || "",
+      sexo: p.sexo || "I",
+      naturalidade: p.naturalidade || "",
+      nacionalidade: p.nacionalidade || "Brasileira",
+      raca_cor: p.raca_cor || "nao_declarado",
+      cep: p.cep || "",
+      tipo_logradouro: p.tipo_logradouro || "",
+      numero: p.numero || "",
+      complemento: p.complemento || "",
+      bairro: p.bairro || "",
+      uf: p.uf || "PA",
+      telefone_secundario: p.telefone_secundario || "",
+      customData: p.custom_data || {},
+    });
     setPatientDialogOpen(true);
   };
 
   const handleSavePatient = async () => {
-    if (!patientForm.nome.trim()) { toast.error("Nome é obrigatório."); return; }
+    if (!pForm.nome.trim()) { toast.error("Nome é obrigatório."); return; }
     setSavingPatient(true);
     try {
-      if (isEditingPatient && selectedPatient) {
-        const { error } = await supabase.from("pacientes").update({
-          nome: patientForm.nome, 
-          cpf: patientForm.cpf, 
-          cns: patientForm.cns,
-          data_nascimento: patientForm.data_nascimento || "", 
-          telefone: patientForm.telefone,
-          email: patientForm.email || "", 
-          endereco: patientForm.endereco, 
-          nome_mae: patientForm.nome_mae,
-          municipio: patientForm.municipio, 
-          observacoes: patientForm.observacoes,
-        }).eq("id", selectedPatient.id);
-        if (error) throw error;
-        setSelectedPatient({ ...selectedPatient, ...patientForm });
-        toast.success("Paciente atualizado!");
-      } else {
-        const id = `pac_${Date.now()}`;
-        const { data, error } = await supabase.from("pacientes").insert({
-          id, 
-          nome: patientForm.nome, 
-          cpf: patientForm.cpf, 
-          cns: patientForm.cns,
-          data_nascimento: patientForm.data_nascimento || "", 
-          telefone: patientForm.telefone,
-          email: patientForm.email || "", 
-          endereco: patientForm.endereco, 
-          nome_mae: patientForm.nome_mae,
-          municipio: patientForm.municipio, 
-          observacoes: patientForm.observacoes,
-        }).select().single();
-        if (error) throw error;
-        setSelectedPatient(data);
-        toast.success("Paciente cadastrado!");
-      }
+      const data = await savePacienteCadastro(pForm, isEditingPatient ? selectedPatient.id : undefined);
+      setSelectedPatient(data);
+      toast.success(isEditingPatient ? "Paciente atualizado!" : "Paciente cadastrado!");
       setPatientDialogOpen(false);
     } catch (err: any) {
       toast.error(err.message || "Erro ao salvar paciente.");
@@ -338,7 +349,8 @@ const AgendamentoExterno: React.FC = () => {
         origem: "externo",
         criado_por: extUser?.id || "",
         agendado_por_externo: extUser?.id || "",
-        observacoes: `Agendado por ${extUser?.nome || "externo"}`,
+        turno: quota.turno || null,
+        observacoes: `Agendado por ${extUser?.nome || "externo"}${quota.turno ? ` (Turno: ${quota.turno})` : ""}`,
       });
       if (agErr) throw agErr;
 
@@ -747,28 +759,21 @@ const AgendamentoExterno: React.FC = () => {
 
       {/* Patient Dialog */}
       <Dialog open={patientDialogOpen} onOpenChange={setPatientDialogOpen}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{isEditingPatient ? "Editar" : "Cadastrar"} Paciente</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3">
-            <div><Label>Nome Completo *</Label><Input value={patientForm.nome} onChange={e => setPatientForm(p => ({ ...p, nome: e.target.value }))} /></div>
-            <div className="grid grid-cols-2 gap-3">
-              <div><Label>CPF</Label><Input value={patientForm.cpf} onChange={e => setPatientForm(p => ({ ...p, cpf: e.target.value }))} placeholder="000.000.000-00" /></div>
-              <div><Label>CNS</Label><Input value={patientForm.cns} onChange={e => setPatientForm(p => ({ ...p, cns: e.target.value }))} /></div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div><Label>Data Nascimento</Label><Input type="date" value={patientForm.data_nascimento} onChange={e => setPatientForm(p => ({ ...p, data_nascimento: e.target.value }))} /></div>
-              <div><Label>Telefone</Label><Input value={patientForm.telefone} onChange={e => setPatientForm(p => ({ ...p, telefone: e.target.value }))} /></div>
-            </div>
-            <div><Label>E-mail</Label><Input type="email" value={patientForm.email} onChange={e => setPatientForm(p => ({ ...p, email: e.target.value }))} /></div>
-            <div><Label>Endereço</Label><Input value={patientForm.endereco} onChange={e => setPatientForm(p => ({ ...p, endereco: e.target.value }))} /></div>
-            <div className="grid grid-cols-2 gap-3">
-              <div><Label>Nome da Mãe</Label><Input value={patientForm.nome_mae} onChange={e => setPatientForm(p => ({ ...p, nome_mae: e.target.value }))} /></div>
-              <div><Label>Município</Label><Input value={patientForm.municipio} onChange={e => setPatientForm(p => ({ ...p, municipio: e.target.value }))} /></div>
-            </div>
-            <div><Label>Observações</Label><Input value={patientForm.observacoes} onChange={e => setPatientForm(p => ({ ...p, observacoes: e.target.value }))} /></div>
-            <Button onClick={handleSavePatient} disabled={savingPatient} className="w-full bg-primary text-primary-foreground">
+          <CadastroPacienteForm
+            form={pForm}
+            onChange={setPForm}
+            onSave={handleSavePatient}
+            saving={savingPatient}
+            isEdit={isEditingPatient}
+            errors={pErrors}
+          />
+          <div className="flex justify-end gap-2 mt-4 pt-4 border-t">
+            <Button variant="outline" onClick={() => setPatientDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={handleSavePatient} disabled={savingPatient} className="gradient-primary text-white">
               {savingPatient && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
               {isEditingPatient ? "Salvar Alterações" : "Cadastrar Paciente"}
             </Button>
