@@ -888,6 +888,79 @@ const ProfissionaisExternos: React.FC = () => {
           </Tabs>
         </DialogContent>
       </Dialog>
+      {/* Edit Quota Modal */}
+      <Dialog open={quotaEditModalOpen} onOpenChange={setQuotaEditModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar Cota</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="col-span-2">
+                <Label>Vagas Totais</Label>
+                <Input 
+                  type="number" 
+                  min={quotaEditForm.vagas_usadas} 
+                  value={quotaEditForm.vagas_total} 
+                  onChange={e => setQuotaEditForm(p => ({ ...p, vagas_total: Number(e.target.value) }))} 
+                />
+                <p className="text-[10px] text-muted-foreground mt-1">Usadas: {quotaEditForm.vagas_usadas} agendamentos</p>
+              </div>
+              
+              <div>
+                <Label>Turno</Label>
+                <Select value={quotaEditForm.turno} onValueChange={v => setQuotaEditForm(p => ({ ...p, turno: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Manhã">Manhã</SelectItem>
+                    <SelectItem value="Tarde">Tarde</SelectItem>
+                    <SelectItem value="Noite">Noite</SelectItem>
+                    <SelectItem value="Integral">Integral</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label>Especialidade</Label>
+                <Input value={quotaEditForm.especialidade} onChange={e => setQuotaEditForm(p => ({ ...p, especialidade: e.target.value }))} />
+              </div>
+
+              <div>
+                <Label>Hora Início</Label>
+                <Input type="time" value={quotaEditForm.hora_inicio} onChange={e => setQuotaEditForm(p => ({ ...p, hora_inicio: e.target.value }))} />
+              </div>
+              <div>
+                <Label>Hora Fim</Label>
+                <Input type="time" value={quotaEditForm.hora_fim} onChange={e => setQuotaEditForm(p => ({ ...p, hora_fim: e.target.value }))} />
+              </div>
+
+              <div>
+                <Label>Início Vigência</Label>
+                <Input type="date" value={quotaEditForm.periodo_inicio} onChange={e => setQuotaEditForm(p => ({ ...p, periodo_inicio: e.target.value }))} />
+              </div>
+              <div>
+                <Label>Fim Vigência</Label>
+                <Input type="date" value={quotaEditForm.periodo_fim} onChange={e => setQuotaEditForm(p => ({ ...p, periodo_fim: e.target.value }))} />
+              </div>
+              
+              <div className="col-span-2 flex items-center space-x-2 pt-2">
+                <Checkbox 
+                  id="quota-ativo" 
+                  checked={quotaEditForm.ativo} 
+                  onCheckedChange={v => setQuotaEditForm(p => ({ ...p, ativo: !!v }))} 
+                />
+                <Label htmlFor="quota-ativo" className="cursor-pointer">Cota Ativa</Label>
+              </div>
+            </div>
+            
+            <Button onClick={handleSaveQuotaEdit} disabled={savingQuota} className="w-full gradient-primary">
+              {savingQuota && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+              Salvar Alterações
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 };
