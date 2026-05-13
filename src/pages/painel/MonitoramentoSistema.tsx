@@ -120,19 +120,19 @@ const MonitoramentoSistema = () => {
         } : {}
       });
 
-      // Se houver erro retornado pela função (mesmo que venha no data.error se não disparar o catch do invoke)
       if (error) {
-        let errorMsg = 'Erro na Edge Function';
+        console.error('Edge Function Cleanup Error:', error);
+        let errorMsg = 'Erro na Edge Function system-cleanup-execute';
+        
         try {
-          // Tentar extrair a mensagem real se o erro for um objeto de resposta
           const errorData = await error.context?.json();
           errorMsg = errorData?.error || errorData?.message || error.message;
         } catch (e) {
-          errorMsg = error.message;
+          errorMsg = error.message || 'Falha ao processar resposta de erro.';
         }
         
-        toast.error(`Falha: ${errorMsg}`);
-        throw error;
+        toast.error(`Falha na Limpeza: ${errorMsg}`);
+        return;
       }
 
       if (data?.success === false) {
