@@ -516,9 +516,36 @@ const MonitoramentoSistema = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      <TableRow>
-                        <TableCell className="text-xs" colSpan={4}>Nenhuma limpeza realizada recentemente.</TableCell>
-                      </TableRow>
+                      {cleanupLogs.length > 0 ? (
+                        cleanupLogs.map((log) => (
+                          <TableRow key={log.id}>
+                            <TableCell className="text-xs">
+                              {new Date(log.created_at).toLocaleString('pt-BR', {
+                                dateStyle: 'short',
+                                timeStyle: 'short',
+                              })}
+                            </TableCell>
+                            <TableCell className="text-xs capitalize">{log.cleanup_type}</TableCell>
+                            <TableCell className="text-xs text-right font-mono">
+                              {log.items_count}
+                            </TableCell>
+                            <TableCell className="text-xs text-center">
+                              <Badge
+                                variant={log.status === 'success' ? 'outline' : 'destructive'}
+                                className="text-[10px] h-4"
+                              >
+                                {log.status === 'success' ? 'Sucesso' : 'Erro'}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell className="text-xs" colSpan={4}>
+                            Nenhuma limpeza realizada recentemente.
+                          </TableCell>
+                        </TableRow>
+                      )}
                     </TableBody>
                   </Table>
                 </div>
