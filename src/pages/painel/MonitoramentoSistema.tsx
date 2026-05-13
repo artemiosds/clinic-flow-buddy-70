@@ -189,7 +189,7 @@ const MonitoramentoSistema = () => {
               <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
               Atualizar análise
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={() => toast.info('Exportação de relatório ainda não configurada.')}>
               <Download className="w-4 h-4 mr-2" />
               Exportar relatório
             </Button>
