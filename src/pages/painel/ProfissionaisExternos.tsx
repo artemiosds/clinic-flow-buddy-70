@@ -71,7 +71,28 @@ const ProfissionaisExternos: React.FC = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [showSenha, setShowSenha] = useState(false);
-  const [form, setForm] = useState({ nome: "", email: "", senha: "", unidade_id: "" });
+  const [form, setForm] = useState({ 
+    nome: "", 
+    email: "", 
+    senha: "", 
+    unidade_id: "",
+    telefone: "",
+    documento_registro: "",
+    unidade_origem: "",
+    responsavel: "",
+    observacoes: "",
+    validade_acesso: "",
+    permissoes: {
+      can_schedule: true,
+      can_view_own: true,
+      can_cancel: true,
+      can_edit_patient: true,
+      can_create_patient: true,
+      can_select_patient: true,
+      can_attach_docs: false,
+      can_use_online_agenda: false
+    }
+  });
 
   // Quotas
   const [quotas, setQuotas] = useState<QuotaRow[]>([]);
@@ -98,13 +119,35 @@ const ProfissionaisExternos: React.FC = () => {
 
   const openNew = () => {
     setEditId(null);
-    setForm({ nome: "", email: "", senha: "", unidade_id: "" });
+    setForm({ 
+      nome: "", email: "", senha: "", unidade_id: "",
+      telefone: "", documento_registro: "", unidade_origem: "",
+      responsavel: "", observacoes: "", validade_acesso: "",
+      permissoes: {
+        can_schedule: true, can_view_own: true, can_cancel: true,
+        can_edit_patient: true, can_create_patient: true,
+        can_select_patient: true, can_attach_docs: false,
+        can_use_online_agenda: false
+      }
+    });
     setDialogOpen(true);
   };
 
   const openEdit = (e: ExternalProf) => {
     setEditId(e.id);
-    setForm({ nome: e.nome, email: e.email, senha: "", unidade_id: e.unidade_id });
+    setForm({ 
+      nome: e.nome, email: e.email, senha: "", unidade_id: e.unidade_id,
+      telefone: e.telefone || "", documento_registro: e.documento_registro || "",
+      unidade_origem: e.unidade_origem || "", responsavel: e.responsavel || "",
+      observacoes: e.observacoes || "", 
+      validade_acesso: e.validade_acesso ? e.validade_acesso.slice(0, 10) : "",
+      permissoes: e.permissoes || {
+        can_schedule: true, can_view_own: true, can_cancel: true,
+        can_edit_patient: true, can_create_patient: true,
+        can_select_patient: true, can_attach_docs: false,
+        can_use_online_agenda: false
+      }
+    });
     setDialogOpen(true);
   };
 
@@ -113,7 +156,12 @@ const ProfissionaisExternos: React.FC = () => {
     setSaving(true);
     try {
       if (editId) {
-        const body: any = { action: "update", id: editId, nome: form.nome, email: form.email, unidade_id: form.unidade_id };
+        const body: any = { 
+          action: "update", 
+          id: editId, 
+          ...form 
+        };
+        delete body.senha;
         if (form.senha) body.senha = form.senha;
         const { data, error } = await supabase.functions.invoke("manage-external", { body });
         if (error || data?.error) { toast.error(data?.error || "Erro."); setSaving(false); return; }
@@ -121,7 +169,11 @@ const ProfissionaisExternos: React.FC = () => {
       } else {
         if (!form.senha) { toast.error("Senha obrigatória para novo cadastro."); setSaving(false); return; }
         const { data, error } = await supabase.functions.invoke("manage-external", {
-          body: { action: "create", nome: form.nome, email: form.email, senha: form.senha, unidade_id: form.unidade_id, criado_por: user?.id || "" },
+          body: { 
+            action: "create", 
+            ...form,
+            criado_por: user?.id || "" 
+          },
         });
         if (error || data?.error) { toast.error(data?.error || "Erro."); setSaving(false); return; }
         toast.success("Profissional externo cadastrado!");

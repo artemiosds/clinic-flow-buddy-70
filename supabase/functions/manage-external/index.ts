@@ -118,7 +118,13 @@ serve(async (req) => {
       if (!current) return new Response(JSON.stringify({ error: "Não encontrado." }), { status: 200, headers: corsHeaders });
 
       const dbFields: Record<string, any> = {};
-      for (const key of ["nome", "email", "unidade_id", "ativo"]) {
+      const fields = [
+        "nome", "email", "unidade_id", "ativo", 
+        "telefone", "documento_registro", "unidade_origem", 
+        "responsavel", "observacoes", "permissoes", 
+        "token_acesso", "validade_acesso"
+      ];
+      for (const key of fields) {
         if (body[key] !== undefined) dbFields[key] = body[key];
       }
       if (dbFields.email) dbFields.email = dbFields.email.trim().toLowerCase();
