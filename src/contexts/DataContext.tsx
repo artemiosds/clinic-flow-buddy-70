@@ -928,6 +928,38 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useRealtimeSync({
     enabled: !!authUser,
+    table: "quotas_externas",
+    onEvent: (payload) => {
+      if (payload.eventType === "DELETE") {
+        const id = String((payload.old as any)?.id || "");
+        if (id) setQuotasExternas((prev) => removeById(prev, id));
+        return;
+      }
+      const row = payload.new as any;
+      if (!row?.id) return;
+      setQuotasExternas((prev) =>
+        upsertById(prev, {
+          id: row.id,
+          profissionalExternoId: row.profissional_externo_id,
+          profissionalInternoId: row.profissional_interno_id,
+          unidadeId: row.unidade_id,
+          vagasTotal: row.vagas_total,
+          vagasUsadas: row.vagas_usadas,
+          turno: row.turno,
+          horaInicio: row.hora_inicio,
+          horaFim: row.hora_fim,
+          especialidade: row.especialidade,
+          periodoInicio: row.periodo_inicio,
+          periodoFim: row.periodo_fim,
+          ativo: row.ativo ?? true,
+        }),
+      );
+    },
+    poll: loadQuotasExternas,
+  });
+
+  useRealtimeSync({
+    enabled: !!authUser,
     table: "funcionarios",
     debounceMs: 1000,
     pollIntervalMs: 120000,
