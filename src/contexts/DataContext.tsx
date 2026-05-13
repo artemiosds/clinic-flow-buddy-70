@@ -468,6 +468,33 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [isGlobalAdmin, userUnidadeId]);
 
+  const loadQuotasExternas = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.from("quotas_externas").select("*");
+      if (data && !error) {
+        setQuotasExternas(
+          data.map((q: any) => ({
+            id: q.id,
+            profissionalExternoId: q.profissional_externo_id,
+            profissionalInternoId: q.profissional_interno_id,
+            unidadeId: q.unidade_id,
+            vagasTotal: q.vagas_total,
+            vagasUsadas: q.vagas_usadas,
+            turno: q.turno,
+            horaInicio: q.hora_inicio,
+            horaFim: q.hora_fim,
+            especialidade: q.especialidade,
+            periodoInicio: q.periodo_inicio,
+            periodoFim: q.periodo_fim,
+            ativo: q.ativo ?? true,
+          })),
+        );
+      }
+    } catch (err) {
+      console.error("Error loading quotas:", err);
+    }
+  }, []);
+
   const loadPacientes = useCallback(async () => {
     try {
       // PERF: Only load the most recent 200 patients to keep the initial load fast.
