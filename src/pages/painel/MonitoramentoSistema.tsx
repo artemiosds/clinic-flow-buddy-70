@@ -30,6 +30,7 @@ const MonitoramentoSistema = () => {
   const [stats, setStats] = useState<any>(null);
   const [cleanupConfirmText, setCleanupConfirmText] = useState('');
   const [activeTab, setActiveTab] = useState('geral');
+  const [cleanupLogs, setCleanupLogs] = useState<any[]>([]);
 
   const isMaster = user?.role?.toLowerCase().trim() === 'master' || user?.usuario === 'admin.sms';
 
@@ -60,9 +61,24 @@ const MonitoramentoSistema = () => {
     }
   };
 
+  const fetchCleanupLogs = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('system_cleanup_logs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(5);
+      if (error) throw error;
+      setCleanupLogs(data || []);
+    } catch (err) {
+      console.error('Error fetching cleanup logs:', err);
+    }
+  };
+
   useEffect(() => {
     if (isMaster) {
       fetchStats();
+      fetchCleanupLogs();
     }
   }, [isMaster]);
 
@@ -80,6 +96,7 @@ const MonitoramentoSistema = () => {
       if (error) throw error;
       toast.success(`${data.count} registros limpos com sucesso!`);
       fetchStats();
+      fetchCleanupLogs();
       setCleanupConfirmText('');
     } catch (err: any) {
       console.error(err);
@@ -137,7 +154,7 @@ const MonitoramentoSistema = () => {
               <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Status Geral</p>
               <div className="flex items-center gap-2">
                 <span className={`w-2 h-2 rounded-full ${getStatusColor(stats?.status)}`} />
-                <p className="text-sm font-bold capitalize">{stats?.status || 'Carregando...'}</p>
+                <p className="text-sm font-bold capitalize">{stats?.status || (loading ? 'Carregando...' : 'Offline')}</p>
               </div>
             </div>
           </CardContent>
@@ -162,7 +179,7 @@ const MonitoramentoSistema = () => {
             </div>
             <div>
               <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Storage</p>
-              <p className="text-sm font-bold">{stats?.storageStats?.length || 0} Buckets</p>
+              <p className="text-sm font-bold">{stats?.storageStats ? `${stats.storageStats.length} Buckets` : (loading ? 'Carregando...' : 'Nenhum')}</p>
             </div>
           </CardContent>
         </Card>
@@ -285,7 +302,7 @@ const MonitoramentoSistema = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {stats?.tableStats?.map((table: any) => (
+                    {stats?.tableStats ? stats.tableStats.map((table: any) => (
                       <TableRow key={table.table}>
                         <TableCell className="font-medium">{table.table}</TableCell>
                         <TableCell className="text-right font-mono">{table.count.toLocaleString('pt-BR')}</TableCell>
@@ -302,11 +319,10 @@ const MonitoramentoSistema = () => {
                           </Button>
                         </TableCell>
                       </TableRow>
-                    ))}
-                    {!stats?.tableStats && (
+                    )) : (
                       <TableRow>
                         <TableCell colSpan={6} className="text-center py-10 text-muted-foreground italic">
-                          Carregando estatísticas das tabelas...
+                          {loading ? 'Carregando estatísticas das tabelas...' : 'Nenhuma informação disponível'}
                         </TableCell>
                       </TableRow>
                     )}
@@ -325,7 +341,7 @@ const MonitoramentoSistema = () => {
                 <CardDescription>Monitoramento de armazenamento de arquivos.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {stats?.storageStats?.map((bucket: any) => (
+                {stats?.storageStats ? stats.storageStats.map((bucket: any) => (
                   <div key={bucket.id} className="p-4 border border-border/50 rounded-lg flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded bg-muted flex items-center justify-center">
@@ -338,9 +354,10 @@ const MonitoramentoSistema = () => {
                     </div>
                     <Badge variant="outline">Ativo</Badge>
                   </div>
-                ))}
-                {!stats?.storageStats && (
-                  <p className="text-center text-muted-foreground py-10">Coletando dados do storage...</p>
+                )) : (
+                  <p className="text-center text-muted-foreground py-10">
+                    {loading ? 'Coletando dados do storage...' : 'Nenhum bucket encontrado'}
+                  </p>
                 )}
               </CardContent>
             </Card>
@@ -499,9 +516,36 @@ const MonitoramentoSistema = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      <TableRow>
-                        <TableCell className="text-xs" colSpan={4}>Nenhuma limpeza realizada recentemente.</TableCell>
-                      </TableRow>
+                      {cleanupLogs.length > 0 ? (
+                        cleanupLogs.map((log) => (
+                          <TableRow key={log.id}>
+                            <TableCell className="text-xs">
+                              {new Date(log.created_at).toLocaleString('pt-BR', {
+                                dateStyle: 'short',
+                                timeStyle: 'short',
+                              })}
+                            </TableCell>
+                            <TableCell className="text-xs capitalize">{log.cleanup_type}</TableCell>
+                            <TableCell className="text-xs text-right font-mono">
+                              {log.items_count}
+                            </TableCell>
+                            <TableCell className="text-xs text-center">
+                              <Badge
+                                variant={log.status === 'success' ? 'outline' : 'destructive'}
+                                className="text-[10px] h-4"
+                              >
+                                {log.status === 'success' ? 'Sucesso' : 'Erro'}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell className="text-xs" colSpan={4}>
+                            Nenhuma limpeza realizada recentemente.
+                          </TableCell>
+                        </TableRow>
+                      )}
                     </TableBody>
                   </Table>
                 </div>

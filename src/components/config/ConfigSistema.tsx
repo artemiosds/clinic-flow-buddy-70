@@ -3,7 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useConfiguracao } from '@/hooks/useConfiguracao';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Loader2, Search, RotateCcw, FileDown, FileUp, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Loader2, Search, RotateCcw, FileDown, FileUp, CheckCircle2, AlertCircle, Activity, ChevronRight } from 'lucide-react';
 import { ConfigSyncIndicator } from '@/components/ConfigSyncIndicator';
 import { toast } from 'sonner';
 import { InstituicaoSection } from './sistema/InstituicaoSection';
@@ -13,6 +14,7 @@ import { AparenciaSection } from './sistema/AparenciaSection';
 import { LgpdSection } from './sistema/LgpdSection';
 
 const CONFIG_KEY = 'config_sistema';
+import { useNavigate } from 'react-router-dom';
 
 export interface SistemaConfig {
   instituicao: { nome: string; cer: string; cnpj: string; endereco: string; telefone: string; email: string; logoUrl: string };
@@ -51,9 +53,11 @@ const SECTIONS = [
   { id: 'backup', label: 'Backup', kw: ['backup', 'exportar', 'json', 'csv', 'pdf', 'restaurar', 'dados'] },
   { id: 'aparencia', label: 'Aparência', kw: ['tema', 'cor', 'fonte', 'aparencia', 'claro', 'escuro'] },
   { id: 'lgpd', label: 'LGPD', kw: ['lgpd', 'privacidade', 'retencao', 'anonimizar', 'conformidade', 'termo'] },
+  { id: 'monitoramento', label: 'Monitoramento', kw: ['status', 'saude', 'banco', 'storage', 'vps', 'logs', 'limpeza'] },
 ];
 
 const ConfigSistema: React.FC = () => {
+  const navigate = useNavigate();
   const { atualizarConfiguracao, configuracoes, loading: hookLoading } = useConfiguracao();
   const [config, setConfig] = useState<SistemaConfig>(DEFAULT);
   const [savedConfig, setSavedConfig] = useState<SistemaConfig>(DEFAULT);
@@ -201,6 +205,27 @@ const ConfigSistema: React.FC = () => {
       )}
       {visibleSections.includes('lgpd') && (
         <LgpdSection value={config.conformidade} onChange={v => update({ conformidade: v })} />
+      )}
+
+      {visibleSections.includes('monitoramento') && (
+        <Card className="shadow-card border-0">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <Activity className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground">Monitoramento do Sistema</h3>
+                  <p className="text-sm text-muted-foreground">Acompanhe a saúde do banco de dados, storage e execute limpezas seguras.</p>
+                </div>
+              </div>
+              <Button onClick={() => navigate('/painel/monitoramento')}>
+                Abrir Painel <ChevronRight className="ml-2 w-4 h-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {visibleSections.length === 0 && (
