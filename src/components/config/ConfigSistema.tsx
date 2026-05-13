@@ -206,6 +206,27 @@ const ConfigSistema: React.FC = () => {
         <LgpdSection value={config.conformidade} onChange={v => update({ conformidade: v })} />
       )}
 
+      {visibleSections.includes('monitoramento') && (
+        <Card className="shadow-card border-0">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <Activity className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground">Monitoramento do Sistema</h3>
+                  <p className="text-sm text-muted-foreground">Acompanhe a saúde do banco de dados, storage e execute limpezas seguras.</p>
+                </div>
+              </div>
+              <Button onClick={() => navigate('/painel/monitoramento')}>
+                Abrir Painel <ChevronRight className="ml-2 w-4 h-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {visibleSections.length === 0 && (
         <div className="text-center py-12 text-muted-foreground text-sm">
           Nenhuma seção encontrada para "<strong>{search}</strong>"
