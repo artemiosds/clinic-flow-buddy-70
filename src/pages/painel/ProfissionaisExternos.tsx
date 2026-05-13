@@ -101,6 +101,15 @@ const ProfissionaisExternos: React.FC = () => {
   const [selectedExternoId, setSelectedExternoId] = useState<string>("");
   const [selectedProfIds, setSelectedProfIds] = useState<string[]>([]);
   const [vagasPorProf, setVagasPorProf] = useState<Record<string, number>>({});
+  const [bodyQuota, setBodyQuota] = useState({
+    unidade_id: "",
+    especialidade: "",
+    turno: "Integral",
+    hora_inicio: "",
+    hora_fim: "",
+    periodo_inicio: new Date().toISOString().slice(0, 10),
+    periodo_fim: `${new Date().getFullYear()}-12-31`,
+  });
   const [savingQuota, setSavingQuota] = useState(false);
 
   const loadExternos = useCallback(async () => {
@@ -235,17 +244,18 @@ const ProfissionaisExternos: React.FC = () => {
     }
     setSavingQuota(true);
     try {
-      const today = new Date().toISOString().slice(0, 10);
-      const endOfYear = `${new Date().getFullYear()}-12-31`;
-
       const inserts = selectedProfIds.map(profId => ({
         profissional_externo_id: selectedExternoId,
         profissional_interno_id: profId,
-        unidade_id: "",
+        unidade_id: bodyQuota.unidade_id || "",
+        especialidade: bodyQuota.especialidade || "",
         vagas_total: vagasPorProf[profId] || 5,
         vagas_usadas: 0,
-        periodo_inicio: today,
-        periodo_fim: endOfYear,
+        turno: bodyQuota.turno || "Integral",
+        hora_inicio: bodyQuota.hora_inicio || null,
+        hora_fim: bodyQuota.hora_fim || null,
+        periodo_inicio: bodyQuota.periodo_inicio || new Date().toISOString().slice(0, 10),
+        periodo_fim: bodyQuota.periodo_fim || `${new Date().getFullYear()}-12-31`,
       }));
 
       const { error } = await supabase.from("quotas_externas").insert(inserts);
