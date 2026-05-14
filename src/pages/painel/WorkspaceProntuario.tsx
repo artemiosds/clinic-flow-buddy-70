@@ -29,6 +29,7 @@ import TriagemDetalhada from '@/components/TriagemDetalhada';
 import DynamicProntuarioFields from '@/components/DynamicProntuarioFields';
 import SoapFieldsAdaptive from '@/components/SoapFieldsAdaptive';
 import PacienteDocumentos from '@/components/PacienteDocumentos';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BuscaPaciente } from '@/components/BuscaPaciente';
 import QuickEditPatientModal from '@/components/pacientes/QuickEditPatientModal';
 import { Label } from '@/components/ui/label';
