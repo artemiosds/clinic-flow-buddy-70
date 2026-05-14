@@ -31,6 +31,7 @@ import { Plus, Search, Phone, Mail, Pencil, Trash2, FileDown, Users, Clock, File
 import PacienteDocumentos from "@/components/PacienteDocumentos";
 import ContactActionButton from "@/components/ContactActionButton";
 import DetalheDrawer, { Secao, Campo, calcularIdade, formatarData } from "@/components/DetalheDrawer";
+import { Link } from "react-router-dom";
 import PacienteDetalheModal, { PSecao, PCampo, AlergiasBlock, formatCPF, formatCNS, formatTelefoneBR, formatarDataBR } from "@/components/PacienteDetalheModal";
 import { formatCNS as maskCNSInput } from "@/lib/cnsUtils";
 import { useCustomFields } from "@/hooks/useCustomFields";
