@@ -496,9 +496,13 @@ const WorkspaceProntuario: React.FC = () => {
             </div>
           </ScrollArea>
         </main>
+      </ResizablePanel>
 
+      <ResizableHandle withHandle className="hidden lg:flex" />
+
+      <ResizablePanel defaultSize={35} minSize={25} className="hidden lg:flex flex-col h-full border-l z-10 shadow-[0_-8px_30px_rgb(0,0,0,0.12)] bg-background">
         {/* Longitudinal History Panel - Integrated Hospital Sidebar */}
-        <aside className="w-[440px] shrink-0 bg-background border-l flex flex-col hidden lg:flex z-10 shadow-[0_-8px_30px_rgb(0,0,0,0.12)] overflow-hidden">
+        <aside className="flex-1 flex flex-col overflow-hidden h-full">
           <Tabs defaultValue="history" className="flex flex-col h-full">
             <div className="px-4 py-3.5 bg-muted/20 border-b">
               <TabsList className="grid grid-cols-2 w-full h-10 p-1 bg-background border rounded-lg">
