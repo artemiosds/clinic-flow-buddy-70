@@ -33,25 +33,63 @@ const Atendimentos: React.FC = () => {
   const resolvePaciente = usePacienteNomeResolver();
   const [atendimentos, setAtendimentos] = useState<AtendimentoDB[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const PAGE_SIZE = 20;
   const canDelete = can('atendimentos', 'can_delete');
 
-  const load = async () => {
-    setLoading(true);
+  const load = async (pageNum = 0, append = false) => {
+    if (pageNum === 0) setLoading(true);
+    else setLoadingMore(true);
+    
     try {
-      let query = (supabase as any).from('atendimentos').select('*').order('data', { ascending: false });
+      const from = pageNum * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+
+      let query = (supabase as any)
+        .from('atendimentos')
+        .select('*')
+        .order('data', { ascending: false })
+        .order('hora_inicio', { ascending: false })
+        .range(from, to);
+
       if (user?.role === 'profissional') query = query.eq('profissional_id', user.id);
       if (user?.unidadeId && user?.usuario !== 'admin.sms') query = query.eq('unidade_id', user.unidadeId);
-      const { data } = await query;
-      if (data) setAtendimentos(data);
+      
+      const { data, error } = await query;
+      
+      if (error) throw error;
+
+      if (data) {
+        if (append) {
+          setAtendimentos(prev => [...prev, ...data]);
+        } else {
+          setAtendimentos(data);
+        }
+        setHasMore(data.length === PAGE_SIZE);
+      }
     } catch (err) {
-      console.error('Error:', err);
+      console.error('Error loading atendimentos:', err);
+      toast.error('Erro ao carregar atendimentos.');
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
-    load();
-  }, [user]);
+    if (user?.id) {
+      setPage(0);
+      load(0, false);
+    }
+  }, [user?.id, user?.unidadeId]);
+
+  const handleLoadMore = () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    load(nextPage, true);
+  };
 
   const handleDelete = async (at: AtendimentoDB) => {
     try {
