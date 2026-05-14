@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { normalizePhone } from "./phoneUtils";
 import { unmaskCNS } from "./cnsUtils";
+import { auditService } from "@/services/auditService";
 
 /**
  * Função única e centralizada para atualizar o cadastro de um paciente.
@@ -64,10 +65,10 @@ export async function updatePacienteCadastro(
   if (dados.tipo_logradouro_codigo !== undefined) updateData.tipo_logradouro_codigo = dados.tipo_logradouro_codigo || "";
 
 
-  // 4. Preservar custom_data
+  // 4. Preservar custom_data e buscar dados para auditoria
   const { data: currentPatient } = await supabase
     .from("pacientes")
-    .select("custom_data")
+    .select("*")
     .eq("id", pacienteId)
     .single();
 
@@ -104,8 +105,30 @@ export async function updatePacienteCadastro(
 
   if (error) {
     console.error(`[${origem}] Erro ao atualizar paciente ${pacienteId}:`, error);
+    await auditService.log({
+      acao: "edicao_paciente_erro",
+      entidade: "paciente",
+      entidadeId: pacienteId,
+      modulo: "pacientes",
+      detalhes: { origem, erro: error.message },
+      status: "erro",
+      pacienteId
+    });
     throw error;
   }
+
+  // 6. Auditoria de sucesso
+  await auditService.log({
+    acao: "edicao_paciente",
+    entidade: "paciente",
+    entidadeId: pacienteId,
+    entidadeNome: data.nome,
+    modulo: "pacientes",
+    before: currentPatient,
+    after: data,
+    pacienteId,
+    origem
+  });
 
   return data;
 }

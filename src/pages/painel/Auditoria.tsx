@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Search, Download, FileText, ChevronLeft, ChevronRight, RefreshCw, Filter, X, Eye, BarChart3, User } from 'lucide-react';
+import { Search, Download, FileText, ChevronLeft, ChevronRight, RefreshCw, Filter, X, Eye, BarChart3, User, Activity } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -59,6 +59,9 @@ const acaoLabels: Record<string, string> = {
   editar: 'Edição',
   excluir: 'Exclusão',
   cancelar: 'Cancelamento',
+  edicao_paciente: 'Edição de Paciente',
+  criacao_paciente: 'Cadastro de Paciente',
+  edicao_paciente_erro: 'Falha na Edição de Paciente',
   login: 'Login',
   login_sucesso: 'Login Sucesso',
   login_falha: 'Login Falha',
@@ -74,6 +77,7 @@ const acaoLabels: Record<string, string> = {
   prontuario_visualizado: 'Prontuário Visualizado',
   prontuario_criado: 'Prontuário Criado',
   prontuario_editado: 'Prontuário Editado',
+  finalizar_prontuario: 'Finalização de Prontuário',
   prontuario_exportado_pdf: 'Prontuário Exportado PDF',
   paciente_chamado: 'Paciente Chamado',
   paciente_rechamado: 'Paciente Rechamado',
@@ -86,6 +90,10 @@ const acaoLabels: Record<string, string> = {
   envio_webhook: 'Envio Webhook',
   portal_acesso: 'Acesso Portal',
   agendar_retorno: 'Agendar Retorno',
+  novo_agendamento: 'Criação de Agendamento',
+  desmarcar_sessao: 'Desmarcação de Sessão',
+  gerar_bpa: 'Geração de BPA',
+  baixar_pdf: 'Download de PDF',
 };
 
 const eventoGrupos: Record<string, { label: string; acoes: string[] }> = {
@@ -130,6 +138,8 @@ const Auditoria: React.FC = () => {
   const [showReport, setShowReport] = useState(false);
   const [reportData, setReportData] = useState<any[]>([]);
   const [reportLoading, setReportLoading] = useState(false);
+  const [resolvedEntities, setResolvedEntities] = useState<Record<string, any>>({});
+  const [resolving, setResolving] = useState<Record<string, boolean>>({});
 
   // Filters
   const [filterDateFrom, setFilterDateFrom] = useState('');
@@ -219,6 +229,150 @@ const Auditoria: React.FC = () => {
     const cpf = String((log.detalhes as any)?.usuario_cpf || '');
     if (!cpf) return '-';
     return isMaster ? formatCpf(cpf) : maskCpf(cpf);
+  };
+
+  // Entity resolution logic
+  const resolveEntity = useCallback(async (log: LogEntry) => {
+    const cacheKey = `${log.entidade}:${log.entidade_id}`;
+    if (resolvedEntities[cacheKey] || resolving[cacheKey] || !log.entidade_id) return;
+
+    // Check if name is already in details
+    const existingName = (log.detalhes as any)?.entidade_nome || (log.detalhes as any)?.paciente_nome || (log.detalhes as any)?.profissional_nome;
+    if (existingName) {
+      setResolvedEntities(prev => ({ ...prev, [cacheKey]: { nome: existingName } }));
+      return;
+    }
+
+    setResolving(prev => ({ ...prev, [cacheKey]: true }));
+    try {
+      let nome = '';
+      let subtitulo = '';
+
+      if (log.entidade === 'paciente' || log.modulo === 'pacientes') {
+        const { data } = await supabase.from('pacientes' as any).select('nome_completo, cpf').eq('id', log.entidade_id).maybeSingle();
+        if (data) {
+          nome = (data as any).nome_completo;
+          subtitulo = `CPF: ${maskCpf((data as any).cpf)}`;
+        }
+      } else if (log.entidade === 'agendamento' || log.modulo === 'agendamento') {
+        const { data } = await supabase.from('agendamentos' as any).select('paciente_nome, profissional_nome, data, hora').eq('id', log.entidade_id).maybeSingle();
+        if (data) {
+          const d = data as any;
+          nome = `${d.paciente_nome} → ${d.profissional_nome}`;
+          subtitulo = `${format(new Date(d.data + 'T12:00:00'), 'dd/MM/yyyy')} às ${d.hora.substring(0, 5)}`;
+        }
+      } else if (log.entidade === 'prontuario' || log.modulo === 'prontuario') {
+        const { data } = await supabase.from('prontuarios' as any).select('paciente_id, profissional_id, data_atendimento').eq('id', log.entidade_id).maybeSingle();
+        if (data) {
+          const d = data as any;
+          const [{ data: pac }, { data: prof }] = await Promise.all([
+            supabase.from('pacientes' as any).select('nome_completo').eq('id', d.paciente_id).maybeSingle(),
+            supabase.from('funcionarios' as any).select('nome').eq('id', d.profissional_id).maybeSingle()
+          ]);
+          nome = `${(pac as any)?.nome_completo || 'Paciente'} / ${(prof as any)?.nome || 'Profissional'}`;
+          subtitulo = d.data_atendimento ? format(new Date(d.data_atendimento + 'T12:00:00'), 'dd/MM/yyyy') : '';
+        }
+      } else if (log.entidade === 'funcionario' || log.entidade === 'funcionarios') {
+        const { data } = await supabase.from('funcionarios' as any).select('nome, profissao').eq('id', log.entidade_id).maybeSingle();
+        if (data) {
+          nome = (data as any).nome;
+          subtitulo = (data as any).profissao;
+        }
+      }
+
+      setResolvedEntities(prev => ({ 
+        ...prev, 
+        [cacheKey]: { 
+          nome: nome || 'Registro não encontrado', 
+          subtitulo,
+          encontrado: !!nome 
+        } 
+      }));
+    } catch (err) {
+      console.error('Error resolving entity:', err);
+    } finally {
+      setResolving(prev => ({ ...prev, [cacheKey]: false }));
+    }
+  }, [resolvedEntities, resolving]);
+
+  // Effect to resolve entities for current page
+  useEffect(() => {
+    if (logs.length > 0) {
+      logs.forEach(log => {
+        if (log.entidade_id && !['login', 'logout', 'auth'].includes(log.acao)) {
+          resolveEntity(log);
+        }
+      });
+    }
+  }, [logs, resolveEntity]);
+
+  const getEntityDisplay = (log: LogEntry) => {
+    if (['login', 'logout'].includes(log.acao)) return <span className="text-muted-foreground">-</span>;
+    
+    const cacheKey = `${log.entidade}:${log.entidade_id}`;
+    const resolved = resolvedEntities[cacheKey];
+
+    if (resolving[cacheKey]) return <span className="text-xs text-muted-foreground animate-pulse">Carregando...</span>;
+    
+    if (resolved) {
+      return (
+        <div className="flex flex-col">
+          <span className="text-sm font-medium leading-none">{resolved.nome}</span>
+          {resolved.subtitulo && <span className="text-[10px] text-muted-foreground mt-1">{resolved.subtitulo}</span>}
+          {!resolved.encontrado && log.entidade_id && (
+            <span className="text-[10px] font-mono text-muted-foreground opacity-50">{log.entidade_id}</span>
+          )}
+        </div>
+      );
+    }
+
+    return <span className="text-xs font-mono text-muted-foreground">{log.entidade_id || '-'}</span>;
+  };
+
+  const formatFieldLabel = (field: string) => {
+    const labels: Record<string, string> = {
+      nome_completo: 'Nome completo',
+      nome: 'Nome',
+      nome_mae: 'Nome da mãe',
+      data_nascimento: 'Data de nascimento',
+      telefone: 'Telefone',
+      telefone_principal: 'Telefone principal',
+      telefone_secundario: 'Telefone secundário',
+      logradouro: 'Logradouro',
+      endereco: 'Endereço',
+      numero: 'Número',
+      bairro: 'Bairro',
+      municipio: 'Município',
+      uf: 'UF',
+      sexo: 'Sexo',
+      cpf: 'CPF',
+      cns: 'CNS',
+      unidade_id: 'Unidade',
+      profissional_id: 'Profissional',
+      paciente_id: 'Paciente',
+      status: 'Status',
+      data: 'Data',
+      hora: 'Hora',
+      email: 'E-mail',
+      cep: 'CEP',
+      raca_cor: 'Raça/Cor',
+      custom_data: 'Dados complementares',
+    };
+    return labels[field] || field;
+  };
+
+  const formatValue = (field: string, value: any) => {
+    if (value === null || value === undefined || value === '') return 'Não informado';
+    if (field === 'cpf') return maskCpf(String(value));
+    if (field === 'data' || field === 'data_nascimento') {
+      try { return format(new Date(value + 'T12:00:00'), 'dd/MM/yyyy'); } catch { return value; }
+    }
+    if (field === 'sexo') {
+      const s = String(value).toLowerCase();
+      if (s === 'm' || s === 'masculino') return 'Masculino';
+      if (s === 'f' || s === 'feminino') return 'Feminino';
+    }
+    return String(value);
   };
 
   // Professional activity report
@@ -547,10 +701,8 @@ const Auditoria: React.FC = () => {
                   <TableRow>
                     <TableHead className="whitespace-nowrap">Data/Hora</TableHead>
                     <TableHead>Usuário</TableHead>
-                    <TableHead>CPF</TableHead>
-                    <TableHead>Perfil</TableHead>
+                    <TableHead>Registro Afetado</TableHead>
                     <TableHead>Ação</TableHead>
-                    <TableHead>Módulo</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="w-10"></TableHead>
                   </TableRow>
@@ -562,10 +714,8 @@ const Auditoria: React.FC = () => {
                         {format(new Date(log.created_at), 'dd/MM/yy HH:mm:ss')}
                       </TableCell>
                       <TableCell className="text-sm font-medium">{log.user_nome || 'Sistema'}</TableCell>
-                      <TableCell className="text-xs font-mono text-muted-foreground">{getCpfDisplay(log)}</TableCell>
-                      <TableCell><Badge variant="outline" className="text-xs">{log.role}</Badge></TableCell>
+                      <TableCell>{getEntityDisplay(log)}</TableCell>
                       <TableCell className="text-sm">{acaoLabels[log.acao] || log.acao}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{moduloLabels[log.modulo] || log.modulo || log.entidade}</TableCell>
                       <TableCell>
                         <Badge className={`text-xs ${statusBadge[log.status] || 'bg-muted text-muted-foreground'}`}>
                           {log.status}
@@ -606,131 +756,169 @@ const Auditoria: React.FC = () => {
       <Sheet open={!!selectedLog} onOpenChange={(open) => !open && setSelectedLog(null)}>
         <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
           <SheetHeader>
-            <SheetTitle>Detalhes do Log</SheetTitle>
+            <SheetTitle>Detalhes da Auditoria</SheetTitle>
           </SheetHeader>
           {selectedLog && (
-            <div className="space-y-4 mt-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <p className="text-xs text-muted-foreground">Funcionário</p>
-                  <p className="text-sm font-medium">{selectedLog.user_nome || 'Sistema'}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">CPF</p>
-                  <p className="text-sm font-mono">{getCpfDisplay(selectedLog)}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Perfil</p>
-                  <p className="text-sm"><Badge variant="outline">{selectedLog.role}</Badge></p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Status</p>
-                  <Badge className={`text-xs ${statusBadge[selectedLog.status] || ''}`}>{selectedLog.status}</Badge>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Data/Hora</p>
-                  <p className="text-sm">{format(new Date(selectedLog.created_at), "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR })}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Dispositivo</p>
-                  <p className="text-sm text-muted-foreground">{String((selectedLog.detalhes as any)?.dispositivo || '-')}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">IP</p>
-                  <p className="text-sm font-mono">{selectedLog.ip || '-'}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Evento</p>
-                  <p className="text-sm font-medium">{acaoLabels[selectedLog.acao] || selectedLog.acao}</p>
-                </div>
-              </div>
-
-              <div>
-                <p className="text-xs text-muted-foreground mb-1">Módulo / Entidade</p>
-                <p className="text-sm">{moduloLabels[selectedLog.modulo] || selectedLog.modulo} → {selectedLog.entidade}</p>
-                {selectedLog.entidade_id && (
-                  <p className="text-xs font-mono text-muted-foreground mt-1">ID: {selectedLog.entidade_id}</p>
-                )}
-              </div>
-
-              {selectedLog.erro && (
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Erro</p>
-                  <p className="text-sm text-destructive bg-destructive/10 p-2 rounded">{selectedLog.erro}</p>
-                </div>
-              )}
-
-              {/* Patient info */}
-              {((selectedLog.detalhes as any)?.paciente_nome || (selectedLog.detalhes as any)?.paciente) && (
-                <div className="border-t pt-3">
-                  <p className="text-xs font-medium text-muted-foreground mb-2">Paciente Envolvido</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <p className="text-xs text-muted-foreground">Nome</p>
-                      <p className="text-sm">{String((selectedLog.detalhes as any)?.paciente_nome || (selectedLog.detalhes as any)?.paciente || '-')}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">CPF do Paciente</p>
-                      <p className="text-sm font-mono">{String((selectedLog.detalhes as any)?.paciente_cpf || '-')}</p>
-                    </div>
+            <div className="space-y-6 mt-6 pb-10">
+              {/* 1. RESUMO DO EVENTO */}
+              <section className="space-y-3">
+                <h3 className="text-sm font-semibold flex items-center gap-2 text-primary border-b pb-1">
+                  <FileText className="w-4 h-4" /> RESUMO DO EVENTO
+                </h3>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                  <div className="col-span-2 bg-muted/30 p-3 rounded-lg border border-primary/10">
+                    <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wider font-bold">Resumo</p>
+                    <p className="text-sm font-medium">
+                      {selectedLog.user_nome || 'Sistema'} {acaoLabels[selectedLog.acao]?.toLowerCase() || selectedLog.acao} em {selectedLog.entidade}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Ação</p>
+                    <p className="text-sm font-medium">{acaoLabels[selectedLog.acao] || selectedLog.acao}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Status</p>
+                    <Badge className={`text-[10px] h-5 ${statusBadge[selectedLog.status] || ''}`}>{selectedLog.status}</Badge>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Data/Hora</p>
+                    <p className="text-sm">{format(new Date(selectedLog.created_at), "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR })}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Módulo</p>
+                    <p className="text-sm">{moduloLabels[selectedLog.modulo] || selectedLog.modulo}</p>
                   </div>
                 </div>
-              )}
+              </section>
 
-              {/* Field-level changes for prontuario edits */}
-              {(selectedLog.detalhes as any)?.campos_alterados && Object.keys((selectedLog.detalhes as any).campos_alterados).length > 0 && (
-                <div className="border-t pt-3">
-                  <p className="text-xs font-medium text-muted-foreground mb-2">Campos Alterados</p>
-                  <div className="space-y-2">
-                    {Object.entries((selectedLog.detalhes as any).campos_alterados).map(([campo, vals]: [string, any]) => (
-                      <div key={campo} className="bg-muted/50 rounded p-2">
-                        <p className="text-xs font-medium text-foreground mb-1">{campo}</p>
-                        <div className="grid grid-cols-2 gap-2">
-                          <div>
-                            <p className="text-[10px] text-muted-foreground">Antes</p>
-                            <p className="text-xs bg-destructive/10 text-destructive rounded p-1">{vals.anterior || '(vazio)'}</p>
+              {/* 2. RESPONSÁVEL */}
+              <section className="space-y-3">
+                <h3 className="text-sm font-semibold flex items-center gap-2 text-primary border-b pb-1">
+                  <User className="w-4 h-4" /> RESPONSÁVEL
+                </h3>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Nome</p>
+                    <p className="text-sm font-medium">{selectedLog.user_nome || 'Sistema'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">CPF</p>
+                    <p className="text-sm font-mono">{getCpfDisplay(selectedLog)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Perfil</p>
+                    <p className="text-sm"><Badge variant="outline" className="text-[10px]">{selectedLog.role}</Badge></p>
+                  </div>
+                </div>
+              </section>
+
+              {/* 3. REGISTRO AFETADO */}
+              <section className="space-y-3">
+                <h3 className="text-sm font-semibold flex items-center gap-2 text-primary border-b pb-1">
+                  <Search className="w-4 h-4" /> REGISTRO AFETADO
+                </h3>
+                <div className="bg-muted/30 p-3 rounded-lg border border-primary/10">
+                  {getEntityDisplay(selectedLog)}
+                </div>
+              </section>
+
+              {/* 4. ALTERAÇÕES REALIZADAS */}
+              <section className="space-y-3">
+                <h3 className="text-sm font-semibold flex items-center gap-2 text-primary border-b pb-1">
+                  <RefreshCw className="w-4 h-4" /> ALTERAÇÕES REALIZADAS
+                </h3>
+                
+                {/* Check various locations for changes */}
+                {(() => {
+                  const details = selectedLog.detalhes as any;
+                  const changes = details.changes || details.alteracoes || details.campos_alterados_detalhe;
+                  const before = details.before || details.old_value || details.old_data;
+                  const after = details.after || details.new_value || details.new_data;
+
+                  if (changes && typeof changes === 'object' && !Array.isArray(changes)) {
+                    return (
+                      <div className="space-y-3">
+                        {Object.entries(changes).map(([campo, vals]: [string, any]) => (
+                          <div key={campo} className="bg-muted/50 rounded-lg p-3 border border-border/50">
+                            <p className="text-xs font-bold text-foreground mb-2 uppercase tracking-tight">
+                              {formatFieldLabel(campo)}
+                            </p>
+                            <div className="grid grid-cols-1 gap-2">
+                              <div className="space-y-1">
+                                <p className="text-[10px] text-muted-foreground uppercase font-semibold">Antes</p>
+                                <div className="text-xs bg-red-500/5 text-red-700 dark:text-red-400 rounded border border-red-200/20 p-2 min-h-[32px]">
+                                  {formatValue(campo, vals.before ?? vals.anterior)}
+                                </div>
+                              </div>
+                              <div className="space-y-1">
+                                <p className="text-[10px] text-muted-foreground uppercase font-semibold">Depois</p>
+                                <div className="text-xs bg-emerald-500/5 text-emerald-700 dark:text-emerald-400 rounded border border-emerald-200/20 p-2 min-h-[32px]">
+                                  {formatValue(campo, vals.after ?? vals.novo)}
+                                </div>
+                              </div>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-[10px] text-muted-foreground">Depois</p>
-                            <p className="text-xs bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 rounded p-1">{vals.novo || '(vazio)'}</p>
-                          </div>
-                        </div>
+                        ))}
                       </div>
-                    ))}
+                    );
+                  }
+
+                  if (before && after) {
+                    // If we have before/after but no changes object, we could try to diff them here
+                    // but usually the service handles this. For compatibility:
+                    return <p className="text-xs text-muted-foreground bg-muted p-3 rounded italic text-center">Use os dados técnicos para comparar antes/depois.</p>;
+                  }
+
+                  return <p className="text-xs text-muted-foreground bg-muted p-3 rounded italic text-center">Este log não possui comparação antes/depois registrada.</p>;
+                })()}
+              </section>
+
+              {/* 5. CONTEXTO TÉCNICO */}
+              <section className="space-y-3">
+                <h3 className="text-sm font-semibold flex items-center gap-2 text-primary border-b pb-1">
+                  <Activity className="w-4 h-4" /> CONTEXTO TÉCNICO
+                </h3>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                  <div>
+                    <p className="text-xs text-muted-foreground">IP</p>
+                    <p className="text-sm font-mono">{selectedLog.ip || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Dispositivo</p>
+                    <p className="text-sm text-muted-foreground">{String((selectedLog.detalhes as any)?.dispositivo || '-')}</p>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-xs text-muted-foreground">Origem / Rota</p>
+                    <p className="text-xs font-mono bg-muted/50 p-1.5 rounded truncate" title={String((selectedLog.detalhes as any)?.origem || '-')}>
+                      {String((selectedLog.detalhes as any)?.origem || '-')}
+                    </p>
                   </div>
                 </div>
-              )}
+              </section>
 
-              {/* Duration info for atendimento */}
-              {(selectedLog.detalhes as any)?.duracao_minutos !== undefined && (
-                <div className="border-t pt-3">
-                  <p className="text-xs font-medium text-muted-foreground mb-2">Duração do Atendimento</p>
-                  <div className="grid grid-cols-3 gap-2">
-                    <div>
-                      <p className="text-xs text-muted-foreground">Início</p>
-                      <p className="text-sm">{String((selectedLog.detalhes as any)?.hora_inicio || '-')}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Fim</p>
-                      <p className="text-sm">{String((selectedLog.detalhes as any)?.hora_fim || '-')}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Duração</p>
-                      <p className="text-sm font-bold">{(selectedLog.detalhes as any)?.duracao_minutos} min</p>
-                    </div>
-                  </div>
+              {/* 6. DADOS TÉCNICOS COMPLETOS */}
+              <section className="space-y-3">
+                <div className="flex items-center gap-2">
+                   <h3 className="text-sm font-semibold text-primary">DADOS TÉCNICOS</h3>
+                   <div className="h-px flex-1 bg-border" />
                 </div>
-              )}
-
-              {/* All details (raw) */}
-              <div className="border-t pt-3">
-                <p className="text-xs font-medium text-muted-foreground mb-2">Dados Completos</p>
-                <pre className="text-[10px] bg-muted p-2 rounded overflow-auto max-h-40 text-muted-foreground">
-                  {JSON.stringify(selectedLog.detalhes, null, 2)}
-                </pre>
-              </div>
+                <details className="group">
+                  <summary className="text-xs text-muted-foreground cursor-pointer hover:text-primary transition-colors flex items-center gap-1 list-none">
+                    <span className="group-open:rotate-90 transition-transform">▶</span> Ver JSON completo
+                  </summary>
+                  <pre className="mt-2 text-[10px] bg-slate-950 text-slate-300 p-3 rounded-lg overflow-auto max-h-60 border border-slate-800 shadow-inner leading-relaxed">
+                    {JSON.stringify(selectedLog.detalhes, (key, value) => {
+                      // Sensitive data masking in technical view
+                      const sensitiveKeys = ['password', 'senha', 'token', 'access_token', 'refresh_token', 'api_key', 'secret', 'authorization', 'bearer'];
+                      if (sensitiveKeys.includes(key.toLowerCase())) return '********';
+                      return value;
+                    }, 2)}
+                  </pre>
+                </details>
+              </section>
             </div>
           )}
+
         </SheetContent>
       </Sheet>
 
