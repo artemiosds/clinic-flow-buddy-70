@@ -33,7 +33,9 @@ import {
   Info,
   MapPin,
   Clock,
-  LayoutDashboard
+  LayoutDashboard,
+  Search,
+  Plus
 } from 'lucide-react';
 
 import PatientClinicalHeader from '@/components/pacientes/PatientClinicalHeader';
@@ -43,6 +45,10 @@ import DynamicProntuarioFields from '@/components/DynamicProntuarioFields';
 import SoapFieldsAdaptive from '@/components/SoapFieldsAdaptive';
 import { isMedico } from '@/data/soapOptionsByProfession';
 import PacienteDocumentos from '@/components/PacienteDocumentos';
+import { BuscaPaciente } from '@/components/BuscaPaciente';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // Services
 import { treatmentService, normalizeSoapPayload } from '@/services/treatmentService';
@@ -66,7 +72,7 @@ const calcularIdade = (dataNasc: string): string => {
 const WorkspaceProntuario: React.FC = () => {
   const { user } = useAuth();
   const { can } = usePermissions();
-  const { funcionarios, unidades } = useData();
+  const { funcionarios, unidades, pacientes } = useData();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
@@ -92,6 +98,7 @@ const WorkspaceProntuario: React.FC = () => {
     paciente_id: pacienteId || '',
     paciente_nome: pacienteNome || '',
     custom_data: {},
+    agendamento_id: agendamentoId || '',
   });
 
   const { getEnabledFields } = useProntuarioStructure();
@@ -103,110 +110,111 @@ const WorkspaceProntuario: React.FC = () => {
 
   // Load patient clinical data
   useEffect(() => {
-    if (!pacienteId) {
-      toast.error('Paciente não identificado');
-      navigate('/painel/prontuario');
-      return;
-    }
-
     const loadData = async () => {
       setLoading(true);
       try {
-        // Load basic patient data
-        const { data: pData } = await supabase
-          .from('pacientes')
-          .select('*')
-          .eq('id', pacienteId)
-          .single();
+        const targetPacienteId = pacienteId || form.paciente_id;
         
-        if (pData) {
-          setPacienteData(pData);
-        }
-
-        // Load triage if agendamentoId is present
-        if (agendamentoId) {
-          const { data: triagemData } = await supabase
-            .from('triage_records')
+        if (targetPacienteId) {
+          // Load basic patient data
+          const { data: pData } = await supabase
+            .from('pacientes')
             .select('*')
-            .eq('agendamento_id', agendamentoId)
-            .maybeSingle();
-          
-          if (triagemData) {
-            setTriagem(triagemData);
-          }
-        }
-
-        const existingForAgendamento = await supabase
-          .from('prontuarios')
-          .select('*')
-          .eq('agendamento_id', agendamentoId)
-          .maybeSingle();
-
-        if (existingForAgendamento.data) {
-          const p = existingForAgendamento.data;
-          setForm({
-            paciente_id: p.paciente_id,
-            paciente_nome: p.paciente_nome,
-            agendamento_id: p.agendamento_id || "",
-            data_atendimento: p.data_atendimento,
-            hora_atendimento: p.hora_atendimento || "",
-            tipo_registro: (p as any).tipo_registro || "consulta",
-            queixa_principal: p.queixa_principal || "",
-            anamnese: p.anamnese || "",
-            sinais_sintomas: p.sinais_sintomas || "",
-            exame_fisico: p.exame_fisico || "",
-            hipotese: p.hipotese || "",
-            conduta: p.conduta || "",
-            prescricao: p.prescricao || "",
-            solicitacao_exames: p.solicitacao_exames || "",
-            evolucao: p.evolucao || "",
-            observacoes: p.observacoes || "",
-            indicacao_retorno: p.indicacao_retorno || "",
-            procedimentos_texto: p.procedimentos_texto || "",
-            outro_procedimento: p.outro_procedimento || "",
-            episodio_id: p.episodio_id || "",
-            soap_subjetivo: (p as any).soap_subjetivo || "",
-            soap_objetivo: (p as any).soap_objetivo || "",
-            soap_avaliacao: (p as any).soap_avaliacao || "",
-            soap_plano: (p as any).soap_plano || "",
-            custom_data: (p as any).custom_data || {},
-          });
-        } else if (editId) {
-          const { data: record } = await supabase
-            .from('prontuarios')
-            .select('*')
-            .eq('id', editId)
+            .eq('id', targetPacienteId)
             .single();
           
-          if (record) {
-            const p = record;
-            setForm({
-              paciente_id: p.paciente_id,
-              paciente_nome: p.paciente_nome,
-              agendamento_id: p.agendamento_id || "",
-              data_atendimento: p.data_atendimento,
-              hora_atendimento: p.hora_atendimento || "",
-              tipo_registro: (p as any).tipo_registro || "consulta",
-              queixa_principal: p.queixa_principal || "",
-              anamnese: p.anamnese || "",
-              sinais_sintomas: p.sinais_sintomas || "",
-              exame_fisico: p.exame_fisico || "",
-              hipotese: p.hipotese || "",
-              conduta: p.conduta || "",
-              prescricao: p.prescricao || "",
-              solicitacao_exames: p.solicitacao_exames || "",
-              evolucao: p.evolucao || "",
-              observacoes: p.observacoes || "",
-              indicacao_retorno: p.indicacao_retorno || "",
-              procedimentos_texto: p.procedimentos_texto || "",
-              outro_procedimento: p.outro_procedimento || "",
-              episodio_id: p.episodio_id || "",
-              soap_subjetivo: (p as any).soap_subjetivo || "",
-              soap_objetivo: (p as any).soap_objetivo || "",
-              soap_avaliacao: (p as any).soap_avaliacao || "",
-              soap_plano: (p as any).soap_plano || "",
-              custom_data: (p as any).custom_data || {},
-            });
+          if (pData) {
+            setPacienteData(pData);
+          }
+
+          // Load triage if agendamentoId is present
+          const targetAgendamentoId = agendamentoId || form.agendamento_id;
+          if (targetAgendamentoId) {
+            const { data: triagemData } = await supabase
+              .from('triage_records')
+              .select('*')
+              .eq('agendamento_id', targetAgendamentoId)
+              .maybeSingle();
+            
+            if (triagemData) {
+              setTriagem(triagemData);
+            }
+          }
+
+          if (agendamentoId) {
+            const existingForAgendamento = await supabase
+              .from('prontuarios')
+              .select('*')
+              .eq('agendamento_id', agendamentoId)
+              .maybeSingle();
+
+            if (existingForAgendamento.data) {
+              const p = existingForAgendamento.data;
+              setForm({
+                paciente_id: p.paciente_id,
+                paciente_nome: p.paciente_nome,
+                agendamento_id: p.agendamento_id || "",
+                data_atendimento: p.data_atendimento,
+                hora_atendimento: p.hora_atendimento || "",
+                tipo_registro: (p as any).tipo_registro || "consulta",
+                queixa_principal: p.queixa_principal || "",
+                anamnese: p.anamnese || "",
+                sinais_sintomas: p.sinais_sintomas || "",
+                exame_fisico: p.exame_fisico || "",
+                hipotese: p.hipotese || "",
+                conduta: p.conduta || "",
+                prescricao: p.prescricao || "",
+                solicitacao_exames: p.solicitacao_exames || "",
+                evolucao: p.evolucao || "",
+                observacoes: p.observacoes || "",
+                indicacao_retorno: p.indicacao_retorno || "",
+                procedimentos_texto: p.procedimentos_texto || "",
+                outro_procedimento: p.outro_procedimento || "",
+                episodio_id: p.episodio_id || "",
+                soap_subjetivo: (p as any).soap_subjetivo || "",
+                soap_objetivo: (p as any).soap_objetivo || "",
+                soap_avaliacao: (p as any).soap_avaliacao || "",
+                soap_plano: (p as any).soap_plano || "",
+                custom_data: (p as any).custom_data || {},
+              });
+            }
+          } else if (editId) {
+            const { data: record } = await supabase
+              .from('prontuarios')
+              .select('*')
+              .eq('id', editId)
+              .single();
+            
+            if (record) {
+              const p = record;
+              setForm({
+                paciente_id: p.paciente_id,
+                paciente_nome: p.paciente_nome,
+                agendamento_id: p.agendamento_id || "",
+                data_atendimento: p.data_atendimento,
+                hora_atendimento: p.hora_atendimento || "",
+                tipo_registro: (p as any).tipo_registro || "consulta",
+                queixa_principal: p.queixa_principal || "",
+                anamnese: p.anamnese || "",
+                sinais_sintomas: p.sinais_sintomas || "",
+                exame_fisico: p.exame_fisico || "",
+                hipotese: p.hipotese || "",
+                conduta: p.conduta || "",
+                prescricao: p.prescricao || "",
+                solicitacao_exames: p.solicitacao_exames || "",
+                evolucao: p.evolucao || "",
+                observacoes: p.observacoes || "",
+                indicacao_retorno: p.indicacao_retorno || "",
+                procedimentos_texto: p.procedimentos_texto || "",
+                outro_procedimento: p.outro_procedimento || "",
+                episodio_id: p.episodio_id || "",
+                soap_subjetivo: (p as any).soap_subjetivo || "",
+                soap_objetivo: (p as any).soap_objetivo || "",
+                soap_avaliacao: (p as any).soap_avaliacao || "",
+                soap_plano: (p as any).soap_plano || "",
+                custom_data: (p as any).custom_data || {},
+              });
+            }
           }
         }
       } catch (error) {
@@ -217,26 +225,42 @@ const WorkspaceProntuario: React.FC = () => {
     };
 
     loadData();
-  }, [pacienteId, agendamentoId, editId, navigate]);
+  }, [pacienteId, agendamentoId, editId, form.paciente_id, form.agendamento_id]);
 
   const handleSave = async () => {
     setSaving(true);
     try {
+      const dbPayload = {
+        ...form,
+        id: editId || undefined,
+        agendamento_id: agendamentoId || form.agendamento_id || null,
+        paciente_id: pacienteId || form.paciente_id,
+        profissional_id: user?.id,
+        profissional_nome: user?.nome,
+        unidade_id: user?.unidadeId || '',
+        data_atendimento: form.data_atendimento,
+        hora_atendimento: form.hora_atendimento,
+      };
+
       const { data, error } = await supabase
         .from('prontuarios')
-        .upsert({
-          ...form,
-          id: editId || undefined,
-          agendamento_id: agendamentoId,
-          paciente_id: pacienteId,
-        })
+        .upsert(dbPayload)
         .select()
         .single();
 
       if (error) throw error;
       toast.success('Prontuário salvo com sucesso!');
+      
+      const effectiveAgendamentoId = agendamentoId || form.agendamento_id;
+      if (effectiveAgendamentoId) {
+        await supabase
+          .from('agendamentos')
+          .update({ status: 'concluido' })
+          .eq('id', effectiveAgendamentoId);
+      }
+
       if (!editId) {
-        navigate(`/painel/workspace-prontuario?pacienteId=${pacienteId}&pacienteNome=${pacienteNome}&editId=${data.id}`);
+        navigate(`/painel/workspace-prontuario?pacienteId=${pacienteId || form.paciente_id}&pacienteNome=${encodeURIComponent(pacienteNome || form.paciente_nome)}&editId=${data.id}`);
       }
     } catch (error) {
       console.error('Error saving prontuário:', error);
@@ -316,6 +340,40 @@ const WorkspaceProntuario: React.FC = () => {
                 alertas={triagem?.alergias?.length > 0 ? ['Alergias Detectadas'] : []}
                 risco={triagem?.prioridade === 'urgente' ? 'alto' : triagem?.prioridade === 'gestante' ? 'medio' : 'baixo'}
               />
+
+              {/* Selector for new clinical record if no patient is loaded via URL */}
+              {(!pacienteId && !editId) && (
+                <Card className="border-primary/20 bg-primary/[0.02]">
+                  <CardContent className="p-6 space-y-4">
+                    <div className="flex items-center gap-2 mb-2">
+                       <User className="w-5 h-5 text-primary" />
+                       <h3 className="font-bold text-foreground">Identificação do Paciente</h3>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <Label>Buscar Paciente</Label>
+                        <BuscaPaciente
+                          pacientes={pacientes}
+                          value={form.paciente_id}
+                          onChange={(id, nome) => {
+                            setForm(prev => ({ ...prev, paciente_id: id, paciente_nome: nome }));
+                          }}
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-1.5">
+                          <Label>Data</Label>
+                          <Input type="date" value={form.data_atendimento} onChange={(e) => setForm(p => ({...p, data_atendimento: e.target.value}))} />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label>Hora</Label>
+                          <Input type="time" value={form.hora_atendimento} onChange={(e) => setForm(p => ({...p, hora_atendimento: e.target.value}))} />
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Clinical Overview Bar - Key Stats at a glance */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 animate-in fade-in slide-in-from-bottom-2 duration-700">
@@ -398,6 +456,7 @@ const WorkspaceProntuario: React.FC = () => {
                       soapEnabled={true}
                       onToggleSoap={() => {}}
                       customOptionsForField={(field) => soapCustom.getOptionsForField(field)}
+                      customOptionsWithId={(field) => soapCustom.getOptionWithId(field)}
                       onAddCustomOption={(field, option) => soapCustom.addOption(field, option, user?.profissao || '')}
                       onDeleteCustomOption={soapCustom.deleteOption}
                     />
@@ -455,12 +514,19 @@ const WorkspaceProntuario: React.FC = () => {
                 </div>
                 <ScrollArea className="flex-1">
                   <div className="p-4 pb-12">
-                    <HistoricoClinico
-                      pacienteId={pacienteId!}
-                      pacienteNome={pacienteNome || ''}
-                      currentProfissionalId={user?.id}
-                      unidades={unidades}
-                    />
+                    {(pacienteId || form.paciente_id) ? (
+                      <HistoricoClinico
+                        pacienteId={(pacienteId || form.paciente_id)!}
+                        pacienteNome={pacienteNome || form.paciente_nome || ''}
+                        currentProfissionalId={user?.id}
+                        unidades={unidades}
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-20 text-center px-6">
+                        <Search className="w-10 h-10 text-muted-foreground/30 mb-4" />
+                        <p className="text-sm text-muted-foreground font-medium">Selecione um paciente para visualizar o histórico longitudinal completo.</p>
+                      </div>
+                    )}
                   </div>
                 </ScrollArea>
               </div>
@@ -474,7 +540,9 @@ const WorkspaceProntuario: React.FC = () => {
                  </div>
                  <ScrollArea className="flex-1">
                    <div className="p-4 pb-12">
-                     <PacienteDocumentos pacienteId={pacienteId!} />
+                     {(pacienteId || form.paciente_id) && (
+                       <PacienteDocumentos pacienteId={(pacienteId || form.paciente_id)!} />
+                     )}
                    </div>
                  </ScrollArea>
                </div>
