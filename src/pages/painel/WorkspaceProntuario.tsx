@@ -43,6 +43,22 @@ import { isMedico } from '@/data/soapOptionsByProfession';
 // Services
 import { treatmentService, normalizeSoapPayload } from '@/services/treatmentService';
 
+const calcularIdade = (dataNasc: string): string => {
+  if (!dataNasc) return "—";
+  const nascimento = new Date(dataNasc + "T12:00:00");
+  if (isNaN(nascimento.getTime())) return "—";
+  const hoje = new Date();
+  let anos = hoje.getFullYear() - nascimento.getFullYear();
+  const m = hoje.getMonth() - nascimento.getMonth();
+  if (m < 0 || (m === 0 && hoje.getDate() < nascimento.getDate())) anos--;
+  if (anos < 1) {
+    let meses = (hoje.getFullYear() - nascimento.getFullYear()) * 12 + (hoje.getMonth() - nascimento.getMonth());
+    if (hoje.getDate() < nascimento.getDate()) meses--;
+    return meses <= 0 ? "< 1 mês" : `${meses} mes(es)`;
+  }
+  return `${anos} ano(s)`;
+};
+
 const WorkspaceProntuario: React.FC = () => {
   const { user } = useAuth();
   const { can } = usePermissions();
@@ -260,11 +276,19 @@ const WorkspaceProntuario: React.FC = () => {
               
               {/* Clinical Patient Header - Compact & Intelligent */}
               <PatientClinicalHeader
-                nome={pacienteNome || 'Paciente não identificado'}
-                idade={form.paciente_id ? 'Calculando...' : '—'} // Idealmente viria de um hook de dados do paciente
-                sexo="—" // Idealmente do estado do paciente
-                cpf="—"
-                cns="—"
+                nome={pacienteData?.nome || pacienteNome || 'Paciente não identificado'}
+                idade={pacienteData?.data_nascimento ? calcularIdade(pacienteData.data_nascimento) : '—'}
+                sexo={(() => {
+                  const s = pacienteData?.custom_data?.sexo || pacienteData?.sexo;
+                  if (!s) return "—";
+                  const val = String(s).toUpperCase();
+                  if (val === 'M' || val === 'MASCULINO') return 'Masculino';
+                  if (val === 'F' || val === 'FEMININO') return 'Feminino';
+                  if (val === 'I' || val === 'IGNORADO') return 'Ignorado';
+                  return s;
+                })()}
+                cpf={pacienteData?.cpf || '—'}
+                cns={pacienteData?.cns || '—'}
                 profissional={user?.nome || '—'}
                 alertas={triagem?.alergias?.length > 0 ? ['Alergias Detectadas'] : []}
               />
