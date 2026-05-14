@@ -514,13 +514,23 @@ const ProntuarioPage: React.FC = () => {
   const filteredProcedimentos = useMemo(() => {
     if (!user) return [];
     const q = procSearch.trim().toLowerCase();
+    
+    // Se estiver pesquisando (query presente), consultamos a base completa de ativos.
+    // Se não estiver pesquisando, filtramos por profissão para facilitar o uso comum.
     return procedimentos.filter((p) => {
-      if (user.profissao && p.profissao && p.profissao.toLowerCase() !== user.profissao.toLowerCase()) return false;
+      // Filtro de profissionais vinculados (se houver trava por profissional)
       if (p.profissionais_ids && p.profissionais_ids.length > 0 && !p.profissionais_ids.includes(user.id)) return false;
+      
       if (q) {
-        const hay = `${p.nome} ${p.id} ${p.especialidade}`.toLowerCase();
-        if (!hay.includes(q)) return false;
+        const hay = `${p.nome} ${p.id} ${p.especialidade} ${p.profissao}`.toLowerCase();
+        return hay.includes(q);
       }
+      
+      // Sem pesquisa: mostra o que é da sua profissão
+      if (user.profissao && p.profissao) {
+        return p.profissao.toLowerCase() === user.profissao.toLowerCase();
+      }
+      
       return true;
     });
   }, [procedimentos, user, procSearch]);
