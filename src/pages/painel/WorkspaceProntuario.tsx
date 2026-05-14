@@ -477,14 +477,30 @@ const WorkspaceProntuario: React.FC = () => {
                       onChange={(field, value) => setForm(prev => ({ ...prev, [field]: value }))}
                       soapErrors={false}
                       onClearErrors={() => {}}
-                      soapEnabled={true}
-                      onToggleSoap={() => {}}
+                      soapEnabled={soapEnabled}
+                      onToggleSoap={handleToggleSoap}
                       labels={soapLabels}
                       customOptionsForField={(field) => soapCustom.getOptionsForField(field)}
                       customOptionsWithId={(field) => soapCustom.getOptionWithId(field)}
                       onAddCustomOption={(field, option) => soapCustom.addOption(field, option, user?.profissao || '')}
                       onDeleteCustomOption={soapCustom.deleteOption}
                     />
+                    
+                    {!soapEnabled && (
+                      <div className="mt-4 space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <div className="flex items-center gap-2 mb-1">
+                          <FileText className="w-4 h-4 text-primary" />
+                          <Label className="font-bold text-xs uppercase text-muted-foreground tracking-wider">Evolução Livre</Label>
+                        </div>
+                        <DebouncedTextarea
+                          rows={8}
+                          value={form.evolucao || ''}
+                          onChange={(e) => setForm(prev => ({ ...prev, evolucao: e.target.value }))}
+                          placeholder="Descreva a evolução clínica do paciente detalhadamente..."
+                          className="bg-card border-border/60 shadow-sm focus-visible:ring-primary/30"
+                        />
+                      </div>
+                    )}
                     <DynamicProntuarioFields
                       campos={getCamposForTipo(form.tipo_registro)}
                       formValues={form}
