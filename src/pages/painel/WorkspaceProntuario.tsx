@@ -20,7 +20,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { 
   History, FileText, User, Activity, ArrowLeft, Save, Printer, 
-  Stethoscope, ClipboardList, Clock, Search, UserCog, Stamp, Trash2
+  Stethoscope, ClipboardList, Clock, Search, UserCog, Stamp, Trash2,
+  Calendar, Info
 } from 'lucide-react';
 
 import PatientClinicalHeader from '@/components/pacientes/PatientClinicalHeader';
@@ -181,12 +182,14 @@ const WorkspaceProntuario: React.FC = () => {
             const { data: p } = await supabase.from('prontuarios').select('*').eq('agendamento_id', agendamentoId).maybeSingle();
             if (p) {
               setForm(prev => ({ ...prev, ...p }));
+              setEspecialidadeFields(p.campos_especialidade || {});
               loadProntuarioProcedimentos(p.id);
             }
           } else if (editId) {
             const { data: p } = await supabase.from('prontuarios').select('*').eq('id', editId).single();
             if (p) {
               setForm(prev => ({ ...prev, ...p }));
+              setEspecialidadeFields(p.campos_especialidade || {});
               loadProntuarioProcedimentos(p.id);
               if (p.agendamento_id) loadTriagem(p.agendamento_id);
             }
@@ -208,6 +211,7 @@ const WorkspaceProntuario: React.FC = () => {
         unidade_id: user?.unidadeId || '',
         prescricao: JSON.stringify(listaPrescricao),
         solicitacao_exames: JSON.stringify(listaExames),
+        campos_especialidade: especialidadeFields,
       };
       const { data, error } = await supabase.from('prontuarios').upsert(dbPayload).select().single();
       if (error) throw error;
@@ -287,14 +291,35 @@ const WorkspaceProntuario: React.FC = () => {
 
                 <Tabs defaultValue="evolution" className="w-full">
                   <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pb-2 border-b mb-4">
-                    <TabsList className="w-full justify-start h-12 bg-transparent gap-6 p-0">
-                      <TabsTrigger value="evolution" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold">Evolução</TabsTrigger>
-                      <TabsTrigger value="prescriptions" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold">Prescrições/Exames</TabsTrigger>
-                      <TabsTrigger value="procedures" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold">Procedimentos/CID</TabsTrigger>
-                      <TabsTrigger value="treatments" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold">Tratamentos/PTS</TabsTrigger>
-                      <TabsTrigger value="antecedents" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold">Antecedentes/Triagem</TabsTrigger>
-                      <TabsTrigger value="annexes" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold">Anexos</TabsTrigger>
-                    </TabsList>
+                    <div className="flex items-center justify-between gap-4 mb-2">
+                      <TabsList className="flex-1 justify-start h-12 bg-transparent gap-6 p-0 overflow-x-auto">
+                        <TabsTrigger value="evolution" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold">Evolução</TabsTrigger>
+                        <TabsTrigger value="prescriptions" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap">Prescrições/Exames</TabsTrigger>
+                        <TabsTrigger value="procedures" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap">Procedimentos/CID</TabsTrigger>
+                        <TabsTrigger value="treatments" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap">Tratamentos/PTS</TabsTrigger>
+                        <TabsTrigger value="antecedents" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap">Histórico Externo</TabsTrigger>
+                        <TabsTrigger value="annexes" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap">Anexos</TabsTrigger>
+                      </TabsList>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Label className="text-[10px] uppercase font-bold text-muted-foreground whitespace-nowrap">Tipo de Registro:</Label>
+                        <Select 
+                          value={form.tipo_registro} 
+                          onValueChange={(v) => setForm(p => ({...p, tipo_registro: v}))}
+                        >
+                          <SelectTrigger className="h-8 w-40 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="avaliacao_inicial">Avaliação Inicial</SelectItem>
+                            <SelectItem value="retorno">Retorno</SelectItem>
+                            <SelectItem value="sessao">Sessão</SelectItem>
+                            <SelectItem value="urgencia">Urgência</SelectItem>
+                            <SelectItem value="procedimento">Procedimento</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
                   </div>
 
                   <TabsContent value="evolution" className="mt-0 space-y-6">
