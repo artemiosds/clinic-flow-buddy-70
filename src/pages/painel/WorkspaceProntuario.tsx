@@ -351,7 +351,7 @@ const WorkspaceProntuario: React.FC = () => {
                       onEspecialidadeChange={(k, v) => setEspecialidadeFields(p => ({...p, [k]: v}))}
                       profissao={user?.profissao}
                       profissionalId={user?.id}
-                      tipoProntuario={form.tipo_registro === 'avaliacao_inicial' ? 'avaliacao' : form.tipo_registro as any}
+                      tipoProntuario={form.tipo_registro === 'avaliacao_inicial' ? 'avaliacao' : (form.tipo_registro === 'retorno' ? 'retorno' : (form.tipo_registro === 'sessao' ? 'sessao' : (form.tipo_registro === 'urgencia' ? 'urgencia' : (form.tipo_registro === 'procedimento' ? 'procedimento' : 'avaliacao'))))}
                     />
                   </TabsContent>
 
