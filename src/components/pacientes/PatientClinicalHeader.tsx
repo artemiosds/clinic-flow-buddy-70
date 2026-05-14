@@ -1,7 +1,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, Calendar, User, Activity, Settings } from 'lucide-react';
+import { AlertCircle, Calendar, User, Activity, UserCog, Edit3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface PatientHeaderProps {
