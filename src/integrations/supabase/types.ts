@@ -4263,6 +4263,20 @@ export type Database = {
         }
         Relationships: []
       }
+      mv_relatorio_producao: {
+        Row: {
+          data: string | null
+          profissao: string | null
+          profissional_id: string | null
+          profissional_nome: string | null
+          status: string | null
+          tempo_total_minutos: number | null
+          total_atendimentos: number | null
+          unidade_id: string | null
+          unidade_nome: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       check_slot_availability: {
@@ -4275,6 +4289,10 @@ export type Database = {
         Returns: Json
       }
       exec_sql: { Args: { sql_query: string }; Returns: Json }
+      get_dashboard_stats: {
+        Args: { p_profissional_id?: string; p_unidade_id?: string }
+        Returns: Json
+      }
       get_system_stats: { Args: never; Returns: Json }
       get_treatment_cycles_paginated: {
         Args: {
@@ -4333,6 +4351,8 @@ export type Database = {
         }
         Returns: Json
       }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
     }
     Enums: {
       paciente_encaminhamento_status: "pendente" | "realizado" | "cancelado"
