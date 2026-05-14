@@ -284,12 +284,20 @@ Deno.serve(async (req) => {
       if (!pront) return;
       protsComProc.add(pront.id);
       
-      // Resolver CID: 1. Proc Prontuario -> 2. Prontuario Header -> 3. PTS
+      const pacId = pront.paciente_id;
+      const pac = pacMap.get(pacId);
+      const pacCustom = pac?.custom_data || {};
+      const pacPts = ptsByPac.get(pacId) || [];
+
+      // Resolver CID: 1. Proc Prontuario -> 2. Prontuario Header -> 3. Paciente -> 4. PTS
       let finalCid = v.cid || pront.cid;
       if (!finalCid) {
-        const pacPts = ptsByPac.get(pront.paciente_id) || [];
-        const ptsWithCid = pacPts.find((p: any) => p.pts_cid && p.pts_cid.length > 0);
-        if (ptsWithCid) finalCid = ptsWithCid.pts_cid[0].cid_codigo;
+        if (pacCustom.cid) {
+          finalCid = pacCustom.cid;
+        } else {
+          const ptsWithCid = pacPts.find((p: any) => p.pts_cid && p.pts_cid.length > 0);
+          if (ptsWithCid) finalCid = ptsWithCid.pts_cid[0].cid_codigo;
+        }
       }
 
       items.push({
@@ -300,34 +308,44 @@ Deno.serve(async (req) => {
       });
     });
 
-    // Prontuários SEM procedimento — tentar buscar no PTS ou marcar pendente
+    // Prontuários SEM procedimento — tentar buscar no Paciente ou PTS
     prots.forEach((pront: any) => {
       if (!protsComProc.has(pront.id)) {
-        const pacPts = ptsByPac.get(pront.paciente_id) || [];
+        const pacId = pront.paciente_id;
+        const pac = pacMap.get(pacId);
+        const pacCustom = pac?.custom_data || {};
+        const pacPts = ptsByPac.get(pacId) || [];
+
+        let finalProc = '';
+        let finalProcNome = '';
+
+        // Prioridade: PTS -> Paciente
         const ptsWithProc = pacPts.find((p: any) => p.pts_sigtap && p.pts_sigtap.length > 0);
+        if (ptsWithProc) {
+          finalProc = ptsWithProc.pts_sigtap[0].procedimento_codigo;
+          finalProcNome = ptsWithProc.pts_sigtap[0].procedimento_nome;
+        } else if (pacCustom.codigo_sigtap) {
+          finalProc = pacCustom.codigo_sigtap;
+          finalProcNome = pacCustom.nome_procedimento || 'Procedimento Vinculado ao Paciente';
+        }
         
+        // Resolver CID
         let finalCid = pront.cid;
         if (!finalCid) {
-          const ptsWithCid = pacPts.find((p: any) => p.pts_cid && p.pts_cid.length > 0);
-          if (ptsWithCid) finalCid = ptsWithCid.pts_cid[0].cid_codigo;
+          if (pacCustom.cid) {
+            finalCid = pacCustom.cid;
+          } else {
+            const ptsWithCid = pacPts.find((p: any) => p.pts_cid && p.pts_cid.length > 0);
+            if (ptsWithCid) finalCid = ptsWithCid.pts_cid[0].cid_codigo;
+          }
         }
 
-        if (ptsWithProc) {
-          const pSigtap = ptsWithProc.pts_sigtap[0];
-          items.push({
-            pront,
-            codigo_sigtap: (pSigtap.procedimento_codigo || '').replace(/\D/g, '').length === 10 ? pSigtap.procedimento_codigo : '',
-            nome_procedimento: pSigtap.procedimento_nome,
-            cid: finalCid
-          });
-        } else {
-          items.push({
-            pront,
-            codigo_sigtap: '',
-            nome_procedimento: '— sem procedimento (Prontuário/PTS) —',
-            cid: finalCid
-          });
-        }
+        items.push({
+          pront,
+          codigo_sigtap: (finalProc || '').replace(/\D/g, '').length === 10 ? finalProc : '',
+          nome_procedimento: finalProcNome || '— sem procedimento (Prontuário/PTS/Paciente) —',
+          cid: finalCid
+        });
       }
     });
 
