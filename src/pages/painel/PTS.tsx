@@ -121,17 +121,28 @@ const PTS: React.FC = () => {
   // Load SIGTAP procedures dynamically based on selected specialties
   const loadSigtapProcsForSpecialties = useCallback(async (specialties: string[]) => {
     if (!user) return;
-    const sigtapKeys = specialties.map(s => SPECIALTY_TO_SIGTAP[s]).filter(Boolean);
-    if (sigtapKeys.length === 0) { setSigtapProcs([]); return; }
     setLoadingProcs(true);
     try {
-      const { data, error } = await supabase
+      const sigtapKeys = specialties.map(s => SPECIALTY_TO_SIGTAP[s]).filter(Boolean);
+      
+      let query = supabase
         .from('sigtap_procedimentos')
         .select('*')
-        .in('especialidade', sigtapKeys)
-        .eq('ativo', true)
+        .eq('ativo', true);
+      
+      // Se houver especialidades selecionadas, filtramos. 
+      // Caso contrário, trazemos uma base inicial (limitada para não travar o select)
+      // Mas o usuário poderá buscar qualquer um.
+      if (sigtapKeys.length > 0) {
+        query = query.in('especialidade', sigtapKeys);
+      } else {
+        query = query.limit(200); // Base inicial sem filtro
+      }
+      
+      const { data, error } = await query
         .order('especialidade')
         .order('codigo');
+        
       if (error) { console.error('Erro ao carregar SIGTAP:', error); return; }
       setSigtapProcs(data || []);
     } catch (err) {
