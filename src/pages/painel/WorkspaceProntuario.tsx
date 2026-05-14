@@ -32,7 +32,8 @@ import {
   ClipboardList,
   Info,
   MapPin,
-  Clock
+  Clock,
+  LayoutDashboard
 } from 'lucide-react';
 
 import PatientClinicalHeader from '@/components/pacientes/PatientClinicalHeader';
@@ -41,6 +42,7 @@ import TriagemDetalhada from '@/components/TriagemDetalhada';
 import DynamicProntuarioFields from '@/components/DynamicProntuarioFields';
 import SoapFieldsAdaptive from '@/components/SoapFieldsAdaptive';
 import { isMedico } from '@/data/soapOptionsByProfession';
+import PacienteDocumentos from '@/components/PacienteDocumentos';
 
 // Services
 import { treatmentService, normalizeSoapPayload } from '@/services/treatmentService';
@@ -460,17 +462,11 @@ const WorkspaceProntuario: React.FC = () => {
                    <FileText className="w-4 h-4 text-primary" />
                    <h3 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Arquivos e Anexos</h3>
                  </div>
-                 <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-                    <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
-                      <FileText className="w-8 h-8 text-muted-foreground/30" />
-                    </div>
-                    <h4 className="text-sm font-semibold text-foreground">Nenhum documento</h4>
-                    <p className="text-xs text-muted-foreground mt-2 max-w-[200px]">Exames, receitas e outros documentos aparecerão listados aqui.</p>
-                    <Button variant="outline" size="sm" className="mt-6 gap-2">
-                      <Download className="w-3.5 h-3.5" />
-                      Acessar Repositório
-                    </Button>
-                 </div>
+                 <ScrollArea className="flex-1">
+                   <div className="p-4 pb-12">
+                     <PacienteDocumentos pacienteId={pacienteId!} />
+                   </div>
+                 </ScrollArea>
                </div>
             </TabsContent>
           </Tabs>
