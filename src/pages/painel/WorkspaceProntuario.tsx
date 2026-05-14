@@ -46,9 +46,15 @@ import SoapFieldsAdaptive from '@/components/SoapFieldsAdaptive';
 import { isMedico } from '@/data/soapOptionsByProfession';
 import PacienteDocumentos from '@/components/PacienteDocumentos';
 import { BuscaPaciente } from '@/components/BuscaPaciente';
+import QuickEditPatientModal from '@/components/pacientes/QuickEditPatientModal';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { 
+  ResizableHandle, 
+  ResizablePanel, 
+  ResizablePanelGroup 
+} from "@/components/ui/resizable";
 
 // Services
 import { treatmentService, normalizeSoapPayload } from '@/services/treatmentService';
@@ -107,6 +113,8 @@ const WorkspaceProntuario: React.FC = () => {
   const soapCustom = useSoapCustomOptions(user?.id);
 
   const [pacienteData, setPacienteData] = useState<any>(null);
+  const [editPatientOpen, setEditPatientOpen] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Load patient clinical data
   useEffect(() => {
@@ -225,7 +233,7 @@ const WorkspaceProntuario: React.FC = () => {
     };
 
     loadData();
-  }, [pacienteId, agendamentoId, editId, form.paciente_id, form.agendamento_id]);
+  }, [pacienteId, agendamentoId, editId, form.paciente_id, form.agendamento_id, refreshTrigger]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -314,13 +322,16 @@ const WorkspaceProntuario: React.FC = () => {
       </header>
 
       <div className="flex flex-1 overflow-hidden relative">
-        {/* Main Content Area: High-focus Clinical Editor */}
-        <main className="flex-1 flex flex-col min-w-0 bg-muted/10 relative overflow-hidden">
+        <ResizablePanelGroup direction="horizontal" className="flex-1">
+          <ResizablePanel defaultSize={65} minSize={40} className="flex flex-col">
+            {/* Main Content Area: High-focus Clinical Editor */}
+            <main className="flex-1 flex flex-col min-w-0 bg-muted/10 relative overflow-hidden h-full">
           <ScrollArea className="flex-1 h-full">
             <div className="p-4 md:p-6 lg:p-8 max-w-5xl mx-auto space-y-6 pb-24">
               
               {/* Clinical Patient Header - Compact & Intelligent */}
               <PatientClinicalHeader
+                onEdit={() => setEditPatientOpen(true)}
                 nome={pacienteData?.nome || pacienteNome || 'Paciente não identificado'}
                 idade={pacienteData?.data_nascimento ? calcularIdade(pacienteData.data_nascimento) : '—'}
                 dataNasc={pacienteData?.data_nascimento}
@@ -486,9 +497,13 @@ const WorkspaceProntuario: React.FC = () => {
             </div>
           </ScrollArea>
         </main>
+      </ResizablePanel>
 
+      <ResizableHandle withHandle className="hidden lg:flex" />
+
+      <ResizablePanel defaultSize={35} minSize={25} className="hidden lg:flex flex-col h-full border-l z-10 shadow-[0_-8px_30px_rgb(0,0,0,0.12)] bg-background">
         {/* Longitudinal History Panel - Integrated Hospital Sidebar */}
-        <aside className="w-[440px] shrink-0 bg-background border-l flex flex-col hidden lg:flex z-10 shadow-[0_-8px_30px_rgb(0,0,0,0.12)] overflow-hidden">
+        <aside className="flex-1 flex flex-col h-full min-w-0">
           <Tabs defaultValue="history" className="flex flex-col h-full">
             <div className="px-4 py-3.5 bg-muted/20 border-b">
               <TabsList className="grid grid-cols-2 w-full h-10 p-1 bg-background border rounded-lg">
@@ -503,8 +518,8 @@ const WorkspaceProntuario: React.FC = () => {
               </TabsList>
             </div>
 
-            <TabsContent value="history" className="flex-1 overflow-hidden m-0 relative">
-              <div className="flex flex-col h-full bg-muted/5">
+            <TabsContent value="history" className="flex-1 overflow-hidden m-0 relative w-full">
+              <div className="flex flex-col h-full bg-muted/5 w-full">
                 <div className="p-4 py-2.5 border-b bg-card/80 backdrop-blur-md flex items-center justify-between sticky top-0 z-10">
                   <div className="flex items-center gap-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-primary" />
@@ -512,8 +527,8 @@ const WorkspaceProntuario: React.FC = () => {
                   </div>
                   <Badge variant="outline" className="text-[9px] font-bold tracking-tighter uppercase px-1.5 h-5 border-primary/20 text-primary bg-primary/5">Timeline Ativa</Badge>
                 </div>
-                <ScrollArea className="flex-1">
-                  <div className="p-4 pb-12">
+                <ScrollArea className="flex-1 w-full">
+                  <div className="p-3 pb-12 w-full">
                     {(pacienteId || form.paciente_id) ? (
                       <HistoricoClinico
                         pacienteId={(pacienteId || form.paciente_id)!}
@@ -532,8 +547,8 @@ const WorkspaceProntuario: React.FC = () => {
               </div>
             </TabsContent>
 
-            <TabsContent value="documents" className="flex-1 overflow-hidden m-0">
-               <div className="flex flex-col h-full bg-muted/5">
+            <TabsContent value="documents" className="flex-1 overflow-hidden m-0 w-full">
+               <div className="flex flex-col h-full bg-muted/5 w-full">
                  <div className="p-4 py-2.5 border-b bg-card flex items-center gap-2">
                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
                    <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Documentos e Anexos</h3>
@@ -549,9 +564,21 @@ const WorkspaceProntuario: React.FC = () => {
             </TabsContent>
           </Tabs>
         </aside>
-      </div>
+      </ResizablePanel>
+    </ResizablePanelGroup>
+
+    <QuickEditPatientModal
+      open={editPatientOpen}
+      onOpenChange={setEditPatientOpen}
+      pacienteId={pacienteId || form.paciente_id}
+      onSaved={() => {
+        setRefreshTrigger(prev => prev + 1);
+        setEditPatientOpen(false);
+      }}
+    />
     </div>
-  );
+  </div>
+);
 };
 
 export default WorkspaceProntuario;

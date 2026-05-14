@@ -65,10 +65,10 @@ function formatDateBR(isoDate: string): string {
 
 const Section: React.FC<{ label: string; value: string }> = ({ label, value }) => (
   <div className="mb-4">
-    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide mb-1">{label}</p>
-    <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed border-l-2 border-primary/20 pl-3 py-1 bg-primary/[0.02] rounded-r-md">
+    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1 px-1">{label}</p>
+    <div className="text-sm text-foreground whitespace-pre-wrap leading-relaxed border-l-2 border-primary/30 pl-3 py-2 bg-muted/40 rounded-r-lg ring-1 ring-border/50 shadow-sm">
       {value || "—"}
-    </p>
+    </div>
   </div>
 );
 
@@ -510,15 +510,15 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
             <p className="text-sm text-muted-foreground text-center">Nenhum atendimento registrado nesta linha do tempo.</p>
           </div>
         ) : (
-          <div className="relative pl-6 space-y-4">
-            <div className="absolute left-2 top-2 bottom-2 w-px bg-gradient-to-b from-primary/30 via-border to-transparent" aria-hidden="true" />
+          <div className="relative pl-5 space-y-4">
+            <div className="absolute left-1.5 top-2 bottom-2 w-px bg-gradient-to-b from-primary/40 via-border to-transparent" aria-hidden="true" />
             {timeline.map((item) => {
               const isOwn = item.profissional_id === currentProfissionalId;
               const expanded = expandedId === item.id;
               return (
                 <div key={item.id} className="relative group">
                   <div className={cn(
-                    "absolute -left-4 top-3 w-3.5 h-3.5 rounded-full border-2 border-background transition-transform group-hover:scale-110 z-10",
+                    "absolute -left-[17px] top-3 w-3.5 h-3.5 rounded-full border-2 border-background transition-transform group-hover:scale-110 z-10",
                     item.tipo_registro?.includes('alta') ? "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]" : "bg-primary"
                   )} />
                   <Card className={cn(
@@ -527,7 +527,7 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
                   )}>
                     <CardContent className="p-0">
                       <div 
-                        className="flex items-start justify-between gap-3 p-4 cursor-pointer hover:bg-muted/30 transition-colors"
+                        className="flex items-start justify-between gap-2.5 p-3 cursor-pointer hover:bg-muted/30 transition-colors"
                         onClick={() => setExpandedId(expanded ? null : item.id)}
                       >
                         <div className="flex-1 min-w-0">
@@ -598,7 +598,7 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
                       </div>
                       
                       {expanded && (
-                        <div className="px-4 pb-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <div className="px-3 pb-3 animate-in fade-in slide-in-from-top-2 duration-300">
                           <div className="border-t pt-4 space-y-4">
                             {renderContent(item)}
                           </div>
