@@ -407,9 +407,12 @@ const WorkspaceProntuario: React.FC = () => {
                     <DynamicProntuarioFields
                       campos={getCamposForTipo(form.tipo_registro)}
                       formValues={form}
-                      customValues={{}}
+                      customValues={form.custom_data || {}}
                       onFormChange={(key, val) => setForm(prev => ({ ...prev, [key]: val }))}
-                      onCustomChange={() => {}}
+                      onCustomChange={(key, val) => setForm(prev => ({ 
+                        ...prev, 
+                        custom_data: { ...(prev.custom_data || {}), [key]: val } 
+                      }))}
                     />
                   </div>
                 </CardContent>
