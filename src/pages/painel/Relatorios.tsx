@@ -141,8 +141,12 @@ const Relatorios: React.FC = () => {
         while (true) {
           let query = supabase
             .from('treatment_sessions')
-            .select('id,cycle_id,patient_id,professional_id,status,scheduled_date,session_number,absence_type')
-            .range(from, from + pageSize - 1);
+            .select('id,cycle_id,patient_id,professional_id,status,scheduled_date,session_number,absence_type');
+
+          if (dateFrom) query = query.gte('scheduled_date', dateFrom);
+          if (dateTo) query = query.lte('scheduled_date', dateTo);
+
+          query = query.range(from, from + pageSize - 1);
 
           if (user?.role === 'profissional') {
             query = query.eq('professional_id', user.id);
