@@ -113,6 +113,8 @@ const WorkspaceProntuario: React.FC = () => {
   const soapCustom = useSoapCustomOptions(user?.id);
 
   const [pacienteData, setPacienteData] = useState<any>(null);
+  const [editPatientOpen, setEditPatientOpen] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Load patient clinical data
   useEffect(() => {
