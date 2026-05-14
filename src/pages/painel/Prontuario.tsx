@@ -3270,7 +3270,7 @@ const ProntuarioPage: React.FC = () => {
                           onClick={() => navigate(`/painel/workspace-prontuario?pacienteId=${p.paciente_id}&pacienteNome=${encodeURIComponent(p.paciente_nome)}&editId=${p.id}`)} 
                           title="Editar"
                         >
-                          <Pencil className="w-4 h-4" />
+                          <Pencil className="w-4 h-4 text-primary" />
                         </Button>
                       ) : (
                         <Button size="icon" variant="ghost" disabled title="Somente leitura — prontuário de outro profissional">
