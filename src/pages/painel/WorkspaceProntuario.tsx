@@ -328,7 +328,7 @@ const WorkspaceProntuario: React.FC = () => {
                   </div>
                   <div className="min-w-0">
                     <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Último Atend.</p>
-                    <p className="text-xs font-semibold truncate">Há 2 dias</p>
+                    <p className="text-xs font-semibold truncate">—</p>
                   </div>
                 </Card>
                 <Card className="p-3 border-none bg-emerald-500/5 flex items-center gap-3">
@@ -337,7 +337,7 @@ const WorkspaceProntuario: React.FC = () => {
                   </div>
                   <div className="min-w-0">
                     <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Frequência</p>
-                    <p className="text-xs font-semibold truncate">Semanal</p>
+                    <p className="text-xs font-semibold truncate">—</p>
                   </div>
                 </Card>
                 <Card className="p-3 border-none bg-indigo-500/5 flex items-center gap-3">
@@ -346,7 +346,7 @@ const WorkspaceProntuario: React.FC = () => {
                   </div>
                   <div className="min-w-0">
                     <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Tratamento</p>
-                    <p className="text-xs font-semibold truncate">Fisioterapia</p>
+                    <p className="text-xs font-semibold truncate">{pacienteData?.especialidade_destino || '—'}</p>
                   </div>
                 </Card>
               </div>
