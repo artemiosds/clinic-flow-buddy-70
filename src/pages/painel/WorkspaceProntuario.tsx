@@ -378,8 +378,12 @@ const WorkspaceProntuario: React.FC = () => {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm"><Printer className="w-4 h-4 mr-2" /> Imprimir</Button>
-          <Button onClick={handleSave} disabled={saving} size="sm" className="gradient-primary">{saving ? 'Salvando...' : 'Finalizar'}</Button>
+          <Button variant="outline" size="sm" onClick={handlePrint}>
+            <Printer className="w-4 h-4 mr-2" /> Imprimir
+          </Button>
+          <Button onClick={handleSave} disabled={saving} size="sm" className="gradient-primary">
+            {saving ? 'Salvando...' : (editId ? 'Finalizar Alteração' : 'Finalizar Prontuário')}
+          </Button>
         </div>
       </header>
 
