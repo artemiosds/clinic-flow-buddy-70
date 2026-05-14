@@ -536,17 +536,14 @@ const ProntuarioPage: React.FC = () => {
   }, [procedimentos, user, procSearch]);
 
   const loadProntuarios = async (pacienteId?: string) => {
-    if (!pacienteId && !search) {
-      setProntuarios([]);
-      return;
-    }
     setLoading(true);
     try {
       let query = (supabase as any)
         .from("prontuarios")
         .select("*")
         .order("data_atendimento", { ascending: false })
-        .limit(50);
+        .order("hora_atendimento", { ascending: false })
+        .limit(100);
       
       if (pacienteId) {
         query = query.eq("paciente_id", pacienteId);
@@ -555,7 +552,9 @@ const ProntuarioPage: React.FC = () => {
         query = query.or(`paciente_nome.ilike.%${q}%,profissional_nome.ilike.%${q}%`);
       }
 
-      if (user?.unidadeId && user?.usuario !== 'admin.sms') query = query.eq("unidade_id", user.unidadeId);
+      if (user?.unidadeId && user?.usuario !== 'admin.sms') {
+        query = query.eq("unidade_id", user.unidadeId);
+      }
       
       const { data, error } = await query;
       if (data) setProntuarios(data);
@@ -2088,7 +2087,7 @@ const ProntuarioPage: React.FC = () => {
                   if (queryPacienteId) {
                     navigate(`/painel/workspace-prontuario?pacienteId=${queryPacienteId}&pacienteNome=${encodeURIComponent(queryPacienteNome || "Paciente")}`);
                   } else {
-                    openNew();
+                    navigate('/painel/workspace-prontuario');
                   }
                 }} 
                 size="sm" 

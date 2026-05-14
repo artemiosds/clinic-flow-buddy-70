@@ -64,9 +64,11 @@ function formatDateBR(isoDate: string): string {
 }
 
 const Section: React.FC<{ label: string; value: string }> = ({ label, value }) => (
-  <div className="mb-2">
-    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide mb-0.5">{label}</p>
-    <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{value || "—"}</p>
+  <div className="mb-4">
+    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide mb-1">{label}</p>
+    <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed border-l-2 border-primary/20 pl-3 py-1 bg-primary/[0.02] rounded-r-md">
+      {value || "—"}
+    </p>
   </div>
 );
 
