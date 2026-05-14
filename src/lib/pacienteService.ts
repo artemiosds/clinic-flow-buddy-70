@@ -65,10 +65,10 @@ export async function updatePacienteCadastro(
   if (dados.tipo_logradouro_codigo !== undefined) updateData.tipo_logradouro_codigo = dados.tipo_logradouro_codigo || "";
 
 
-  // 4. Preservar custom_data
+  // 4. Preservar custom_data e buscar dados para auditoria
   const { data: currentPatient } = await supabase
     .from("pacientes")
-    .select("custom_data")
+    .select("*")
     .eq("id", pacienteId)
     .single();
 
