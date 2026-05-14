@@ -1054,7 +1054,11 @@ const ProntuarioPage: React.FC = () => {
       soap_objetivo: (p as any).soap_objetivo || "",
       soap_avaliacao: (p as any).soap_avaliacao || "",
       soap_plano: (p as any).soap_plano || "",
+      custom_data: (p as any).custom_data || {},
     };
+    if (formData.custom_data?.soap_enabled !== undefined) {
+      setSoapEnabled(formData.custom_data.soap_enabled);
+    }
     setForm(formData);
     setPreviousForm(formData);
     setOriginalProfissional({
@@ -1193,6 +1197,10 @@ const ProntuarioPage: React.FC = () => {
         soap_objetivo: soapPayload.objetivo,
         soap_avaliacao: soapPayload.avaliacao,
         soap_plano: soapPayload.plano,
+        custom_data: {
+          ...form.custom_data,
+          soap_enabled: soapEnabled
+        }
       };
 
       // CORRIGIDO: não salva 'no_episode' no banco
