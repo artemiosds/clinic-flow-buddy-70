@@ -152,6 +152,16 @@ const WorkspaceProntuario: React.FC = () => {
     }
   };
 
+  const loadTriagem = async (agendamentoId: string) => {
+    const { data } = await supabase.from("triage_records").select("*").eq("agendamento_id", agendamentoId).not("confirmado_em", "is", null).maybeSingle();
+    if (data) setTriagem(data);
+  };
+
+  const loadEpisodios = async (pacienteId: string) => {
+    const { data } = await supabase.from("episodios_clinicos").select("id,titulo,status").eq("paciente_id", pacienteId).eq("status", "ativo");
+    if (data) setEpisodios(data);
+  };
+
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
@@ -161,8 +171,10 @@ const WorkspaceProntuario: React.FC = () => {
           const { data: pData } = await supabase.from('pacientes').select('*').eq('id', targetPacienteId).single();
           if (pData) setPacienteData(pData);
           loadSessaoData(targetPacienteId);
+          loadEpisodios(targetPacienteId);
 
           if (agendamentoId) {
+            loadTriagem(agendamentoId);
             const { data: p } = await supabase.from('prontuarios').select('*').eq('agendamento_id', agendamentoId).maybeSingle();
             if (p) {
               setForm(prev => ({ ...prev, ...p }));
@@ -173,6 +185,7 @@ const WorkspaceProntuario: React.FC = () => {
             if (p) {
               setForm(prev => ({ ...prev, ...p }));
               loadProntuarioProcedimentos(p.id);
+              if (p.agendamento_id) loadTriagem(p.agendamento_id);
             }
           }
         }
