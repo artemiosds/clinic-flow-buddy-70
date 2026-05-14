@@ -383,13 +383,13 @@ const BpaProducao: React.FC = () => {
         }
       });
 
-      setLinhas(result);
+      setLinhas(finalResult);
 
       console.log("[BPA] resumo da resolucao", {
         competencia,
         totalProntuarios: prots.length,
         totalVinculos: (vincs || []).length,
-        totalLinhas: result.length
+        totalLinhas: finalResult.length
       });
 
     } catch (err: any) {
