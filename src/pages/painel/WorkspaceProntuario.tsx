@@ -32,7 +32,8 @@ import {
   ClipboardList,
   Info,
   MapPin,
-  Clock
+  Clock,
+  LayoutDashboard
 } from 'lucide-react';
 
 import PatientClinicalHeader from '@/components/pacientes/PatientClinicalHeader';
@@ -41,6 +42,7 @@ import TriagemDetalhada from '@/components/TriagemDetalhada';
 import DynamicProntuarioFields from '@/components/DynamicProntuarioFields';
 import SoapFieldsAdaptive from '@/components/SoapFieldsAdaptive';
 import { isMedico } from '@/data/soapOptionsByProfession';
+import PacienteDocumentos from '@/components/PacienteDocumentos';
 
 // Services
 import { treatmentService, normalizeSoapPayload } from '@/services/treatmentService';
@@ -89,6 +91,7 @@ const WorkspaceProntuario: React.FC = () => {
     conduta: '',
     paciente_id: pacienteId || '',
     paciente_nome: pacienteNome || '',
+    custom_data: {},
   });
 
   const { getEnabledFields } = useProntuarioStructure();
@@ -166,6 +169,7 @@ const WorkspaceProntuario: React.FC = () => {
             soap_objetivo: (p as any).soap_objetivo || "",
             soap_avaliacao: (p as any).soap_avaliacao || "",
             soap_plano: (p as any).soap_plano || "",
+            custom_data: (p as any).custom_data || {},
           });
         } else if (editId) {
           const { data: record } = await supabase
@@ -201,6 +205,7 @@ const WorkspaceProntuario: React.FC = () => {
               soap_objetivo: (p as any).soap_objetivo || "",
               soap_avaliacao: (p as any).soap_avaliacao || "",
               soap_plano: (p as any).soap_plano || "",
+              custom_data: (p as any).custom_data || {},
             });
           }
         }
@@ -217,10 +222,24 @@ const WorkspaceProntuario: React.FC = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Logic for saving based on Prontuario.tsx implementation
-      // ... stripped for simplicity in this prototype structure
+      const { data, error } = await supabase
+        .from('prontuarios')
+        .upsert({
+          ...form,
+          id: editId || undefined,
+          agendamento_id: agendamentoId,
+          paciente_id: pacienteId,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
       toast.success('Prontuário salvo com sucesso!');
+      if (!editId) {
+        navigate(`/painel/workspace-prontuario?pacienteId=${pacienteId}&pacienteNome=${pacienteNome}&editId=${data.id}`);
+      }
     } catch (error) {
+      console.error('Error saving prontuário:', error);
       toast.error('Erro ao salvar prontuário');
     } finally {
       setSaving(false);
@@ -312,7 +331,7 @@ const WorkspaceProntuario: React.FC = () => {
                   </div>
                   <div className="min-w-0">
                     <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Último Atend.</p>
-                    <p className="text-xs font-semibold truncate">Há 2 dias</p>
+                    <p className="text-xs font-semibold truncate">—</p>
                   </div>
                 </Card>
                 <Card className="p-3 border-none bg-emerald-500/5 flex items-center gap-3">
@@ -321,7 +340,7 @@ const WorkspaceProntuario: React.FC = () => {
                   </div>
                   <div className="min-w-0">
                     <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Frequência</p>
-                    <p className="text-xs font-semibold truncate">Semanal</p>
+                    <p className="text-xs font-semibold truncate">—</p>
                   </div>
                 </Card>
                 <Card className="p-3 border-none bg-indigo-500/5 flex items-center gap-3">
@@ -330,7 +349,7 @@ const WorkspaceProntuario: React.FC = () => {
                   </div>
                   <div className="min-w-0">
                     <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Tratamento</p>
-                    <p className="text-xs font-semibold truncate">Fisioterapia</p>
+                    <p className="text-xs font-semibold truncate">{pacienteData?.especialidade_destino || '—'}</p>
                   </div>
                 </Card>
               </div>
@@ -391,9 +410,12 @@ const WorkspaceProntuario: React.FC = () => {
                     <DynamicProntuarioFields
                       campos={getCamposForTipo(form.tipo_registro)}
                       formValues={form}
-                      customValues={{}}
+                      customValues={form.custom_data || {}}
                       onFormChange={(key, val) => setForm(prev => ({ ...prev, [key]: val }))}
-                      onCustomChange={() => {}}
+                      onCustomChange={(key, val) => setForm(prev => ({ 
+                        ...prev, 
+                        custom_data: { ...(prev.custom_data || {}), [key]: val } 
+                      }))}
                     />
                   </div>
                 </CardContent>
@@ -446,17 +468,11 @@ const WorkspaceProntuario: React.FC = () => {
                    <FileText className="w-4 h-4 text-primary" />
                    <h3 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Arquivos e Anexos</h3>
                  </div>
-                 <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-                    <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
-                      <FileText className="w-8 h-8 text-muted-foreground/30" />
-                    </div>
-                    <h4 className="text-sm font-semibold text-foreground">Nenhum documento</h4>
-                    <p className="text-xs text-muted-foreground mt-2 max-w-[200px]">Exames, receitas e outros documentos aparecerão listados aqui.</p>
-                    <Button variant="outline" size="sm" className="mt-6 gap-2">
-                      <Download className="w-3.5 h-3.5" />
-                      Acessar Repositório
-                    </Button>
-                 </div>
+                 <ScrollArea className="flex-1">
+                   <div className="p-4 pb-12">
+                     <PacienteDocumentos pacienteId={pacienteId!} />
+                   </div>
+                 </ScrollArea>
                </div>
             </TabsContent>
           </Tabs>

@@ -1105,10 +1105,10 @@ const Pacientes: React.FC = () => {
                       size="sm"
                       variant="ghost"
                       className="h-8 w-8 p-0"
-                      onClick={() =>
-                        navigate(`/painel/prontuario?pacienteId=${p.id}&pacienteNome=${encodeURIComponent(p.nome)}`)
-                      }
-                      title="Ver Prontuários"
+                        onClick={() =>
+                          navigate(`/painel/workspace-prontuario?pacienteId=${p.id}&pacienteNome=${encodeURIComponent(p.nome)}`)
+                        }
+                        title="Ver Prontuários"
                     >
                       <FileText className="w-3.5 h-3.5" />
                     </Button>

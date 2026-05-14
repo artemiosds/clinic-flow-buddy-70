@@ -967,7 +967,7 @@ const Agenda: React.FC = () => {
     await logAction({ acao: "atendimento_iniciado", entidade: "atendimentos", entidadeId: ag.id, modulo: "atendimentos", user, detalhes: { paciente_nome: ag.pacienteNome, paciente_cpf: pac?.cpf || "", hora_inicio: horaInicio, unidade: ag.unidadeId, sala: ag.salaId || "" } });
     toast.success("Atendimento iniciado!");
     const params = new URLSearchParams({ pacienteId: ag.pacienteId, pacienteNome: ag.pacienteNome, agendamentoId: ag.id, horaInicio, data: ag.data, tipo: ag.tipo || '' });
-    navigate(`/painel/prontuario?${params.toString()}`);
+    navigate(`/painel/workspace-prontuario?${params.toString()}`);
   };
 
   const handleAgendarRetorno = async () => {
@@ -1679,10 +1679,10 @@ const Agenda: React.FC = () => {
                               <Button size="sm" className="h-8 px-3 text-xs bg-success text-success-foreground hover:bg-success/90" onClick={() => handleIniciarAtendimento(ag)}><Play className="w-3.5 h-3.5 mr-1" /> Iniciar atendimento</Button>
                             )}
                             {isEmAtendimento && (
-                              <Button size="sm" variant="outline" className="h-8 px-3 text-xs" onClick={() => { const params = new URLSearchParams({ pacienteId: ag.pacienteId, pacienteNome: ag.pacienteNome, agendamentoId: ag.id, data: ag.data, tipo: ag.tipo || '' }); try { const stored = localStorage.getItem(`timer_${ag.id}`); if (stored) { const parsed = JSON.parse(stored); if (parsed.horaInicio) params.set('horaInicio', parsed.horaInicio); } } catch {} navigate(`/painel/prontuario?${params.toString()}`); }}><Clock className="w-3.5 h-3.5 mr-1" /> Continuar</Button>
+                              <Button size="sm" variant="outline" className="h-8 px-3 text-xs" onClick={() => { const params = new URLSearchParams({ pacienteId: ag.pacienteId, pacienteNome: ag.pacienteNome, agendamentoId: ag.id, data: ag.data, tipo: ag.tipo || '' }); try { const stored = localStorage.getItem(`timer_${ag.id}`); if (stored) { const parsed = JSON.parse(stored); if (parsed.horaInicio) params.set('horaInicio', parsed.horaInicio); } } catch {} navigate(`/painel/workspace-prontuario?${params.toString()}`); }}><Clock className="w-3.5 h-3.5 mr-1" /> Continuar</Button>
                             )}
                             {ag.status === "concluido" && (
-                              <Button size="sm" variant="ghost" className="h-8 px-3 text-xs" onClick={() => { const params = new URLSearchParams({ pacienteId: ag.pacienteId, pacienteNome: ag.pacienteNome, agendamentoId: ag.id, data: ag.data, tipo: ag.tipo || '' }); navigate(`/painel/prontuario?${params.toString()}`); }}>✅ Ver prontuário</Button>
+                              <Button size="sm" variant="ghost" className="h-8 px-3 text-xs" onClick={() => { const params = new URLSearchParams({ pacienteId: ag.pacienteId, pacienteNome: ag.pacienteNome, agendamentoId: ag.id, data: ag.data, tipo: ag.tipo || '' }); navigate(`/painel/workspace-prontuario?${params.toString()}`); }}>✅ Ver prontuário</Button>
                             )}
                             {(ag.status === "falta" || ag.status === "cancelado") && <span className="text-xs text-muted-foreground px-2 py-1">{ag.status === "falta" ? "Faltou" : "Cancelado"}</span>}
                             {!ehHoje && !["falta", "cancelado", "concluido"].includes(ag.status) && <span className="text-xs text-muted-foreground px-2 py-1">📅 Agendado para {new Date(ag.data + "T12:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}</span>}
