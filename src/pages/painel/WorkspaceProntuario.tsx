@@ -217,10 +217,24 @@ const WorkspaceProntuario: React.FC = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Logic for saving based on Prontuario.tsx implementation
-      // ... stripped for simplicity in this prototype structure
+      const { data, error } = await supabase
+        .from('prontuarios')
+        .upsert({
+          ...form,
+          id: editId || undefined,
+          agendamento_id: agendamentoId,
+          paciente_id: pacienteId,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
       toast.success('Prontuário salvo com sucesso!');
+      if (!editId) {
+        navigate(`/painel/prontuario?pacienteId=${pacienteId}&pacienteNome=${pacienteNome}&editId=${data.id}`);
+      }
     } catch (error) {
+      console.error('Error saving prontuário:', error);
       toast.error('Erro ao salvar prontuário');
     } finally {
       setSaving(false);
