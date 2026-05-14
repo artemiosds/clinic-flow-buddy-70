@@ -21,8 +21,10 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/componen
 import { 
   History, FileText, User, Activity, ArrowLeft, Save, Printer, 
   Stethoscope, ClipboardList, Clock, Search, UserCog, Stamp, Trash2,
-  Calendar, Info
+  Calendar, Info, AlertTriangle
 } from 'lucide-react';
+import { cn } from "@/lib/utils";
+import { TIPO_REGISTRO_LABELS } from '@/utils/labels';
 
 import PatientClinicalHeader from '@/components/pacientes/PatientClinicalHeader';
 import { HistoricoClinico } from '@/components/HistoricoClinico';
