@@ -547,8 +547,8 @@ const WorkspaceProntuario: React.FC = () => {
               </div>
             </TabsContent>
 
-            <TabsContent value="documents" className="flex-1 overflow-hidden m-0">
-               <div className="flex flex-col h-full bg-muted/5">
+            <TabsContent value="documents" className="flex-1 overflow-hidden m-0 w-full">
+               <div className="flex flex-col h-full bg-muted/5 w-full">
                  <div className="p-4 py-2.5 border-b bg-card flex items-center gap-2">
                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
                    <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Documentos e Anexos</h3>
