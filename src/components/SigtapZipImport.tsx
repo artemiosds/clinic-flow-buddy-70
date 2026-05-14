@@ -282,7 +282,7 @@ const SigtapZipImport: React.FC = () => {
       procedures.push({ codigo, nome, especialidade, subgrupo });
     }
 
-    addLog('info', `📋 ${procedures.length.toLocaleString('pt-BR')} procedimentos filtrados`);
+    addLog('info', `📋 ${procedures.length.toLocaleString('pt-BR')} procedimentos identificados`);
 
     if (procedures.length === 0) {
       throw new Error('Nenhum procedimento encontrado para as especialidades selecionadas. Verifique os filtros.');
