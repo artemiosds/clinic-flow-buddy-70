@@ -89,6 +89,7 @@ const AdminCredentials            = lazyRetry(() => import("./pages/painel/Admin
 const ArquivoDigital              = lazyRetry(() => import("./pages/ArquivoDigital"));
 const PacienteAtualizacaoCadastral = lazyRetry(() => import("./pages/painel/PacienteAtualizacaoCadastral"));
 const MonitoramentoSistema = lazyRetry(() => import("./pages/painel/MonitoramentoSistema"));
+const WorkspaceProntuario = lazyRetry(() => import("./pages/painel/WorkspaceProntuario"));
 
 const LoginExterno                = lazyRetry(() => import("./pages/LoginExterno"));
 const AgendamentoExterno          = lazyRetry(() => import("./pages/AgendamentoExterno"));
@@ -214,6 +215,7 @@ const App = () => (
                     <Route path="unidades" element={<ModuleRoute modulo="unidades_salas"><UnidadesSalas /></ModuleRoute>} />
                     <Route path="disponibilidade" element={<ModuleRoute modulo="disponibilidade"><Disponibilidade /></ModuleRoute>} />
                     <Route path="prontuario" element={<ModuleRoute modulo="prontuario"><Prontuario /></ModuleRoute>} />
+                    <Route path="prontuario/workspace" element={<ModuleRoute modulo="prontuario"><WorkspaceProntuario /></ModuleRoute>} />
                     <Route path="auditoria" element={<ModuleRoute modulo="logs_auditoria"><Auditoria /></ModuleRoute>} />
                     <Route path="triagem" element={<ModuleRoute modulo="triagem"><Triagem /></ModuleRoute>} />
                     <Route path="historico-triagem" element={<ModuleRoute modulo="historico_triagem"><HistoricoTriagem /></ModuleRoute>} />

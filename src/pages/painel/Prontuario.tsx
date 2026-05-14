@@ -2083,7 +2083,17 @@ const ProntuarioPage: React.FC = () => {
               </>
             )}
             {canEdit && (
-              <Button onClick={openNew} size="sm" className="gradient-primary text-primary-foreground">
+              <Button 
+                onClick={() => {
+                  if (queryPacienteId) {
+                    navigate(`/painel/prontuario/workspace?pacienteId=${queryPacienteId}&pacienteNome=${encodeURIComponent(queryPacienteNome || "Paciente")}`);
+                  } else {
+                    openNew();
+                  }
+                }} 
+                size="sm" 
+                className="gradient-primary text-primary-foreground"
+              >
                 <Plus className="w-4 h-4 mr-2" />
                 Novo Prontuário
               </Button>
@@ -3255,7 +3265,12 @@ const ProntuarioPage: React.FC = () => {
                         <History className="w-4 h-4 text-primary" />
                       </Button>
                       {(isProfissional ? isOwn : true) ? (
-                        <Button size="icon" variant="ghost" onClick={() => openEdit(p)} title="Editar">
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          onClick={() => navigate(`/painel/prontuario/workspace?pacienteId=${p.paciente_id}&pacienteNome=${encodeURIComponent(p.paciente_nome)}&editId=${p.id}`)} 
+                          title="Editar"
+                        >
                           <Pencil className="w-4 h-4" />
                         </Button>
                       ) : (
