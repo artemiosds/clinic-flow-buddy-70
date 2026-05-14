@@ -325,20 +325,25 @@ const WorkspaceProntuario: React.FC = () => {
         currentProntuario = old;
       }
 
-      const dbPayload = {
+      const dbPayload: any = {
         ...form,
         id: editId || form.id || undefined,
         profissional_id: user?.id,
         profissional_nome: user?.nome,
         unidade_id: user?.unidadeId || '',
-        prescricao: JSON.stringify(listaPrescricao),
-        solicitacao_exames: JSON.stringify(listaExames),
-        campos_especialidade: especialidadeFields,
+        prescricao: listaPrescricao.length > 0 ? JSON.stringify({ medicamentos: listaPrescricao }) : form.prescricao,
+        solicitacao_exames: listaExames.length > 0 ? JSON.stringify({ exames: listaExames }) : form.solicitacao_exames,
+        observacoes: Object.keys(especialidadeFields).length > 0
+          ? JSON.stringify({ especialidade_fields: especialidadeFields, texto: form.observacoes || '' })
+          : form.observacoes,
         custom_data: {
           ...form.custom_data,
           soap_enabled: soapEnabled
         }
       };
+
+      // Remove non-existent columns if they accidentally leaked from form
+      delete dbPayload.campos_especialidade;
       
       const { data, error } = await supabase.from('prontuarios').upsert(dbPayload).select().single();
       if (error) throw error;
