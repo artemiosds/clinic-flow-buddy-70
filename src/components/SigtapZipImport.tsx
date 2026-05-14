@@ -227,7 +227,7 @@ const SigtapZipImport: React.FC = () => {
 
   const runImport = async (zipBytes: Uint8Array, competencia: string) => {
     setStep('processing');
-    addLog('info', 'Lendo arquivo ZIP...');
+    addLog('info', `Iniciando carga completa da competência ${competenciaLabel(competencia)}...`);
 
     let zip: JSZip;
     try {
