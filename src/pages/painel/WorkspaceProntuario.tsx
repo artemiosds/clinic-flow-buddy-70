@@ -257,6 +257,9 @@ const WorkspaceProntuario: React.FC = () => {
                   cpf={pacienteData?.cpf || '—'}
                   cns={pacienteData?.cns || '—'}
                   profissional={user?.nome || '—'}
+                  telefone={pacienteData?.telefone}
+                  email={pacienteData?.email}
+                  endereco={pacienteData?.endereco}
                 />
 
                 {(!pacienteId && !editId) && (
