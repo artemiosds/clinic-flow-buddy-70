@@ -563,9 +563,20 @@ const WorkspaceProntuario: React.FC = () => {
             </TabsContent>
           </Tabs>
         </aside>
-      </div>
-    </div>
-  );
+      </ResizablePanel>
+    </ResizablePanelGroup>
+
+    <QuickEditPatientModal
+      open={editPatientOpen}
+      onOpenChange={setEditPatientOpen}
+      pacienteId={pacienteId || form.paciente_id}
+      onSaved={() => {
+        setRefreshTrigger(prev => prev + 1);
+        setEditPatientOpen(false);
+      }}
+    />
+  </div>
+);
 };
 
 export default WorkspaceProntuario;
