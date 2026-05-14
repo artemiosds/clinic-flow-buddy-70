@@ -78,6 +78,8 @@ const WorkspaceProntuario: React.FC = () => {
   const { config: profConfig } = useProntuarioConfig(user?.id, form.tipo_registro);
   const soapCustom = useSoapCustomOptions(user?.id);
 
+  const [pacienteData, setPacienteData] = useState<any>(null);
+
   // Load patient clinical data
   useEffect(() => {
     if (!pacienteId) {
@@ -89,6 +91,17 @@ const WorkspaceProntuario: React.FC = () => {
     const loadData = async () => {
       setLoading(true);
       try {
+        // Load basic patient data
+        const { data: pData } = await supabase
+          .from('pacientes')
+          .select('*')
+          .eq('id', pacienteId)
+          .single();
+        
+        if (pData) {
+          setPacienteData(pData);
+        }
+
         // Load triage if agendamentoId is present
         if (agendamentoId) {
           const { data: triagemData } = await supabase
@@ -181,7 +194,7 @@ const WorkspaceProntuario: React.FC = () => {
     };
 
     loadData();
-  }, [pacienteId, agendamentoId, editId]);
+  }, [pacienteId, agendamentoId, editId, navigate]);
 
   const handleSave = async () => {
     setSaving(true);
