@@ -547,10 +547,8 @@ const Auditoria: React.FC = () => {
                   <TableRow>
                     <TableHead className="whitespace-nowrap">Data/Hora</TableHead>
                     <TableHead>Usuário</TableHead>
-                    <TableHead>CPF</TableHead>
-                    <TableHead>Perfil</TableHead>
+                    <TableHead>Registro Afetado</TableHead>
                     <TableHead>Ação</TableHead>
-                    <TableHead>Módulo</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="w-10"></TableHead>
                   </TableRow>
