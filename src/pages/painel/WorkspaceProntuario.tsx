@@ -130,6 +130,27 @@ const WorkspaceProntuario: React.FC = () => {
     setSessaoDataLoading(false);
   };
 
+  const loadProntuarioProcedimentos = async (prontId: string) => {
+    const { data: prontProc } = await supabase.from("prontuario_procedimentos").select("*").eq("prontuario_id", prontId);
+    if (prontProc && prontProc.length > 0) {
+      setSelectedProcIds(prontProc.map((d: any) => d.procedimento_id));
+      const cidsByProcMap: Record<string, any[]> = {};
+      const selectedCidsMap: Record<string, string[]> = {};
+      prontProc.forEach((d: any) => {
+        try {
+          const parsed = d.observacao ? JSON.parse(d.observacao) : null;
+          const cids: any[] = Array.isArray(parsed?.cids) ? parsed.cids : [];
+          if (cids.length > 0) {
+            cidsByProcMap[d.procedimento_id] = cids;
+            selectedCidsMap[d.procedimento_id] = cids.map((c: any) => c.codigo);
+          }
+        } catch { /* ignore */ }
+      });
+      setCidsByProc(prev => ({ ...prev, ...cidsByProcMap }));
+      setSelectedCidsByProc(prev => ({ ...prev, ...selectedCidsMap }));
+    }
+  };
+
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
@@ -138,13 +159,20 @@ const WorkspaceProntuario: React.FC = () => {
         if (targetPacienteId) {
           const { data: pData } = await supabase.from('pacientes').select('*').eq('id', targetPacienteId).single();
           if (pData) setPacienteData(pData);
+          loadSessaoData(targetPacienteId);
 
           if (agendamentoId) {
             const { data: p } = await supabase.from('prontuarios').select('*').eq('agendamento_id', agendamentoId).maybeSingle();
-            if (p) setForm(prev => ({ ...prev, ...p }));
+            if (p) {
+              setForm(prev => ({ ...prev, ...p }));
+              loadProntuarioProcedimentos(p.id);
+            }
           } else if (editId) {
             const { data: p } = await supabase.from('prontuarios').select('*').eq('id', editId).single();
-            if (p) setForm(prev => ({ ...prev, ...p }));
+            if (p) {
+              setForm(prev => ({ ...prev, ...p }));
+              loadProntuarioProcedimentos(p.id);
+            }
           }
         }
       } finally { setLoading(false); }
