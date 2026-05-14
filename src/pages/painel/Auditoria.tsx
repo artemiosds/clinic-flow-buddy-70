@@ -241,32 +241,34 @@ const Auditoria: React.FC = () => {
       let subtitulo = '';
 
       if (log.entidade === 'paciente' || log.modulo === 'pacientes') {
-        const { data } = await supabase.from('pacientes').select('nome_completo, cpf').eq('id', log.entidade_id).maybeSingle();
+        const { data } = await supabase.from('pacientes' as any).select('nome_completo, cpf').eq('id', log.entidade_id).maybeSingle();
         if (data) {
-          nome = data.nome_completo;
-          subtitulo = `CPF: ${maskCpf(data.cpf)}`;
+          nome = (data as any).nome_completo;
+          subtitulo = `CPF: ${maskCpf((data as any).cpf)}`;
         }
       } else if (log.entidade === 'agendamento' || log.modulo === 'agendamento') {
-        const { data } = await supabase.from('agendamentos').select('paciente_nome, profissional_nome, data, hora').eq('id', log.entidade_id).maybeSingle();
+        const { data } = await supabase.from('agendamentos' as any).select('paciente_nome, profissional_nome, data, hora').eq('id', log.entidade_id).maybeSingle();
         if (data) {
-          nome = `${data.paciente_nome} → ${data.profissional_nome}`;
-          subtitulo = `${format(new Date(data.data + 'T12:00:00'), 'dd/MM/yyyy')} às ${data.hora.substring(0, 5)}`;
+          const d = data as any;
+          nome = `${d.paciente_nome} → ${d.profissional_nome}`;
+          subtitulo = `${format(new Date(d.data + 'T12:00:00'), 'dd/MM/yyyy')} às ${d.hora.substring(0, 5)}`;
         }
       } else if (log.entidade === 'prontuario' || log.modulo === 'prontuario') {
         const { data } = await supabase.from('prontuarios' as any).select('paciente_id, profissional_id, data_atendimento').eq('id', log.entidade_id).maybeSingle();
         if (data) {
+          const d = data as any;
           const [{ data: pac }, { data: prof }] = await Promise.all([
-            supabase.from('pacientes').select('nome_completo').eq('id', data.paciente_id).maybeSingle(),
-            supabase.from('funcionarios' as any).select('nome').eq('id', data.profissional_id).maybeSingle()
+            supabase.from('pacientes' as any).select('nome_completo').eq('id', d.paciente_id).maybeSingle(),
+            supabase.from('funcionarios' as any).select('nome').eq('id', d.profissional_id).maybeSingle()
           ]);
-          nome = `${pac?.nome_completo || 'Paciente'} / ${prof?.nome || 'Profissional'}`;
-          subtitulo = data.data_atendimento ? format(new Date(data.data_atendimento + 'T12:00:00'), 'dd/MM/yyyy') : '';
+          nome = `${(pac as any)?.nome_completo || 'Paciente'} / ${(prof as any)?.nome || 'Profissional'}`;
+          subtitulo = d.data_atendimento ? format(new Date(d.data_atendimento + 'T12:00:00'), 'dd/MM/yyyy') : '';
         }
       } else if (log.entidade === 'funcionario' || log.entidade === 'funcionarios') {
         const { data } = await supabase.from('funcionarios' as any).select('nome, profissao').eq('id', log.entidade_id).maybeSingle();
         if (data) {
-          nome = data.nome;
-          subtitulo = data.profissao;
+          nome = (data as any).nome;
+          subtitulo = (data as any).profissao;
         }
       }
 
