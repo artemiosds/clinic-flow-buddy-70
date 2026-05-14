@@ -285,7 +285,7 @@ const SigtapZipImport: React.FC = () => {
     addLog('info', `📋 ${procedures.length.toLocaleString('pt-BR')} procedimentos identificados`);
 
     if (procedures.length === 0) {
-      throw new Error('Nenhum procedimento encontrado para as especialidades selecionadas. Verifique os filtros.');
+      throw new Error('Nenhum procedimento encontrado no arquivo tb_procedimento.txt. Verifique se o arquivo está correto.');
     }
 
     // ============= Parse CID descriptions (fixed-width, latin-1) =============
