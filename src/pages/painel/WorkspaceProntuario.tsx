@@ -33,7 +33,7 @@ import {
   Info
 } from 'lucide-react';
 
-import FichaPacienteCabecalho from '@/components/FichaPacienteCabecalho';
+import PatientClinicalHeader from '@/components/pacientes/PatientClinicalHeader';
 import { HistoricoClinico } from '@/components/HistoricoClinico';
 import TriagemDetalhada from '@/components/TriagemDetalhada';
 import DynamicProntuarioFields from '@/components/DynamicProntuarioFields';
@@ -205,147 +205,151 @@ const WorkspaceProntuario: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-100px)] -m-4 lg:-m-8 bg-background">
-      {/* Clinician Header Bar */}
-      <header className="flex items-center justify-between px-6 py-3 border-b bg-card shrink-0">
+    <div className="flex flex-col h-screen overflow-hidden bg-background">
+      {/* Clinician Header Bar - Professional, High-Density */}
+      <header className="flex items-center justify-between px-6 py-2.5 border-b bg-card shrink-0 z-20">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="gap-2">
+          <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="gap-2 h-9 px-3">
             <ArrowLeft className="w-4 h-4" />
-            Sair
+            <span className="hidden sm:inline">Voltar</span>
           </Button>
-          <div className="h-6 w-px bg-border" />
-          <div className="flex items-center gap-2">
-            <Stethoscope className="w-5 h-5 text-primary" />
-            <h1 className="text-lg font-bold font-display">Workspace Clínico</h1>
-            <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20">
-              {editId ? 'Edição de Prontuário' : 'Novo Atendimento'}
-            </Badge>
+          <div className="h-6 w-px bg-border mx-1" />
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Stethoscope className="w-4.5 h-4.5 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-sm font-bold font-display leading-none">Workspace Clínico</h1>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-1 font-semibold">
+                {editId ? 'Edição de Prontuário' : 'Novo Atendimento'}
+              </p>
+            </div>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="gap-2">
+          <Button variant="outline" size="sm" className="gap-2 h-9">
             <Printer className="w-4 h-4" />
-            Imprimir
+            <span className="hidden md:inline">Imprimir</span>
           </Button>
-          <Button onClick={handleSave} disabled={saving} size="sm" className="gap-2 gradient-primary">
+          <Button onClick={handleSave} disabled={saving} size="sm" className="gap-2 h-9 px-4 gradient-primary shadow-sm shadow-primary/20">
             <Save className="w-4 h-4" />
-            {saving ? 'Salvando...' : 'Finalizar Atendimento'}
+            <span>{saving ? 'Salvando...' : 'Finalizar Atendimento'}</span>
           </Button>
         </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
-        {/* Main Content Area: Clinical Records */}
-        <main className="flex-1 flex flex-col min-w-0 border-r overflow-hidden">
-          <ScrollArea className="flex-1">
-            <div className="p-6 max-w-4xl mx-auto space-y-6">
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* Main Content Area: High-focus Clinical Editor */}
+        <main className="flex-1 flex flex-col min-w-0 bg-muted/10 relative overflow-hidden">
+          <ScrollArea className="flex-1 h-full">
+            <div className="p-4 md:p-6 lg:p-8 max-w-5xl mx-auto space-y-6 pb-24">
               
-              {/* Header: Patient Info (Compact) */}
-              <FichaPacienteCabecalho
-                pacienteId={pacienteId!}
-                profissionalNome={user?.nome || ''}
-                profissionalId={user?.id || ''}
-                agendamentoId={agendamentoId || undefined}
-                triagem={triagem}
-                funcionarios={funcionarios.map(f => ({ 
-                  id: f.id, 
-                  nome: f.nome, 
-                  profissao: f.profissao || '', 
-                  ativo: f.ativo ?? true 
-                }))}
+              {/* Clinical Patient Header - Compact & Intelligent */}
+              <PatientClinicalHeader
+                nome={pacienteNome || 'Paciente não identificado'}
+                idade={form.paciente_id ? 'Calculando...' : '—'} // Idealmente viria de um hook de dados do paciente
+                sexo="—" // Idealmente do estado do paciente
+                cpf="—"
+                cns="—"
+                profissional={user?.nome || '—'}
+                alertas={triagem?.alergias?.length > 0 ? ['Alergias Detectadas'] : []}
               />
 
-              {/* Triage summary if available */}
+              {/* Triage summary if available - High Clinical Alert Style */}
               {triagem && (
-                <div className="bg-muted/30 rounded-xl p-4 border border-dashed">
-                  <h3 className="text-xs font-bold uppercase text-muted-foreground mb-3 flex items-center gap-2">
-                    <Activity className="w-3.5 h-3.5" />
-                    Triagem Recente
-                  </h3>
+                <div className="animate-in fade-in slide-in-from-top-2 duration-500">
                   <TriagemDetalhada triagem={triagem} showEmpty={false} />
                 </div>
               )}
 
-              {/* Clinical Record Editor */}
-              <div className="space-y-6 bg-card rounded-xl border p-6 shadow-sm">
-                <div className="flex items-center justify-between border-b pb-4 mb-4">
-                  <div className="flex items-center gap-2">
-                    <ClipboardList className="w-5 h-5 text-primary" />
-                    <h2 className="text-lg font-bold">Evolução Clínica</h2>
-                  </div>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <History className="w-4 h-4" />
-                      {form.data_atendimento}
+              {/* Evolution Workspace - Maximum Area for Writing */}
+              <Card className="border-none shadow-md overflow-hidden ring-1 ring-border">
+                <div className="bg-card border-b px-6 py-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-primary/5 flex items-center justify-center">
+                      <ClipboardList className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <h2 className="text-base font-bold text-foreground">Evolução Atual</h2>
+                      <div className="flex items-center gap-3 text-[11px] text-muted-foreground mt-0.5">
+                         <span className="flex items-center gap-1"><History className="w-3.5 h-3.5" /> {form.data_atendimento} às {form.hora_atendimento}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
+                
+                <CardContent className="p-6 md:p-8 space-y-8 bg-card">
+                  {/* SOAP Editor - Adaptive & Professional */}
+                  <div className="space-y-6">
+                    <SoapFieldsAdaptive
+                      profissao={user?.profissao}
+                      values={{
+                        soap_subjetivo: form.soap_subjetivo || '',
+                        soap_objetivo: form.soap_objetivo || '',
+                        soap_avaliacao: form.soap_avaliacao || '',
+                        soap_plano: form.soap_plano || '',
+                      }}
+                      onChange={(field, value) => setForm(prev => ({ ...prev, [field]: value }))}
+                      soapErrors={false}
+                      onClearErrors={() => {}}
+                      soapEnabled={true}
+                      onToggleSoap={() => {}}
+                      customOptionsForField={(field) => soapCustom.getOptionsForField(field)}
+                      onAddCustomOption={(field, option) => soapCustom.addOption(field, option, user?.profissao || '')}
+                      onDeleteCustomOption={soapCustom.deleteOption}
+                    />
+                  </div>
 
-                {/* SOAP Editor */}
-                <SoapFieldsAdaptive
-                  profissao={user?.profissao}
-                  values={{
-                    soap_subjetivo: form.soap_subjetivo || '',
-                    soap_objetivo: form.soap_objetivo || '',
-                    soap_avaliacao: form.soap_avaliacao || '',
-                    soap_plano: form.soap_plano || '',
-                  }}
-                  onChange={(field, value) => setForm(prev => ({ ...prev, [field]: value }))}
-                  soapErrors={false}
-                  onClearErrors={() => {}}
-                  soapEnabled={true}
-                  onToggleSoap={() => {}}
-                  customOptionsForField={(field) => soapCustom.getOptionsForField(field)}
-                  onAddCustomOption={(field, option) => soapCustom.addOption(field, option, user?.profissao || '')}
-                  onDeleteCustomOption={soapCustom.deleteOption}
-                />
+                  <Separator className="opacity-50" />
 
-                <Separator />
-
-                {/* Dynamic Fields Section */}
-                <div className="space-y-4">
-                  <h3 className="text-sm font-bold uppercase text-muted-foreground">Complementos e Conduta</h3>
-                  <DynamicProntuarioFields
-                    campos={getCamposForTipo(form.tipo_registro)}
-                    formValues={form}
-                    customValues={{}}
-                    onFormChange={(key, val) => setForm(prev => ({ ...prev, [key]: val }))}
-                    onCustomChange={() => {}}
-                  />
-                </div>
-              </div>
+                  {/* Complementary Sections */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 mb-2">
+                       <Activity className="w-4 h-4 text-primary" />
+                       <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Conduta e Complementos</h3>
+                    </div>
+                    <DynamicProntuarioFields
+                      campos={getCamposForTipo(form.tipo_registro)}
+                      formValues={form}
+                      customValues={{}}
+                      onFormChange={(key, val) => setForm(prev => ({ ...prev, [key]: val }))}
+                      onCustomChange={() => {}}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </ScrollArea>
         </main>
 
-        {/* Lateral Sidebar: Timeline & Context */}
-        <aside className="w-[400px] shrink-0 bg-muted/20 flex flex-col overflow-hidden">
+        {/* Longitudinal History Panel - Intelligent Sidebar */}
+        <aside className="w-[420px] shrink-0 bg-background border-l flex flex-col hidden xl:flex z-10 shadow-2xl overflow-hidden">
           <Tabs defaultValue="history" className="flex flex-col h-full">
-            <div className="px-4 pt-3 border-b bg-card">
-              <TabsList className="grid grid-cols-2 w-full mb-2">
-                <TabsTrigger value="history" className="gap-2">
-                  <History className="w-3.5 h-3.5" />
-                  Histórico
+            <div className="px-4 py-3 bg-card border-b">
+              <TabsList className="grid grid-cols-2 w-full h-11 p-1 bg-muted/50 rounded-lg">
+                <TabsTrigger value="history" className="gap-2 text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                  <History className="w-4 h-4" />
+                  Registro Longitudinal
                 </TabsTrigger>
-                <TabsTrigger value="documents" className="gap-2">
-                  <FileText className="w-3.5 h-3.5" />
+                <TabsTrigger value="documents" className="gap-2 text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                  <FileText className="w-4 h-4" />
                   Documentos
                 </TabsTrigger>
               </TabsList>
             </div>
 
-            <TabsContent value="history" className="flex-1 overflow-hidden m-0">
-              <div className="flex flex-col h-full">
-                <div className="p-4 border-b bg-card/50 flex items-center justify-between">
-                  <h3 className="text-sm font-bold flex items-center gap-2">
-                    <Info className="w-4 h-4 text-primary" />
-                    Linha do Tempo
-                  </h3>
-                  <Badge variant="secondary" className="text-[10px]">Paciente Longitudinal</Badge>
+            <TabsContent value="history" className="flex-1 overflow-hidden m-0 relative">
+              <div className="flex flex-col h-full bg-muted/5">
+                <div className="p-4 py-3 border-b bg-card/80 backdrop-blur-sm flex items-center justify-between sticky top-0 z-10">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <h3 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Histórico Clínico Completo</h3>
+                  </div>
+                  <Badge variant="outline" className="text-[9px] font-bold tracking-tighter uppercase px-1.5 h-5 border-primary/20 text-primary bg-primary/5">Timeline</Badge>
                 </div>
                 <ScrollArea className="flex-1">
-                  <div className="p-4">
+                  <div className="p-4 pb-12">
                     <HistoricoClinico
                       pacienteId={pacienteId!}
                       pacienteNome={pacienteNome || ''}
@@ -358,11 +362,23 @@ const WorkspaceProntuario: React.FC = () => {
             </TabsContent>
 
             <TabsContent value="documents" className="flex-1 overflow-hidden m-0">
-              <div className="flex flex-col h-full p-4 items-center justify-center text-center text-muted-foreground">
-                <FileText className="w-12 h-12 mb-4 opacity-20" />
-                <p className="text-sm">Documentos anexados e gerados aparecerão aqui.</p>
-                <Button variant="link" size="sm" className="mt-2">Ver todos os arquivos</Button>
-              </div>
+               <div className="flex flex-col h-full bg-muted/5">
+                 <div className="p-4 py-3 border-b bg-card flex items-center gap-2">
+                   <FileText className="w-4 h-4 text-primary" />
+                   <h3 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Arquivos e Anexos</h3>
+                 </div>
+                 <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+                    <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
+                      <FileText className="w-8 h-8 text-muted-foreground/30" />
+                    </div>
+                    <h4 className="text-sm font-semibold text-foreground">Nenhum documento</h4>
+                    <p className="text-xs text-muted-foreground mt-2 max-w-[200px]">Exames, receitas e outros documentos aparecerão listados aqui.</p>
+                    <Button variant="outline" size="sm" className="mt-6 gap-2">
+                      <Download className="w-3.5 h-3.5" />
+                      Acessar Repositório
+                    </Button>
+                 </div>
+               </div>
             </TabsContent>
           </Tabs>
         </aside>
