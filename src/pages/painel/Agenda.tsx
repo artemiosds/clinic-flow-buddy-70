@@ -967,7 +967,7 @@ const Agenda: React.FC = () => {
     await logAction({ acao: "atendimento_iniciado", entidade: "atendimentos", entidadeId: ag.id, modulo: "atendimentos", user, detalhes: { paciente_nome: ag.pacienteNome, paciente_cpf: pac?.cpf || "", hora_inicio: horaInicio, unidade: ag.unidadeId, sala: ag.salaId || "" } });
     toast.success("Atendimento iniciado!");
     const params = new URLSearchParams({ pacienteId: ag.pacienteId, pacienteNome: ag.pacienteNome, agendamentoId: ag.id, horaInicio, data: ag.data, tipo: ag.tipo || '' });
-    navigate(`/painel/prontuario?${params.toString()}`);
+    navigate(`/painel/workspace-prontuario?${params.toString()}`);
   };
 
   const handleAgendarRetorno = async () => {
