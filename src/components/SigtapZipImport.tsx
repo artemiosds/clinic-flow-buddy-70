@@ -422,10 +422,8 @@ const SigtapZipImport: React.FC = () => {
   };
 
   const handleStart = async () => {
-    if (selected.size === 0) {
-      toast.error('Selecione ao menos uma especialidade');
-      return;
-    }
+    // Não bloqueamos mais se nenhuma especialidade estiver selecionada, 
+    // pois a importação agora é sempre total.
 
     setLogs([]);
     setProgressPct(0);
