@@ -59,6 +59,9 @@ const acaoLabels: Record<string, string> = {
   editar: 'Edição',
   excluir: 'Exclusão',
   cancelar: 'Cancelamento',
+  edicao_paciente: 'Edição de Paciente',
+  criacao_paciente: 'Cadastro de Paciente',
+  edicao_paciente_erro: 'Falha na Edição de Paciente',
   login: 'Login',
   login_sucesso: 'Login Sucesso',
   login_falha: 'Login Falha',
@@ -74,6 +77,7 @@ const acaoLabels: Record<string, string> = {
   prontuario_visualizado: 'Prontuário Visualizado',
   prontuario_criado: 'Prontuário Criado',
   prontuario_editado: 'Prontuário Editado',
+  finalizar_prontuario: 'Finalização de Prontuário',
   prontuario_exportado_pdf: 'Prontuário Exportado PDF',
   paciente_chamado: 'Paciente Chamado',
   paciente_rechamado: 'Paciente Rechamado',
@@ -86,6 +90,10 @@ const acaoLabels: Record<string, string> = {
   envio_webhook: 'Envio Webhook',
   portal_acesso: 'Acesso Portal',
   agendar_retorno: 'Agendar Retorno',
+  novo_agendamento: 'Criação de Agendamento',
+  desmarcar_sessao: 'Desmarcação de Sessão',
+  gerar_bpa: 'Geração de BPA',
+  baixar_pdf: 'Download de PDF',
 };
 
 const eventoGrupos: Record<string, { label: string; acoes: string[] }> = {
