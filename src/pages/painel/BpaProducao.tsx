@@ -289,8 +289,8 @@ const BpaProducao: React.FC = () => {
         }
       });
 
-      const result: LinhaBPA[] = [];
-      const protsComProc = new Set();
+      // Usando result e protsComProc já declarados acima
+
 
       // Função para resolver Procedimento e CID por prioridade
       const resolveBpaRow = (pront: any, procVinc?: any): LinhaBPA[] => {
