@@ -303,23 +303,35 @@ const WorkspaceProntuario: React.FC = () => {
                         <TabsTrigger value="annexes" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap">Anexos</TabsTrigger>
                       </TabsList>
 
-                      <div className="flex items-center gap-2 shrink-0">
-                        <Label className="text-[10px] uppercase font-bold text-muted-foreground whitespace-nowrap">Tipo de Registro:</Label>
-                        <Select 
-                          value={form.tipo_registro} 
-                          onValueChange={(v) => setForm(p => ({...p, tipo_registro: v}))}
-                        >
-                          <SelectTrigger className="h-8 w-40 text-xs">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="avaliacao_inicial">Avaliação Inicial</SelectItem>
-                            <SelectItem value="retorno">Retorno</SelectItem>
-                            <SelectItem value="sessao">Sessão</SelectItem>
-                            <SelectItem value="urgencia">Urgência</SelectItem>
-                            <SelectItem value="procedimento">Procedimento</SelectItem>
-                          </SelectContent>
-                        </Select>
+                      <div className="flex flex-col gap-1.5 shrink-0 min-w-[300px]">
+                        <Label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Tipo de Registro</Label>
+                        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                          {[
+                            { value: 'avaliacao_inicial', label: TIPO_REGISTRO_LABELS.avaliacao_inicial, color: 'text-success', bgColor: 'bg-success/10', borderColor: 'border-success/20', activeBg: 'bg-success', activeText: 'text-white', icon: Stethoscope },
+                            { value: 'retorno', label: TIPO_REGISTRO_LABELS.retorno, color: 'text-info', bgColor: 'bg-info/10', borderColor: 'border-info/20', activeBg: 'bg-info', activeText: 'text-white', icon: Clock },
+                            { value: 'sessao', label: TIPO_REGISTRO_LABELS.sessao, color: 'text-warning', bgColor: 'bg-warning/10', borderColor: 'border-warning/20', activeBg: 'bg-warning', activeText: 'text-warning-foreground', icon: Activity },
+                            { value: 'urgencia', label: TIPO_REGISTRO_LABELS.urgencia, color: 'text-destructive', bgColor: 'bg-destructive/10', borderColor: 'border-destructive/20', activeBg: 'bg-destructive', activeText: 'text-destructive-foreground', icon: AlertTriangle },
+                            { value: 'procedimento', label: TIPO_REGISTRO_LABELS.procedimento, color: 'text-muted-foreground', bgColor: 'bg-muted/50', borderColor: 'border-border', activeBg: 'bg-foreground', activeText: 'text-background', icon: ClipboardList },
+                          ].map((type) => {
+                            const isActive = form.tipo_registro === type.value;
+                            const Icon = type.icon;
+                            return (
+                              <button
+                                key={type.value}
+                                onClick={() => setForm(p => ({...p, tipo_registro: type.value}))}
+                                className={cn(
+                                  "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-semibold border transition-all whitespace-nowrap shadow-sm",
+                                  isActive 
+                                    ? `${type.activeBg} ${type.activeText} border-transparent scale-105 z-10`
+                                    : `${type.bgColor} ${type.color} ${type.borderColor} hover:bg-opacity-80`
+                                )}
+                              >
+                                <Icon className="w-3.5 h-3.5 shrink-0" />
+                                {type.label}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
                     </div>
                   </div>
