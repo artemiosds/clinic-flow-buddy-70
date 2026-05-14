@@ -20,6 +20,9 @@ interface AuditParams {
   detalhes?: Record<string, any>;
   before?: any;
   after?: any;
+  // Compatibility with old code
+  oldValue?: any;
+  newValue?: any;
   status?: 'sucesso' | 'erro' | 'bloqueado' | 'pendente';
   erro?: string;
   pacienteId?: string;
@@ -40,12 +43,15 @@ export const diffObjects = (before: any, after: any) => {
 
   allKeys.forEach(key => {
     // Skip technical fields
-    if (['updated_at', 'criado_em', 'atualizado_em', 'id'].includes(key)) return;
+    if (['updated_at', 'criado_em', 'atualizado_em', 'id', 'created_at'].includes(key)) return;
     
-    if (JSON.stringify(before[key]) !== JSON.stringify(after[key])) {
+    const valBefore = before[key];
+    const valAfter = after[key];
+
+    if (JSON.stringify(valBefore) !== JSON.stringify(valAfter)) {
       changes[key] = {
-        before: before[key],
-        after: after[key]
+        before: valBefore,
+        after: valAfter
       };
     }
   });
@@ -60,18 +66,22 @@ export const auditService = {
       const device = getDeviceInfo();
       const ua = navigator.userAgent;
 
+      // Map old fields to new ones for compatibility
+      const effectiveBefore = params.before || params.oldValue;
+      const effectiveAfter = params.after || params.newValue;
+
       // Enrich details
       const detalhes: Record<string, any> = { 
         ...(params.detalhes || {}),
         dispositivo: device,
         user_agent: ua,
-        origem: params.origem || window.location.pathname,
+        origem: params.origem || (typeof window !== 'undefined' ? window.location.pathname : ''),
       };
 
-      if (params.before) detalhes.before = params.before;
-      if (params.after) detalhes.after = params.after;
+      if (effectiveBefore) detalhes.before = effectiveBefore;
+      if (effectiveAfter) detalhes.after = effectiveAfter;
       
-      const changes = diffObjects(params.before, params.after);
+      const changes = diffObjects(effectiveBefore, effectiveAfter);
       if (changes) {
         detalhes.changes = changes;
         detalhes.campos_alterados = Object.keys(changes);
@@ -112,7 +122,6 @@ export const auditService = {
     }
   },
 
-  // Helper for updates to easily record before/after
   async auditUpdate(params: Omit<AuditParams, 'before' | 'after'> & { before: any; after: any }) {
     return this.log(params);
   },
@@ -129,3 +138,4 @@ export const auditService = {
     return this.log({ ...params, status: 'erro' });
   }
 };
+
