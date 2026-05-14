@@ -105,8 +105,30 @@ export async function updatePacienteCadastro(
 
   if (error) {
     console.error(`[${origem}] Erro ao atualizar paciente ${pacienteId}:`, error);
+    await auditService.log({
+      acao: "edicao_paciente_erro",
+      entidade: "paciente",
+      entidadeId: pacienteId,
+      modulo: "pacientes",
+      detalhes: { origem, erro: error.message },
+      status: "erro",
+      pacienteId
+    });
     throw error;
   }
+
+  // 6. Auditoria de sucesso
+  await auditService.log({
+    acao: "edicao_paciente",
+    entidade: "paciente",
+    entidadeId: pacienteId,
+    entidadeNome: data.nome,
+    modulo: "pacientes",
+    before: currentPatient,
+    after: data,
+    pacienteId,
+    origem
+  });
 
   return data;
 }
