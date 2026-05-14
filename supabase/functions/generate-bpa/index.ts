@@ -350,6 +350,7 @@ Deno.serve(async (req) => {
     });
 
 
+    let totalValidLines = 0;
     for (const item of items) {
       const { pront, codigo_sigtap, nome_procedimento, cid } = item;
       totalAtendimentos += 1;
@@ -517,9 +518,28 @@ Deno.serve(async (req) => {
         padNum(cep, 8);                         // 171-178 CEP
 
       linhasBpa.push(linha);
+      totalValidLines += 1;
     }
 
-    const totalLinhas = linhasBpa.length;
+    const totalLinhas = totalValidLines;
+    
+    console.log("[BPA] resumo da geracao", {
+      competencia: comp,
+      totalAtendimentos,
+      totalLinhasValidas: totalLinhas,
+      totalPendentes: pendentes.length
+    });
+
+    if (totalLinhas === 0) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Nenhuma linha válida encontrada para gerar o BPA-I desta competência.',
+          total_pendentes: pendentes.length,
+          pendentes
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
 
     // ─── Header tipo 01 (controle do arquivo) ─────────────────────────────────
     // 01-02  Indicador linha (01)
