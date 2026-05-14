@@ -322,6 +322,11 @@ const WorkspaceProntuario: React.FC = () => {
                       customValues={form.custom_data || {}}
                       onFormChange={(k, v) => setForm(p => ({...p, [k]: v}))}
                       onCustomChange={(k, v) => setForm(p => ({...p, custom_data: {...p.custom_data, [k]: v}}))}
+                      especialidadeFields={especialidadeFields}
+                      onEspecialidadeChange={(k, v) => setEspecialidadeFields(p => ({...p, [k]: v}))}
+                      profissao={user?.profissao}
+                      profissionalId={user?.id}
+                      tipoProntuario={form.tipo_registro === 'avaliacao_inicial' ? 'avaliacao' : form.tipo_registro as any}
                     />
                   </TabsContent>
 
