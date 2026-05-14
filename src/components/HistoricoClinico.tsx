@@ -510,8 +510,8 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
             <p className="text-sm text-muted-foreground text-center">Nenhum atendimento registrado nesta linha do tempo.</p>
           </div>
         ) : (
-          <div className="relative pl-6 space-y-4">
-            <div className="absolute left-2 top-2 bottom-2 w-px bg-gradient-to-b from-primary/30 via-border to-transparent" aria-hidden="true" />
+          <div className="relative pl-5 space-y-4">
+            <div className="absolute left-1.5 top-2 bottom-2 w-px bg-gradient-to-b from-primary/40 via-border to-transparent" aria-hidden="true" />
             {timeline.map((item) => {
               const isOwn = item.profissional_id === currentProfissionalId;
               const expanded = expandedId === item.id;
