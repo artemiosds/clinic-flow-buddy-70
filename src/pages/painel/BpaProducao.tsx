@@ -200,7 +200,7 @@ const BpaProducao: React.FC = () => {
         .select('prontuario_id, procedimento_id, nome_procedimento, codigo_sigtap, cid')
         .in('prontuario_id', prontIds);
 
-      const result: LinhaBPA[] = [];
+      const finalResult: LinhaBPA[] = [];
       const protsComProc = new Set();
 
       // 4. Herança entre prontuários do mesmo paciente na competência
