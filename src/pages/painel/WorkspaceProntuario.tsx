@@ -303,9 +303,12 @@ const WorkspaceProntuario: React.FC = () => {
                         <TabsTrigger value="annexes" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap">Anexos</TabsTrigger>
                       </TabsList>
 
-                      <div className="flex flex-col gap-1.5 shrink-0 min-w-[320px] bg-muted/20 p-2 rounded-lg border border-border/50">
-                        <Label className="text-[10px] uppercase font-bold text-muted-foreground/70 ml-1 mb-0.5 tracking-tight">Selecione o Tipo de Registro</Label>
-                        <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 custom-scrollbar">
+                      <div className="flex items-center gap-3 shrink-0 ml-auto">
+                        <div className="hidden xl:flex flex-col items-end mr-1">
+                          <span className="text-[9px] uppercase font-bold text-muted-foreground/60 tracking-widest leading-none">Tipo de</span>
+                          <span className="text-[9px] uppercase font-bold text-muted-foreground/60 tracking-widest leading-none">Registro</span>
+                        </div>
+                        <div className="flex items-center gap-1 bg-muted/40 p-1 rounded-lg border border-border/50 h-10 overflow-x-auto no-scrollbar shadow-inner">
                           {[
                             { value: 'avaliacao_inicial', label: TIPO_REGISTRO_LABELS.avaliacao_inicial, color: 'text-green-700', bgColor: 'bg-green-50', borderColor: 'border-green-200', activeBg: 'bg-green-600', activeText: 'text-white', icon: Stethoscope },
                             { value: 'retorno', label: TIPO_REGISTRO_LABELS.retorno, color: 'text-blue-700', bgColor: 'bg-blue-50', borderColor: 'border-blue-200', activeBg: 'bg-blue-600', activeText: 'text-white', icon: Clock },
@@ -320,15 +323,16 @@ const WorkspaceProntuario: React.FC = () => {
                                 key={type.value}
                                 type="button"
                                 onClick={() => setForm(p => ({...p, tipo_registro: type.value}))}
+                                title={type.label}
                                 className={cn(
-                                  "flex items-center gap-1.5 px-3 py-2 rounded-md text-[11px] font-bold border transition-all whitespace-nowrap shadow-sm",
+                                  "flex items-center gap-1.5 px-3 h-8 rounded-md text-[11px] font-semibold transition-all whitespace-nowrap shrink-0",
                                   isActive 
-                                    ? `${type.activeBg} ${type.activeText} border-transparent scale-105 ring-2 ring-offset-1 ring-offset-background ring-current/20 z-10`
-                                    : `${type.bgColor} ${type.color} ${type.borderColor} hover:bg-white hover:shadow-md`
+                                    ? `${type.activeBg} ${type.activeText} shadow-sm z-10 scale-100` 
+                                    : "text-muted-foreground hover:bg-background/80 hover:text-foreground border border-transparent"
                                 )}
                               >
-                                <Icon className={cn("w-3.5 h-3.5 shrink-0", isActive ? "animate-pulse" : "")} />
-                                {type.label}
+                                <Icon className={cn("w-3.5 h-3.5 shrink-0", isActive ? "" : "opacity-70")} />
+                                <span className={cn(isActive ? "block" : "hidden md:block")}>{type.label}</span>
                               </button>
                             );
                           })}
