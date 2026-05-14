@@ -518,7 +518,7 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
               return (
                 <div key={item.id} className="relative group">
                   <div className={cn(
-                    "absolute -left-4 top-3 w-3.5 h-3.5 rounded-full border-2 border-background transition-transform group-hover:scale-110 z-10",
+                    "absolute -left-[17px] top-3 w-3.5 h-3.5 rounded-full border-2 border-background transition-transform group-hover:scale-110 z-10",
                     item.tipo_registro?.includes('alta') ? "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]" : "bg-primary"
                   )} />
                   <Card className={cn(
