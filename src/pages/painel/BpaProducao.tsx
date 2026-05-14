@@ -731,7 +731,19 @@ const BpaProducao: React.FC = () => {
                           </div>
                         </TableCell>
                         <TableCell className={cn("text-xs font-mono", !ok && v.errors.some(e => e.includes('SIGTAP')) && "text-destructive")}>
-                          {l.codigo_sigtap || (isMed ? <Badge variant="outline" className="text-primary border-primary/20 text-[9px] font-normal uppercase">Opcional Médico</Badge> : <span className="italic text-destructive">faltando</span>)}
+                          <div className="flex flex-col">
+                            <span>{l.codigo_sigtap || (isMed ? <Badge variant="outline" className="text-primary border-primary/20 text-[9px] font-normal uppercase">Opcional Médico</Badge> : <span className="italic text-destructive">faltando</span>)}</span>
+                            {l.cid && (
+                              <span className="text-[10px] text-muted-foreground mt-0.5 flex items-center gap-1">
+                                <span className="font-semibold text-primary/70">CID:</span> {l.cid}
+                                {l.fonte_cid && l.fonte_cid !== 'atendimento' && l.fonte_cid !== 'prontuario' && (
+                                  <span className="text-[8px] px-1 bg-amber-50 text-amber-600 border border-amber-100 rounded">
+                                    H: {l.fonte_cid.replace(/_/g, ' ')}
+                                  </span>
+                                )}
+                              </span>
+                            )}
+                          </div>
                         </TableCell>
 
 
