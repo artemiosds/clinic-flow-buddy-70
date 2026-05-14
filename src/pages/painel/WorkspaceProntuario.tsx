@@ -222,21 +222,38 @@ const WorkspaceProntuario: React.FC = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
+      const dbPayload = {
+        ...form,
+        id: editId || undefined,
+        agendamento_id: agendamentoId || form.agendamento_id || null,
+        paciente_id: pacienteId || form.paciente_id,
+        profissional_id: user?.id,
+        profissional_nome: user?.nome,
+        unidade_id: user?.unidadeId || '',
+        data_atendimento: form.data_atendimento,
+        hora_atendimento: form.hora_atendimento,
+      };
+
       const { data, error } = await supabase
         .from('prontuarios')
-        .upsert({
-          ...form,
-          id: editId || undefined,
-          agendamento_id: agendamentoId,
-          paciente_id: pacienteId,
-        })
+        .upsert(dbPayload)
         .select()
         .single();
 
       if (error) throw error;
       toast.success('Prontuário salvo com sucesso!');
+      
+      // Se for um novo prontuário vinculado a um agendamento, marcar agendamento como concluído
+      const effectiveAgendamentoId = agendamentoId || form.agendamento_id;
+      if (effectiveAgendamentoId) {
+        await supabase
+          .from('agendamentos')
+          .update({ status: 'concluido' })
+          .eq('id', effectiveAgendamentoId);
+      }
+
       if (!editId) {
-        navigate(`/painel/workspace-prontuario?pacienteId=${pacienteId}&pacienteNome=${pacienteNome}&editId=${data.id}`);
+        navigate(`/painel/workspace-prontuario?pacienteId=${pacienteId || form.paciente_id}&pacienteNome=${encodeURIComponent(pacienteNome || form.paciente_nome)}&editId=${data.id}`);
       }
     } catch (error) {
       console.error('Error saving prontuário:', error);
