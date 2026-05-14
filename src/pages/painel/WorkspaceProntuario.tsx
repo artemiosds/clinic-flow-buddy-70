@@ -518,8 +518,8 @@ const WorkspaceProntuario: React.FC = () => {
               </TabsList>
             </div>
 
-            <TabsContent value="history" className="flex-1 overflow-hidden m-0 relative">
-              <div className="flex flex-col h-full bg-muted/5">
+            <TabsContent value="history" className="flex-1 overflow-hidden m-0 relative w-full">
+              <div className="flex flex-col h-full bg-muted/5 w-full">
                 <div className="p-4 py-2.5 border-b bg-card/80 backdrop-blur-md flex items-center justify-between sticky top-0 z-10">
                   <div className="flex items-center gap-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-primary" />
