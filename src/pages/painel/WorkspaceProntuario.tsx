@@ -398,6 +398,7 @@ const WorkspaceProntuario: React.FC = () => {
                       soapEnabled={true}
                       onToggleSoap={() => {}}
                       customOptionsForField={(field) => soapCustom.getOptionsForField(field)}
+                      customOptionsWithId={(field) => soapCustom.getOptionWithId(field)}
                       onAddCustomOption={(field, option) => soapCustom.addOption(field, option, user?.profissao || '')}
                       onDeleteCustomOption={soapCustom.deleteOption}
                     />
