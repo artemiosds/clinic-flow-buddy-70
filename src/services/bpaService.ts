@@ -13,7 +13,7 @@ export interface ProntuarioRow {
 }
 
 export interface LinhaBPA {
-  key: string;                // prontuario_id + proc_id
+  key: string;                // identificador único da linha
   prontuario_id?: string;
   pts_id?: string;
   paciente_id: string;
@@ -25,8 +25,8 @@ export interface LinhaBPA {
   procedimento_nome: string;
   codigo_sigtap: string;
   cid?: string;
-  fonte_procedimento: "prontuario" | "pts" | "tratamento";
-  fonte_cid?: "prontuario" | "pts" | "atendimento";
+  fonte_procedimento: "prontuario" | "pts" | "paciente" | "tratamento";
+  fonte_cid?: "prontuario" | "pts" | "atendimento" | "paciente";
 }
 
 export interface ValidationFlags {

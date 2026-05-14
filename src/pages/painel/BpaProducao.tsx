@@ -44,6 +44,41 @@ const currentCompetencia = (): string => {
   return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}`;
 };
 
+/**
+ * Resolve o range de datas para uma competência AAAAMM
+ */
+export const resolveCompetenciaRange = (competencia: string) => {
+  const comp = String(competencia || '').replace(/\D/g, '');
+  if (comp.length !== 6) return null;
+  
+  const ano = parseInt(comp.slice(0, 4));
+  const mes = parseInt(comp.slice(4, 6));
+  
+  if (isNaN(ano) || isNaN(mes) || mes < 1 || mes > 12) return null;
+
+  // Início do mês (00:00:00 local)
+  const dataInicio = new Date(ano, mes - 1, 1);
+  dataInicio.setHours(0, 0, 0, 0);
+  
+  // Fim do mês (23:59:59 local)
+  const dataFim = new Date(ano, mes, 0); // último dia do mês mes-1
+  dataFim.setHours(23, 59, 59, 999);
+
+  const formatDate = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+
+  return {
+    inicio: formatDate(dataInicio),
+    fim: formatDate(dataFim),
+    dataInicio,
+    dataFim
+  };
+};
+
 const BpaProducao: React.FC = () => {
   const { user } = useAuth();
   const { unidades } = useData();

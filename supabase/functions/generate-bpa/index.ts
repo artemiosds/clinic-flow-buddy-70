@@ -158,11 +158,40 @@ Deno.serve(async (req) => {
       );
     }
 
-    const ano = competencia.slice(0, 4);
-    const mes = competencia.slice(4, 6);
-    const dataInicio = `${ano}-${mes}-01`;
-    const ultDia = new Date(Number(ano), Number(mes), 0).getDate();
-    const dataFim = `${ano}-${mes}-${String(ultDia).padStart(2, '0')}`;
+    const comp = onlyDigits(String(competencia || ''));
+    if (comp.length !== 6) {
+      return new Response(
+        JSON.stringify({ error: 'competencia inválida (esperado AAAAMM)' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
+    const anoNum = parseInt(comp.slice(0, 4));
+    const mesNum = parseInt(comp.slice(4, 6));
+    
+    // Início do mês
+    const start = new Date(anoNum, mesNum - 1, 1);
+    start.setHours(0, 0, 0, 0);
+    
+    // Fim do mês
+    const end = new Date(anoNum, mesNum, 0);
+    end.setHours(23, 59, 59, 999);
+
+    const formatDateIso = (d: Date) => {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    };
+
+    const dataInicio = formatDateIso(start);
+    const dataFim = formatDateIso(end);
+
+    console.log("[BPA] competencia resolvida", {
+      competencia: comp,
+      dataInicio,
+      dataFim
+    });
 
     // 1. Prontuários do período (somente finalizados — todos no schema atual já são finalizados ao salvar)
     let prontQuery = supabase
