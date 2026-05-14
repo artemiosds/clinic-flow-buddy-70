@@ -20,7 +20,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { 
   History, FileText, User, Activity, ArrowLeft, Save, Printer, 
-  Stethoscope, ClipboardList, Clock, Search, UserCog, Stamp, Trash2
+  Stethoscope, ClipboardList, Clock, Search, UserCog, Stamp, Trash2,
+  Calendar, Info
 } from 'lucide-react';
 
 import PatientClinicalHeader from '@/components/pacientes/PatientClinicalHeader';
@@ -32,6 +33,8 @@ import PacienteDocumentos from '@/components/PacienteDocumentos';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BuscaPaciente } from '@/components/BuscaPaciente';
 import QuickEditPatientModal from '@/components/pacientes/QuickEditPatientModal';
+import { BuscaProcedimento } from '@/components/BuscaProcedimento';
+import { BuscaCID } from '@/components/BuscaCID';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { procedureService } from '@/services/procedureService';
@@ -87,7 +90,7 @@ const WorkspaceProntuario: React.FC = () => {
   const [sessaoDataLoading, setSessaoDataLoading] = useState(false);
 
   const [form, setForm] = useState<any>({
-    tipo_registro: searchParams.get('tipo') || 'consulta',
+    tipo_registro: searchParams.get('tipo') === 'Retorno' ? 'retorno' : (searchParams.get('tipo') === 'Consulta' ? 'avaliacao_inicial' : (searchParams.get('tipo') || 'avaliacao_inicial')),
     data_atendimento: searchParams.get('data') || new Date().toISOString().split('T')[0],
     hora_atendimento: searchParams.get('horaInicio') || new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
     soap_subjetivo: '', soap_objetivo: '', soap_avaliacao: '', soap_plano: '',
@@ -98,7 +101,7 @@ const WorkspaceProntuario: React.FC = () => {
     agendamento_id: agendamentoId || '',
   });
 
-  const { getCamposForTipo } = useProntuarioTiposConfig();
+  const { getCamposForTipo, soapLabels } = useProntuarioTiposConfig();
   const soapCustom = useSoapCustomOptions(user?.id);
 
   // Load procedures, medications and preferences
@@ -179,12 +182,14 @@ const WorkspaceProntuario: React.FC = () => {
             const { data: p } = await supabase.from('prontuarios').select('*').eq('agendamento_id', agendamentoId).maybeSingle();
             if (p) {
               setForm(prev => ({ ...prev, ...p }));
+              setEspecialidadeFields((p as any).campos_especialidade || {});
               loadProntuarioProcedimentos(p.id);
             }
           } else if (editId) {
             const { data: p } = await supabase.from('prontuarios').select('*').eq('id', editId).single();
             if (p) {
               setForm(prev => ({ ...prev, ...p }));
+              setEspecialidadeFields((p as any).campos_especialidade || {});
               loadProntuarioProcedimentos(p.id);
               if (p.agendamento_id) loadTriagem(p.agendamento_id);
             }
@@ -206,6 +211,7 @@ const WorkspaceProntuario: React.FC = () => {
         unidade_id: user?.unidadeId || '',
         prescricao: JSON.stringify(listaPrescricao),
         solicitacao_exames: JSON.stringify(listaExames),
+        campos_especialidade: especialidadeFields,
       };
       const { data, error } = await supabase.from('prontuarios').upsert(dbPayload).select().single();
       if (error) throw error;
@@ -285,14 +291,35 @@ const WorkspaceProntuario: React.FC = () => {
 
                 <Tabs defaultValue="evolution" className="w-full">
                   <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pb-2 border-b mb-4">
-                    <TabsList className="w-full justify-start h-12 bg-transparent gap-6 p-0">
-                      <TabsTrigger value="evolution" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold">Evolução</TabsTrigger>
-                      <TabsTrigger value="prescriptions" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold">Prescrições/Exames</TabsTrigger>
-                      <TabsTrigger value="procedures" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold">Procedimentos/CID</TabsTrigger>
-                      <TabsTrigger value="treatments" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold">Tratamentos/PTS</TabsTrigger>
-                      <TabsTrigger value="antecedents" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold">Antecedentes/Triagem</TabsTrigger>
-                      <TabsTrigger value="annexes" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold">Anexos</TabsTrigger>
-                    </TabsList>
+                    <div className="flex items-center justify-between gap-4 mb-2">
+                      <TabsList className="flex-1 justify-start h-12 bg-transparent gap-6 p-0 overflow-x-auto">
+                        <TabsTrigger value="evolution" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold">Evolução</TabsTrigger>
+                        <TabsTrigger value="prescriptions" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap">Prescrições/Exames</TabsTrigger>
+                        <TabsTrigger value="procedures" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap">Procedimentos/CID</TabsTrigger>
+                        <TabsTrigger value="treatments" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap">Tratamentos/PTS</TabsTrigger>
+                        <TabsTrigger value="antecedents" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap">Histórico Externo</TabsTrigger>
+                        <TabsTrigger value="annexes" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap">Anexos</TabsTrigger>
+                      </TabsList>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Label className="text-[10px] uppercase font-bold text-muted-foreground whitespace-nowrap">Tipo de Registro:</Label>
+                        <Select 
+                          value={form.tipo_registro} 
+                          onValueChange={(v) => setForm(p => ({...p, tipo_registro: v}))}
+                        >
+                          <SelectTrigger className="h-8 w-40 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="avaliacao_inicial">Avaliação Inicial</SelectItem>
+                            <SelectItem value="retorno">Retorno</SelectItem>
+                            <SelectItem value="sessao">Sessão</SelectItem>
+                            <SelectItem value="urgencia">Urgência</SelectItem>
+                            <SelectItem value="procedimento">Procedimento</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
                   </div>
 
                   <TabsContent value="evolution" className="mt-0 space-y-6">
@@ -309,6 +336,7 @@ const WorkspaceProntuario: React.FC = () => {
                       onClearErrors={() => {}}
                       soapEnabled={true}
                       onToggleSoap={() => {}}
+                      labels={soapLabels}
                       customOptionsForField={(field) => soapCustom.getOptionsForField(field)}
                       customOptionsWithId={(field) => soapCustom.getOptionWithId(field)}
                       onAddCustomOption={(field, option) => soapCustom.addOption(field, option, user?.profissao || '')}
@@ -320,6 +348,11 @@ const WorkspaceProntuario: React.FC = () => {
                       customValues={form.custom_data || {}}
                       onFormChange={(k, v) => setForm(p => ({...p, [k]: v}))}
                       onCustomChange={(k, v) => setForm(p => ({...p, custom_data: {...p.custom_data, [k]: v}}))}
+                      especialidadeFields={especialidadeFields}
+                      onEspecialidadeChange={(k, v) => setEspecialidadeFields(p => ({...p, [k]: v}))}
+                      profissao={user?.profissao}
+                      profissionalId={user?.id}
+                      tipoProntuario={form.tipo_registro === 'avaliacao_inicial' ? 'avaliacao' : (form.tipo_registro === 'retorno' ? 'retorno' : (form.tipo_registro === 'sessao' ? 'sessao' : (form.tipo_registro === 'urgencia' ? 'urgencia' : (form.tipo_registro === 'procedimento' ? 'procedimento' : 'avaliacao'))))}
                     />
                   </TabsContent>
 
@@ -341,31 +374,46 @@ const WorkspaceProntuario: React.FC = () => {
                       <CardContent className="p-6">
                         <div className="space-y-4">
                           <Label>Procedimentos Realizados / CID-10</Label>
-                          <Select onValueChange={(id) => {
-                            if (id && !selectedProcIds.includes(id)) {
-                              setSelectedProcIds(prev => [...prev, id]);
-                              procedureService.getCidsForProcedure(id).then(list => {
-                                setCidsByProc(prev => ({ ...prev, [id]: list }));
-                              });
-                            }
-                          }}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecionar procedimento..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {procedimentos.map(p => (
-                                <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <BuscaProcedimento 
+                            profissao={user?.profissao}
+                            onChange={(proc) => {
+                              if (proc && !selectedProcIds.includes(proc.id)) {
+                                setSelectedProcIds(prev => [...prev, proc.id]);
+                                procedureService.getCidsForProcedure(proc.id).then(list => {
+                                  setCidsByProc(prev => ({ ...prev, [proc.id]: list }));
+                                });
+                              }
+                            }}
+                          />
                           <div className="space-y-3 mt-4">
                             {selectedProcIds.map(pid => {
                               const proc = procedimentos.find(p => p.id === pid);
                               return (
                                 <div key={pid} className="p-3 border rounded-lg bg-muted/20">
                                   <div className="flex items-center justify-between mb-2">
-                                    <span className="font-semibold text-sm">{proc?.nome || pid}</span>
+                                    <div className="flex flex-col">
+                                      <span className="font-semibold text-sm">{proc?.nome || pid}</span>
+                                      <span className="text-[10px] font-mono text-muted-foreground">Código: {proc?.id || pid}</span>
+                                    </div>
                                     <Button variant="ghost" size="sm" onClick={() => setSelectedProcIds(prev => prev.filter(i => i !== pid))}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                                  </div>
+                                  <div className="mb-3">
+                                    <BuscaCID 
+                                      placeholder="Adicionar CID relacionado..."
+                                      onSelect={(cid) => {
+                                        const current = selectedCidsByProc[pid] || [];
+                                        if (!current.includes(cid.codigo)) {
+                                          setSelectedCidsByProc(prev => ({ ...prev, [pid]: [...current, cid.codigo] }));
+                                          setCidsByProc(prev => {
+                                            const existing = prev[pid] || [];
+                                            if (!existing.some(x => x.codigo === cid.codigo)) {
+                                              return { ...prev, [pid]: [...existing, cid] };
+                                            }
+                                            return prev;
+                                          });
+                                        }
+                                      }} 
+                                    />
                                   </div>
                                   <div className="flex flex-wrap gap-2">
                                     {(cidsByProc[pid] || []).map(cid => (
@@ -443,6 +491,8 @@ const WorkspaceProntuario: React.FC = () => {
                       profissao={user?.profissao} 
                       values={especialidadeFields} 
                       onChange={(k, v) => setEspecialidadeFields(p => ({...p, [k]: v}))} 
+                      profissionalId={user?.id}
+                      tipoProntuario={form.tipo_registro === 'avaliacao_inicial' ? 'avaliacao' : form.tipo_registro as any}
                     />
                   </TabsContent>
 
@@ -488,7 +538,12 @@ const WorkspaceProntuario: React.FC = () => {
         open={editPatientOpen}
         onOpenChange={setEditPatientOpen}
         pacienteId={pacienteId || form.paciente_id}
-        onSaved={() => { setRefreshTrigger(r => r + 1); setEditPatientOpen(false); }}
+        onSaved={async () => { 
+          const { data: pData } = await supabase.from('pacientes').select('*').eq('id', pacienteId || form.paciente_id).single();
+          if (pData) setPacienteData(pData);
+          setRefreshTrigger(r => r + 1); 
+          setEditPatientOpen(false); 
+        }}
       />
     </div>
   );

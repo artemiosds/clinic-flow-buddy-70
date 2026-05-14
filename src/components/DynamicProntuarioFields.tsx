@@ -5,6 +5,7 @@ import { DebouncedTextarea } from '@/components/ui/debounced-textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { CampoConfig } from '@/hooks/useProntuarioTiposConfig';
+import CamposEspecialidade from './CamposEspecialidade';
 
 /** Known builtin keys that map directly to form state */
 const BUILTIN_KEYS = new Set([
@@ -23,10 +24,17 @@ interface DynamicProntuarioFieldsProps {
   onFormChange: (key: string, value: string) => void;
   onCustomChange: (key: string, value: string) => void;
   disabled?: boolean;
+  /** Pass-through for specialty fields if they should be part of the flow */
+  especialidadeFields?: Record<string, string>;
+  onEspecialidadeChange?: (key: string, value: string) => void;
+  profissao?: string;
+  profissionalId?: string;
+  tipoProntuario?: any;
 }
 
 const DynamicProntuarioFields: React.FC<DynamicProntuarioFieldsProps> = ({
   campos, formValues, customValues, onFormChange, onCustomChange, disabled,
+  especialidadeFields, onEspecialidadeChange, profissao, profissionalId, tipoProntuario,
 }) => {
   if (campos.length === 0) return null;
 
@@ -144,6 +152,19 @@ const DynamicProntuarioFields: React.FC<DynamicProntuarioFieldsProps> = ({
           </div>
         );
       })}
+
+      {/* Seção de Especialidade integrada ao fluxo se configurada */}
+      {profissao && especialidadeFields && onEspecialidadeChange && (
+        <div className="mt-6 border-t pt-6">
+          <CamposEspecialidade
+            profissao={profissao}
+            values={especialidadeFields}
+            onChange={onEspecialidadeChange}
+            profissionalId={profissionalId}
+            tipoProntuario={tipoProntuario}
+          />
+        </div>
+      )}
     </div>
   );
 };

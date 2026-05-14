@@ -35,6 +35,7 @@ interface SoapFieldsAdaptiveProps {
   customOptionsWithId?: (campo: string) => CustomOptionWithId[];
   onAddCustomOption?: (campo: string, opcao: string) => void;
   onDeleteCustomOption?: (id: string) => void;
+  labels?: { subjetivo: string; objetivo: string; avaliacao: string; plano: string };
 }
 
 const FIELD_LABELS: { key: keyof SoapValues; soapKey: string; label: string; placeholder: string }[] = [
@@ -58,6 +59,7 @@ const SoapFieldsAdaptive: React.FC<SoapFieldsAdaptiveProps> = ({
   customOptionsWithId,
   onAddCustomOption,
   onDeleteCustomOption,
+  labels,
 }) => {
   const options = getSoapOptions(profissao);
   const isDropdownMode = hasDropdownSoap(profissao);
@@ -187,10 +189,12 @@ const SoapFieldsAdaptive: React.FC<SoapFieldsAdaptiveProps> = ({
             const showDropdown = isDropdownMode && (defaultFieldOptions.length > 0 || customFieldOptions.length > 0);
             const customWithIds = customOptionsWithId?.(field.soapKey) || [];
 
+            const fieldLabel = labels ? (labels as any)[field.soapKey] || field.label : field.label;
+
             return (
               <div key={field.key} className="space-y-1.5">
                 <Label>
-                  {field.label}
+                  {fieldLabel}
                   {!isMedicoMode && soapEnabled && (
                     <span className="text-muted-foreground text-xs ml-1">(opcional)</span>
                   )}

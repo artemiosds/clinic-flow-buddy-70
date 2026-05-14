@@ -269,7 +269,10 @@ const SolicitacaoExames: React.FC<SolicitacaoExamesProps> = ({
           {/* TAB BUSCAR */}
           <TabsContent value="buscar" className="mt-2">
             <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+              <div className="absolute left-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5 pointer-events-none">
+                <Search className="w-3.5 h-3.5 text-muted-foreground" />
+                <div className="w-px h-3.5 bg-border mx-0.5" />
+              </div>
               <Input
                 placeholder="Buscar exame por nome, código SUS ou categoria..."
                 value={searchTerm}
