@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { normalizePhone } from "./phoneUtils";
 import { unmaskCNS } from "./cnsUtils";
+import { auditService } from "@/services/auditService";
 
 /**
  * Função única e centralizada para atualizar o cadastro de um paciente.
