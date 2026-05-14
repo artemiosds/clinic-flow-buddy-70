@@ -185,16 +185,45 @@ const WorkspaceProntuario: React.FC = () => {
     try {
       const dbPayload = {
         ...form,
-        id: editId || undefined,
+        id: editId || form.id || undefined,
         profissional_id: user?.id,
         profissional_nome: user?.nome,
         unidade_id: user?.unidadeId || '',
+        prescricao: JSON.stringify(listaPrescricao),
+        solicitacao_exames: JSON.stringify(listaExames),
       };
       const { data, error } = await supabase.from('prontuarios').upsert(dbPayload).select().single();
       if (error) throw error;
+      
+      // Save procedures
+      if (selectedProcIds.length > 0) {
+        await supabase.from("prontuario_procedimentos").delete().eq("prontuario_id", data.id);
+        const links = selectedProcIds.map(pid => {
+          const proc = procedimentos.find(p => p.id === pid);
+          const codigos = selectedCidsByProc[pid] || [];
+          const cidsCatalogo = cidsByProc[pid] || [];
+          const cidsPayload = codigos.map(c => ({ codigo: c, descricao: cidsCatalogo.find(cc => cc.codigo === c)?.descricao || '' }));
+          return {
+            prontuario_id: data.id,
+            procedimento_id: pid,
+            paciente_id: form.paciente_id,
+            agendamento_id: form.agendamento_id || null,
+            profissional_id: user?.id,
+            unidade_id: user?.unidadeId,
+            codigo_sigtap: proc?.id || pid,
+            nome_procedimento: proc?.nome || 'Procedimento',
+            especialidade: proc?.especialidade || '',
+            quantidade: 1,
+            cid: codigos[0] || null,
+            observacao: cidsPayload.length > 0 ? JSON.stringify({ cids: cidsPayload }) : '',
+          };
+        });
+        await supabase.from("prontuario_procedimentos").insert(links);
+      }
+
       toast.success('Prontuário salvo com sucesso!');
-      if (!editId) navigate(`/painel/workspace-prontuario?pacienteId=${pacienteId || form.paciente_id}&editId=${data.id}`);
-    } catch (e) { toast.error('Erro ao salvar prontuário'); } finally { setSaving(false); }
+      if (!editId) navigate(`/painel/workspace-prontuario?pacienteId=${pacienteId || form.paciente_id}&editId=${data.id}`, { replace: true });
+    } catch (e) { console.error(e); toast.error('Erro ao salvar prontuário'); } finally { setSaving(false); }
   };
 
   if (loading) return <div className="flex items-center justify-center h-screen">Carregando...</div>;
