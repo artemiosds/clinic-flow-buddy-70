@@ -171,7 +171,25 @@ const Atendimentos: React.FC = () => {
                 </CardContent>
               </Card>
             );
-          })}
+          {hasMore && (
+            <div className="flex justify-center pt-4 pb-8">
+              <Button 
+                variant="outline" 
+                onClick={handleLoadMore} 
+                disabled={loadingMore}
+                className="w-full max-w-xs"
+              >
+                {loadingMore ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Carregando...
+                  </>
+                ) : (
+                  'Carregar mais'
+                )}
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </div>
