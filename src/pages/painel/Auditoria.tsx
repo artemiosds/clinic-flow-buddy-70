@@ -223,6 +223,144 @@ const Auditoria: React.FC = () => {
     return isMaster ? formatCpf(cpf) : maskCpf(cpf);
   };
 
+  // Entity resolution logic
+  const resolveEntity = useCallback(async (log: LogEntry) => {
+    const cacheKey = `${log.entidade}:${log.entidade_id}`;
+    if (resolvedEntities[cacheKey] || resolving[cacheKey] || !log.entidade_id) return;
+
+    // Check if name is already in details
+    const existingName = (log.detalhes as any)?.entidade_nome || (log.detalhes as any)?.paciente_nome || (log.detalhes as any)?.profissional_nome;
+    if (existingName) {
+      setResolvedEntities(prev => ({ ...prev, [cacheKey]: { nome: existingName } }));
+      return;
+    }
+
+    setResolving(prev => ({ ...prev, [cacheKey]: true }));
+    try {
+      let nome = '';
+      let subtitulo = '';
+
+      if (log.entidade === 'paciente' || log.modulo === 'pacientes') {
+        const { data } = await supabase.from('pacientes').select('nome_completo, cpf').eq('id', log.entidade_id).maybeSingle();
+        if (data) {
+          nome = data.nome_completo;
+          subtitulo = `CPF: ${maskCpf(data.cpf)}`;
+        }
+      } else if (log.entidade === 'agendamento' || log.modulo === 'agendamento') {
+        const { data } = await supabase.from('agendamentos').select('paciente_nome, profissional_nome, data, hora').eq('id', log.entidade_id).maybeSingle();
+        if (data) {
+          nome = `${data.paciente_nome} → ${data.profissional_nome}`;
+          subtitulo = `${format(new Date(data.data + 'T12:00:00'), 'dd/MM/yyyy')} às ${data.hora.substring(0, 5)}`;
+        }
+      } else if (log.entidade === 'prontuario' || log.modulo === 'prontuario') {
+        const { data } = await supabase.from('prontuarios' as any).select('paciente_id, profissional_id, data_atendimento').eq('id', log.entidade_id).maybeSingle();
+        if (data) {
+          const [{ data: pac }, { data: prof }] = await Promise.all([
+            supabase.from('pacientes').select('nome_completo').eq('id', data.paciente_id).maybeSingle(),
+            supabase.from('funcionarios' as any).select('nome').eq('id', data.profissional_id).maybeSingle()
+          ]);
+          nome = `${pac?.nome_completo || 'Paciente'} / ${prof?.nome || 'Profissional'}`;
+          subtitulo = data.data_atendimento ? format(new Date(data.data_atendimento + 'T12:00:00'), 'dd/MM/yyyy') : '';
+        }
+      } else if (log.entidade === 'funcionario' || log.entidade === 'funcionarios') {
+        const { data } = await supabase.from('funcionarios' as any).select('nome, profissao').eq('id', log.entidade_id).maybeSingle();
+        if (data) {
+          nome = data.nome;
+          subtitulo = data.profissao;
+        }
+      }
+
+      setResolvedEntities(prev => ({ 
+        ...prev, 
+        [cacheKey]: { 
+          nome: nome || 'Registro não encontrado', 
+          subtitulo,
+          encontrado: !!nome 
+        } 
+      }));
+    } catch (err) {
+      console.error('Error resolving entity:', err);
+    } finally {
+      setResolving(prev => ({ ...prev, [cacheKey]: false }));
+    }
+  }, [resolvedEntities, resolving]);
+
+  // Effect to resolve entities for current page
+  useEffect(() => {
+    if (logs.length > 0) {
+      logs.forEach(log => {
+        if (log.entidade_id && !['login', 'logout', 'auth'].includes(log.acao)) {
+          resolveEntity(log);
+        }
+      });
+    }
+  }, [logs, resolveEntity]);
+
+  const getEntityDisplay = (log: LogEntry) => {
+    if (['login', 'logout'].includes(log.acao)) return <span className="text-muted-foreground">-</span>;
+    
+    const cacheKey = `${log.entidade}:${log.entidade_id}`;
+    const resolved = resolvedEntities[cacheKey];
+
+    if (resolving[cacheKey]) return <span className="text-xs text-muted-foreground animate-pulse">Carregando...</span>;
+    
+    if (resolved) {
+      return (
+        <div className="flex flex-col">
+          <span className="text-sm font-medium leading-none">{resolved.nome}</span>
+          {resolved.subtitulo && <span className="text-[10px] text-muted-foreground mt-1">{resolved.subtitulo}</span>}
+          {!resolved.encontrado && log.entidade_id && (
+            <span className="text-[10px] font-mono text-muted-foreground opacity-50">{log.entidade_id}</span>
+          )}
+        </div>
+      );
+    }
+
+    return <span className="text-xs font-mono text-muted-foreground">{log.entidade_id || '-'}</span>;
+  };
+
+  const formatFieldLabel = (field: string) => {
+    const labels: Record<string, string> = {
+      nome_completo: 'Nome completo',
+      nome_mae: 'Nome da mãe',
+      data_nascimento: 'Data de nascimento',
+      telefone_principal: 'Telefone principal',
+      telefone_secundario: 'Telefone secundário',
+      logradouro: 'Logradouro',
+      numero: 'Número',
+      bairro: 'Bairro',
+      municipio: 'Município',
+      uf: 'UF',
+      sexo: 'Sexo',
+      cpf: 'CPF',
+      cns: 'CNS',
+      unidade_id: 'Unidade',
+      profissional_id: 'Profissional',
+      paciente_id: 'Paciente',
+      status: 'Status',
+      data: 'Data',
+      hora: 'Hora',
+      email: 'E-mail',
+      cep: 'CEP',
+      raca_cor: 'Raça/Cor',
+    };
+    return labels[field] || field;
+  };
+
+  const formatValue = (field: string, value: any) => {
+    if (value === null || value === undefined || value === '') return 'Não informado';
+    if (field === 'cpf') return maskCpf(String(value));
+    if (field === 'data' || field === 'data_nascimento') {
+      try { return format(new Date(value + 'T12:00:00'), 'dd/MM/yyyy'); } catch { return value; }
+    }
+    if (field === 'sexo') {
+      const s = String(value).toLowerCase();
+      if (s === 'm' || s === 'masculino') return 'Masculino';
+      if (s === 'f' || s === 'feminino') return 'Feminino';
+    }
+    return String(value);
+  };
+
   // Professional activity report
   const generateReport = useCallback(async () => {
     setReportLoading(true);
