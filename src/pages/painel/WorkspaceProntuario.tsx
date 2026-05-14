@@ -307,13 +307,14 @@ const WorkspaceProntuario: React.FC = () => {
 
                   <TabsContent value="prescriptions" className="mt-0 space-y-6">
                     <PrescricaoMedicamentos
-                      medications={medications.filter(m => m.ativo)}
-                      lista={listaPrescricao}
-                      setLista={setListaPrescricao}
+                      profissionalId={user?.id || ''}
+                      value={listaPrescricao}
+                      onChange={setListaPrescricao}
                     />
                     <SolicitacaoExames
-                      lista={listaExames}
-                      setLista={setListaExames}
+                      profissionalId={user?.id || ''}
+                      value={listaExames}
+                      onChange={setListaExames}
                     />
                   </TabsContent>
 
