@@ -70,10 +70,24 @@ const WorkspaceProntuario: React.FC = () => {
   const [editPatientOpen, setEditPatientOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
+  // Expanded clinical state
+  const [procedimentos, setProcedimentos] = useState<any[]>([]);
+  const [selectedProcIds, setSelectedProcIds] = useState<string[]>([]);
+  const [cidsByProc, setCidsByProc] = useState<Record<string, any[]>>({});
+  const [selectedCidsByProc, setSelectedCidsByProc] = useState<Record<string, string[]>>({});
+  const [listaExames, setListaExames] = useState<any[]>([]);
+  const [listaPrescricao, setListaPrescricao] = useState<any[]>([]);
+  const [medications, setMedications] = useState<any[]>([]);
+  const [profPreferences, setProfPreferences] = useState<any[]>([]);
+  const [especialidadeFields, setEspecialidadeFields] = useState<Record<string, string>>({});
+  const [sessaoCycle, setSessaoCycle] = useState<any>(null);
+  const [sessaoPts, setSessaoPts] = useState<any>(null);
+  const [sessaoDataLoading, setSessaoDataLoading] = useState(false);
+
   const [form, setForm] = useState<any>({
-    tipo_registro: 'consulta',
-    data_atendimento: new Date().toISOString().split('T')[0],
-    hora_atendimento: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+    tipo_registro: searchParams.get('tipo') || 'consulta',
+    data_atendimento: searchParams.get('data') || new Date().toISOString().split('T')[0],
+    hora_atendimento: searchParams.get('horaInicio') || new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
     soap_subjetivo: '', soap_objetivo: '', soap_avaliacao: '', soap_plano: '',
     evolucao: '', queixa_principal: '', conduta: '',
     paciente_id: pacienteId || '',
@@ -84,6 +98,37 @@ const WorkspaceProntuario: React.FC = () => {
 
   const { getCamposForTipo } = useProntuarioTiposConfig();
   const soapCustom = useSoapCustomOptions(user?.id);
+
+  // Load procedures, medications and preferences
+  useEffect(() => {
+    if (!user?.id) return;
+    const loadCommonData = async () => {
+      try {
+        const [procsList, medsRes, prefsRes] = await Promise.all([
+          procedureService.getActive(),
+          supabase.from("medications").select("*").or(`is_global.eq.true,profissional_id.eq.${user.id}`),
+          supabase.from("professional_preferences").select("tipo,item_id,desabilitado").eq("profissional_id", user.id),
+        ]);
+        setProcedimentos(procsList as any[]);
+        if (medsRes.data) setMedications(medsRes.data);
+        if (prefsRes.data) setProfPreferences(prefsRes.data);
+      } catch (err) { console.error("Error loading common data:", err); }
+    };
+    loadCommonData();
+  }, [user?.id]);
+
+  const loadSessaoData = async (patientId: string) => {
+    setSessaoDataLoading(true);
+    try {
+      const [cycleRes, ptsRes] = await Promise.all([
+        supabase.from('treatment_cycles').select('*').eq('patient_id', patientId).in('status', ['em_andamento', 'ativo']).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+        supabase.from('pts').select('*').eq('patient_id', patientId).eq('status', 'ativo').order('created_at', { ascending: false }).limit(1).maybeSingle(),
+      ]);
+      setSessaoCycle(cycleRes.data);
+      setSessaoPts(ptsRes.data);
+    } catch (err) { console.error("Error loading session data:", err); }
+    setSessaoDataLoading(false);
+  };
 
   useEffect(() => {
     const loadData = async () => {
