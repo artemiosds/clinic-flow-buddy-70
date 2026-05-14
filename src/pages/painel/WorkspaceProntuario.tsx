@@ -318,6 +318,13 @@ const WorkspaceProntuario: React.FC = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
+      const { auditService } = await import('@/services/auditService');
+      let currentProntuario = null;
+      if (editId) {
+        const { data: old } = await supabase.from('prontuarios').select('*').eq('id', editId).maybeSingle();
+        currentProntuario = old;
+      }
+
       const dbPayload = {
         ...form,
         id: editId || form.id || undefined,
@@ -332,9 +339,23 @@ const WorkspaceProntuario: React.FC = () => {
           soap_enabled: soapEnabled
         }
       };
+      
       const { data, error } = await supabase.from('prontuarios').upsert(dbPayload).select().single();
       if (error) throw error;
       
+      // Audit
+      await auditService.log({
+        acao: editId ? 'finalizar_alteracao_prontuario' : 'finalizar_prontuario',
+        entidade: 'prontuario',
+        entidadeId: data.id,
+        entidadeNome: pacienteData?.nome || pacienteNome || 'Paciente',
+        modulo: 'Prontuário',
+        before: currentProntuario,
+        after: data,
+        pacienteId: pacienteId || form.paciente_id,
+        origem: 'Workspace Prontuário'
+      });
+
       // Save procedures
       if (selectedProcIds.length > 0) {
         await supabase.from("prontuario_procedimentos").delete().eq("prontuario_id", data.id);
@@ -363,7 +384,12 @@ const WorkspaceProntuario: React.FC = () => {
 
       toast.success('Prontuário salvo com sucesso!');
       if (!editId) navigate(`/painel/workspace-prontuario?pacienteId=${pacienteId || form.paciente_id}&editId=${data.id}`, { replace: true });
-    } catch (e) { console.error(e); toast.error('Erro ao salvar prontuário'); } finally { setSaving(false); }
+    } catch (e) { 
+      console.error(e); 
+      toast.error('Erro ao salvar prontuário'); 
+    } finally { 
+      setSaving(false); 
+    }
   };
 
   if (loading) return <div className="flex items-center justify-center h-screen">Carregando...</div>;
