@@ -159,7 +159,7 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
   const [docModalOpen, setDocModalOpen] = useState(false);
   const cancelledRef = useRef(false);
 
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (pageNum = 0, append = false) => {
     if (!pacienteId) {
       setProntuarios([]);
       setEpisodios([]);
@@ -168,32 +168,47 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
     }
 
     cancelledRef.current = false;
-    setLoading(true);
+    if (pageNum === 0) setLoading(true);
+    else setLoadingMore(true);
     setError(null);
 
     try {
-      const [{ data: pData, error: pError }, { data: eData, error: eError }] = await Promise.all([
-        supabase
-          .from("prontuarios")
-          .select(
-            "id,data_atendimento,hora_atendimento,profissional_nome,profissional_id,queixa_principal,evolucao,conduta,indicacao_retorno,procedimentos_texto,outro_procedimento,unidade_id,episodio_id,tipo_registro,observacoes",
-          )
-          .eq("paciente_id", pacienteId)
-          .order("data_atendimento", { ascending: false }),
-        supabase
+      const from = pageNum * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+
+      // 1. Load Prontuarios with range/pagination
+      const { data: pData, error: pError } = await supabase
+        .from("prontuarios")
+        .select(
+          "id,data_atendimento,hora_atendimento,profissional_nome,profissional_id,queixa_principal,evolucao,conduta,indicacao_retorno,procedimentos_texto,outro_procedimento,unidade_id,episodio_id,tipo_registro,observacoes",
+        )
+        .eq("paciente_id", pacienteId)
+        .order("data_atendimento", { ascending: false })
+        .order("hora_atendimento", { ascending: false })
+        .range(from, to);
+
+      // 2. Load Episodios (usually few enough to load all, or could also paginate)
+      let eData = [];
+      if (pageNum === 0) {
+        const { data: episodes, error: eError } = await supabase
           .from("episodios_clinicos")
           .select("*")
           .eq("paciente_id", pacienteId)
-          .order("data_inicio", { ascending: false }),
-      ]);
+          .order("data_inicio", { ascending: false });
+        if (eError) throw eError;
+        eData = episodes || [];
+      }
 
       if (cancelledRef.current) return;
-
       if (pError) throw pError;
-      if (eError) throw eError;
 
-      setProntuarios(pData || []);
-      setEpisodios(eData || []);
+      if (append) {
+        setProntuarios(prev => [...prev, ...(pData || [])]);
+      } else {
+        setProntuarios(pData || []);
+        setEpisodios(eData);
+      }
+      setHasMore((pData || []).length === PAGE_SIZE);
     } catch (err) {
       console.error("[Historico] Erro inesperado:", err);
       if (!cancelledRef.current) {
@@ -202,16 +217,24 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
     } finally {
       if (!cancelledRef.current) {
         setLoading(false);
+        setLoadingMore(false);
       }
     }
   }, [pacienteId]);
 
   useEffect(() => {
-    loadData();
+    setPage(0);
+    loadData(0, false);
     return () => {
       cancelledRef.current = true;
     };
-  }, [loadData]);
+  }, [pacienteId]);
+
+  const handleLoadMore = () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    loadData(nextPage, true);
+  };
 
   const unidadeMap = useMemo(() => new Map(unidades.map((u) => [u.id, u.nome])), [unidades]);
   const episodioMap = useMemo(() => new Map(episodios.map((e) => [e.id, e])), [episodios]);
