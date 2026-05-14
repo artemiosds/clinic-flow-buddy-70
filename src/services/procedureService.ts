@@ -86,6 +86,7 @@ async function fetchAll(): Promise<{ procs: ProcedimentoDB[]; links: Map<string,
       .eq('ativo', true)
       .order('especialidade')
       .order('nome'),
+      .limit(20000),
     (supabase as any).from('procedimento_profissionais').select('procedimento_codigo, profissional_id'),
   ]);
 
