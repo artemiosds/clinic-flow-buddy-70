@@ -158,11 +158,40 @@ Deno.serve(async (req) => {
       );
     }
 
-    const ano = competencia.slice(0, 4);
-    const mes = competencia.slice(4, 6);
-    const dataInicio = `${ano}-${mes}-01`;
-    const ultDia = new Date(Number(ano), Number(mes), 0).getDate();
-    const dataFim = `${ano}-${mes}-${String(ultDia).padStart(2, '0')}`;
+    const comp = onlyDigits(String(competencia || ''));
+    if (comp.length !== 6) {
+      return new Response(
+        JSON.stringify({ error: 'competencia inválida (esperado AAAAMM)' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
+    const anoNum = parseInt(comp.slice(0, 4));
+    const mesNum = parseInt(comp.slice(4, 6));
+    
+    // Início do mês
+    const start = new Date(anoNum, mesNum - 1, 1);
+    start.setHours(0, 0, 0, 0);
+    
+    // Fim do mês
+    const end = new Date(anoNum, mesNum, 0);
+    end.setHours(23, 59, 59, 999);
+
+    const formatDateIso = (d: Date) => {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    };
+
+    const dataInicio = formatDateIso(start);
+    const dataFim = formatDateIso(end);
+
+    console.log("[BPA] competencia resolvida", {
+      competencia: comp,
+      dataInicio,
+      dataFim
+    });
 
     // 1. Prontuários do período (somente finalizados — todos no schema atual já são finalizados ao salvar)
     let prontQuery = supabase
@@ -255,12 +284,20 @@ Deno.serve(async (req) => {
       if (!pront) return;
       protsComProc.add(pront.id);
       
-      // Resolver CID: 1. Proc Prontuario -> 2. Prontuario Header -> 3. PTS
+      const pacId = pront.paciente_id;
+      const pac = pacMap.get(pacId);
+      const pacCustom = pac?.custom_data || {};
+      const pacPts = ptsByPac.get(pacId) || [];
+
+      // Resolver CID: 1. Proc Prontuario -> 2. Prontuario Header -> 3. Paciente -> 4. PTS
       let finalCid = v.cid || pront.cid;
       if (!finalCid) {
-        const pacPts = ptsByPac.get(pront.paciente_id) || [];
-        const ptsWithCid = pacPts.find((p: any) => p.pts_cid && p.pts_cid.length > 0);
-        if (ptsWithCid) finalCid = ptsWithCid.pts_cid[0].cid_codigo;
+        if (pacCustom.cid) {
+          finalCid = pacCustom.cid;
+        } else {
+          const ptsWithCid = pacPts.find((p: any) => p.pts_cid && p.pts_cid.length > 0);
+          if (ptsWithCid) finalCid = ptsWithCid.pts_cid[0].cid_codigo;
+        }
       }
 
       items.push({
@@ -271,38 +308,49 @@ Deno.serve(async (req) => {
       });
     });
 
-    // Prontuários SEM procedimento — tentar buscar no PTS ou marcar pendente
+    // Prontuários SEM procedimento — tentar buscar no Paciente ou PTS
     prots.forEach((pront: any) => {
       if (!protsComProc.has(pront.id)) {
-        const pacPts = ptsByPac.get(pront.paciente_id) || [];
+        const pacId = pront.paciente_id;
+        const pac = pacMap.get(pacId);
+        const pacCustom = pac?.custom_data || {};
+        const pacPts = ptsByPac.get(pacId) || [];
+
+        let finalProc = '';
+        let finalProcNome = '';
+
+        // Prioridade: PTS -> Paciente
         const ptsWithProc = pacPts.find((p: any) => p.pts_sigtap && p.pts_sigtap.length > 0);
+        if (ptsWithProc) {
+          finalProc = ptsWithProc.pts_sigtap[0].procedimento_codigo;
+          finalProcNome = ptsWithProc.pts_sigtap[0].procedimento_nome;
+        } else if (pacCustom.codigo_sigtap) {
+          finalProc = pacCustom.codigo_sigtap;
+          finalProcNome = pacCustom.nome_procedimento || 'Procedimento Vinculado ao Paciente';
+        }
         
+        // Resolver CID
         let finalCid = pront.cid;
         if (!finalCid) {
-          const ptsWithCid = pacPts.find((p: any) => p.pts_cid && p.pts_cid.length > 0);
-          if (ptsWithCid) finalCid = ptsWithCid.pts_cid[0].cid_codigo;
+          if (pacCustom.cid) {
+            finalCid = pacCustom.cid;
+          } else {
+            const ptsWithCid = pacPts.find((p: any) => p.pts_cid && p.pts_cid.length > 0);
+            if (ptsWithCid) finalCid = ptsWithCid.pts_cid[0].cid_codigo;
+          }
         }
 
-        if (ptsWithProc) {
-          const pSigtap = ptsWithProc.pts_sigtap[0];
-          items.push({
-            pront,
-            codigo_sigtap: (pSigtap.procedimento_codigo || '').replace(/\D/g, '').length === 10 ? pSigtap.procedimento_codigo : '',
-            nome_procedimento: pSigtap.procedimento_nome,
-            cid: finalCid
-          });
-        } else {
-          items.push({
-            pront,
-            codigo_sigtap: '',
-            nome_procedimento: '— sem procedimento (Prontuário/PTS) —',
-            cid: finalCid
-          });
-        }
+        items.push({
+          pront,
+          codigo_sigtap: (finalProc || '').replace(/\D/g, '').length === 10 ? finalProc : '',
+          nome_procedimento: finalProcNome || '— sem procedimento (Prontuário/PTS/Paciente) —',
+          cid: finalCid
+        });
       }
     });
 
 
+    let totalValidLines = 0;
     for (const item of items) {
       const { pront, codigo_sigtap, nome_procedimento, cid } = item;
       totalAtendimentos += 1;
@@ -470,9 +518,28 @@ Deno.serve(async (req) => {
         padNum(cep, 8);                         // 171-178 CEP
 
       linhasBpa.push(linha);
+      totalValidLines += 1;
     }
 
-    const totalLinhas = linhasBpa.length;
+    const totalLinhas = totalValidLines;
+    
+    console.log("[BPA] resumo da geracao", {
+      competencia: comp,
+      totalAtendimentos,
+      totalLinhasValidas: totalLinhas,
+      totalPendentes: pendentes.length
+    });
+
+    if (totalLinhas === 0) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Nenhuma linha válida encontrada para gerar o BPA-I desta competência.',
+          total_pendentes: pendentes.length,
+          pendentes
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
 
     // ─── Header tipo 01 (controle do arquivo) ─────────────────────────────────
     // 01-02  Indicador linha (01)
