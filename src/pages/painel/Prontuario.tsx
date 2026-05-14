@@ -2086,7 +2086,7 @@ const ProntuarioPage: React.FC = () => {
               <Button 
                 onClick={() => {
                   if (queryPacienteId) {
-                    navigate(`/painel/prontuario/workspace?pacienteId=${queryPacienteId}&pacienteNome=${encodeURIComponent(queryPacienteNome || "Paciente")}`);
+                    navigate(`/painel/workspace-prontuario?pacienteId=${queryPacienteId}&pacienteNome=${encodeURIComponent(queryPacienteNome || "Paciente")}`);
                   } else {
                     openNew();
                   }
@@ -3268,7 +3268,7 @@ const ProntuarioPage: React.FC = () => {
                         <Button 
                           size="icon" 
                           variant="ghost" 
-                          onClick={() => navigate(`/painel/prontuario/workspace?pacienteId=${p.paciente_id}&pacienteNome=${encodeURIComponent(p.paciente_nome)}&editId=${p.id}`)} 
+                          onClick={() => navigate(`/painel/workspace-prontuario?pacienteId=${p.paciente_id}&pacienteNome=${encodeURIComponent(p.paciente_nome)}&editId=${p.id}`)} 
                           title="Editar"
                         >
                           <Pencil className="w-4 h-4" />
