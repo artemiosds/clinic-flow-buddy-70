@@ -62,7 +62,7 @@ const calcularIdade = (dataNasc: string): string => {
 
 const WorkspaceProntuario: React.FC = () => {
   const { user } = useAuth();
-  const { pacientes, unidades } = useData();
+  const { pacientes, unidades, updateAgendamento } = useData();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
@@ -99,6 +99,9 @@ const WorkspaceProntuario: React.FC = () => {
     hora_atendimento: searchParams.get('horaInicio') || new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
     soap_subjetivo: '', soap_objetivo: '', soap_avaliacao: '', soap_plano: '',
     evolucao: '', queixa_principal: '', conduta: '',
+    anamnese: '', sinais_sintomas: '', exame_fisico: '', hipotese: '',
+    observacoes: '', indicacao_retorno: '', motivo_alteracao: '',
+    procedimentos_texto: '', outro_procedimento: '', episodio_id: '',
     paciente_id: pacienteId || '',
     paciente_nome: pacienteNome || '',
     custom_data: {},
@@ -186,13 +189,31 @@ const WorkspaceProntuario: React.FC = () => {
           const processProntuario = (p: any) => {
             if (p) {
               setForm(prev => ({ ...prev, ...p }));
-              setEspecialidadeFields((p as any).campos_especialidade || {});
+              
+              // Load specialty fields from observations if they were stored there (standard pattern)
+              if (p.observacoes && p.observacoes.startsWith('{')) {
+                try {
+                  const parsedObs = JSON.parse(p.observacoes);
+                  if (parsedObs.especialidade_fields) {
+                    setEspecialidadeFields(parsedObs.especialidade_fields);
+                  }
+                } catch (e) {
+                  console.error("Error parsing observations for specialty fields", e);
+                }
+              }
+
               loadProntuarioProcedimentos(p.id);
               
               // Load prescriptions and exams
               try {
-                if (p.prescricao) setListaPrescricao(JSON.parse(p.prescricao));
-                if (p.solicitacao_exames) setListaExames(JSON.parse(p.solicitacao_exames));
+                if (p.prescricao) {
+                  const parsedPresc = JSON.parse(p.prescricao);
+                  setListaPrescricao(parsedPresc.medicamentos || parsedPresc);
+                }
+                if (p.solicitacao_exames) {
+                  const parsedExams = JSON.parse(p.solicitacao_exames);
+                  setListaExames(parsedExams.exames || parsedExams);
+                }
               } catch (e) { console.error("Error parsing prescriptions/exams", e); }
               
               // Load SOAP enabled state
@@ -325,20 +346,25 @@ const WorkspaceProntuario: React.FC = () => {
         currentProntuario = old;
       }
 
-      const dbPayload = {
+      const dbPayload: any = {
         ...form,
         id: editId || form.id || undefined,
         profissional_id: user?.id,
         profissional_nome: user?.nome,
         unidade_id: user?.unidadeId || '',
-        prescricao: JSON.stringify(listaPrescricao),
-        solicitacao_exames: JSON.stringify(listaExames),
-        campos_especialidade: especialidadeFields,
+        prescricao: listaPrescricao.length > 0 ? JSON.stringify({ medicamentos: listaPrescricao }) : form.prescricao,
+        solicitacao_exames: listaExames.length > 0 ? JSON.stringify({ exames: listaExames }) : form.solicitacao_exames,
+        observacoes: Object.keys(especialidadeFields).length > 0
+          ? JSON.stringify({ especialidade_fields: especialidadeFields, texto: form.observacoes || '' })
+          : form.observacoes,
         custom_data: {
           ...form.custom_data,
           soap_enabled: soapEnabled
         }
       };
+
+      // Remove non-existent columns if they accidentally leaked from form
+      delete dbPayload.campos_especialidade;
       
       const { data, error } = await supabase.from('prontuarios').upsert(dbPayload).select().single();
       if (error) throw error;
@@ -380,6 +406,11 @@ const WorkspaceProntuario: React.FC = () => {
           };
         });
         await supabase.from("prontuario_procedimentos").insert(links);
+      }
+
+      // Update agendamento status if provided
+      if (form.agendamento_id) {
+        await updateAgendamento(form.agendamento_id, { status: 'concluido' });
       }
 
       toast.success('Prontuário salvo com sucesso!');
