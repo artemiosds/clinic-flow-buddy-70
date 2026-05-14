@@ -46,6 +46,8 @@ import CamposEspecialidade from '@/components/CamposEspecialidade';
 import ProntuarioAnexos from '@/components/ProntuarioAnexos';
 import ResultadosExames from '@/components/ResultadosExames';
 import HistoricoCompletoModal from '@/components/HistoricoCompletoModal';
+import { openPrintDocument } from '@/lib/printLayout';
+import { DebouncedTextarea } from '@/components/ui/debounced-textarea';
 
 const calcularIdade = (dataNasc: string): string => {
   if (!dataNasc) return "—";
