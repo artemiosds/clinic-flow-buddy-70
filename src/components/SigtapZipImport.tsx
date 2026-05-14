@@ -605,27 +605,36 @@ const SigtapZipImport: React.FC = () => {
         {/* Specialty filter (visible in both tabs while idle) */}
         {step === 'idle' && (
           <div className="space-y-2 pt-2 border-t">
-            <p className="text-sm font-medium">Associação automática às especialidades:</p>
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium">Associação automática às especialidades:</p>
+              <Badge variant="secondary" className="text-[10px] font-normal uppercase tracking-wider">Base Completa</Badge>
+            </div>
+            <p className="text-[10px] text-muted-foreground leading-tight mb-2">
+              A importação será sempre <strong>COMPLETA e UNIVERSAL</strong>. Marque abaixo para vincular procedimentos específicos 
+              às especialidades na visualização inicial (vínculo secundário).
+            </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
               {SPECIALTY_OPTIONS.map(s => (
-                <label key={s.key} className="flex items-center gap-2 text-sm cursor-pointer">
+                <label key={s.key} className="flex items-center gap-2 text-sm cursor-pointer opacity-80 hover:opacity-100 transition-opacity">
                   <Checkbox checked={selected.has(s.key)} onCheckedChange={() => toggleOne(s.key)} />
                   <span>{s.label}</span>
-                  <span className="text-xs text-muted-foreground">(subgrupo{s.subgrupos.includes(',') ? 's' : ''} {s.subgrupos})</span>
+                  <span className="text-[10px] text-muted-foreground">(subgrupo {s.subgrupos})</span>
                 </label>
               ))}
             </div>
-            <label className="flex items-center gap-2 text-sm cursor-pointer">
-              <Checkbox checked={selected.size === SPECIALTY_OPTIONS.length} onCheckedChange={toggleAll} />
-              <span className="font-medium">Selecionar todas</span>
-            </label>
+            <div className="flex items-center justify-between pt-1">
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <Checkbox checked={selected.size === SPECIALTY_OPTIONS.length} onCheckedChange={toggleAll} />
+                <span className="font-medium">Selecionar todas</span>
+              </label>
+            </div>
           </div>
         )}
 
         {step === 'idle' && (
-          <Button onClick={handleStart} disabled={!canStart || selected.size === 0} className="w-full gradient-primary text-primary-foreground">
+          <Button onClick={handleStart} disabled={!canStart} className="w-full gradient-primary text-primary-foreground font-semibold shadow-lg">
             <Download className="w-4 h-4 mr-2" />
-            {source === 'github' ? 'Baixar do GitHub e Importar' : 'Processar ZIP e Importar'}
+            {source === 'github' ? 'Baixar do GitHub e Importar TUDO' : 'Processar ZIP e Importar TUDO'}
           </Button>
         )}
 
