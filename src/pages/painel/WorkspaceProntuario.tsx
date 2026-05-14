@@ -192,7 +192,12 @@ const WorkspaceProntuario: React.FC = () => {
                 profissionalId={user?.id || ''}
                 agendamentoId={agendamentoId || undefined}
                 triagem={triagem}
-                funcionarios={funcionarios.map(f => ({ ...f, ativo: f.ativo ?? true }))}
+                funcionarios={funcionarios.map(f => ({ 
+                  id: f.id, 
+                  nome: f.nome, 
+                  profissao: f.profissao || '', 
+                  ativo: f.ativo ?? true 
+                }))}
               />
 
               {/* Triage summary if available */}
@@ -235,8 +240,8 @@ const WorkspaceProntuario: React.FC = () => {
                   onClearErrors={() => {}}
                   soapEnabled={true}
                   onToggleSoap={() => {}}
-                  customOptionsForField={(field) => soapCustom.getOptions(field)}
-                  onAddCustomOption={soapCustom.addOption}
+                  customOptionsForField={(field) => soapCustom.getOptionsForField(field)}
+                  onAddCustomOption={(field, option) => soapCustom.addOption(field, option, user?.profissao || '')}
                   onDeleteCustomOption={soapCustom.deleteOption}
                 />
 
