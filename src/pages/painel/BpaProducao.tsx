@@ -718,10 +718,17 @@ const BpaProducao: React.FC = () => {
                           {prof?.cbo || <span className="italic">faltando</span>}
                         </TableCell>
                         <TableCell className="text-xs">
-                          {l.procedimento_nome}
-                          {isMed && !l.codigo_sigtap && (
-                            <Badge className="ml-1 bg-primary/10 text-primary border-0 text-[9px]">consulta</Badge>
-                          )}
+                          <div className="flex flex-col">
+                            <span>{l.procedimento_nome}</span>
+                            {l.fonte_procedimento && l.fonte_procedimento !== 'prontuario' && (
+                              <Badge variant="outline" className="text-[8px] h-3 px-1 w-fit bg-amber-50 text-amber-700 border-amber-200 mt-0.5 uppercase">
+                                Herança: {l.fonte_procedimento.replace(/_/g, ' ')}
+                              </Badge>
+                            )}
+                            {isMed && !l.codigo_sigtap && (
+                              <Badge className="mt-0.5 bg-primary/10 text-primary border-0 text-[9px] w-fit">consulta</Badge>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell className={cn("text-xs font-mono", !ok && v.errors.some(e => e.includes('SIGTAP')) && "text-destructive")}>
                           {l.codigo_sigtap || (isMed ? <Badge variant="outline" className="text-primary border-primary/20 text-[9px] font-normal uppercase">Opcional Médico</Badge> : <span className="italic text-destructive">faltando</span>)}
