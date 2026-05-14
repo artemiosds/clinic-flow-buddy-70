@@ -12,6 +12,9 @@ interface PatientHeaderProps {
   cns: string;
   profissional: string;
   dataNasc?: string;
+  telefone?: string;
+  email?: string;
+  endereco?: string;
   numeroProntuario?: string;
   alertas?: string[];
   risco?: 'baixo' | 'medio' | 'alto';
