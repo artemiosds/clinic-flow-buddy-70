@@ -605,7 +605,7 @@ const SigtapZipImport: React.FC = () => {
         {/* Specialty filter (visible in both tabs while idle) */}
         {step === 'idle' && (
           <div className="space-y-2 pt-2 border-t">
-            <p className="text-sm font-medium">Filtrar especialidades a importar:</p>
+            <p className="text-sm font-medium">Associação automática às especialidades:</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
               {SPECIALTY_OPTIONS.map(s => (
                 <label key={s.key} className="flex items-center gap-2 text-sm cursor-pointer">
