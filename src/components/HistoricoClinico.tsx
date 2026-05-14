@@ -593,6 +593,29 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
                 );
               })}
             </div>
+            {hasMore && (
+              <div className="flex justify-center p-4">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleLoadMore}
+                  disabled={loadingMore}
+                  className="text-primary hover:text-primary/80"
+                >
+                  {loadingMore ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Carregando...
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className="w-4 h-4 mr-2" />
+                      Carregar mais atendimentos
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
           </ScrollArea>
         )}
       </div>
