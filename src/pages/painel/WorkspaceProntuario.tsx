@@ -101,7 +101,7 @@ const WorkspaceProntuario: React.FC = () => {
     agendamento_id: agendamentoId || '',
   });
 
-  const { getCamposForTipo } = useProntuarioTiposConfig();
+  const { getCamposForTipo, soapLabels } = useProntuarioTiposConfig();
   const soapCustom = useSoapCustomOptions(user?.id);
 
   // Load procedures, medications and preferences
@@ -336,6 +336,7 @@ const WorkspaceProntuario: React.FC = () => {
                       onClearErrors={() => {}}
                       soapEnabled={true}
                       onToggleSoap={() => {}}
+                      labels={soapLabels}
                       customOptionsForField={(field) => soapCustom.getOptionsForField(field)}
                       customOptionsWithId={(field) => soapCustom.getOptionWithId(field)}
                       onAddCustomOption={(field, option) => soapCustom.addOption(field, option, user?.profissao || '')}
