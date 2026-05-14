@@ -1249,7 +1249,7 @@ const Pacientes: React.FC = () => {
               onClick={() => {
                 setDetalheOpen(false);
                 navigate(
-                  `/painel/prontuario?pacienteId=${detalhePaciente.id}&pacienteNome=${encodeURIComponent(detalhePaciente.nome)}`,
+                  `/painel/workspace-prontuario?pacienteId=${detalhePaciente.id}&pacienteNome=${encodeURIComponent(detalhePaciente.nome)}`,
                 );
               }}
             >

@@ -299,6 +299,8 @@ const WorkspaceProntuario: React.FC = () => {
               <PatientClinicalHeader
                 nome={pacienteData?.nome || pacienteNome || 'Paciente não identificado'}
                 idade={pacienteData?.data_nascimento ? calcularIdade(pacienteData.data_nascimento) : '—'}
+                dataNasc={pacienteData?.data_nascimento}
+                numeroProntuario={pacienteData?.id?.slice(0, 8)}
                 sexo={(() => {
                   const s = pacienteData?.custom_data?.sexo || pacienteData?.sexo;
                   if (!s) return "—";
@@ -312,49 +314,50 @@ const WorkspaceProntuario: React.FC = () => {
                 cns={pacienteData?.cns || '—'}
                 profissional={user?.nome || '—'}
                 alertas={triagem?.alergias?.length > 0 ? ['Alergias Detectadas'] : []}
+                risco={triagem?.prioridade === 'urgente' ? 'alto' : triagem?.prioridade === 'gestante' ? 'medio' : 'baixo'}
               />
 
-              {/* Patient Meta & Quick Info (Horizontal Bar) */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 animate-in fade-in slide-in-from-bottom-2 duration-700">
-                <Card className="p-3 border-none bg-primary/5 flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <MapPin className="w-4 h-4 text-primary" />
+              {/* Clinical Overview Bar - Key Stats at a glance */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 animate-in fade-in slide-in-from-bottom-2 duration-700">
+                <div className="p-3.5 rounded-xl border bg-card/50 flex items-center gap-3.5 shadow-sm">
+                  <div className="w-10 h-10 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-600">
+                    <MapPin className="w-5 h-5" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Município</p>
-                    <p className="text-xs font-semibold truncate">{pacienteData?.municipio || '—'}</p>
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest leading-tight">Origem</p>
+                    <p className="text-xs font-bold truncate mt-0.5">{pacienteData?.municipio || '—'}</p>
                   </div>
-                </Card>
-                <Card className="p-3 border-none bg-amber-500/5 flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-amber-500/10 flex items-center justify-center">
-                    <Clock className="w-4 h-4 text-amber-600" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Último Atend.</p>
-                    <p className="text-xs font-semibold truncate">—</p>
-                  </div>
-                </Card>
-                <Card className="p-3 border-none bg-emerald-500/5 flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center">
-                    <Activity className="w-4 h-4 text-emerald-600" />
+                </div>
+                <div className="p-3.5 rounded-xl border bg-card/50 flex items-center gap-3.5 shadow-sm">
+                  <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-600">
+                    <Clock className="w-5 h-5" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Frequência</p>
-                    <p className="text-xs font-semibold truncate">—</p>
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest leading-tight">Vínculo</p>
+                    <p className="text-xs font-bold truncate mt-0.5">{pacienteData?.unidade_vinculo || 'Não vinculado'}</p>
                   </div>
-                </Card>
-                <Card className="p-3 border-none bg-indigo-500/5 flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-indigo-500/10 flex items-center justify-center">
-                    <FileText className="w-4 h-4 text-indigo-600" />
+                </div>
+                <div className="p-3.5 rounded-xl border bg-card/50 flex items-center gap-3.5 shadow-sm">
+                  <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-600">
+                    <Activity className="w-5 h-5" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Tratamento</p>
-                    <p className="text-xs font-semibold truncate">{pacienteData?.especialidade_destino || '—'}</p>
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest leading-tight">Status Clínico</p>
+                    <p className="text-xs font-bold truncate mt-0.5">Ativo</p>
                   </div>
-                </Card>
+                </div>
+                <div className="p-3.5 rounded-xl border bg-card/50 flex items-center gap-3.5 shadow-sm">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                    <FileText className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest leading-tight">Especialidade</p>
+                    <p className="text-xs font-bold truncate mt-0.5">{pacienteData?.especialidade_destino || '—'}</p>
+                  </div>
+                </div>
               </div>
 
-              {/* Triage summary if available - High Clinical Alert Style */}
+              {/* Triage summary if available - Detailed & Hospital Grade */}
               {triagem && (
                 <div className="animate-in fade-in slide-in-from-top-2 duration-500">
                   <TriagemDetalhada triagem={triagem} showEmpty={false} />
@@ -362,22 +365,23 @@ const WorkspaceProntuario: React.FC = () => {
               )}
 
               {/* Evolution Workspace - Maximum Area for Writing */}
-              <Card className="border-none shadow-md overflow-hidden ring-1 ring-border">
-                <div className="bg-card border-b px-6 py-4 flex items-center justify-between">
+              <div className="bg-card rounded-2xl border shadow-sm overflow-hidden ring-1 ring-border/50">
+                <div className="bg-muted/30 border-b px-6 py-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-primary/5 flex items-center justify-center">
+                    <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
                       <ClipboardList className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <h2 className="text-base font-bold text-foreground">Evolução Atual</h2>
-                      <div className="flex items-center gap-3 text-[11px] text-muted-foreground mt-0.5">
-                         <span className="flex items-center gap-1"><History className="w-3.5 h-3.5" /> {form.data_atendimento} às {form.hora_atendimento}</span>
+                      <h2 className="text-sm font-bold text-foreground">Registro de Evolução Atual</h2>
+                      <div className="flex items-center gap-3 text-[10px] text-muted-foreground mt-0.5 uppercase tracking-wider font-semibold">
+                         <span className="flex items-center gap-1.5"><History className="w-3.5 h-3.5" /> Atendimento em {form.data_atendimento} às {form.hora_atendimento}</span>
                       </div>
                     </div>
                   </div>
+                  <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 text-[10px] px-2 h-6 uppercase font-bold">Modo Edição</Badge>
                 </div>
                 
-                <CardContent className="p-6 md:p-8 space-y-8 bg-card">
+                <div className="p-6 md:p-8 space-y-8">
                   {/* SOAP Editor - Adaptive & Professional */}
                   <div className="space-y-6">
                     <SoapFieldsAdaptive
@@ -402,10 +406,10 @@ const WorkspaceProntuario: React.FC = () => {
                   <Separator className="opacity-50" />
 
                   {/* Complementary Sections */}
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     <div className="flex items-center gap-2 mb-2">
                        <Activity className="w-4 h-4 text-primary" />
-                       <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Conduta e Complementos</h3>
+                       <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Conduta e Prescrição Complementar</h3>
                     </div>
                     <DynamicProntuarioFields
                       campos={getCamposForTipo(form.tipo_registro)}
@@ -418,36 +422,36 @@ const WorkspaceProntuario: React.FC = () => {
                       }))}
                     />
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </div>
           </ScrollArea>
         </main>
 
-        {/* Longitudinal History Panel - Intelligent Sidebar */}
-        <aside className="w-[420px] shrink-0 bg-background border-l flex flex-col hidden xl:flex z-10 shadow-2xl overflow-hidden">
+        {/* Longitudinal History Panel - Integrated Hospital Sidebar */}
+        <aside className="w-[440px] shrink-0 bg-background border-l flex flex-col hidden lg:flex z-10 shadow-[0_-8px_30px_rgb(0,0,0,0.12)] overflow-hidden">
           <Tabs defaultValue="history" className="flex flex-col h-full">
-            <div className="px-4 py-3 bg-card border-b">
-              <TabsList className="grid grid-cols-2 w-full h-11 p-1 bg-muted/50 rounded-lg">
-                <TabsTrigger value="history" className="gap-2 text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm">
-                  <History className="w-4 h-4" />
-                  Registro Longitudinal
+            <div className="px-4 py-3.5 bg-muted/20 border-b">
+              <TabsList className="grid grid-cols-2 w-full h-10 p-1 bg-background border rounded-lg">
+                <TabsTrigger value="history" className="gap-2 text-[11px] font-bold uppercase tracking-tighter data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                  <History className="w-3.5 h-3.5" />
+                  Prontuário Longitudinal
                 </TabsTrigger>
-                <TabsTrigger value="documents" className="gap-2 text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm">
-                  <FileText className="w-4 h-4" />
-                  Documentos
+                <TabsTrigger value="documents" className="gap-2 text-[11px] font-bold uppercase tracking-tighter data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                  <FileText className="w-3.5 h-3.5" />
+                  Repositório de Exames
                 </TabsTrigger>
               </TabsList>
             </div>
 
             <TabsContent value="history" className="flex-1 overflow-hidden m-0 relative">
               <div className="flex flex-col h-full bg-muted/5">
-                <div className="p-4 py-3 border-b bg-card/80 backdrop-blur-sm flex items-center justify-between sticky top-0 z-10">
+                <div className="p-4 py-2.5 border-b bg-card/80 backdrop-blur-md flex items-center justify-between sticky top-0 z-10">
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <h3 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Histórico Clínico Completo</h3>
+                    <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                    <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Histórico Longitudinal</h3>
                   </div>
-                  <Badge variant="outline" className="text-[9px] font-bold tracking-tighter uppercase px-1.5 h-5 border-primary/20 text-primary bg-primary/5">Timeline</Badge>
+                  <Badge variant="outline" className="text-[9px] font-bold tracking-tighter uppercase px-1.5 h-5 border-primary/20 text-primary bg-primary/5">Timeline Ativa</Badge>
                 </div>
                 <ScrollArea className="flex-1">
                   <div className="p-4 pb-12">
@@ -464,9 +468,9 @@ const WorkspaceProntuario: React.FC = () => {
 
             <TabsContent value="documents" className="flex-1 overflow-hidden m-0">
                <div className="flex flex-col h-full bg-muted/5">
-                 <div className="p-4 py-3 border-b bg-card flex items-center gap-2">
-                   <FileText className="w-4 h-4 text-primary" />
-                   <h3 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Arquivos e Anexos</h3>
+                 <div className="p-4 py-2.5 border-b bg-card flex items-center gap-2">
+                   <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                   <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Documentos e Anexos</h3>
                  </div>
                  <ScrollArea className="flex-1">
                    <div className="p-4 pb-12">
