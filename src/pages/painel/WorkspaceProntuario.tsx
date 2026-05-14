@@ -30,7 +30,9 @@ import {
   ChevronRight,
   Stethoscope,
   ClipboardList,
-  Info
+  Info,
+  MapPin,
+  Clock
 } from 'lucide-react';
 
 import PatientClinicalHeader from '@/components/pacientes/PatientClinicalHeader';
@@ -292,6 +294,46 @@ const WorkspaceProntuario: React.FC = () => {
                 profissional={user?.nome || '—'}
                 alertas={triagem?.alergias?.length > 0 ? ['Alergias Detectadas'] : []}
               />
+
+              {/* Patient Meta & Quick Info (Horizontal Bar) */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 animate-in fade-in slide-in-from-bottom-2 duration-700">
+                <Card className="p-3 border-none bg-primary/5 flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                    <MapPin className="w-4 h-4 text-primary" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Município</p>
+                    <p className="text-xs font-semibold truncate">{pacienteData?.municipio || '—'}</p>
+                  </div>
+                </Card>
+                <Card className="p-3 border-none bg-amber-500/5 flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-amber-500/10 flex items-center justify-center">
+                    <Clock className="w-4 h-4 text-amber-600" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Último Atend.</p>
+                    <p className="text-xs font-semibold truncate">Há 2 dias</p>
+                  </div>
+                </Card>
+                <Card className="p-3 border-none bg-emerald-500/5 flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                    <Activity className="w-4 h-4 text-emerald-600" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Frequência</p>
+                    <p className="text-xs font-semibold truncate">Semanal</p>
+                  </div>
+                </Card>
+                <Card className="p-3 border-none bg-indigo-500/5 flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-indigo-500/10 flex items-center justify-center">
+                    <FileText className="w-4 h-4 text-indigo-600" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Tratamento</p>
+                    <p className="text-xs font-semibold truncate">Fisioterapia</p>
+                  </div>
+                </Card>
+              </div>
 
               {/* Triage summary if available - High Clinical Alert Style */}
               {triagem && (
