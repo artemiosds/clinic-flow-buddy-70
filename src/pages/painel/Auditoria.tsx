@@ -702,10 +702,8 @@ const Auditoria: React.FC = () => {
                         {format(new Date(log.created_at), 'dd/MM/yy HH:mm:ss')}
                       </TableCell>
                       <TableCell className="text-sm font-medium">{log.user_nome || 'Sistema'}</TableCell>
-                      <TableCell className="text-xs font-mono text-muted-foreground">{getCpfDisplay(log)}</TableCell>
-                      <TableCell><Badge variant="outline" className="text-xs">{log.role}</Badge></TableCell>
+                      <TableCell>{getEntityDisplay(log)}</TableCell>
                       <TableCell className="text-sm">{acaoLabels[log.acao] || log.acao}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{moduloLabels[log.modulo] || log.modulo || log.entidade}</TableCell>
                       <TableCell>
                         <Badge className={`text-xs ${statusBadge[log.status] || 'bg-muted text-muted-foreground'}`}>
                           {log.status}
