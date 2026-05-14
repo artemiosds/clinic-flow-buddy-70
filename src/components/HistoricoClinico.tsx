@@ -500,123 +500,141 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
         </div>
       )}
 
-      <div className="space-y-2">
-        <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-          <FileText className="w-4 h-4 text-muted-foreground" /> Linha do Tempo ({timeline.length} registro(s))
-        </h3>
+      <div className="space-y-4">
         {timeline.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-6 gap-2">
-            <FileText className="w-8 h-8 text-muted-foreground/40" />
-            <p className="text-sm text-muted-foreground text-center">Nenhum atendimento registrado.</p>
+          <div className="flex flex-col items-center justify-center py-10 gap-2 border-2 border-dashed rounded-xl bg-muted/20">
+            <FileText className="w-10 h-10 text-muted-foreground/30" />
+            <p className="text-sm text-muted-foreground text-center">Nenhum atendimento registrado nesta linha do tempo.</p>
           </div>
         ) : (
-          <ScrollArea className="max-h-[400px]">
-            <div className="relative pl-6 space-y-3">
-              <div className="absolute left-2 top-2 bottom-2 w-px bg-border" aria-hidden="true" />
-              {timeline.map((item) => {
-                const isOwn = item.profissional_id === currentProfissionalId;
-                const expanded = expandedId === item.id;
-                return (
-                  <div key={item.id} className="relative">
-                    <div className="absolute -left-4 top-2 w-3 h-3 rounded-full bg-primary border-2 border-background" />
-                    <Card className="border-0 shadow-sm hover:shadow-md transition-shadow">
-                      <CardContent className="p-3">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <time className="text-xs font-bold text-primary" dateTime={item.data_atendimento}>
-                                {formatDateBR(item.data_atendimento)}
-                              </time>
-                              {item.hora_atendimento && (
-                                <span className="text-xs text-muted-foreground">{item.hora_atendimento}</span>
-                              )}
-                              {item.episodioTitulo && (
-                                <Badge variant="outline" className="text-[10px]">
-                                  {item.episodioTitulo}
-                                </Badge>
-                              )}
-                              {item.tipo_registro?.includes('alta') && (
-                                <Badge className="text-[10px] bg-amber-100 text-amber-700 border-amber-200">ALTA</Badge>
-                              )}
-                            </div>
-                            <p className="text-sm text-foreground mt-0.5">
-                              {item.profissional_nome}
-                              {isOwn && <span className="text-xs text-primary ml-1">(você)</span>}
-                            </p>
-                            {item.unidadeNome && <p className="text-xs text-muted-foreground">{item.unidadeNome}</p>}
-                            {item.evolucao && !expanded && (
-                              <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
-                                {item.evolucao}
-                              </p>
+          <div className="relative pl-6 space-y-4">
+            <div className="absolute left-2 top-2 bottom-2 w-px bg-gradient-to-b from-primary/30 via-border to-transparent" aria-hidden="true" />
+            {timeline.map((item) => {
+              const isOwn = item.profissional_id === currentProfissionalId;
+              const expanded = expandedId === item.id;
+              return (
+                <div key={item.id} className="relative group">
+                  <div className={cn(
+                    "absolute -left-4 top-3 w-3.5 h-3.5 rounded-full border-2 border-background transition-transform group-hover:scale-110 z-10",
+                    item.tipo_registro?.includes('alta') ? "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]" : "bg-primary"
+                  )} />
+                  <Card className={cn(
+                    "border shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden",
+                    expanded ? "ring-1 ring-primary/20" : ""
+                  )}>
+                    <CardContent className="p-0">
+                      <div 
+                        className="flex items-start justify-between gap-3 p-4 cursor-pointer hover:bg-muted/30 transition-colors"
+                        onClick={() => setExpandedId(expanded ? null : item.id)}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap mb-1">
+                            <time className="text-xs font-bold text-primary flex items-center gap-1">
+                              <Calendar className="w-3 h-3" />
+                              {formatDateBR(item.data_atendimento)}
+                            </time>
+                            {item.hora_atendimento && (
+                              <Badge variant="secondary" className="text-[10px] font-medium h-5 px-1.5 py-0 bg-muted/60">
+                                <Clock className="w-2.5 h-2.5 mr-1 text-muted-foreground" />
+                                {item.hora_atendimento}
+                              </Badge>
+                            )}
+                            {item.episodioTitulo && (
+                              <Badge variant="outline" className="text-[10px] h-5 border-primary/20 text-primary/80 bg-primary/5">
+                                {item.episodioTitulo}
+                              </Badge>
+                            )}
+                            {item.tipo_registro?.includes('alta') && (
+                              <Badge className="text-[10px] h-5 bg-amber-500/10 text-amber-600 border-amber-200">ALTA</Badge>
                             )}
                           </div>
-                          <div className="flex items-center gap-1 shrink-0">
-                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setViewerItem(item)} title="Visualizar">
-                              <Eye className="w-3.5 h-3.5 text-primary" />
-                            </Button>
-                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleDownloadPDF(item)} title="Baixar PDF">
-                              <FileDown className="w-3.5 h-3.5 text-primary" />
-                            </Button>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button size="sm" variant="ghost" className="h-7 w-7 p-0" title="Mais ações">
-                                  <MoreVertical className="w-3.5 h-3.5" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-48">
-                                <DropdownMenuItem onClick={() => handlePrint(item)}>
-                                  <Printer className="w-3.5 h-3.5 mr-2" /> Imprimir
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => { setViewerItem(item); setTimeout(() => setDocModalOpen(true), 100); }}>
-                                  <FileSignature className="w-3.5 h-3.5 mr-2" /> Gerar documento
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-7 w-7 p-0"
-                              onClick={() => setExpandedId(expanded ? null : item.id)}
-                            >
-                              {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                            </Button>
+                          <div className="flex items-center gap-2">
+                             <p className="text-sm font-bold text-foreground truncate">
+                               {item.profissional_nome}
+                             </p>
+                             {isOwn && <Badge className="text-[9px] h-4 bg-primary/10 text-primary border-none">VOCÊ</Badge>}
                           </div>
+                          {item.unidadeNome && <p className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5"><MapPin className="w-2.5 h-2.5" /> {item.unidadeNome}</p>}
+                          
+                          {item.evolucao && !expanded && (
+                            <p className="text-xs text-muted-foreground mt-2 line-clamp-2 italic leading-relaxed bg-muted/40 p-2 rounded-md border border-border/40">
+                              "{item.evolucao}"
+                            </p>
+                          )}
                         </div>
-                        {expanded && (
-                          <div className="mt-2 space-y-1 text-xs border-t pt-2">
+                        <div className="flex items-center gap-1 shrink-0 self-start mt-1">
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            className="h-8 w-8 p-0 rounded-full hover:bg-primary/10 hover:text-primary" 
+                            onClick={(e) => { e.stopPropagation(); setViewerItem(item); }} 
+                            title="Visualizar Detalhes"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                              <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-full" title="Mais opções">
+                                <MoreVertical className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuItem onClick={() => handlePrint(item)}>
+                                <Printer className="w-3.5 h-3.5 mr-2" /> Imprimir Registro
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleDownloadPDF(item)}>
+                                <FileDown className="w-3.5 h-3.5 mr-2" /> Baixar PDF
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => { setViewerItem(item); setTimeout(() => setDocModalOpen(true), 100); }}>
+                                <FileSignature className="w-3.5 h-3.5 mr-2" /> Gerar Documento
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </div>
+                      
+                      {expanded && (
+                        <div className="px-4 pb-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                          <div className="border-t pt-4 space-y-4">
                             {renderContent(item)}
                           </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  </div>
-                );
-              })}
-            </div>
+                          <div className="mt-4 pt-4 border-t flex justify-end">
+                             <Button variant="ghost" size="xs" onClick={() => setExpandedId(null)} className="text-[10px] uppercase font-bold tracking-wider gap-1 h-7">
+                               <ChevronUp className="w-3 h-3" /> Recolher
+                             </Button>
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              );
+            })}
             {hasMore && (
-              <div className="flex justify-center p-4">
+              <div className="flex justify-center pt-4">
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
                   onClick={handleLoadMore}
                   disabled={loadingMore}
-                  className="text-primary hover:text-primary/80"
+                  className="rounded-full px-6 border-primary/20 text-primary hover:bg-primary/5 font-semibold text-xs"
                 >
                   {loadingMore ? (
                     <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />
                       Carregando...
                     </>
                   ) : (
                     <>
-                      <ChevronDown className="w-4 h-4 mr-2" />
-                      Carregar mais atendimentos
+                      <ChevronDown className="w-3.5 h-3.5 mr-2" />
+                      Carregar mais registros
                     </>
                   )}
                 </Button>
               </div>
             )}
-          </ScrollArea>
+          </div>
         )}
       </div>
 
