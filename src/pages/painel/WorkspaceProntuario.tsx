@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
@@ -102,8 +102,17 @@ const WorkspaceProntuario: React.FC = () => {
           }
         }
 
-        // Load existing record if editing
-        if (editId) {
+        const existingForAgendamento = await supabase
+          .from('prontuarios')
+          .select('*')
+          .eq('agendamento_id', agendamentoId)
+          .maybeSingle();
+
+        if (existingForAgendamento.data) {
+          setForm({
+            ...existingForAgendamento.data,
+          });
+        } else if (editId) {
           const { data: record } = await supabase
             .from('prontuarios')
             .select('*')
@@ -113,7 +122,6 @@ const WorkspaceProntuario: React.FC = () => {
           if (record) {
             setForm({
               ...record,
-              // Parse potential JSON in observations or other fields if needed
             });
           }
         }
