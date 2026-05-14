@@ -598,7 +598,7 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
                       </div>
                       
                       {expanded && (
-                        <div className="px-4 pb-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <div className="px-3 pb-3 animate-in fade-in slide-in-from-top-2 duration-300">
                           <div className="border-t pt-4 space-y-4">
                             {renderContent(item)}
                           </div>
