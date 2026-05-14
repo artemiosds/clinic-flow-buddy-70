@@ -275,9 +275,9 @@ const SigtapZipImport: React.FC = () => {
       const grupoSub = codigo.substring(0, 4);
       const subgrupo = codigo.substring(2, 4);
 
-      const especialidade = SUBGROUP_SPECIALTY_MAP[grupoSub];
-      if (!especialidade) continue;
-      if (!selected.has(especialidade)) continue;
+      const especialidade = SUBGROUP_SPECIALTY_MAP[grupoSub] || 'outros';
+      // Removida a trava de especialidade selecionada: Importamos TUDO.
+      // A seleção na UI agora serve apenas para associação/visualização se necessário.
 
       procedures.push({ codigo, nome, especialidade, subgrupo });
     }
