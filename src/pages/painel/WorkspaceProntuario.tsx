@@ -91,6 +91,7 @@ const WorkspaceProntuario: React.FC = () => {
     conduta: '',
     paciente_id: pacienteId || '',
     paciente_nome: pacienteNome || '',
+    custom_data: {},
   });
 
   const { getEnabledFields } = useProntuarioStructure();
