@@ -126,7 +126,7 @@ const PatientHeader: React.FC<PatientHeaderProps> = ({
       )}
 
       <div className="bg-muted/30 border-t flex justify-center py-1 cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setExpanded(!expanded)}>
-        <Badge variant="ghost" className="text-[9px] uppercase font-bold gap-1 text-muted-foreground">
+        <Badge variant="outline" className="text-[9px] uppercase font-bold gap-1 text-muted-foreground border-none">
           {expanded ? 'Ver menos' : 'Ver detalhes do cadastro'}
         </Badge>
       </div>
