@@ -527,7 +527,7 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
                   )}>
                     <CardContent className="p-0">
                       <div 
-                        className="flex items-start justify-between gap-3 p-4 cursor-pointer hover:bg-muted/30 transition-colors"
+                        className="flex items-start justify-between gap-2.5 p-3 cursor-pointer hover:bg-muted/30 transition-colors"
                         onClick={() => setExpandedId(expanded ? null : item.id)}
                       >
                         <div className="flex-1 min-w-0">
