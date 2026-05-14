@@ -106,9 +106,31 @@ const PatientHeader: React.FC<PatientHeaderProps> = ({
                 Sem Alertas Críticos
               </Badge>
             )}
-          </div>
         </div>
       </div>
+      
+      {expanded && (
+        <div className="p-4 border-t bg-muted/20 grid grid-cols-1 md:grid-cols-3 gap-6 animate-in slide-in-from-top-2 duration-200">
+          <div className="space-y-1">
+            <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Contatos</span>
+            <div className="text-sm font-medium">
+              <p>{telefone || 'Telefone não informado'}</p>
+              <p className="text-muted-foreground text-xs">{email || 'E-mail não informado'}</p>
+            </div>
+          </div>
+          <div className="space-y-1 md:col-span-2">
+            <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Endereço Completo</span>
+            <p className="text-sm font-medium">{endereco || 'Endereço não informado'}</p>
+          </div>
+        </div>
+      )}
+
+      <div className="bg-muted/30 border-t flex justify-center py-1 cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setExpanded(!expanded)}>
+        <Badge variant="ghost" className="text-[9px] uppercase font-bold gap-1 text-muted-foreground">
+          {expanded ? 'Ver menos' : 'Ver detalhes do cadastro'}
+        </Badge>
+      </div>
+    </div>
     </div>
   );
 };
