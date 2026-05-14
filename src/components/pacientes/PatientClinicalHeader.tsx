@@ -1,7 +1,8 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, Calendar, FileText, Phone, User, Activity } from 'lucide-react';
+import { AlertCircle, Calendar, User, Activity, Settings } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface PatientHeaderProps {
   nome: string;
@@ -15,10 +16,11 @@ interface PatientHeaderProps {
   alertas?: string[];
   risco?: 'baixo' | 'medio' | 'alto';
   className?: string;
+  onEdit?: () => void;
 }
 
 const PatientHeader: React.FC<PatientHeaderProps> = ({ 
-  nome, idade, sexo, cpf, cns, profissional, dataNasc, numeroProntuario, alertas = [], risco = 'baixo', className 
+  nome, idade, sexo, cpf, cns, profissional, dataNasc, numeroProntuario, alertas = [], risco = 'baixo', className, onEdit 
 }) => {
   const riskStyles = {
     baixo: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
@@ -39,12 +41,25 @@ const PatientHeader: React.FC<PatientHeaderProps> = ({
               risco === 'baixo' ? 'bg-emerald-500' : risco === 'medio' ? 'bg-amber-500' : 'bg-rose-500'
             )} />
           </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 mb-0.5">
-              <h2 className="text-lg font-bold font-display text-foreground truncate">{nome}</h2>
-              <Badge variant="outline" className={cn("text-[10px] uppercase font-bold px-1.5 h-4.5", riskStyles[risco])}>
-                Risco {risco}
-              </Badge>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between mb-0.5">
+              <div className="flex items-center gap-2 overflow-hidden">
+                <h2 className="text-lg font-bold font-display text-foreground truncate">{nome}</h2>
+                <Badge variant="outline" className={cn("text-[10px] uppercase font-bold px-1.5 h-4.5 shrink-0", riskStyles[risco])}>
+                  Risco {risco}
+                </Badge>
+              </div>
+              {onEdit && (
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8 rounded-lg hover:bg-primary/10 hover:text-primary shrink-0" 
+                  onClick={onEdit}
+                  title="Editar dados do paciente"
+                >
+                  <Settings className="w-4 h-4" />
+                </Button>
+              )}
             </div>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground font-medium">
               <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> {idade} ({dataNasc || '—'})</span>
