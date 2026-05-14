@@ -576,6 +576,7 @@ const WorkspaceProntuario: React.FC = () => {
         setEditPatientOpen(false);
       }}
     />
+    </div>
   </div>
 );
 };
