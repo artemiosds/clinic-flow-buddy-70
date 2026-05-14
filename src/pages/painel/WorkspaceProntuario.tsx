@@ -233,7 +233,7 @@ const WorkspaceProntuario: React.FC = () => {
     };
 
     loadData();
-  }, [pacienteId, agendamentoId, editId, form.paciente_id, form.agendamento_id]);
+  }, [pacienteId, agendamentoId, editId, form.paciente_id, form.agendamento_id, refreshTrigger]);
 
   const handleSave = async () => {
     setSaving(true);
