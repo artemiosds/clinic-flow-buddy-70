@@ -293,7 +293,7 @@ const WorkspaceProntuario: React.FC = () => {
 
                 <Tabs defaultValue="evolution" className="w-full">
                   <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pb-2 border-b mb-4">
-                    <div className="flex items-center justify-between gap-4 mb-2">
+                    <div className="flex items-center justify-between mb-2">
                       <TabsList className="flex-1 justify-start h-12 bg-transparent gap-6 p-0 overflow-x-auto">
                         <TabsTrigger value="evolution" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold">Evolução</TabsTrigger>
                         <TabsTrigger value="prescriptions" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap">Prescrições/Exames</TabsTrigger>
@@ -302,40 +302,49 @@ const WorkspaceProntuario: React.FC = () => {
                         <TabsTrigger value="antecedents" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap">Histórico Externo</TabsTrigger>
                         <TabsTrigger value="annexes" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap">Anexos</TabsTrigger>
                       </TabsList>
-
-                      <div className="flex items-center gap-1.5 shrink-0 ml-auto bg-muted/20 p-1 rounded-full border border-border/40 h-9">
-                        {[
-                          { value: 'avaliacao_inicial', label: 'Avaliação', fullLabel: TIPO_REGISTRO_LABELS.avaliacao_inicial, color: 'text-green-600', activeBg: 'bg-green-600', icon: Stethoscope },
-                          { value: 'retorno', label: 'Retorno', fullLabel: TIPO_REGISTRO_LABELS.retorno, color: 'text-blue-600', activeBg: 'bg-blue-600', icon: Clock },
-                          { value: 'sessao', label: 'Sessão', fullLabel: TIPO_REGISTRO_LABELS.sessao, color: 'text-amber-600', activeBg: 'bg-amber-500', icon: Activity },
-                          { value: 'urgencia', label: 'Urgência', fullLabel: TIPO_REGISTRO_LABELS.urgencia, color: 'text-red-600', activeBg: 'bg-red-600', icon: AlertTriangle },
-                          { value: 'procedimento', label: 'Proc.', fullLabel: TIPO_REGISTRO_LABELS.procedimento, color: 'text-purple-600', activeBg: 'bg-purple-600', icon: ClipboardList },
-                        ].map((type) => {
-                          const isActive = form.tipo_registro === type.value;
-                          const Icon = type.icon;
-                          return (
-                            <button
-                              key={type.value}
-                              type="button"
-                              onClick={() => setForm(p => ({...p, tipo_registro: type.value}))}
-                              title={type.fullLabel}
-                              className={cn(
-                                "flex items-center gap-1.5 px-3 h-7 rounded-full text-[10px] font-bold transition-all whitespace-nowrap shrink-0 uppercase tracking-tight",
-                                isActive 
-                                  ? `${type.activeBg} text-white shadow-sm` 
-                                  : "text-muted-foreground/70 hover:bg-muted/50"
-                              )}
-                            >
-                              <Icon className={cn("w-3.5 h-3.5", !isActive && type.color)} />
-                              <span className="hidden lg:inline">{type.label}</span>
-                            </button>
-                          )
-                        })}
-                      </div>
                     </div>
                   </div>
 
                   <TabsContent value="evolution" className="mt-0 space-y-6">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card p-4 rounded-xl border border-border/60 shadow-sm mb-6">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                          <History className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-bold text-foreground">Evolução Clínica</h3>
+                          <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Atendimento Atual</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <Label className="text-[10px] font-bold uppercase text-muted-foreground whitespace-nowrap">Tipo de Registro:</Label>
+                        <Select 
+                          value={form.tipo_registro} 
+                          onValueChange={(val) => setForm(p => ({...p, tipo_registro: val}))}
+                        >
+                          <SelectTrigger className="w-[180px] h-9 text-xs font-bold bg-background border-border/50">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {[
+                              { value: 'avaliacao_inicial', label: 'Avaliação', color: 'bg-green-600', icon: Stethoscope },
+                              { value: 'retorno', label: 'Retorno', color: 'bg-blue-600', icon: Clock },
+                              { value: 'sessao', label: 'Sessão', color: 'bg-amber-500', icon: Activity },
+                              { value: 'urgencia', label: 'Urgência', color: 'bg-red-600', icon: AlertTriangle },
+                              { value: 'procedimento', label: 'Procedimento', color: 'bg-purple-600', icon: ClipboardList },
+                            ].map((type) => (
+                              <SelectItem key={type.value} value={type.value}>
+                                <div className="flex items-center gap-2">
+                                  <div className={cn("w-2 h-2 rounded-full", type.color)} />
+                                  <span>{type.label}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
                     <SoapFieldsAdaptive
                       profissao={user?.profissao}
                       values={{
