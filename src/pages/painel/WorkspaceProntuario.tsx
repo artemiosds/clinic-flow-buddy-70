@@ -46,9 +46,15 @@ import SoapFieldsAdaptive from '@/components/SoapFieldsAdaptive';
 import { isMedico } from '@/data/soapOptionsByProfession';
 import PacienteDocumentos from '@/components/PacienteDocumentos';
 import { BuscaPaciente } from '@/components/BuscaPaciente';
+import QuickEditPatientModal from '@/components/pacientes/QuickEditPatientModal';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { 
+  ResizableHandle, 
+  ResizablePanel, 
+  ResizablePanelGroup 
+} from "@/components/ui/resizable";
 
 // Services
 import { treatmentService, normalizeSoapPayload } from '@/services/treatmentService';
