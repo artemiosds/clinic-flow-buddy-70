@@ -421,8 +421,6 @@ const WorkspaceProntuario: React.FC = () => {
                   <TabsContent value="antecedents" className="mt-0 space-y-6">
                     <TriagemDetalhada 
                       triagem={triagem} 
-                      onConfirm={() => {}} 
-                      showConfirmButton={false} 
                     />
                     <CamposEspecialidade 
                       profissao={user?.profissao} 
@@ -432,7 +430,10 @@ const WorkspaceProntuario: React.FC = () => {
                   </TabsContent>
 
                   <TabsContent value="annexes" className="mt-0 space-y-6">
-                    <ProntuarioAnexos pacienteId={pacienteId || form.paciente_id} />
+                    <ProntuarioAnexos 
+                      pacienteId={pacienteId || form.paciente_id} 
+                      tipoRegistro={form.tipo_registro}
+                    />
                     <ResultadosExames pacienteId={pacienteId || form.paciente_id} />
                   </TabsContent>
                 </Tabs>
