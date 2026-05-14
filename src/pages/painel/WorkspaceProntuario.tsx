@@ -323,19 +323,23 @@ const WorkspaceProntuario: React.FC = () => {
                       <CardContent className="p-6">
                         <div className="space-y-4">
                           <Label>Procedimentos Realizados / CID-10</Label>
-                          <BuscaPaciente 
-                            pacientes={procedimentos.map(p => ({ id: p.id, nome: p.nome })) as any} 
-                            placeholder="Buscar procedimento..."
-                            value=""
-                            onChange={(id, nome) => {
-                              if (!selectedProcIds.includes(id)) {
-                                setSelectedProcIds(prev => [...prev, id]);
-                                procedureService.getCidsForProcedure(id).then(list => {
-                                  setCidsByProc(prev => ({ ...prev, [id]: list }));
-                                });
-                              }
-                            }}
-                          />
+                          <Select onValueChange={(id) => {
+                            if (id && !selectedProcIds.includes(id)) {
+                              setSelectedProcIds(prev => [...prev, id]);
+                              procedureService.getCidsForProcedure(id).then(list => {
+                                setCidsByProc(prev => ({ ...prev, [id]: list }));
+                              });
+                            }
+                          }}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecionar procedimento..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {procedimentos.map(p => (
+                                <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                           <div className="space-y-3 mt-4">
                             {selectedProcIds.map(pid => {
                               const proc = procedimentos.find(p => p.id === pid);
