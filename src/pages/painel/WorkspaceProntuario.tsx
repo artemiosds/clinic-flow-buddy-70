@@ -324,7 +324,7 @@ const WorkspaceProntuario: React.FC = () => {
                         <div className="space-y-4">
                           <Label>Procedimentos Realizados / CID-10</Label>
                           <BuscaPaciente 
-                            pacientes={procedimentos.map(p => ({ id: p.id, nome: p.nome }))} 
+                            pacientes={procedimentos.map(p => ({ id: p.id, nome: p.nome })) as any} 
                             placeholder="Buscar procedimento..."
                             value=""
                             onChange={(id, nome) => {
