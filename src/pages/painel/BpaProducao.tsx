@@ -200,15 +200,104 @@ const BpaProducao: React.FC = () => {
         .select('prontuario_id, procedimento_id, nome_procedimento, codigo_sigtap, cid')
         .in('prontuario_id', prontIds);
 
-      const result: LinhaBPA[] = [];
+      const finalResult: LinhaBPA[] = [];
       const protsComProc = new Set();
+
+      // 4. Herança entre prontuários do mesmo paciente na competência
+      const herancaPac = new Map<string, { sigtap: string; nome: string; cid: string; fonte_sigtap: string; fonte_cid: string }>();
+
+      // Primeiro passamos para identificar quem tem dados completos
+      (vincs || []).forEach((v: any) => {
+        const pront = prots.find(p => p.id === v.prontuario_id);
+        if (!pront) return;
+        const pacId = pront.paciente_id;
+        const sigtapValido = (v.codigo_sigtap || '').replace(/\D/g, '').length === 10;
+        const cidValido = !!(v.cid || pront.cid);
+
+        if (!herancaPac.has(pacId)) {
+          if (sigtapValido || cidValido) {
+            herancaPac.set(pacId, {
+              sigtap: sigtapValido ? v.codigo_sigtap : '',
+              nome: sigtapValido ? v.nome_procedimento : '',
+              cid: cidValido ? (v.cid || pront.cid) : '',
+              fonte_sigtap: sigtapValido ? 'outro_prontuario_mesmo_paciente' : '',
+              fonte_cid: cidValido ? 'outro_prontuario_mesmo_paciente' : ''
+            });
+          }
+        } else {
+          const current = herancaPac.get(pacId)!;
+          if (sigtapValido && !current.sigtap) {
+            current.sigtap = v.codigo_sigtap;
+            current.nome = v.nome_procedimento;
+            current.fonte_sigtap = 'outro_prontuario_mesmo_paciente';
+          }
+          if (cidValido && !current.cid) {
+            current.cid = v.cid || pront.cid;
+            current.fonte_cid = 'outro_prontuario_mesmo_paciente';
+          }
+        }
+      });
+
+      // Se ainda faltar algo na herança, buscar no PTS ou Paciente (como fallback de herança para quem não tem nada)
+      uniquePacIds.forEach(pacId => {
+        const pac = pm[pacId];
+        const pacPts = ptsByPac.get(pacId) || [];
+        const existing = herancaPac.get(pacId);
+
+        let herancaSigtap = existing?.sigtap || '';
+        let herancaNome = existing?.nome || '';
+        let herancaCid = existing?.cid || '';
+        let herancaFonteSigtap = existing?.fonte_sigtap || '';
+        let herancaFonteCid = existing?.fonte_cid || '';
+
+        // Tentar PTS
+        if (!herancaSigtap) {
+          const ptsWithProc = pacPts.find((p: any) => p.pts_sigtap && p.pts_sigtap.length > 0);
+          if (ptsWithProc) {
+            herancaSigtap = ptsWithProc.pts_sigtap[0].procedimento_codigo;
+            herancaNome = ptsWithProc.pts_sigtap[0].procedimento_nome;
+            herancaFonteSigtap = 'pts';
+          }
+        }
+        if (!herancaCid) {
+          const ptsWithCid = pacPts.find((p: any) => p.pts_cid && p.pts_cid.length > 0);
+          if (ptsWithCid) {
+            herancaCid = ptsWithCid.pts_cid[0].cid_codigo;
+            herancaFonteCid = 'pts';
+          }
+        }
+
+        // Tentar Paciente
+        if (!herancaSigtap && pac?.custom_data?.codigo_sigtap) {
+          herancaSigtap = pac.custom_data.codigo_sigtap;
+          herancaNome = pac.custom_data.nome_procedimento || 'Procedimento Vinculado ao Paciente';
+          herancaFonteSigtap = 'paciente';
+        }
+        if (!herancaCid && pac?.custom_data?.cid) {
+          herancaCid = pac.custom_data.cid;
+          herancaFonteCid = 'paciente';
+        }
+
+        if (herancaSigtap || herancaCid) {
+          herancaPac.set(pacId, {
+            sigtap: herancaSigtap,
+            nome: herancaNome,
+            cid: herancaCid,
+            fonte_sigtap: herancaFonteSigtap,
+            fonte_cid: herancaFonteCid
+          });
+        }
+      });
+
+      // Usando finalResult e protsComProc já declarados acima
+
 
       // Função para resolver Procedimento e CID por prioridade
       const resolveBpaRow = (pront: any, procVinc?: any): LinhaBPA[] => {
         const rows: LinhaBPA[] = [];
         const pacId = pront.paciente_id;
         const pac = pm[pacId];
-        const pacPts = ptsByPac.get(pacId) || [];
+        const hPac = herancaPac.get(pacId);
 
         // Identifica se é médico
         const prof = profM[pront.profissional_id];
@@ -219,18 +308,10 @@ const BpaProducao: React.FC = () => {
           let finalCid = procVinc.cid || pront.cid;
           let fonteCid: LinhaBPA["fonte_cid"] = procVinc.cid ? "prontuario" : (pront.cid ? "atendimento" : undefined);
 
-          // Se faltar CID, busca no Paciente ou PTS
-          if (!finalCid) {
-            if (pac?.custom_data?.cid) {
-              finalCid = pac.custom_data.cid;
-              fonteCid = "paciente";
-            } else {
-              const ptsWithCid = pacPts.find((p: any) => p.pts_cid && p.pts_cid.length > 0);
-              if (ptsWithCid) {
-                finalCid = ptsWithCid.pts_cid[0].cid_codigo;
-                fonteCid = "pts";
-              }
-            }
+          // Se faltar CID, herança
+          if (!finalCid && hPac?.cid) {
+            finalCid = hPac.cid;
+            fonteCid = hPac.fonte_cid as any;
           }
 
           rows.push({
@@ -249,7 +330,7 @@ const BpaProducao: React.FC = () => {
             fonte_cid: fonteCid
           });
         } else {
-          // Caso Prontuário sem procedimento vinculado: buscar no Paciente ou PTS
+          // Caso Prontuário sem procedimento vinculado
           let finalProc = '';
           let finalProcNome = '';
           let fonteProc: LinhaBPA["fonte_procedimento"] = "prontuario";
@@ -257,31 +338,16 @@ const BpaProducao: React.FC = () => {
           let finalCid = pront.cid;
           let fonteCid: LinhaBPA["fonte_cid"] = pront.cid ? "atendimento" : undefined;
 
-          // Tentar PTS primeiro
-          const ptsWithProc = pacPts.find((p: any) => p.pts_sigtap && p.pts_sigtap.length > 0);
-          if (ptsWithProc) {
-            finalProc = ptsWithProc.pts_sigtap[0].procedimento_codigo;
-            finalProcNome = ptsWithProc.pts_sigtap[0].procedimento_nome;
-            fonteProc = "pts";
-          } else if (pac?.custom_data?.codigo_sigtap) {
-            // Tentar Paciente
-            finalProc = pac.custom_data.codigo_sigtap;
-            finalProcNome = pac.custom_data.nome_procedimento || 'Procedimento Vinculado ao Paciente';
-            fonteProc = "paciente";
+          // Herança por prioridade
+          if (hPac?.sigtap) {
+            finalProc = hPac.sigtap;
+            finalProcNome = hPac.nome;
+            fonteProc = hPac.fonte_sigtap as any;
           }
 
-          // Resolver CID se faltar
-          if (!finalCid) {
-            if (pac?.custom_data?.cid) {
-              finalCid = pac.custom_data.cid;
-              fonteCid = "paciente";
-            } else {
-              const ptsWithCid = pacPts.find((p: any) => p.pts_cid && p.pts_cid.length > 0);
-              if (ptsWithCid) {
-                finalCid = ptsWithCid.pts_cid[0].cid_codigo;
-                fonteCid = "pts";
-              }
-            }
+          if (!finalCid && hPac?.cid) {
+            finalCid = hPac.cid;
+            fonteCid = hPac.fonte_cid as any;
           }
 
           rows.push({
@@ -293,7 +359,7 @@ const BpaProducao: React.FC = () => {
             profissional_nome: pront.profissional_nome,
             unidade_id: pront.unidade_id,
             data: pront.data_atendimento,
-            procedimento_nome: finalProcNome || (isMed ? 'Consulta Médica' : '— sem procedimento (Prontuário/PTS/Paciente) —'),
+            procedimento_nome: finalProcNome || (isMed ? 'Consulta Médica' : '— sem procedimento (Herança/PTS/Paciente) —'),
             codigo_sigtap: (finalProc || '').replace(/\D/g, '').length === 10 ? finalProc : '',
             cid: finalCid,
             fonte_procedimento: fonteProc,
@@ -308,22 +374,22 @@ const BpaProducao: React.FC = () => {
         const pront = prots.find(p => p.id === v.prontuario_id);
         if (!pront) return;
         protsComProc.add(pront.id);
-        result.push(...resolveBpaRow(pront, v));
+        finalResult.push(...resolveBpaRow(pront, v));
       });
 
       prots.forEach((pront) => {
         if (!protsComProc.has(pront.id)) {
-          result.push(...resolveBpaRow(pront));
+          finalResult.push(...resolveBpaRow(pront));
         }
       });
 
-      setLinhas(result);
+      setLinhas(finalResult);
 
       console.log("[BPA] resumo da resolucao", {
         competencia,
         totalProntuarios: prots.length,
         totalVinculos: (vincs || []).length,
-        totalLinhas: result.length
+        totalLinhas: finalResult.length
       });
 
     } catch (err: any) {
@@ -652,13 +718,32 @@ const BpaProducao: React.FC = () => {
                           {prof?.cbo || <span className="italic">faltando</span>}
                         </TableCell>
                         <TableCell className="text-xs">
-                          {l.procedimento_nome}
-                          {isMed && !l.codigo_sigtap && (
-                            <Badge className="ml-1 bg-primary/10 text-primary border-0 text-[9px]">consulta</Badge>
-                          )}
+                          <div className="flex flex-col">
+                            <span>{l.procedimento_nome}</span>
+                            {l.fonte_procedimento && l.fonte_procedimento !== 'prontuario' && (
+                              <Badge variant="outline" className="text-[8px] h-3 px-1 w-fit bg-amber-50 text-amber-700 border-amber-200 mt-0.5 uppercase">
+                                Herança: {l.fonte_procedimento.replace(/_/g, ' ')}
+                              </Badge>
+                            )}
+                            {isMed && !l.codigo_sigtap && (
+                              <Badge className="mt-0.5 bg-primary/10 text-primary border-0 text-[9px] w-fit">consulta</Badge>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell className={cn("text-xs font-mono", !ok && v.errors.some(e => e.includes('SIGTAP')) && "text-destructive")}>
-                          {l.codigo_sigtap || (isMed ? <Badge variant="outline" className="text-primary border-primary/20 text-[9px] font-normal uppercase">Opcional Médico</Badge> : <span className="italic text-destructive">faltando</span>)}
+                          <div className="flex flex-col">
+                            <span>{l.codigo_sigtap || (isMed ? <Badge variant="outline" className="text-primary border-primary/20 text-[9px] font-normal uppercase">Opcional Médico</Badge> : <span className="italic text-destructive">faltando</span>)}</span>
+                            {l.cid && (
+                              <span className="text-[10px] text-muted-foreground mt-0.5 flex items-center gap-1">
+                                <span className="font-semibold text-primary/70">CID:</span> {l.cid}
+                                {l.fonte_cid && l.fonte_cid !== 'atendimento' && l.fonte_cid !== 'prontuario' && (
+                                  <span className="text-[8px] px-1 bg-amber-50 text-amber-600 border border-amber-100 rounded">
+                                    H: {l.fonte_cid.replace(/_/g, ' ')}
+                                  </span>
+                                )}
+                              </span>
+                            )}
+                          </div>
                         </TableCell>
 
 

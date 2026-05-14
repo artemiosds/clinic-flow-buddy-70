@@ -25,8 +25,8 @@ export interface LinhaBPA {
   procedimento_nome: string;
   codigo_sigtap: string;
   cid?: string;
-  fonte_procedimento: "prontuario" | "pts" | "paciente" | "tratamento";
-  fonte_cid?: "prontuario" | "pts" | "atendimento" | "paciente";
+  fonte_procedimento: "prontuario" | "pts" | "paciente" | "tratamento" | "outro_prontuario_mesmo_paciente" | "historico_paciente";
+  fonte_cid?: "prontuario" | "pts" | "atendimento" | "paciente" | "outro_prontuario_mesmo_paciente" | "historico_paciente";
 }
 
 export interface ValidationFlags {
