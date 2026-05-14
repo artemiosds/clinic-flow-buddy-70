@@ -103,15 +103,10 @@ const WorkspaceProntuario: React.FC = () => {
 
   // Load patient clinical data
   useEffect(() => {
-    if (!pacienteId) {
-      toast.error('Paciente não identificado');
-      navigate('/painel/prontuario');
-      return;
-    }
-
     const loadData = async () => {
       setLoading(true);
       try {
+        if (pacienteId) {
         // Load basic patient data
         const { data: pData } = await supabase
           .from('pacientes')
@@ -217,7 +212,7 @@ const WorkspaceProntuario: React.FC = () => {
     };
 
     loadData();
-  }, [pacienteId, agendamentoId, editId, navigate]);
+  }, [pacienteId, agendamentoId, editId]);
 
   const handleSave = async () => {
     setSaving(true);
