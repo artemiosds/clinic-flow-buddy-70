@@ -171,6 +171,7 @@ const Atendimentos: React.FC = () => {
                 </CardContent>
               </Card>
             );
+          })}
           {hasMore && (
             <div className="flex justify-center pt-4 pb-8">
               <Button 
