@@ -306,6 +306,45 @@ const WorkspaceProntuario: React.FC = () => {
                   </div>
 
                   <TabsContent value="evolution" className="mt-0 space-y-6">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card p-4 rounded-xl border border-border/60 shadow-sm mb-6">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                          <History className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-bold text-foreground">Evolução Clínica</h3>
+                          <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Atendimento Atual</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <Label className="text-[10px] font-bold uppercase text-muted-foreground whitespace-nowrap">Tipo de Registro:</Label>
+                        <Select 
+                          value={form.tipo_registro} 
+                          onValueChange={(val) => setForm(p => ({...p, tipo_registro: val}))}
+                        >
+                          <SelectTrigger className="w-[180px] h-9 text-xs font-bold bg-background border-border/50">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {[
+                              { value: 'avaliacao_inicial', label: 'Avaliação', color: 'bg-green-600', icon: Stethoscope },
+                              { value: 'retorno', label: 'Retorno', color: 'bg-blue-600', icon: Clock },
+                              { value: 'sessao', label: 'Sessão', color: 'bg-amber-500', icon: Activity },
+                              { value: 'urgencia', label: 'Urgência', color: 'bg-red-600', icon: AlertTriangle },
+                              { value: 'procedimento', label: 'Procedimento', color: 'bg-purple-600', icon: ClipboardList },
+                            ].map((type) => (
+                              <SelectItem key={type.value} value={type.value}>
+                                <div className="flex items-center gap-2">
+                                  <div className={cn("w-2 h-2 rounded-full", type.color)} />
+                                  <span>{type.label}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
                     <SoapFieldsAdaptive
                       profissao={user?.profissao}
                       values={{
