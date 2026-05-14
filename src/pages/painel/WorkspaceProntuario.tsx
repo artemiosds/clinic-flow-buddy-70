@@ -527,8 +527,8 @@ const WorkspaceProntuario: React.FC = () => {
                   </div>
                   <Badge variant="outline" className="text-[9px] font-bold tracking-tighter uppercase px-1.5 h-5 border-primary/20 text-primary bg-primary/5">Timeline Ativa</Badge>
                 </div>
-                <ScrollArea className="flex-1">
-                  <div className="p-4 pb-12">
+                <ScrollArea className="flex-1 w-full">
+                  <div className="p-3 pb-12 w-full">
                     {(pacienteId || form.paciente_id) ? (
                       <HistoricoClinico
                         pacienteId={(pacienteId || form.paciente_id)!}
