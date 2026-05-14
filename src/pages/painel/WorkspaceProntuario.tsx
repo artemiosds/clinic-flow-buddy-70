@@ -21,8 +21,10 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/componen
 import { 
   History, FileText, User, Activity, ArrowLeft, Save, Printer, 
   Stethoscope, ClipboardList, Clock, Search, UserCog, Stamp, Trash2,
-  Calendar, Info
+  Calendar, Info, AlertTriangle
 } from 'lucide-react';
+import { cn } from "@/lib/utils";
+import { TIPO_REGISTRO_LABELS } from '@/utils/labels';
 
 import PatientClinicalHeader from '@/components/pacientes/PatientClinicalHeader';
 import { HistoricoClinico } from '@/components/HistoricoClinico';
@@ -301,23 +303,36 @@ const WorkspaceProntuario: React.FC = () => {
                         <TabsTrigger value="annexes" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap">Anexos</TabsTrigger>
                       </TabsList>
 
-                      <div className="flex items-center gap-2 shrink-0">
-                        <Label className="text-[10px] uppercase font-bold text-muted-foreground whitespace-nowrap">Tipo de Registro:</Label>
-                        <Select 
-                          value={form.tipo_registro} 
-                          onValueChange={(v) => setForm(p => ({...p, tipo_registro: v}))}
-                        >
-                          <SelectTrigger className="h-8 w-40 text-xs">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="avaliacao_inicial">Avaliação Inicial</SelectItem>
-                            <SelectItem value="retorno">Retorno</SelectItem>
-                            <SelectItem value="sessao">Sessão</SelectItem>
-                            <SelectItem value="urgencia">Urgência</SelectItem>
-                            <SelectItem value="procedimento">Procedimento</SelectItem>
-                          </SelectContent>
-                        </Select>
+                      <div className="flex flex-col gap-1.5 shrink-0 min-w-[320px] bg-muted/20 p-2 rounded-lg border border-border/50">
+                        <Label className="text-[10px] uppercase font-bold text-muted-foreground/70 ml-1 mb-0.5 tracking-tight">Selecione o Tipo de Registro</Label>
+                        <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 custom-scrollbar">
+                          {[
+                            { value: 'avaliacao_inicial', label: TIPO_REGISTRO_LABELS.avaliacao_inicial, color: 'text-green-700', bgColor: 'bg-green-50', borderColor: 'border-green-200', activeBg: 'bg-green-600', activeText: 'text-white', icon: Stethoscope },
+                            { value: 'retorno', label: TIPO_REGISTRO_LABELS.retorno, color: 'text-blue-700', bgColor: 'bg-blue-50', borderColor: 'border-blue-200', activeBg: 'bg-blue-600', activeText: 'text-white', icon: Clock },
+                            { value: 'sessao', label: TIPO_REGISTRO_LABELS.sessao, color: 'text-amber-700', bgColor: 'bg-amber-50', borderColor: 'border-amber-200', activeBg: 'bg-amber-500', activeText: 'text-white', icon: Activity },
+                            { value: 'urgencia', label: TIPO_REGISTRO_LABELS.urgencia, color: 'text-red-700', bgColor: 'bg-red-50', borderColor: 'border-red-200', activeBg: 'bg-red-600', activeText: 'text-white', icon: AlertTriangle },
+                            { value: 'procedimento', label: TIPO_REGISTRO_LABELS.procedimento, color: 'text-purple-700', bgColor: 'bg-purple-50', borderColor: 'border-purple-200', activeBg: 'bg-purple-600', activeText: 'text-white', icon: ClipboardList },
+                          ].map((type) => {
+                            const isActive = form.tipo_registro === type.value;
+                            const Icon = type.icon;
+                            return (
+                              <button
+                                key={type.value}
+                                type="button"
+                                onClick={() => setForm(p => ({...p, tipo_registro: type.value}))}
+                                className={cn(
+                                  "flex items-center gap-1.5 px-3 py-2 rounded-md text-[11px] font-bold border transition-all whitespace-nowrap shadow-sm",
+                                  isActive 
+                                    ? `${type.activeBg} ${type.activeText} border-transparent scale-105 ring-2 ring-offset-1 ring-offset-background ring-current/20 z-10`
+                                    : `${type.bgColor} ${type.color} ${type.borderColor} hover:bg-white hover:shadow-md`
+                                )}
+                              >
+                                <Icon className={cn("w-3.5 h-3.5 shrink-0", isActive ? "animate-pulse" : "")} />
+                                {type.label}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
                     </div>
                   </div>
