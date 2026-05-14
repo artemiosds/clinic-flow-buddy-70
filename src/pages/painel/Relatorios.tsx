@@ -1245,6 +1245,7 @@ ${dataRows}
           {[
             { value: 'geral', label: 'Geral' },
             { value: 'produtividade', label: 'Produtividade' },
+            { value: 'analise_clinica', label: '🩺 Análise Clínica' },
             { value: 'procedimentos', label: 'Procedimentos' },
             { value: 'faltas', label: 'Faltas' },
             { value: 'pacientes', label: 'Pacientes' },
