@@ -10,53 +10,88 @@ interface PatientHeaderProps {
   cpf: string;
   cns: string;
   profissional: string;
+  dataNasc?: string;
+  numeroProntuario?: string;
   alertas?: string[];
+  risco?: 'baixo' | 'medio' | 'alto';
   className?: string;
 }
 
-const PatientHeader: React.FC<PatientHeaderProps> = ({ nome, idade, sexo, cpf, cns, profissional, alertas = [], className }) => (
-  <div className={cn("bg-card border rounded-xl p-4 shadow-sm flex flex-col gap-4", className)}>
-    {/* Top Row: Name and Alerts */}
-    <div className="flex items-start justify-between gap-4">
-      <div className="flex items-center gap-3">
-        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-lg">
-          {nome.charAt(0)}
+const PatientHeader: React.FC<PatientHeaderProps> = ({ 
+  nome, idade, sexo, cpf, cns, profissional, dataNasc, numeroProntuario, alertas = [], risco = 'baixo', className 
+}) => {
+  const riskStyles = {
+    baixo: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
+    medio: "bg-amber-500/10 text-amber-600 border-amber-500/20",
+    alto: "bg-rose-500/10 text-rose-600 border-rose-500/20",
+  };
+
+  return (
+    <div className={cn("bg-card border-none shadow-sm rounded-xl overflow-hidden ring-1 ring-border/50", className)}>
+      <div className="flex flex-col md:flex-row">
+        {/* Left: Identity */}
+        <div className="flex-1 p-4 flex items-center gap-4 border-b md:border-b-0 md:border-r">
+          <div className="relative">
+            <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold text-xl shadow-inner">
+              {nome.charAt(0)}
+            </div>
+            <div className={cn("absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-card", 
+              risco === 'baixo' ? 'bg-emerald-500' : risco === 'medio' ? 'bg-amber-500' : 'bg-rose-500'
+            )} />
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 mb-0.5">
+              <h2 className="text-lg font-bold font-display text-foreground truncate">{nome}</h2>
+              <Badge variant="outline" className={cn("text-[10px] uppercase font-bold px-1.5 h-4.5", riskStyles[risco])}>
+                Risco {risco}
+              </Badge>
+            </div>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground font-medium">
+              <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> {idade} ({dataNasc || '—'})</span>
+              <span className="flex items-center gap-1"><User className="w-3.5 h-3.5" /> {sexo}</span>
+              <span className="flex items-center gap-1 text-primary/80 font-mono">ID: {numeroProntuario || '—'}</span>
+            </div>
+          </div>
         </div>
-        <div>
-          <h2 className="text-xl font-bold font-display text-foreground">{nome}</h2>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-            <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> {idade}</span>
-            <span className="text-border">|</span>
-            <span className="flex items-center gap-1"><User className="w-3.5 h-3.5" /> {sexo}</span>
+
+        {/* Right: Clinical Metadata & Alerts */}
+        <div className="flex-[0.8] p-4 bg-muted/5">
+          <div className="grid grid-cols-2 gap-y-2.5 gap-x-4 mb-3">
+            <div className="flex flex-col">
+              <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider leading-none mb-1">CPF</span>
+              <span className="text-xs font-mono font-semibold">{cpf || '—'}</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider leading-none mb-1">Cartão SUS (CNS)</span>
+              <span className="text-xs font-mono font-semibold">{cns || '—'}</span>
+            </div>
+            <div className="flex flex-col col-span-2">
+              <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider leading-none mb-1">Profissional Responsável</span>
+              <div className="flex items-center gap-1.5">
+                <div className="w-4 h-4 rounded-full bg-primary/20 flex items-center justify-center">
+                   <Activity className="w-2.5 h-2.5 text-primary" />
+                </div>
+                <span className="text-xs font-semibold truncate">{profissional}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex flex-wrap gap-1.5">
+            {alertas.length > 0 ? alertas.map((alerta, i) => (
+              <Badge key={i} variant="destructive" className="text-[9px] font-bold uppercase py-0 px-1.5 h-5 bg-rose-500/10 text-rose-600 border-rose-500/20 hover:bg-rose-500/20">
+                <AlertCircle className="w-3 h-3 mr-1" />
+                {alerta}
+              </Badge>
+            )) : (
+              <Badge variant="secondary" className="text-[9px] font-bold uppercase py-0 px-1.5 h-5 bg-emerald-500/5 text-emerald-600/70 border-emerald-500/10">
+                Sem Alertas Críticos
+              </Badge>
+            )}
           </div>
         </div>
       </div>
-      <div className="flex flex-col items-end gap-2">
-        {alertas.map((alerta, i) => (
-          <Badge key={i} variant="destructive" className="flex items-center gap-1.5 px-3 py-1">
-            <AlertCircle className="w-3.5 h-3.5" />
-            {alerta}
-          </Badge>
-        ))}
-      </div>
     </div>
-
-    {/* Bottom Row: Metadata */}
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 border-t pt-4">
-      <div className="flex items-center gap-2 text-sm">
-        <span className="text-muted-foreground">CPF:</span>
-        <span className="font-mono font-medium">{cpf || '—'}</span>
-      </div>
-      <div className="flex items-center gap-2 text-sm">
-        <span className="text-muted-foreground">CNS:</span>
-        <span className="font-mono font-medium">{cns || '—'}</span>
-      </div>
-      <div className="flex items-center gap-2 text-sm">
-        <span className="text-muted-foreground">Prof.:</span>
-        <span className="font-medium truncate">{profissional}</span>
-      </div>
-    </div>
-  </div>
-);
+  );
+};
 
 export default PatientHeader;
