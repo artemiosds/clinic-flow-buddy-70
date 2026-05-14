@@ -57,7 +57,7 @@ const PatientHeader: React.FC<PatientHeaderProps> = ({
                   onClick={onEdit}
                   title="Editar dados do paciente"
                 >
-                  <Settings className="w-4 h-4" />
+                  <UserCog className="w-4 h-4" />
                 </Button>
               )}
             </div>
