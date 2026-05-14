@@ -67,9 +67,9 @@ const SigtapSyncPanel: React.FC = () => {
               <Database className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h3 className="font-semibold text-base">Tabela SIGTAP — Procedimentos e CIDs</h3>
+              <h3 className="font-semibold text-base">Base de Dados SIGTAP (Universal)</h3>
               <p className="text-xs text-muted-foreground">
-                Importação local sem dependência da API do DATASUS
+                Importação integral de procedimentos e CIDs do SUS para todos os profissionais.
               </p>
             </div>
           </div>

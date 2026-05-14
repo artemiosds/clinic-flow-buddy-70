@@ -227,7 +227,7 @@ const SigtapZipImport: React.FC = () => {
 
   const runImport = async (zipBytes: Uint8Array, competencia: string) => {
     setStep('processing');
-    addLog('info', 'Lendo arquivo ZIP...');
+    addLog('info', `Iniciando carga completa da competência ${competenciaLabel(competencia)}...`);
 
     let zip: JSZip;
     try {
@@ -275,17 +275,17 @@ const SigtapZipImport: React.FC = () => {
       const grupoSub = codigo.substring(0, 4);
       const subgrupo = codigo.substring(2, 4);
 
-      const especialidade = SUBGROUP_SPECIALTY_MAP[grupoSub];
-      if (!especialidade) continue;
-      if (!selected.has(especialidade)) continue;
+      const especialidade = SUBGROUP_SPECIALTY_MAP[grupoSub] || 'outros';
+      // Removida a trava de especialidade selecionada: Importamos TUDO.
+      // A seleção na UI agora serve apenas para associação/visualização se necessário.
 
       procedures.push({ codigo, nome, especialidade, subgrupo });
     }
 
-    addLog('info', `📋 ${procedures.length.toLocaleString('pt-BR')} procedimentos filtrados`);
+    addLog('info', `📋 ${procedures.length.toLocaleString('pt-BR')} procedimentos identificados`);
 
     if (procedures.length === 0) {
-      throw new Error('Nenhum procedimento encontrado para as especialidades selecionadas. Verifique os filtros.');
+      throw new Error('Nenhum procedimento encontrado no arquivo tb_procedimento.txt. Verifique se o arquivo está correto.');
     }
 
     // ============= Parse CID descriptions (fixed-width, latin-1) =============
@@ -422,10 +422,8 @@ const SigtapZipImport: React.FC = () => {
   };
 
   const handleStart = async () => {
-    if (selected.size === 0) {
-      toast.error('Selecione ao menos uma especialidade');
-      return;
-    }
+    // Não bloqueamos mais se nenhuma especialidade estiver selecionada, 
+    // pois a importação agora é sempre total.
 
     setLogs([]);
     setProgressPct(0);
@@ -605,27 +603,36 @@ const SigtapZipImport: React.FC = () => {
         {/* Specialty filter (visible in both tabs while idle) */}
         {step === 'idle' && (
           <div className="space-y-2 pt-2 border-t">
-            <p className="text-sm font-medium">Filtrar especialidades a importar:</p>
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium">Associação automática às especialidades:</p>
+              <Badge variant="secondary" className="text-[10px] font-normal uppercase tracking-wider">Base Completa</Badge>
+            </div>
+            <p className="text-[10px] text-muted-foreground leading-tight mb-2">
+              A importação será sempre <strong>COMPLETA e UNIVERSAL</strong>. Marque abaixo para vincular procedimentos específicos 
+              às especialidades na visualização inicial (vínculo secundário).
+            </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
               {SPECIALTY_OPTIONS.map(s => (
-                <label key={s.key} className="flex items-center gap-2 text-sm cursor-pointer">
+                <label key={s.key} className="flex items-center gap-2 text-sm cursor-pointer opacity-80 hover:opacity-100 transition-opacity">
                   <Checkbox checked={selected.has(s.key)} onCheckedChange={() => toggleOne(s.key)} />
                   <span>{s.label}</span>
-                  <span className="text-xs text-muted-foreground">(subgrupo{s.subgrupos.includes(',') ? 's' : ''} {s.subgrupos})</span>
+                  <span className="text-[10px] text-muted-foreground">(subgrupo {s.subgrupos})</span>
                 </label>
               ))}
             </div>
-            <label className="flex items-center gap-2 text-sm cursor-pointer">
-              <Checkbox checked={selected.size === SPECIALTY_OPTIONS.length} onCheckedChange={toggleAll} />
-              <span className="font-medium">Selecionar todas</span>
-            </label>
+            <div className="flex items-center justify-between pt-1">
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <Checkbox checked={selected.size === SPECIALTY_OPTIONS.length} onCheckedChange={toggleAll} />
+                <span className="font-medium">Selecionar todas</span>
+              </label>
+            </div>
           </div>
         )}
 
         {step === 'idle' && (
-          <Button onClick={handleStart} disabled={!canStart || selected.size === 0} className="w-full gradient-primary text-primary-foreground">
+          <Button onClick={handleStart} disabled={!canStart} className="w-full gradient-primary text-primary-foreground font-semibold shadow-lg">
             <Download className="w-4 h-4 mr-2" />
-            {source === 'github' ? 'Baixar do GitHub e Importar' : 'Processar ZIP e Importar'}
+            {source === 'github' ? 'Baixar do GitHub e Importar TUDO' : 'Processar ZIP e Importar TUDO'}
           </Button>
         )}
 
