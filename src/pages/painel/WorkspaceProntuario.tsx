@@ -105,6 +105,8 @@ const WorkspaceProntuario: React.FC = () => {
     agendamento_id: agendamentoId || '',
   });
 
+  const [soapEnabled, setSoapEnabled] = useState(true);
+
   const { getCamposForTipo, soapLabels } = useProntuarioTiposConfig();
   const soapCustom = useSoapCustomOptions(user?.id);
 
