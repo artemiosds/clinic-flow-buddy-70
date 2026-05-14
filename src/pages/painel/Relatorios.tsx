@@ -1403,6 +1403,16 @@ ${dataRows}
             </Card>
           </div>
         </TabsContent>
+        {/* === ANÁLISE CLÍNICA === */}
+        <TabsContent value="analise_clinica" className="space-y-5 mt-4">
+          <AnaliseClinica 
+            dateFrom={dateFrom} 
+            dateTo={dateTo} 
+            filterUnit={filterUnit} 
+            filterProf={filterProf} 
+          />
+        </TabsContent>
+
 
         {/* === PRODUTIVIDADE === */}
         <TabsContent value="produtividade" className="space-y-5 mt-4">
