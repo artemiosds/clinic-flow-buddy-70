@@ -441,25 +441,27 @@ const WorkspaceProntuario: React.FC = () => {
             </ScrollArea>
           </ResizablePanel>
           <ResizableHandle />
-          <ResizablePanel defaultSize={30}>
-            <Tabs defaultValue="history" className="h-full">
-              <TabsList className="w-full">
-                <TabsTrigger value="history" className="flex-1">Histórico</TabsTrigger>
-                <TabsTrigger value="files" className="flex-1">Arquivos</TabsTrigger>
-              </TabsList>
-              <TabsContent value="history" className="h-[calc(100%-40px)] overflow-hidden">
-                <ScrollArea className="h-full p-4">
-                   {(pacienteId || form.paciente_id) && (
-                     <HistoricoClinico 
-                       pacienteId={pacienteId || form.paciente_id} 
-                       pacienteNome={pacienteNome || form.paciente_nome || ''} 
-                       unidades={unidades}
-                       currentProfissionalId={user?.id}
-                     />
-                   )}
-                </ScrollArea>
+          <ResizablePanel defaultSize={35} minSize={25}>
+            <Tabs defaultValue="history" className="flex flex-col h-full">
+              <div className="px-4 py-2 border-b bg-muted/30">
+                <TabsList className="w-full h-9 bg-transparent p-0 gap-4">
+                  <TabsTrigger value="history" className="flex-1 h-9 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-xs font-bold uppercase tracking-wider">Histórico Longitudinal</TabsTrigger>
+                  <TabsTrigger value="files" className="flex-1 h-9 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-xs font-bold uppercase tracking-wider">Documentos</TabsTrigger>
+                </TabsList>
+              </div>
+              <TabsContent value="history" className="flex-1 min-h-0 mt-0">
+                 {(pacienteId || form.paciente_id) && (
+                   <HistoricoClinico 
+                     pacienteId={pacienteId || form.paciente_id} 
+                     pacienteNome={pacienteNome || form.paciente_nome || ''} 
+                     unidades={unidades}
+                     currentProfissionalId={user?.id}
+                   />
+                 )}
               </TabsContent>
-
+              <TabsContent value="files" className="flex-1 min-h-0 mt-0 overflow-y-auto p-4">
+                <PacienteDocumentos pacienteId={pacienteId || form.paciente_id} />
+              </TabsContent>
             </Tabs>
           </ResizablePanel>
         </ResizablePanelGroup>
