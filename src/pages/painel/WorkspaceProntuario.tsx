@@ -303,40 +303,34 @@ const WorkspaceProntuario: React.FC = () => {
                         <TabsTrigger value="annexes" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap">Anexos</TabsTrigger>
                       </TabsList>
 
-                      <div className="flex items-center gap-3 shrink-0 ml-auto">
-                        <div className="hidden xl:flex flex-col items-end mr-1">
-                          <span className="text-[9px] uppercase font-bold text-muted-foreground/60 tracking-widest leading-none">Tipo de</span>
-                          <span className="text-[9px] uppercase font-bold text-muted-foreground/60 tracking-widest leading-none">Registro</span>
-                        </div>
-                        <div className="flex items-center gap-1 bg-muted/40 p-1 rounded-lg border border-border/50 h-10 overflow-x-auto no-scrollbar shadow-inner">
-                          {[
-                            { value: 'avaliacao_inicial', label: TIPO_REGISTRO_LABELS.avaliacao_inicial, color: 'text-green-700', bgColor: 'bg-green-50', borderColor: 'border-green-200', activeBg: 'bg-green-600', activeText: 'text-white', icon: Stethoscope },
-                            { value: 'retorno', label: TIPO_REGISTRO_LABELS.retorno, color: 'text-blue-700', bgColor: 'bg-blue-50', borderColor: 'border-blue-200', activeBg: 'bg-blue-600', activeText: 'text-white', icon: Clock },
-                            { value: 'sessao', label: TIPO_REGISTRO_LABELS.sessao, color: 'text-amber-700', bgColor: 'bg-amber-50', borderColor: 'border-amber-200', activeBg: 'bg-amber-500', activeText: 'text-white', icon: Activity },
-                            { value: 'urgencia', label: TIPO_REGISTRO_LABELS.urgencia, color: 'text-red-700', bgColor: 'bg-red-50', borderColor: 'border-red-200', activeBg: 'bg-red-600', activeText: 'text-white', icon: AlertTriangle },
-                            { value: 'procedimento', label: TIPO_REGISTRO_LABELS.procedimento, color: 'text-purple-700', bgColor: 'bg-purple-50', borderColor: 'border-purple-200', activeBg: 'bg-purple-600', activeText: 'text-white', icon: ClipboardList },
-                          ].map((type) => {
-                            const isActive = form.tipo_registro === type.value;
-                            const Icon = type.icon;
-                            return (
-                              <button
-                                key={type.value}
-                                type="button"
-                                onClick={() => setForm(p => ({...p, tipo_registro: type.value}))}
-                                title={type.label}
-                                className={cn(
-                                  "flex items-center gap-1.5 px-3 h-8 rounded-md text-[11px] font-semibold transition-all whitespace-nowrap shrink-0",
-                                  isActive 
-                                    ? `${type.activeBg} ${type.activeText} shadow-sm z-10 scale-100` 
-                                    : "text-muted-foreground hover:bg-background/80 hover:text-foreground border border-transparent"
-                                )}
-                              >
-                                <Icon className={cn("w-3.5 h-3.5 shrink-0", isActive ? "" : "opacity-70")} />
-                                <span className={cn(isActive ? "block" : "hidden md:block")}>{type.label}</span>
-                              </button>
-                            );
-                          })}
-                        </div>
+                      <div className="flex items-center gap-1.5 shrink-0 ml-auto bg-muted/20 p-1 rounded-full border border-border/40 h-9">
+                        {[
+                          { value: 'avaliacao_inicial', label: 'Avaliação', fullLabel: TIPO_REGISTRO_LABELS.avaliacao_inicial, color: 'text-green-600', activeBg: 'bg-green-600', icon: Stethoscope },
+                          { value: 'retorno', label: 'Retorno', fullLabel: TIPO_REGISTRO_LABELS.retorno, color: 'text-blue-600', activeBg: 'bg-blue-600', icon: Clock },
+                          { value: 'sessao', label: 'Sessão', fullLabel: TIPO_REGISTRO_LABELS.sessao, color: 'text-amber-600', activeBg: 'bg-amber-500', icon: Activity },
+                          { value: 'urgencia', label: 'Urgência', fullLabel: TIPO_REGISTRO_LABELS.urgencia, color: 'text-red-600', activeBg: 'bg-red-600', icon: AlertTriangle },
+                          { value: 'procedimento', label: 'Proc.', fullLabel: TIPO_REGISTRO_LABELS.procedimento, color: 'text-purple-600', activeBg: 'bg-purple-600', icon: ClipboardList },
+                        ].map((type) => {
+                          const isActive = form.tipo_registro === type.value;
+                          const Icon = type.icon;
+                          return (
+                            <button
+                              key={type.value}
+                              type="button"
+                              onClick={() => setForm(p => ({...p, tipo_registro: type.value}))}
+                              title={type.fullLabel}
+                              className={cn(
+                                "flex items-center gap-1.5 px-3 h-7 rounded-full text-[10px] font-bold transition-all whitespace-nowrap shrink-0 uppercase tracking-tight",
+                                isActive 
+                                  ? `${type.activeBg} text-white shadow-sm` 
+                                  : "text-muted-foreground/70 hover:bg-muted/50"
+                              )}
+                            >
+                              <Icon className={cn("w-3.5 h-3.5", !isActive && type.color)} />
+                              <span className="hidden lg:inline">{type.label}</span>
+                            </button>
+                          )
+                        })}
                       </div>
                     </div>
                   </div>
