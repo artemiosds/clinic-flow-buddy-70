@@ -289,7 +289,7 @@ const BpaProducao: React.FC = () => {
         }
       });
 
-      // Usando result e protsComProc já declarados acima
+      // Usando finalResult e protsComProc já declarados acima
 
 
       // Função para resolver Procedimento e CID por prioridade
