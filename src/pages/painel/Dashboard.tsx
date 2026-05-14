@@ -130,25 +130,19 @@ const Dashboard: React.FC = () => {
       const d = new Date(now);
       d.setDate(d.getDate() - i);
       const dateStr = d.toISOString().split('T')[0];
-      // Use atendimentos (finalized) as primary source; only add agendamentos not yet in atendimentos
-      const atendimentoCount = atendimentosDB.filter(a => a.data === dateStr).length;
-      const agendamentoIds = new Set(atendimentosDB.filter(a => a.data === dateStr).map(a => a.id));
-      const extraFromAgendamentos = filteredAgendamentos.filter(a => a.data === dateStr && (a.status === 'concluido' || a.status === 'em_atendimento') && !agendamentoIds.has(a.id)).length;
-      result.push({ name: days[d.getDay()], atendimentos: atendimentoCount + extraFromAgendamentos });
+      const count = filteredAgendamentos.filter(a => a.data === dateStr && (a.status === 'concluido' || a.status === 'em_atendimento')).length;
+      result.push({ name: days[d.getDay()], atendimentos: count });
     }
     return result;
-  }, [atendimentosDB, filteredAgendamentos]);
+  }, [filteredAgendamentos]);
 
   const profData = useMemo(() => {
-    // Use agendamentos as the single source to avoid double-counting
     const map: Record<string, number> = {};
     filteredAgendamentos.forEach(a => {
       if (a.profissionalNome) map[a.profissionalNome] = (map[a.profissionalNome] || 0) + 1;
     });
     return Object.entries(map).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 5);
   }, [filteredAgendamentos]);
-
-  const totalAtendimentos = atendimentosDB.filter(a => a.status === 'finalizado').length;
 
   if (loading) return <DashboardSkeleton />;
 
@@ -184,20 +178,20 @@ const Dashboard: React.FC = () => {
       {/* Executive KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard 
-          title="Taxa No-Show" 
+          title="Taxa No-Show (30d)" 
           value={`${kpis.noShowRate}%`} 
           icon={<XCircle className="w-5 h-5 text-destructive-foreground" />} 
           color="bg-destructive"
-          subtitle={`${kpis.faltas} faltas de ${filteredAgendamentos.length}`}
+          subtitle={`Últimos 30 dias`}
           onClick={() => navigate('/painel/relatorios')}
           critical={kpis.noShowRate > 20}
         />
         <StatCard 
-          title="Tempo Médio" 
-          value={`${kpis.avgTime}min`} 
+          title="Atendimentos (30d)" 
+          value={`${kpis.totalFinalizados}`} 
           icon={<Clock className="w-5 h-5 text-primary-foreground" />} 
           color="gradient-primary"
-          subtitle={`${kpis.totalFinalizados} atendimentos`}
+          subtitle="Total realizado"
           onClick={() => navigate('/painel/relatorios')}
         />
         <StatCard 
@@ -213,7 +207,7 @@ const Dashboard: React.FC = () => {
           value={kpis.prioAguardando} 
           icon={<AlertTriangle className="w-5 h-5 text-warning-foreground" />} 
           color="bg-warning"
-          subtitle={`${kpis.prioAtendidos} atendidos`}
+          subtitle="Aguardando"
           onClick={() => navigate('/painel/fila')}
           critical={kpis.prioAguardando > 5}
         />
