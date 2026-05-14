@@ -166,10 +166,20 @@ const WorkspaceProntuario: React.FC = () => {
                   <TabsContent value="evolution" className="mt-4">
                     <SoapFieldsAdaptive
                       profissao={user?.profissao}
-                      values={form}
-                      onChange={(f, v) => setForm(prev => ({...prev, [f]: v}))}
-                      soapCustomOptions={soapCustom}
-                      onAddCustomOption={soapCustom.addOption}
+                      values={{
+                        soap_subjetivo: form.soap_subjetivo || '',
+                        soap_objetivo: form.soap_objetivo || '',
+                        soap_avaliacao: form.soap_avaliacao || '',
+                        soap_plano: form.soap_plano || '',
+                      }}
+                      onChange={(field, value) => setForm(prev => ({ ...prev, [field]: value }))}
+                      soapErrors={false}
+                      onClearErrors={() => {}}
+                      soapEnabled={true}
+                      onToggleSoap={() => {}}
+                      customOptionsForField={(field) => soapCustom.getOptionsForField(field)}
+                      customOptionsWithId={(field) => soapCustom.getOptionWithId(field)}
+                      onAddCustomOption={(field, option) => soapCustom.addOption(field, option, user?.profissao || '')}
                       onDeleteCustomOption={soapCustom.deleteOption}
                     />
                     <DynamicProntuarioFields
@@ -193,9 +203,17 @@ const WorkspaceProntuario: React.FC = () => {
               </TabsList>
               <TabsContent value="history" className="h-[calc(100%-40px)] overflow-hidden">
                 <ScrollArea className="h-full p-4">
-                   {pacienteId && <HistoricoClinico pacienteId={pacienteId} pacienteNome={pacienteNome || ''} />}
+                   {(pacienteId || form.paciente_id) && (
+                     <HistoricoClinico 
+                       pacienteId={pacienteId || form.paciente_id} 
+                       pacienteNome={pacienteNome || form.paciente_nome || ''} 
+                       unidades={unidades}
+                       currentProfissionalId={user?.id}
+                     />
+                   )}
                 </ScrollArea>
               </TabsContent>
+
             </Tabs>
           </ResizablePanel>
         </ResizablePanelGroup>
