@@ -327,6 +327,10 @@ const WorkspaceProntuario: React.FC = () => {
         prescricao: JSON.stringify(listaPrescricao),
         solicitacao_exames: JSON.stringify(listaExames),
         campos_especialidade: especialidadeFields,
+        custom_data: {
+          ...form.custom_data,
+          soap_enabled: soapEnabled
+        }
       };
       const { data, error } = await supabase.from('prontuarios').upsert(dbPayload).select().single();
       if (error) throw error;
