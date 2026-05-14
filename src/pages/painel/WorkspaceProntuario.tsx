@@ -266,12 +266,18 @@ const WorkspaceProntuario: React.FC = () => {
                 )}
 
                 <Tabs defaultValue="evolution" className="w-full">
-                  <TabsList>
-                    <TabsTrigger value="evolution">Evolução</TabsTrigger>
-                    <TabsTrigger value="procedures">Procedimentos/CID</TabsTrigger>
-                    <TabsTrigger value="documents">Documentos</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="evolution" className="mt-4">
+                  <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pb-2 border-b mb-4">
+                    <TabsList className="w-full justify-start h-12 bg-transparent gap-6 p-0">
+                      <TabsTrigger value="evolution" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold">Evolução</TabsTrigger>
+                      <TabsTrigger value="prescriptions" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold">Prescrições/Exames</TabsTrigger>
+                      <TabsTrigger value="procedures" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold">Procedimentos/CID</TabsTrigger>
+                      <TabsTrigger value="treatments" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold">Tratamentos/PTS</TabsTrigger>
+                      <TabsTrigger value="antecedents" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold">Antecedentes/Triagem</TabsTrigger>
+                      <TabsTrigger value="annexes" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold">Anexos</TabsTrigger>
+                    </TabsList>
+                  </div>
+
+                  <TabsContent value="evolution" className="mt-0 space-y-6">
                     <SoapFieldsAdaptive
                       profissao={user?.profissao}
                       values={{
@@ -297,6 +303,131 @@ const WorkspaceProntuario: React.FC = () => {
                       onFormChange={(k, v) => setForm(p => ({...p, [k]: v}))}
                       onCustomChange={(k, v) => setForm(p => ({...p, custom_data: {...p.custom_data, [k]: v}}))}
                     />
+                  </TabsContent>
+
+                  <TabsContent value="prescriptions" className="mt-0 space-y-6">
+                    <PrescricaoMedicamentos
+                      medications={medications.filter(m => m.ativo)}
+                      lista={listaPrescricao}
+                      setLista={setListaPrescricao}
+                    />
+                    <SolicitacaoExames
+                      lista={listaExames}
+                      setLista={setListaExames}
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="procedures" className="mt-0 space-y-6">
+                    <Card>
+                      <CardContent className="p-6">
+                        <div className="space-y-4">
+                          <Label>Procedimentos Realizados / CID-10</Label>
+                          <BuscaPaciente 
+                            pacientes={procedimentos.map(p => ({ id: p.id, nome: p.nome }))} 
+                            placeholder="Buscar procedimento..."
+                            value=""
+                            onChange={(id, nome) => {
+                              if (!selectedProcIds.includes(id)) {
+                                setSelectedProcIds(prev => [...prev, id]);
+                                procedureService.getCidsForProcedure(id).then(list => {
+                                  setCidsByProc(prev => ({ ...prev, [id]: list }));
+                                });
+                              }
+                            }}
+                          />
+                          <div className="space-y-3 mt-4">
+                            {selectedProcIds.map(pid => {
+                              const proc = procedimentos.find(p => p.id === pid);
+                              return (
+                                <div key={pid} className="p-3 border rounded-lg bg-muted/20">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <span className="font-semibold text-sm">{proc?.nome || pid}</span>
+                                    <Button variant="ghost" size="sm" onClick={() => setSelectedProcIds(prev => prev.filter(i => i !== pid))}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                                  </div>
+                                  <div className="flex flex-wrap gap-2">
+                                    {(cidsByProc[pid] || []).map(cid => (
+                                      <Badge 
+                                        key={cid.codigo} 
+                                        variant={selectedCidsByProc[pid]?.includes(cid.codigo) ? "default" : "outline"}
+                                        className="cursor-pointer"
+                                        onClick={() => {
+                                          const current = selectedCidsByProc[pid] || [];
+                                          if (current.includes(cid.codigo)) {
+                                            setSelectedCidsByProc(prev => ({ ...prev, [pid]: current.filter(c => c !== cid.codigo) }));
+                                          } else {
+                                            setSelectedCidsByProc(prev => ({ ...prev, [pid]: [...current, cid.codigo] }));
+                                          }
+                                        }}
+                                      >
+                                        {cid.codigo} - {cid.descricao}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+
+                  <TabsContent value="treatments" className="mt-0 space-y-6">
+                    {sessaoCycle ? (
+                      <Card className="border-primary/20 bg-primary/5">
+                        <CardContent className="p-4">
+                          <div className="flex items-center gap-3">
+                            <Activity className="w-5 h-5 text-primary" />
+                            <div>
+                              <p className="font-bold text-sm">Tratamento em Andamento: {sessaoCycle.treatment_type}</p>
+                              <p className="text-xs text-muted-foreground">Início: {new Date(sessaoCycle.start_date).toLocaleDateString()} | Sessões: {sessaoCycle.sessions_done}/{sessaoCycle.total_sessions}</p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ) : (
+                      <div className="p-8 text-center border-2 border-dashed rounded-xl">
+                        <p className="text-muted-foreground mb-4">Nenhum ciclo de tratamento ativo para este paciente.</p>
+                        <Button variant="outline" size="sm">Iniciar Novo Ciclo</Button>
+                      </div>
+                    )}
+                    
+                    {sessaoPts ? (
+                      <Card>
+                        <CardContent className="p-4">
+                          <h4 className="font-bold text-sm mb-2 flex items-center gap-2">
+                            <ClipboardList className="w-4 h-4" /> Projeto Terapêutico Singular (PTS)
+                          </h4>
+                          <div className="space-y-2">
+                            <div className="text-xs bg-muted p-2 rounded"><strong>Diagnóstico:</strong> {sessaoPts.diagnostico_funcional}</div>
+                            <div className="text-xs bg-muted p-2 rounded"><strong>Objetivos:</strong> {sessaoPts.objetivos_terapeuticos}</div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ) : (
+                      <div className="p-8 text-center border-2 border-dashed rounded-xl">
+                        <p className="text-muted-foreground mb-4">Nenhum PTS ativo para este paciente.</p>
+                        <Button variant="outline" size="sm">Criar PTS</Button>
+                      </div>
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="antecedents" className="mt-0 space-y-6">
+                    <TriagemDetalhada 
+                      triagem={triagem} 
+                      onConfirm={() => {}} 
+                      showConfirmButton={false} 
+                    />
+                    <CamposEspecialidade 
+                      profissao={user?.profissao} 
+                      values={especialidadeFields} 
+                      onChange={(k, v) => setEspecialidadeFields(p => ({...p, [k]: v}))} 
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="annexes" className="mt-0 space-y-6">
+                    <ProntuarioAnexos pacienteId={pacienteId || form.paciente_id} />
+                    <ResultadosExames pacienteId={pacienteId || form.paciente_id} />
                   </TabsContent>
                 </Tabs>
               </div>
