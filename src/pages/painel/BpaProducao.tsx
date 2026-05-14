@@ -374,12 +374,12 @@ const BpaProducao: React.FC = () => {
         const pront = prots.find(p => p.id === v.prontuario_id);
         if (!pront) return;
         protsComProc.add(pront.id);
-        result.push(...resolveBpaRow(pront, v));
+        finalResult.push(...resolveBpaRow(pront, v));
       });
 
       prots.forEach((pront) => {
         if (!protsComProc.has(pront.id)) {
-          result.push(...resolveBpaRow(pront));
+          finalResult.push(...resolveBpaRow(pront));
         }
       });
 
