@@ -169,6 +169,7 @@ const WorkspaceProntuario: React.FC = () => {
             soap_objetivo: (p as any).soap_objetivo || "",
             soap_avaliacao: (p as any).soap_avaliacao || "",
             soap_plano: (p as any).soap_plano || "",
+            custom_data: (p as any).custom_data || {},
           });
         } else if (editId) {
           const { data: record } = await supabase
@@ -204,6 +205,7 @@ const WorkspaceProntuario: React.FC = () => {
               soap_objetivo: (p as any).soap_objetivo || "",
               soap_avaliacao: (p as any).soap_avaliacao || "",
               soap_plano: (p as any).soap_plano || "",
+              custom_data: (p as any).custom_data || {},
             });
           }
         }
