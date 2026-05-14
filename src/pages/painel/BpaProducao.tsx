@@ -435,8 +435,13 @@ const BpaProducao: React.FC = () => {
           cnes: modalCnes || '',
         },
       });
+
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
+
+      if (!data.conteudo || data.conteudo.trim().length === 0) {
+        throw new Error("O arquivo TXT BPA-I não pôde ser gerado porque não há linhas válidas ou houve erro estrutural.");
+      }
 
       const blob = new Blob([data.conteudo], { type: 'text/plain;charset=utf-8' });
       const url = URL.createObjectURL(blob);
@@ -447,6 +452,13 @@ const BpaProducao: React.FC = () => {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+
+      console.log("[BPA] geracao txt", {
+        competencia: modalCompetencia,
+        totalLinhasValidas: data.total_exportados,
+        arquivoGerado: data.filename,
+        tamanhoBytes: data.conteudo.length
+      });
 
       toast.success(
         `BPA gerado com sucesso. ${data.total_exportados} procedimento(s) exportado(s).`,
@@ -459,7 +471,10 @@ const BpaProducao: React.FC = () => {
       );
       setModalOpen(false);
     } catch (err: any) {
-      console.error('generate error', err);
+      console.error("[BPA] erro na geracao BPA-I", {
+        competencia: modalCompetencia,
+        errorMessage: err?.message,
+      });
       toast.error('Erro ao gerar BPA: ' + (err?.message || 'desconhecido'));
     } finally {
       setGenerating(false);
