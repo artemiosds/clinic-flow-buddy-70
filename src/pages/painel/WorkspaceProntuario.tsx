@@ -331,6 +331,7 @@ const WorkspaceProntuario: React.FC = () => {
               
               {/* Clinical Patient Header - Compact & Intelligent */}
               <PatientClinicalHeader
+                onEdit={() => setEditPatientOpen(true)}
                 nome={pacienteData?.nome || pacienteNome || 'Paciente não identificado'}
                 idade={pacienteData?.data_nascimento ? calcularIdade(pacienteData.data_nascimento) : '—'}
                 dataNasc={pacienteData?.data_nascimento}
