@@ -73,6 +73,7 @@ const WorkspaceProntuario: React.FC = () => {
 
   // Expanded clinical state
   const [procedimentos, setProcedimentos] = useState<any[]>([]);
+  const [episodios, setEpisodios] = useState<any[]>([]);
   const [selectedProcIds, setSelectedProcIds] = useState<string[]>([]);
   const [cidsByProc, setCidsByProc] = useState<Record<string, any[]>>({});
   const [selectedCidsByProc, setSelectedCidsByProc] = useState<Record<string, string[]>>({});
