@@ -233,7 +233,7 @@ const WorkspaceProntuario: React.FC = () => {
       if (error) throw error;
       toast.success('Prontuário salvo com sucesso!');
       if (!editId) {
-        navigate(`/painel/prontuario?pacienteId=${pacienteId}&pacienteNome=${pacienteNome}&editId=${data.id}`);
+        navigate(`/painel/workspace-prontuario?pacienteId=${pacienteId}&pacienteNome=${pacienteNome}&editId=${data.id}`);
       }
     } catch (error) {
       console.error('Error saving prontuário:', error);
