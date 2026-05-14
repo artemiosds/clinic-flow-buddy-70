@@ -46,6 +46,8 @@ import CamposEspecialidade from '@/components/CamposEspecialidade';
 import ProntuarioAnexos from '@/components/ProntuarioAnexos';
 import ResultadosExames from '@/components/ResultadosExames';
 import HistoricoCompletoModal from '@/components/HistoricoCompletoModal';
+import { openPrintDocument } from '@/lib/printLayout';
+import { DebouncedTextarea } from '@/components/ui/debounced-textarea';
 
 const calcularIdade = (dataNasc: string): string => {
   if (!dataNasc) return "—";
@@ -102,6 +104,8 @@ const WorkspaceProntuario: React.FC = () => {
     custom_data: {},
     agendamento_id: agendamentoId || '',
   });
+
+  const [soapEnabled, setSoapEnabled] = useState(true);
 
   const { getCamposForTipo, soapLabels } = useProntuarioTiposConfig();
   const soapCustom = useSoapCustomOptions(user?.id);
@@ -179,28 +183,137 @@ const WorkspaceProntuario: React.FC = () => {
           loadSessaoData(targetPacienteId);
           loadEpisodios(targetPacienteId);
 
+          const processProntuario = (p: any) => {
+            if (p) {
+              setForm(prev => ({ ...prev, ...p }));
+              setEspecialidadeFields((p as any).campos_especialidade || {});
+              loadProntuarioProcedimentos(p.id);
+              
+              // Load prescriptions and exams
+              try {
+                if (p.prescricao) setListaPrescricao(JSON.parse(p.prescricao));
+                if (p.solicitacao_exames) setListaExames(JSON.parse(p.solicitacao_exames));
+              } catch (e) { console.error("Error parsing prescriptions/exams", e); }
+              
+              // Load SOAP enabled state
+              if (p.custom_data?.soap_enabled !== undefined) {
+                setSoapEnabled(p.custom_data.soap_enabled);
+              }
+            }
+          };
+
           if (agendamentoId) {
             loadTriagem(agendamentoId);
             const { data: p } = await supabase.from('prontuarios').select('*').eq('agendamento_id', agendamentoId).maybeSingle();
-            if (p) {
-              setForm(prev => ({ ...prev, ...p }));
-              setEspecialidadeFields((p as any).campos_especialidade || {});
-              loadProntuarioProcedimentos(p.id);
-            }
+            processProntuario(p);
           } else if (editId) {
             const { data: p } = await supabase.from('prontuarios').select('*').eq('id', editId).single();
-            if (p) {
-              setForm(prev => ({ ...prev, ...p }));
-              setEspecialidadeFields((p as any).campos_especialidade || {});
-              loadProntuarioProcedimentos(p.id);
-              if (p.agendamento_id) loadTriagem(p.agendamento_id);
-            }
+            processProntuario(p);
+            if (p?.agendamento_id) loadTriagem(p.agendamento_id);
           }
         }
       } finally { setLoading(false); }
     };
     loadData();
   }, [pacienteId, agendamentoId, editId, refreshTrigger]);
+
+  const handlePrint = async () => {
+    const meta = {
+      'Paciente': pacienteData?.nome || pacienteNome || '—',
+      'Idade': pacienteData?.data_nascimento ? calcularIdade(pacienteData.data_nascimento) : '—',
+      'CPF': pacienteData?.cpf || '—',
+      'Profissional': user?.nome || '—',
+      'Data': form.data_atendimento ? new Date(form.data_atendimento + 'T12:00:00').toLocaleDateString('pt-BR') : '—',
+      'Tipo': TIPO_REGISTRO_LABELS[form.tipo_registro as keyof typeof TIPO_REGISTRO_LABELS] || form.tipo_registro
+    };
+
+    let body = `
+      <div class="section">
+        <div class="section-title">Evolução Clínica / SOAP</div>
+        <div class="section-content">
+          ${soapEnabled ? `
+            <div style="margin-bottom: 8px;"><strong>S — Subjetivo:</strong> ${form.soap_subjetivo || '—'}</div>
+            <div style="margin-bottom: 8px;"><strong>O — Objetivo:</strong> ${form.soap_objetivo || '—'}</div>
+            <div style="margin-bottom: 8px;"><strong>A — Avaliação:</strong> ${form.soap_avaliacao || '—'}</div>
+            <div style="margin-bottom: 8px;"><strong>P — Plano:</strong> ${form.soap_plano || '—'}</div>
+          ` : `<div style="white-space: pre-wrap;">${form.evolucao || '—'}</div>`}
+        </div>
+      </div>
+      
+      ${form.queixa_principal ? `
+        <div class="section">
+          <div class="section-title">Queixa Principal</div>
+          <div class="section-content">${form.queixa_principal}</div>
+        </div>
+      ` : ''}
+
+      ${form.conduta ? `
+        <div class="section">
+          <div class="section-title">Conduta</div>
+          <div class="section-content">${form.conduta}</div>
+        </div>
+      ` : ''}
+    `;
+
+    // Add procedures
+    if (selectedProcIds.length > 0) {
+      body += `
+        <div class="section">
+          <div class="section-title">Procedimentos / CID</div>
+          <div class="section-content">
+            <ul style="padding-left: 20px; margin: 0;">
+              ${selectedProcIds.map(pid => {
+                const proc = procedimentos.find(p => p.id === pid);
+                const cids = selectedCidsByProc[pid] || [];
+                return `<li style="margin-bottom: 4px;"><strong>${proc?.nome || pid}</strong> (Código: ${proc?.id || pid}) ${cids.length > 0 ? `<br/><span style="font-size: 10pt; color: #475569;">CIDs: ${cids.join(', ')}</span>` : ''}</li>`;
+              }).join('')}
+            </ul>
+          </div>
+        </div>
+      `;
+    }
+
+    // Add prescriptions if any
+    if (listaPrescricao.length > 0) {
+       body += `
+        <div class="section">
+          <div class="section-title">Prescrições</div>
+          <div class="section-content">
+            <ul style="padding-left: 20px; margin: 0;">
+              ${listaPrescricao.map((p: any) => `<li style="margin-bottom: 4px;"><strong>${p.medicamento}</strong> - ${p.posologia}</li>`).join('')}
+            </ul>
+          </div>
+        </div>
+      `;
+    }
+
+    // Add exams if any
+    if (listaExames.length > 0) {
+       body += `
+        <div class="section">
+          <div class="section-title">Exames Solicitados</div>
+          <div class="section-content">
+            <ul style="padding-left: 20px; margin: 0;">
+              ${listaExames.map((e: any) => `<li style="margin-bottom: 4px;">${e.nome || e}</li>`).join('')}
+            </ul>
+          </div>
+        </div>
+      `;
+    }
+
+    openPrintDocument("Prontuário Clínico", body, meta);
+  };
+
+  const handleToggleSoap = (enabled: boolean) => {
+    setSoapEnabled(enabled);
+    setForm(prev => ({
+      ...prev,
+      custom_data: {
+        ...prev.custom_data,
+        soap_enabled: enabled
+      }
+    }));
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -214,6 +327,10 @@ const WorkspaceProntuario: React.FC = () => {
         prescricao: JSON.stringify(listaPrescricao),
         solicitacao_exames: JSON.stringify(listaExames),
         campos_especialidade: especialidadeFields,
+        custom_data: {
+          ...form.custom_data,
+          soap_enabled: soapEnabled
+        }
       };
       const { data, error } = await supabase.from('prontuarios').upsert(dbPayload).select().single();
       if (error) throw error;
@@ -261,8 +378,12 @@ const WorkspaceProntuario: React.FC = () => {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm"><Printer className="w-4 h-4 mr-2" /> Imprimir</Button>
-          <Button onClick={handleSave} disabled={saving} size="sm" className="gradient-primary">{saving ? 'Salvando...' : 'Finalizar'}</Button>
+          <Button variant="outline" size="sm" onClick={handlePrint}>
+            <Printer className="w-4 h-4 mr-2" /> Imprimir
+          </Button>
+          <Button onClick={handleSave} disabled={saving} size="sm" className="gradient-primary">
+            {saving ? 'Salvando...' : (editId ? 'Finalizar Alteração' : 'Finalizar Prontuário')}
+          </Button>
         </div>
       </header>
 
@@ -356,14 +477,30 @@ const WorkspaceProntuario: React.FC = () => {
                       onChange={(field, value) => setForm(prev => ({ ...prev, [field]: value }))}
                       soapErrors={false}
                       onClearErrors={() => {}}
-                      soapEnabled={true}
-                      onToggleSoap={() => {}}
+                      soapEnabled={soapEnabled}
+                      onToggleSoap={handleToggleSoap}
                       labels={soapLabels}
                       customOptionsForField={(field) => soapCustom.getOptionsForField(field)}
                       customOptionsWithId={(field) => soapCustom.getOptionWithId(field)}
                       onAddCustomOption={(field, option) => soapCustom.addOption(field, option, user?.profissao || '')}
                       onDeleteCustomOption={soapCustom.deleteOption}
                     />
+                    
+                    {!soapEnabled && (
+                      <div className="mt-4 space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <div className="flex items-center gap-2 mb-1">
+                          <FileText className="w-4 h-4 text-primary" />
+                          <Label className="font-bold text-xs uppercase text-muted-foreground tracking-wider">Evolução Livre</Label>
+                        </div>
+                        <DebouncedTextarea
+                          rows={8}
+                          value={form.evolucao || ''}
+                          onChange={(e) => setForm(prev => ({ ...prev, evolucao: e.target.value }))}
+                          placeholder="Descreva a evolução clínica do paciente detalhadamente..."
+                          className="bg-card border-border/60 shadow-sm focus-visible:ring-primary/30"
+                        />
+                      </div>
+                    )}
                     <DynamicProntuarioFields
                       campos={getCamposForTipo(form.tipo_registro)}
                       formValues={form}
