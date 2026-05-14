@@ -130,6 +130,8 @@ const Auditoria: React.FC = () => {
   const [showReport, setShowReport] = useState(false);
   const [reportData, setReportData] = useState<any[]>([]);
   const [reportLoading, setReportLoading] = useState(false);
+  const [resolvedEntities, setResolvedEntities] = useState<Record<string, any>>({});
+  const [resolving, setResolving] = useState<Record<string, boolean>>({});
 
   // Filters
   const [filterDateFrom, setFilterDateFrom] = useState('');
