@@ -43,6 +43,7 @@ import { useNavigate } from "react-router-dom";
 import CadastroPacienteForm, { PacienteFormData, emptyPacienteForm } from "@/components/CadastroPacienteForm";
 import { FichaImpressao, FichaPrintMode } from '@/components/FichaImpressao';
 import "@/styles/ficha-impressao.css";
+import { PacienteCard } from "@/components/pacientes/PacienteCard";
 
 interface FichaDados {
   paciente: {

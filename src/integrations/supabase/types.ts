@@ -4288,10 +4288,28 @@ export type Database = {
         }
         Returns: Json
       }
+      count_patient_history: {
+        Args: { p_paciente_id: string }
+        Returns: number
+      }
       exec_sql: { Args: { sql_query: string }; Returns: Json }
       get_dashboard_stats: {
         Args: { p_profissional_id?: string; p_unidade_id?: string }
         Returns: Json
+      }
+      get_patient_history: {
+        Args: { p_limit?: number; p_offset?: number; p_paciente_id: string }
+        Returns: {
+          data_atendimento: string
+          evolucao: string
+          hora_atendimento: string
+          id: string
+          procedimentos_texto: string
+          profissional_nome: string
+          queixa_principal: string
+          tipo_registro: string
+          unidade_id: string
+        }[]
       }
       get_system_stats: { Args: never; Returns: Json }
       get_treatment_cycles_paginated: {

@@ -104,9 +104,18 @@ const Relatorios: React.FC = () => {
 
   const loadReportData = useCallback(async () => {
     try {
+      // PERF: Se as datas forem alteradas, filtramos direto no banco para reduzir payload
       let qAt = supabase.from('atendimentos').select('id,agendamento_id,paciente_id,paciente_nome,profissional_id,profissional_nome,unidade_id,sala_id,setor,procedimento,data,hora_inicio,hora_fim,duracao_minutos,status');
       let qFila = supabase.from('fila_espera').select('id,paciente_id,paciente_nome,unidade_id,profissional_id,setor,prioridade,prioridade_perfil,status,posicao,hora_chegada,hora_chamada,criado_em');
       let qTriage = supabase.from('triage_records').select('id,agendamento_id,tecnico_id,criado_em,confirmado_em,iniciado_em');
+      
+      if (dateFrom) {
+        qAt = qAt.gte('data', dateFrom);
+      }
+      if (dateTo) {
+        qAt = qAt.lte('data', dateTo);
+      }
+
       // Universal unit isolation (admin.sms sees all)
       if (user?.unidadeId && user?.usuario !== 'admin.sms') {
         qAt = qAt.eq('unidade_id', user.unidadeId);
@@ -132,8 +141,12 @@ const Relatorios: React.FC = () => {
         while (true) {
           let query = supabase
             .from('treatment_sessions')
-            .select('id,cycle_id,patient_id,professional_id,status,scheduled_date,session_number,absence_type')
-            .range(from, from + pageSize - 1);
+            .select('id,cycle_id,patient_id,professional_id,status,scheduled_date,session_number,absence_type');
+
+          if (dateFrom) query = query.gte('scheduled_date', dateFrom);
+          if (dateTo) query = query.lte('scheduled_date', dateTo);
+
+          query = query.range(from, from + pageSize - 1);
 
           if (user?.role === 'profissional') {
             query = query.eq('professional_id', user.id);
