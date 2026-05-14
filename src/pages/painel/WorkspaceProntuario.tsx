@@ -34,12 +34,12 @@ import QuickEditPatientModal from '@/components/pacientes/QuickEditPatientModal'
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { procedureService } from '@/services/procedureService';
-import { PrescricaoMedicamentos } from '@/components/PrescricaoMedicamentos';
-import { SolicitacaoExames } from '@/components/SolicitacaoExames';
-import { CamposEspecialidade } from '@/components/CamposEspecialidade';
-import { ProntuarioAnexos } from '@/components/ProntuarioAnexos';
-import { ResultadosExames } from '@/components/ResultadosExames';
-import { HistoricoCompletoModal } from '@/components/HistoricoCompletoModal';
+import PrescricaoMedicamentos from '@/components/PrescricaoMedicamentos';
+import SolicitacaoExames from '@/components/SolicitacaoExames';
+import CamposEspecialidade from '@/components/CamposEspecialidade';
+import ProntuarioAnexos from '@/components/ProntuarioAnexos';
+import ResultadosExames from '@/components/ResultadosExames';
+import HistoricoCompletoModal from '@/components/HistoricoCompletoModal';
 
 const calcularIdade = (dataNasc: string): string => {
   if (!dataNasc) return "—";
