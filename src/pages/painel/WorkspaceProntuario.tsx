@@ -183,28 +183,137 @@ const WorkspaceProntuario: React.FC = () => {
           loadSessaoData(targetPacienteId);
           loadEpisodios(targetPacienteId);
 
+          const processProntuario = (p: any) => {
+            if (p) {
+              setForm(prev => ({ ...prev, ...p }));
+              setEspecialidadeFields((p as any).campos_especialidade || {});
+              loadProntuarioProcedimentos(p.id);
+              
+              // Load prescriptions and exams
+              try {
+                if (p.prescricao) setListaPrescricao(JSON.parse(p.prescricao));
+                if (p.solicitacao_exames) setListaExames(JSON.parse(p.solicitacao_exames));
+              } catch (e) { console.error("Error parsing prescriptions/exams", e); }
+              
+              // Load SOAP enabled state
+              if (p.custom_data?.soap_enabled !== undefined) {
+                setSoapEnabled(p.custom_data.soap_enabled);
+              }
+            }
+          };
+
           if (agendamentoId) {
             loadTriagem(agendamentoId);
             const { data: p } = await supabase.from('prontuarios').select('*').eq('agendamento_id', agendamentoId).maybeSingle();
-            if (p) {
-              setForm(prev => ({ ...prev, ...p }));
-              setEspecialidadeFields((p as any).campos_especialidade || {});
-              loadProntuarioProcedimentos(p.id);
-            }
+            processProntuario(p);
           } else if (editId) {
             const { data: p } = await supabase.from('prontuarios').select('*').eq('id', editId).single();
-            if (p) {
-              setForm(prev => ({ ...prev, ...p }));
-              setEspecialidadeFields((p as any).campos_especialidade || {});
-              loadProntuarioProcedimentos(p.id);
-              if (p.agendamento_id) loadTriagem(p.agendamento_id);
-            }
+            processProntuario(p);
+            if (p?.agendamento_id) loadTriagem(p.agendamento_id);
           }
         }
       } finally { setLoading(false); }
     };
     loadData();
   }, [pacienteId, agendamentoId, editId, refreshTrigger]);
+
+  const handlePrint = async () => {
+    const meta = {
+      'Paciente': pacienteData?.nome || pacienteNome || '—',
+      'Idade': pacienteData?.data_nascimento ? calcularIdade(pacienteData.data_nascimento) : '—',
+      'CPF': pacienteData?.cpf || '—',
+      'Profissional': user?.nome || '—',
+      'Data': form.data_atendimento ? new Date(form.data_atendimento + 'T12:00:00').toLocaleDateString('pt-BR') : '—',
+      'Tipo': TIPO_REGISTRO_LABELS[form.tipo_registro as keyof typeof TIPO_REGISTRO_LABELS] || form.tipo_registro
+    };
+
+    let body = `
+      <div class="section">
+        <div class="section-title">Evolução Clínica / SOAP</div>
+        <div class="section-content">
+          ${soapEnabled ? `
+            <div style="margin-bottom: 8px;"><strong>S — Subjetivo:</strong> ${form.soap_subjetivo || '—'}</div>
+            <div style="margin-bottom: 8px;"><strong>O — Objetivo:</strong> ${form.soap_objetivo || '—'}</div>
+            <div style="margin-bottom: 8px;"><strong>A — Avaliação:</strong> ${form.soap_avaliacao || '—'}</div>
+            <div style="margin-bottom: 8px;"><strong>P — Plano:</strong> ${form.soap_plano || '—'}</div>
+          ` : `<div style="white-space: pre-wrap;">${form.evolucao || '—'}</div>`}
+        </div>
+      </div>
+      
+      ${form.queixa_principal ? `
+        <div class="section">
+          <div class="section-title">Queixa Principal</div>
+          <div class="section-content">${form.queixa_principal}</div>
+        </div>
+      ` : ''}
+
+      ${form.conduta ? `
+        <div class="section">
+          <div class="section-title">Conduta</div>
+          <div class="section-content">${form.conduta}</div>
+        </div>
+      ` : ''}
+    `;
+
+    // Add procedures
+    if (selectedProcIds.length > 0) {
+      body += `
+        <div class="section">
+          <div class="section-title">Procedimentos / CID</div>
+          <div class="section-content">
+            <ul style="padding-left: 20px; margin: 0;">
+              ${selectedProcIds.map(pid => {
+                const proc = procedimentos.find(p => p.id === pid);
+                const cids = selectedCidsByProc[pid] || [];
+                return `<li style="margin-bottom: 4px;"><strong>${proc?.nome || pid}</strong> (Código: ${proc?.id || pid}) ${cids.length > 0 ? `<br/><span style="font-size: 10pt; color: #475569;">CIDs: ${cids.join(', ')}</span>` : ''}</li>`;
+              }).join('')}
+            </ul>
+          </div>
+        </div>
+      `;
+    }
+
+    // Add prescriptions if any
+    if (listaPrescricao.length > 0) {
+       body += `
+        <div class="section">
+          <div class="section-title">Prescrições</div>
+          <div class="section-content">
+            <ul style="padding-left: 20px; margin: 0;">
+              ${listaPrescricao.map((p: any) => `<li style="margin-bottom: 4px;"><strong>${p.medicamento}</strong> - ${p.posologia}</li>`).join('')}
+            </ul>
+          </div>
+        </div>
+      `;
+    }
+
+    // Add exams if any
+    if (listaExames.length > 0) {
+       body += `
+        <div class="section">
+          <div class="section-title">Exames Solicitados</div>
+          <div class="section-content">
+            <ul style="padding-left: 20px; margin: 0;">
+              ${listaExames.map((e: any) => `<li style="margin-bottom: 4px;">${e.nome || e}</li>`).join('')}
+            </ul>
+          </div>
+        </div>
+      `;
+    }
+
+    openPrintDocument("Prontuário Clínico", body, meta);
+  };
+
+  const handleToggleSoap = (enabled: boolean) => {
+    setSoapEnabled(enabled);
+    setForm(prev => ({
+      ...prev,
+      custom_data: {
+        ...prev.custom_data,
+        soap_enabled: enabled
+      }
+    }));
+  };
 
   const handleSave = async () => {
     setSaving(true);
