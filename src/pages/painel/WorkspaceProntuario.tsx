@@ -182,14 +182,14 @@ const WorkspaceProntuario: React.FC = () => {
             const { data: p } = await supabase.from('prontuarios').select('*').eq('agendamento_id', agendamentoId).maybeSingle();
             if (p) {
               setForm(prev => ({ ...prev, ...p }));
-              setEspecialidadeFields(p.campos_especialidade || {});
+              setEspecialidadeFields((p as any).campos_especialidade || {});
               loadProntuarioProcedimentos(p.id);
             }
           } else if (editId) {
             const { data: p } = await supabase.from('prontuarios').select('*').eq('id', editId).single();
             if (p) {
               setForm(prev => ({ ...prev, ...p }));
-              setEspecialidadeFields(p.campos_especialidade || {});
+              setEspecialidadeFields((p as any).campos_especialidade || {});
               loadProntuarioProcedimentos(p.id);
               if (p.agendamento_id) loadTriagem(p.agendamento_id);
             }
