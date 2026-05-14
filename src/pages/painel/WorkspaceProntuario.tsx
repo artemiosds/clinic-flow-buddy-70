@@ -32,6 +32,8 @@ import PacienteDocumentos from '@/components/PacienteDocumentos';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BuscaPaciente } from '@/components/BuscaPaciente';
 import QuickEditPatientModal from '@/components/pacientes/QuickEditPatientModal';
+import { BuscaProcedimento } from '@/components/BuscaProcedimento';
+import { BuscaCID } from '@/components/BuscaCID';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { procedureService } from '@/services/procedureService';
@@ -341,31 +343,46 @@ const WorkspaceProntuario: React.FC = () => {
                       <CardContent className="p-6">
                         <div className="space-y-4">
                           <Label>Procedimentos Realizados / CID-10</Label>
-                          <Select onValueChange={(id) => {
-                            if (id && !selectedProcIds.includes(id)) {
-                              setSelectedProcIds(prev => [...prev, id]);
-                              procedureService.getCidsForProcedure(id).then(list => {
-                                setCidsByProc(prev => ({ ...prev, [id]: list }));
-                              });
-                            }
-                          }}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecionar procedimento..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {procedimentos.map(p => (
-                                <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <BuscaProcedimento 
+                            profissao={user?.profissao}
+                            onChange={(proc) => {
+                              if (proc && !selectedProcIds.includes(proc.id)) {
+                                setSelectedProcIds(prev => [...prev, proc.id]);
+                                procedureService.getCidsForProcedure(proc.id).then(list => {
+                                  setCidsByProc(prev => ({ ...prev, [proc.id]: list }));
+                                });
+                              }
+                            }}
+                          />
                           <div className="space-y-3 mt-4">
                             {selectedProcIds.map(pid => {
                               const proc = procedimentos.find(p => p.id === pid);
                               return (
                                 <div key={pid} className="p-3 border rounded-lg bg-muted/20">
                                   <div className="flex items-center justify-between mb-2">
-                                    <span className="font-semibold text-sm">{proc?.nome || pid}</span>
+                                    <div className="flex flex-col">
+                                      <span className="font-semibold text-sm">{proc?.nome || pid}</span>
+                                      <span className="text-[10px] font-mono text-muted-foreground">Código: {proc?.id || pid}</span>
+                                    </div>
                                     <Button variant="ghost" size="sm" onClick={() => setSelectedProcIds(prev => prev.filter(i => i !== pid))}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                                  </div>
+                                  <div className="mb-3">
+                                    <BuscaCID 
+                                      placeholder="Adicionar CID relacionado..."
+                                      onSelect={(cid) => {
+                                        const current = selectedCidsByProc[pid] || [];
+                                        if (!current.includes(cid.codigo)) {
+                                          setSelectedCidsByProc(prev => ({ ...prev, [pid]: [...current, cid.codigo] }));
+                                          setCidsByProc(prev => {
+                                            const existing = prev[pid] || [];
+                                            if (!existing.some(x => x.codigo === cid.codigo)) {
+                                              return { ...prev, [pid]: [...existing, cid] };
+                                            }
+                                            return prev;
+                                          });
+                                        }
+                                      }} 
+                                    />
                                   </div>
                                   <div className="flex flex-wrap gap-2">
                                     {(cidsByProc[pid] || []).map(cid => (
@@ -443,6 +460,8 @@ const WorkspaceProntuario: React.FC = () => {
                       profissao={user?.profissao} 
                       values={especialidadeFields} 
                       onChange={(k, v) => setEspecialidadeFields(p => ({...p, [k]: v}))} 
+                      profissionalId={user?.id}
+                      tipoProntuario={form.tipo_registro === 'avaliacao_inicial' ? 'avaliacao' : form.tipo_registro as any}
                     />
                   </TabsContent>
 
