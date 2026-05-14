@@ -322,8 +322,10 @@ const WorkspaceProntuario: React.FC = () => {
       </header>
 
       <div className="flex flex-1 overflow-hidden relative">
-        {/* Main Content Area: High-focus Clinical Editor */}
-        <main className="flex-1 flex flex-col min-w-0 bg-muted/10 relative overflow-hidden">
+        <ResizablePanelGroup direction="horizontal" className="flex-1">
+          <ResizablePanel defaultSize={65} minSize={40} className="flex flex-col">
+            {/* Main Content Area: High-focus Clinical Editor */}
+            <main className="flex-1 flex flex-col min-w-0 bg-muted/10 relative overflow-hidden h-full">
           <ScrollArea className="flex-1 h-full">
             <div className="p-4 md:p-6 lg:p-8 max-w-5xl mx-auto space-y-6 pb-24">
               
