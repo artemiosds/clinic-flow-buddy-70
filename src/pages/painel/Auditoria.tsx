@@ -324,11 +324,14 @@ const Auditoria: React.FC = () => {
   const formatFieldLabel = (field: string) => {
     const labels: Record<string, string> = {
       nome_completo: 'Nome completo',
+      nome: 'Nome',
       nome_mae: 'Nome da mãe',
       data_nascimento: 'Data de nascimento',
+      telefone: 'Telefone',
       telefone_principal: 'Telefone principal',
       telefone_secundario: 'Telefone secundário',
       logradouro: 'Logradouro',
+      endereco: 'Endereço',
       numero: 'Número',
       bairro: 'Bairro',
       municipio: 'Município',
@@ -345,6 +348,7 @@ const Auditoria: React.FC = () => {
       email: 'E-mail',
       cep: 'CEP',
       raca_cor: 'Raça/Cor',
+      custom_data: 'Dados complementares',
     };
     return labels[field] || field;
   };
