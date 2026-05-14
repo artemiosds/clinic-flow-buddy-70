@@ -5,7 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Loader2, FileText, ChevronDown, ChevronUp, Activity, AlertTriangle, RefreshCw, Eye, FileSignature, History, MoreVertical, Printer, Download, Link2, FileDown, Paperclip } from "lucide-react";
+import { Loader2, FileText, ChevronDown, ChevronUp, Activity, AlertTriangle, RefreshCw, Eye, FileSignature, History, MoreVertical, Printer, Download, Link2, FileDown, Paperclip, Calendar, Clock, MapPin } from "lucide-react";
+import { cn } from "@/lib/utils";
 import PacienteDocumentos from "./PacienteDocumentos";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
@@ -600,7 +601,7 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
                             {renderContent(item)}
                           </div>
                           <div className="mt-4 pt-4 border-t flex justify-end">
-                             <Button variant="ghost" size="xs" onClick={() => setExpandedId(null)} className="text-[10px] uppercase font-bold tracking-wider gap-1 h-7">
+                             <Button variant="ghost" size="sm" onClick={() => setExpandedId(null)} className="text-[10px] uppercase font-bold tracking-wider gap-1 h-7">
                                <ChevronUp className="w-3 h-3" /> Recolher
                              </Button>
                           </div>
