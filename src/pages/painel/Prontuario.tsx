@@ -535,12 +535,28 @@ const ProntuarioPage: React.FC = () => {
     });
   }, [procedimentos, user, procSearch]);
 
-  const loadProntuarios = async () => {
+  const loadProntuarios = async (pacienteId?: string) => {
+    if (!pacienteId && !search) {
+      setProntuarios([]);
+      return;
+    }
     setLoading(true);
     try {
-      // All professionals can VIEW all prontuários — edit is restricted in the UI
-      let query = (supabase as any).from("prontuarios").select("*").order("data_atendimento", { ascending: false });
+      let query = (supabase as any)
+        .from("prontuarios")
+        .select("*")
+        .order("data_atendimento", { ascending: false })
+        .limit(50);
+      
+      if (pacienteId) {
+        query = query.eq("paciente_id", pacienteId);
+      } else if (search) {
+        const q = search.trim();
+        query = query.or(`paciente_nome.ilike.%${q}%,profissional_nome.ilike.%${q}%`);
+      }
+
       if (user?.unidadeId && user?.usuario !== 'admin.sms') query = query.eq("unidade_id", user.unidadeId);
+      
       const { data, error } = await query;
       if (data) setProntuarios(data);
       if (error) console.error("Error loading prontuarios:", error);
@@ -551,8 +567,9 @@ const ProntuarioPage: React.FC = () => {
   };
 
   useEffect(() => {
-    loadProntuarios();
-  }, [user?.id, user?.role]); // eslint-disable-line react-hooks/exhaustive-deps
+    const pacienteId = searchParams.get("pacienteId");
+    loadProntuarios(pacienteId || undefined);
+  }, [user?.id, user?.role, searchParams.get("pacienteId"), search]); // Added search to refresh list on search
 
   const dialogOpenRef = useRef(false);
   useEffect(() => { dialogOpenRef.current = dialogOpen; }, [dialogOpen]);
