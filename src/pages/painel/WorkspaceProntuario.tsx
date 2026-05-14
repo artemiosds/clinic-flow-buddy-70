@@ -90,7 +90,7 @@ const WorkspaceProntuario: React.FC = () => {
   const [sessaoDataLoading, setSessaoDataLoading] = useState(false);
 
   const [form, setForm] = useState<any>({
-    tipo_registro: searchParams.get('tipo') || 'consulta',
+    tipo_registro: searchParams.get('tipo') === 'Retorno' ? 'retorno' : (searchParams.get('tipo') === 'Consulta' ? 'avaliacao_inicial' : (searchParams.get('tipo') || 'avaliacao_inicial')),
     data_atendimento: searchParams.get('data') || new Date().toISOString().split('T')[0],
     hora_atendimento: searchParams.get('horaInicio') || new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
     soap_subjetivo: '', soap_objetivo: '', soap_avaliacao: '', soap_plano: '',
@@ -537,7 +537,12 @@ const WorkspaceProntuario: React.FC = () => {
         open={editPatientOpen}
         onOpenChange={setEditPatientOpen}
         pacienteId={pacienteId || form.paciente_id}
-        onSaved={() => { setRefreshTrigger(r => r + 1); setEditPatientOpen(false); }}
+        onSaved={async () => { 
+          const { data: pData } = await supabase.from('pacientes').select('*').eq('id', pacienteId || form.paciente_id).single();
+          if (pData) setPacienteData(pData);
+          setRefreshTrigger(r => r + 1); 
+          setEditPatientOpen(false); 
+        }}
       />
     </div>
   );

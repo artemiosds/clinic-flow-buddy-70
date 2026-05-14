@@ -1107,7 +1107,7 @@ const Pacientes: React.FC = () => {
                       variant="ghost"
                       className="h-8 w-8 p-0"
                       onClick={() =>
-                        navigate(`/painel/workspace-prontuario?pacienteId=${p.id}&pacienteNome=${encodeURIComponent(p.nome)}`)
+                        navigate(`/painel/workspace-prontuario?pacienteId=${p.id}&pacienteNome=${encodeURIComponent(p.nome)}&tipo=retorno`)
                       }
                       title="Ver Prontuários"
                     >
@@ -1250,7 +1250,7 @@ const Pacientes: React.FC = () => {
               onClick={() => {
                 setDetalheOpen(false);
                 navigate(
-                  `/painel/workspace-prontuario?pacienteId=${detalhePaciente.id}&pacienteNome=${encodeURIComponent(detalhePaciente.nome)}`,
+                  `/painel/workspace-prontuario?pacienteId=${detalhePaciente.id}&pacienteNome=${encodeURIComponent(detalhePaciente.nome)}&tipo=retorno`,
                 );
               }}
             >
