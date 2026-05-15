@@ -158,19 +158,91 @@ export const procedureService = {
       .from('sigtap_procedimento_cids')
       .select('cid_codigo, cid_descricao')
       .eq('procedimento_codigo', codigo)
-      .limit(50);
+      .order('cid_codigo');
     return (data || []).map((r: any) => ({ codigo: r.cid_codigo, descricao: r.cid_descricao }));
   },
 
   async searchCids(query: string): Promise<{ codigo: string; descricao: string }[]> {
     const q = query.trim();
     if (!q) return [];
+    const safe = q.replace(/[%,()]/g, ' ');
     const { data } = await (supabase as any)
       .from('cid10_codigos')
       .select('codigo, descricao')
-      .or(`codigo.ilike.%${q}%,descricao.ilike.%${q}%`)
-      .limit(20);
-    return (data || []).map((r: any) => ({ codigo: r.codigo, descricao: r.descricao }));
+      .or(`codigo.ilike.%${safe}%,descricao.ilike.%${safe}%`)
+      .order('codigo')
+      .limit(30);
+    let rows = (data || []).map((r: any) => ({ codigo: r.codigo, descricao: r.descricao }));
+    // Fallback: usa a base de vínculos importados se o catálogo CID-10 estiver vazio
+    if (rows.length === 0) {
+      const { data: link } = await (supabase as any)
+        .from('sigtap_procedimento_cids')
+        .select('cid_codigo, cid_descricao')
+        .or(`cid_codigo.ilike.%${safe}%,cid_descricao.ilike.%${safe}%`)
+        .limit(200);
+      const seen = new Set<string>();
+      rows = [];
+      for (const r of link || []) {
+        if (seen.has(r.cid_codigo)) continue;
+        seen.add(r.cid_codigo);
+        rows.push({ codigo: r.cid_codigo, descricao: r.cid_descricao || '' });
+        if (rows.length >= 30) break;
+      }
+    }
+    const ql = safe.toLowerCase();
+    rows.sort((a: any, b: any) => {
+      const ac = a.codigo.toLowerCase(), bc = b.codigo.toLowerCase();
+      const score = (c: string) => (c === ql ? 0 : c.startsWith(ql) ? 1 : 2);
+      return score(ac) - score(bc);
+    });
+    return rows;
+  },
+
+  async searchProcedimentos(query: string, profissao?: string, limit = 30): Promise<ProcedimentoDB[]> {
+    const q = query.trim();
+    if (q.length < 2) return [];
+    const safe = q.replace(/[%,()]/g, ' ');
+    let qb: any = (supabase as any)
+      .from('sigtap_procedimentos')
+      .select('codigo, nome, descricao, especialidade, ativo, total_cids, origem, valor, created_at, updated_at')
+      .eq('ativo', true)
+      .or(`codigo.ilike.%${safe}%,nome.ilike.%${safe}%`)
+      .limit(limit * 4);
+    if (profissao) {
+      const espKey = profissaoToEspecialidadeSigtap(profissao);
+      if (espKey) qb = qb.eq('especialidade', espKey);
+    }
+    const { data } = await qb;
+    const ql = normalize(safe);
+    const rows: ProcedimentoDB[] = (data || []).map((p: any) => ({
+      id: p.codigo,
+      nome: p.nome,
+      descricao: p.descricao || '',
+      profissao: SIGTAP_ESPECIALIDADE_TO_PROFISSAO[p.especialidade]?.[0] || p.especialidade || '',
+      especialidade: p.especialidade || '',
+      profissional_id: null,
+      profissionais_ids: [],
+      ativo: p.ativo,
+      criado_em: p.created_at,
+      atualizado_em: p.updated_at,
+      total_cids: p.total_cids || 0,
+      origem: (p.origem || 'SIGTAP') as 'SIGTAP' | 'PERSONALIZADO',
+      valor: p.valor ?? null,
+    }));
+    const sl = safe.toLowerCase();
+    rows.sort((a, b) => {
+      const score = (p: ProcedimentoDB) => {
+        const c = p.id.toLowerCase();
+        const n = normalize(p.nome);
+        if (c === sl) return 0;
+        if (c.startsWith(sl)) return 1;
+        if (n.startsWith(ql)) return 2;
+        if (n.includes(ql)) return 3;
+        return 4;
+      };
+      return score(a) - score(b);
+    });
+    return rows.slice(0, limit);
   },
 
   async createCustom(input: {
