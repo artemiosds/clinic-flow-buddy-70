@@ -413,11 +413,15 @@ const WorkspaceProntuario: React.FC = () => {
         await updateAgendamento(form.agendamento_id, { status: 'concluido' });
       }
 
-      toast.success('Prontuário salvo com sucesso!');
-      if (!editId) navigate(`/painel/workspace-prontuario?pacienteId=${pacienteId || form.paciente_id}&editId=${data.id}`, { replace: true });
-    } catch (e) { 
-      console.error(e); 
-      toast.error('Erro ao salvar prontuário'); 
+      toast.success(editId ? 'Alteração finalizada com sucesso!' : 'Prontuário finalizado com sucesso!');
+      // Fecha o workspace após finalizar (novo ou alteração)
+      setTimeout(() => {
+        if (window.history.length > 1) navigate(-1);
+        else navigate('/painel/agenda');
+      }, 300);
+    } catch (e: any) { 
+      console.error('[Prontuário] Erro ao salvar:', e);
+      toast.error(`Erro ao salvar prontuário: ${e?.message || 'desconhecido'}`); 
     } finally { 
       setSaving(false); 
     }
