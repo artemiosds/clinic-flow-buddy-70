@@ -301,6 +301,20 @@ const SigtapZipImport: React.FC = () => {
         if (codigo && descricao) cidDescMap.set(codigo, descricao);
       }
       addLog('ok', `📚 ${cidDescMap.size.toLocaleString('pt-BR')} CIDs catalogados`);
+
+      // Persistir catálogo de CIDs em cid10_codigos (usado pela busca do prontuário)
+      const cidRows = Array.from(cidDescMap.entries()).map(([codigo, descricao]) => ({ codigo, descricao }));
+      const CID_CAT_BATCH = 1000;
+      let cidSaved = 0;
+      for (let i = 0; i < cidRows.length; i += CID_CAT_BATCH) {
+        const batch = cidRows.slice(i, i + CID_CAT_BATCH);
+        const { error } = await (supabase as any)
+          .from('cid10_codigos')
+          .upsert(batch, { onConflict: 'codigo' });
+        if (error) console.warn('[SIGTAP] cid10 upsert:', error.message);
+        else cidSaved += batch.length;
+      }
+      addLog('ok', `🗂️ ${cidSaved.toLocaleString('pt-BR')} CIDs persistidos no catálogo`);
     }
 
     // ============= Parse PROC↔CID relations (fixed-width) =============
