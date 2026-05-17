@@ -449,7 +449,7 @@ const ConfigWhatsApp: React.FC = () => {
         </div>
         <div>
           <h2 className="text-xl font-bold font-display text-foreground">WhatsApp Business</h2>
-          <p className="text-sm text-muted-foreground">Automação de mensagens via Evolution API</p>
+          <p className="text-sm text-muted-foreground">Automação de mensagens via Evolution API ou UazapiGO</p>
         </div>
         <div className="ml-auto">{statusBadge(evolutionStatus)}</div>
       </div>
