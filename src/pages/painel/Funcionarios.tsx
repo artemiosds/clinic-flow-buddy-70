@@ -121,7 +121,9 @@ const Funcionarios: React.FC = () => {
     } else {
       setCbo(null);
     }
+    setCns(normalizeCNS(cd.cns || ''));
     setShowCboError(false);
+    setShowCnsError(false);
     setCustomData(cd);
     setDialogOpen(true);
   };
