@@ -569,7 +569,7 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-4 overflow-y-auto flex-1 px-6 py-4">
           {/* Model selector */}
           <div className="space-y-1.5">
             <Label className="text-[13px] font-bold">Selecionar modelo</Label>
