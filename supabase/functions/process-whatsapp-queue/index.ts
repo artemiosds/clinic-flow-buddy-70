@@ -120,9 +120,16 @@ serve(async (req) => {
 
   try {
     const evoCfg = await getClinicaConfig(supabase);
-    if (!evoCfg?.evolution_instance_name) {
-      return new Response(JSON.stringify({ success: false, error: "Evolution não configurada" }),
-        { status: 400, headers: corsHeaders });
+    const provider = evoCfg?.whatsapp_provider || "evolution";
+    const providerOk =
+      provider === "uazapi"
+        ? !!(evoCfg?.uazapi_base_url && evoCfg?.uazapi_admin_token)
+        : !!evoCfg?.evolution_instance_name;
+    if (!providerOk) {
+      return new Response(
+        JSON.stringify({ success: false, error: `Provedor "${provider}" não configurado` }),
+        { status: 400, headers: corsHeaders },
+      );
     }
 
     // 1️⃣  Conta total de pendentes para decidir o tamanho do lote (escalonamento).
