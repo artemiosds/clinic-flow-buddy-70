@@ -1350,6 +1350,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const addUnidade = useCallback(
     async (u: Unidade) => {
+      const cnesDigits = (u.cnes || '').replace(/\D/g, '').slice(0, 7);
+      const custom = { ...(u.custom_data || {}), cnes: cnesDigits };
       const { error } = await supabase.from("unidades" as any).insert({
         id: u.id,
         nome: u.nome,
@@ -1358,10 +1360,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         telefone: u.telefone,
         whatsapp: u.whatsapp,
         ativo: u.ativo,
+        custom_data: custom,
       } as any);
       if (!error) {
         invalidateCache(queryKeys.unidades.all);
-        setUnidades((prev) => [...prev, u]);
+        setUnidades((prev) => [...prev, { ...u, cnes: cnesDigits, custom_data: custom }]);
       } else console.error("Error adding unidade:", error);
     },
     [invalidateCache],
@@ -1376,16 +1379,28 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (data.telefone !== undefined) dbData.telefone = data.telefone;
       if (data.whatsapp !== undefined) dbData.whatsapp = data.whatsapp;
       if (data.ativo !== undefined) dbData.ativo = data.ativo;
+
+      let mergedCustom: Record<string, any> | undefined;
+      if (data.cnes !== undefined || data.custom_data !== undefined) {
+        const existing = unidades.find((u) => u.id === id);
+        const base = { ...(existing?.custom_data || {}), ...(data.custom_data || {}) };
+        if (data.cnes !== undefined) {
+          base.cnes = (data.cnes || '').replace(/\D/g, '').slice(0, 7);
+        }
+        mergedCustom = base;
+        dbData.custom_data = base;
+      }
+
       const { error } = await supabase
         .from("unidades" as any)
         .update(dbData)
         .eq("id", id);
       if (!error) {
         invalidateCache(queryKeys.unidades.all);
-        setUnidades((prev) => prev.map((u) => (u.id === id ? { ...u, ...data } : u)));
+        setUnidades((prev) => prev.map((u) => (u.id === id ? { ...u, ...data, ...(mergedCustom ? { custom_data: mergedCustom, cnes: mergedCustom.cnes } : {}) } : u)));
       } else console.error("Error updating unidade:", error);
     },
-    [invalidateCache],
+    [invalidateCache, unidades],
   );
 
   const deleteUnidade = useCallback(
