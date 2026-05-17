@@ -584,11 +584,11 @@ export const HistoricoClinicoTimeline: React.FC<Props> = ({ pacienteId, unidades
   if (events.length === 0) return <EmptyState />;
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 flex flex-col min-h-0">
       <TimelineHeader total={events.length} />
 
-      <ScrollArea className="max-h-[500px]">
-        <div className="relative pl-8 space-y-3">
+      <ScrollArea className="h-[min(70vh,640px)] sm:h-[min(75vh,720px)] pr-2">
+        <div className="relative pl-8 space-y-3 pb-10">
           <div className="absolute left-3 top-3 bottom-3 w-px bg-border" aria-hidden="true" />
 
           {paginatedEvents.map((event) => (
@@ -604,16 +604,16 @@ export const HistoricoClinicoTimeline: React.FC<Props> = ({ pacienteId, unidades
               }
             />
           ))}
-        </div>
 
-        {remaining > 0 && (
-          <div className="flex justify-center pt-4 pb-2">
-            <Button variant="outline" size="sm" onClick={handleLoadMore} className="gap-2">
-              <ChevronDown className="w-3.5 h-3.5" />
-              Carregar mais ({remaining} restante{remaining !== 1 ? "s" : ""})
-            </Button>
-          </div>
-        )}
+          {remaining > 0 && (
+            <div className="flex justify-center pt-4 pb-6">
+              <Button variant="outline" size="sm" onClick={handleLoadMore} className="gap-2">
+                <ChevronDown className="w-3.5 h-3.5" />
+                Carregar mais ({remaining} restante{remaining !== 1 ? "s" : ""})
+              </Button>
+            </div>
+          )}
+        </div>
       </ScrollArea>
 
       <Dialog open={!!viewEvent} onOpenChange={(o) => !o && setViewEvent(null)}>
