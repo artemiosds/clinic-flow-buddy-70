@@ -933,6 +933,10 @@ const ConfigMedicamentosExames: React.FC = () => {
                     {seeding === 'med' ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <RotateCcw className="w-4 h-4 mr-1" />}
                     Carregar / Restaurar base RENAME
                   </Button>
+                  <Button onClick={seedReme} disabled={!!seeding} variant="secondary">
+                    {seeding === 'med' ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <RotateCcw className="w-4 h-4 mr-1" />}
+                    Carregar / Restaurar base REME ({REME_MEDICATIONS.length})
+                  </Button>
                   <Button onClick={exportMedsCsv} variant="outline"><Download className="w-4 h-4 mr-1" />Exportar CSV</Button>
                 </div>
               </div>
