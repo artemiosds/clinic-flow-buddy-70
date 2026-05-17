@@ -82,12 +82,28 @@ const ConfigWhatsApp: React.FC = () => {
   const userUnitId = user?.unidadeId || '';
   const { atualizarConfiguracao, configuracoes, loading: hookLoading } = useConfiguracao(userUnitId);
 
+  // Provider selector
+  const [whatsappProvider, setWhatsappProvider] = useState<'evolution' | 'uazapi'>('evolution');
+
   // Evolution API config
   const [evolutionConfig, setEvolutionConfig] = useState({
     nome_clinica: '', logo_url: '', telefone: '',
     evolution_base_url: 'https://api.agendamento-saude-sms-oriximina.site',
     evolution_api_key: '', evolution_instance_name: '',
   });
+
+  // UazapiGO config
+  const [uazapiConfig, setUazapiConfig] = useState({
+    uazapi_base_url: 'https://free.uazapi.com',
+    uazapi_admin_token: '',
+    uazapi_instance_name: '',
+  });
+  const [uazapiSaving, setUazapiSaving] = useState(false);
+  const [uazapiTesting, setUazapiTesting] = useState(false);
+  const [uazapiStatus, setUazapiStatus] = useState<'idle' | 'connected' | 'disconnected' | 'error'>('idle');
+  // Masked-token UX (consistent with Evolution): true while user has not chosen to edit
+  const [uazapiTokenMasked, setUazapiTokenMasked] = useState(false);
+  const [evolutionKeyMasked, setEvolutionKeyMasked] = useState(false);
   const [evolutionInstances, setEvolutionInstances] = useState<{ instanceName: string; state: string }[]>([]);
   const [evolutionLoading, setEvolutionLoading] = useState(true);
   const [evolutionSaving, setEvolutionSaving] = useState(false);
@@ -105,46 +121,47 @@ const ConfigWhatsApp: React.FC = () => {
   const [horasLembrete1, setHorasLembrete1] = useState(24);
   const [horasLembrete2, setHorasLembrete2] = useState(2);
 
+  // Load from clinica_config (source of truth read by edge functions)
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from('clinica_config')
+          .select('*')
+          .limit(1)
+          .maybeSingle();
+        if (data) {
+          setEvolutionConfig({
+            nome_clinica: (data as any).nome_clinica || '',
+            logo_url: (data as any).logo_url || '',
+            telefone: (data as any).telefone || '',
+            evolution_base_url: (data as any).evolution_base_url || 'https://api.agendamento-saude-sms-oriximina.site',
+            evolution_api_key: (data as any).evolution_api_key || '',
+            evolution_instance_name: (data as any).evolution_instance_name || '',
+          });
+          setUazapiConfig({
+            uazapi_base_url: (data as any).uazapi_base_url || 'https://free.uazapi.com',
+            uazapi_admin_token: (data as any).uazapi_admin_token || '',
+            uazapi_instance_name: (data as any).uazapi_instance_name || '',
+          });
+          setWhatsappProvider(((data as any).whatsapp_provider as any) || 'evolution');
+          setEvolutionKeyMasked(!!(data as any).evolution_api_key);
+          setUazapiTokenMasked(!!(data as any).uazapi_admin_token);
+        }
+      } catch (e) { /* ignore */ }
+      setEvolutionLoading(false);
+    })();
+  }, []);
+
   useEffect(() => {
     if (!hookLoading) {
-      const clinicaCfg = configuracoes['config_clinica'];
-      if (clinicaCfg) {
-        setEvolutionConfig({
-          nome_clinica: clinicaCfg.nome_clinica || '',
-          logo_url: clinicaCfg.logo_url || '',
-          telefone: clinicaCfg.telefone || '',
-          evolution_base_url: clinicaCfg.evolution_base_url || 'https://api.agendamento-saude-sms-oriximina.site',
-          evolution_api_key: clinicaCfg.evolution_api_key || '',
-          evolution_instance_name: clinicaCfg.evolution_instance_name || '',
-        });
-      }
       const waCfg = configuracoes['config_whatsapp_reminders'];
       if (waCfg) {
         setHorasLembrete1(waCfg.horas_lembrete_1 || 24);
         setHorasLembrete2(waCfg.horas_lembrete_2 || 2);
       }
-      setEvolutionLoading(false);
     }
   }, [hookLoading, configuracoes]);
-
-  // Check connection whenever config is loaded or changed
-  useEffect(() => {
-    if (evolutionConfig.evolution_instance_name && evolutionConfig.evolution_api_key) {
-      const check = async () => {
-        try {
-          const resp = await fetch(
-            `${evolutionConfig.evolution_base_url}/instance/connectionState/${evolutionConfig.evolution_instance_name}`,
-            { headers: { apikey: evolutionConfig.evolution_api_key } }
-          );
-          if (resp.ok) {
-            const state = await resp.json();
-            setEvolutionStatus(state?.instance?.state === 'open' ? 'connected' : 'disconnected');
-          } else { setEvolutionStatus('error'); }
-        } catch { setEvolutionStatus('error'); }
-      };
-      check();
-    }
-  }, [evolutionConfig.evolution_instance_name, evolutionConfig.evolution_api_key, evolutionConfig.evolution_base_url]);
 
   // Logs
   const [logs, setLogs] = useState<NotifLog[]>([]);
@@ -251,15 +268,91 @@ const ConfigWhatsApp: React.FC = () => {
     .replace(/\{\{data\}\}/g, '20/04/2026')
     .replace(/\{\{hora\}\}/g, '14:00');
 
-  // Save Evolution config
+  // Persist provider choice directly into clinica_config (source of truth used by edge functions)
+  const persistProvider = async (provider: 'evolution' | 'uazapi') => {
+    try {
+      const { data: row } = await supabase.from('clinica_config').select('id').limit(1).maybeSingle();
+      if (row?.id) {
+        await supabase.from('clinica_config').update({ whatsapp_provider: provider } as any).eq('id', row.id);
+      } else {
+        await supabase.from('clinica_config').insert({ whatsapp_provider: provider, nome_clinica: evolutionConfig.nome_clinica || '' } as any);
+      }
+      toast.success(`Provedor ativo: ${provider === 'evolution' ? 'Evolution API' : 'UazapiGO'}`);
+    } catch (e: any) { toast.error(`Erro ao definir provedor: ${e.message}`); }
+  };
+
+  // Save Evolution config — writes to BOTH system_config (UI cache) and clinica_config (edge function source)
   const saveEvolutionConfig = async () => {
     setEvolutionSaving(true);
     try {
-      await atualizarConfiguracao('config_clinica', evolutionConfig, { auditAcao: 'ALTERAR_CONFIG_CLINICA' });
-      toast.success('Configurações salvas!');
+      await atualizarConfiguracao('config_clinica', evolutionConfig, { auditAcao: 'ALTERAR_CONFIG_CLINICA', silent: true });
+      const { data: row } = await supabase.from('clinica_config').select('id, evolution_api_key').limit(1).maybeSingle();
+      const payload: any = {
+        nome_clinica: evolutionConfig.nome_clinica,
+        logo_url: evolutionConfig.logo_url,
+        telefone: evolutionConfig.telefone,
+        evolution_base_url: evolutionConfig.evolution_base_url,
+        evolution_instance_name: evolutionConfig.evolution_instance_name,
+      };
+      // Only persist API key if user changed it (i.e., field is not masked)
+      if (!evolutionKeyMasked && evolutionConfig.evolution_api_key) {
+        payload.evolution_api_key = evolutionConfig.evolution_api_key;
+      }
+      if (row?.id) {
+        await supabase.from('clinica_config').update(payload).eq('id', row.id);
+      } else {
+        await supabase.from('clinica_config').insert({ ...payload, evolution_api_key: payload.evolution_api_key || '' });
+      }
+      toast.success('Evolution API salva!');
+      setEvolutionKeyMasked(true);
     } catch (err: any) { toast.error(`Erro: ${err.message}`); }
     setEvolutionSaving(false);
   };
+
+  // Save UazapiGO config
+  const saveUazapiConfig = async () => {
+    if (!uazapiConfig.uazapi_base_url || !uazapiConfig.uazapi_instance_name) {
+      toast.error('Informe Server URL e Nome/ID da Instância.');
+      return;
+    }
+    setUazapiSaving(true);
+    try {
+      const { data: row } = await supabase.from('clinica_config').select('id').limit(1).maybeSingle();
+      const payload: any = {
+        uazapi_base_url: uazapiConfig.uazapi_base_url,
+        uazapi_instance_name: uazapiConfig.uazapi_instance_name,
+      };
+      if (!uazapiTokenMasked && uazapiConfig.uazapi_admin_token) {
+        payload.uazapi_admin_token = uazapiConfig.uazapi_admin_token;
+      }
+      if (row?.id) {
+        await supabase.from('clinica_config').update(payload).eq('id', row.id);
+      } else {
+        await supabase.from('clinica_config').insert({ ...payload, uazapi_admin_token: payload.uazapi_admin_token || '', nome_clinica: '' });
+      }
+      toast.success('UazapiGO salva!');
+      setUazapiTokenMasked(true);
+    } catch (err: any) { toast.error(`Erro: ${err.message}`); }
+    setUazapiSaving(false);
+  };
+
+  // Verify UazapiGO instance status
+  const checkUazapi = async () => {
+    try {
+      // uazapi style: GET /instance/status with header token
+      const resp = await fetch(
+        `${uazapiConfig.uazapi_base_url.replace(/\/$/, '')}/instance/status`,
+        { headers: { token: uazapiConfig.uazapi_admin_token } as any },
+      );
+      if (resp.ok) {
+        const j = await resp.json().catch(() => ({}));
+        const connected = j?.instance?.status === 'connected' || j?.connected === true || j?.status === 'connected';
+        setUazapiStatus(connected ? 'connected' : 'disconnected');
+        toast[connected ? 'success' : 'warning'](connected ? 'UazapiGO conectada!' : 'Instância UazapiGO desconectada.');
+      } else { setUazapiStatus('error'); toast.error(`Falha (${resp.status})`); }
+    } catch (e: any) { setUazapiStatus('error'); toast.error(`Erro: ${e.message}`); }
+  };
+
 
   const checkConnection = async () => {
     if (!evolutionConfig.evolution_instance_name || !evolutionConfig.evolution_api_key) {
@@ -356,7 +449,7 @@ const ConfigWhatsApp: React.FC = () => {
         </div>
         <div>
           <h2 className="text-xl font-bold font-display text-foreground">WhatsApp Business</h2>
-          <p className="text-sm text-muted-foreground">Automação de mensagens via Evolution API</p>
+          <p className="text-sm text-muted-foreground">Automação de mensagens via Evolution API ou UazapiGO</p>
         </div>
         <div className="ml-auto">{statusBadge(evolutionStatus)}</div>
       </div>
@@ -376,9 +469,40 @@ const ConfigWhatsApp: React.FC = () => {
 
         {/* ─── CONEXÃO ─── */}
         <TabsContent value="conexao" className="space-y-4 mt-4">
+          {/* Provider selector */}
+          <Card className="shadow-card border-0">
+            <CardContent className="p-5">
+              <div className="flex flex-col md:flex-row md:items-center gap-4">
+                <div className="flex-1">
+                  <h3 className="font-semibold text-foreground flex items-center gap-2"><Zap className="w-4 h-4 text-primary" /> Provedor de envio ativo</h3>
+                  <p className="text-xs text-muted-foreground mt-1">Apenas o provedor selecionado envia mensagens. Nunca os dois ao mesmo tempo.</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Select
+                    value={whatsappProvider}
+                    onValueChange={(v: any) => { setWhatsappProvider(v); persistProvider(v); }}
+                  >
+                    <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="evolution">Evolution API</SelectItem>
+                      <SelectItem value="uazapi">UazapiGO</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Badge className="bg-primary/10 text-primary border-0">
+                    {whatsappProvider === 'evolution' ? 'Evolution API' : 'UazapiGO'}
+                  </Badge>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Evolution API */}
           <Card className="shadow-card border-0">
             <CardContent className="p-5 space-y-4">
-              <h3 className="font-semibold text-foreground flex items-center gap-2"><Smartphone className="w-4 h-4" /> Evolution API</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold text-foreground flex items-center gap-2"><Smartphone className="w-4 h-4" /> Evolution API</h3>
+                {whatsappProvider === 'evolution' ? statusBadge(evolutionStatus) : <Badge variant="outline">Alternativa</Badge>}
+              </div>
               {evolutionLoading ? (
                 <div className="flex items-center justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
               ) : (
@@ -390,7 +514,23 @@ const ConfigWhatsApp: React.FC = () => {
                   <Separator />
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div><Label>Base URL</Label><Input value={evolutionConfig.evolution_base_url} onChange={e => setEvolutionConfig(p => ({ ...p, evolution_base_url: e.target.value }))} /></div>
-                    <div><Label>API Key</Label><Input type="password" value={evolutionConfig.evolution_api_key} onChange={e => setEvolutionConfig(p => ({ ...p, evolution_api_key: e.target.value }))} /></div>
+                    <div>
+                      <Label>API Key</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          type="password"
+                          placeholder={evolutionKeyMasked ? '••••••••••••••••' : 'Cole a API Key'}
+                          value={evolutionKeyMasked ? '' : evolutionConfig.evolution_api_key}
+                          disabled={evolutionKeyMasked}
+                          onChange={e => setEvolutionConfig(p => ({ ...p, evolution_api_key: e.target.value }))}
+                        />
+                        {evolutionKeyMasked && (
+                          <Button type="button" variant="outline" onClick={() => { setEvolutionKeyMasked(false); setEvolutionConfig(p => ({ ...p, evolution_api_key: '' })); }}>
+                            Alterar
+                          </Button>
+                        )}
+                      </div>
+                    </div>
                   </div>
                   <div>
                     <Label>Instância</Label>
@@ -415,6 +555,54 @@ const ConfigWhatsApp: React.FC = () => {
                   </div>
                 </>
               )}
+            </CardContent>
+          </Card>
+
+          {/* UazapiGO */}
+          <Card className="shadow-card border-0">
+            <CardContent className="p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold text-foreground flex items-center gap-2">
+                  <Smartphone className="w-4 h-4" /> UazapiGO
+                  {whatsappProvider !== 'uazapi' && <Badge variant="outline" className="ml-2">Alternativa</Badge>}
+                </h3>
+                {whatsappProvider === 'uazapi' ? statusBadge(uazapiStatus) : null}
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div><Label>Server URL</Label><Input placeholder="https://free.uazapi.com" value={uazapiConfig.uazapi_base_url} onChange={e => setUazapiConfig(p => ({ ...p, uazapi_base_url: e.target.value }))} /></div>
+                <div>
+                  <Label>Admin Token</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="password"
+                      placeholder={uazapiTokenMasked ? '••••••••••••••••' : 'Token da instância UazapiGO'}
+                      value={uazapiTokenMasked ? '' : uazapiConfig.uazapi_admin_token}
+                      disabled={uazapiTokenMasked}
+                      onChange={e => setUazapiConfig(p => ({ ...p, uazapi_admin_token: e.target.value }))}
+                    />
+                    {uazapiTokenMasked && (
+                      <Button type="button" variant="outline" onClick={() => { setUazapiTokenMasked(false); setUazapiConfig(p => ({ ...p, uazapi_admin_token: '' })); }}>
+                        Alterar
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div>
+                <Label>Nome/ID da Instância</Label>
+                <Input placeholder="ex: 7MF67B" value={uazapiConfig.uazapi_instance_name} onChange={e => setUazapiConfig(p => ({ ...p, uazapi_instance_name: e.target.value }))} />
+              </div>
+              <div className="flex gap-2">
+                <Button className="gradient-primary text-primary-foreground flex-1" disabled={uazapiSaving} onClick={saveUazapiConfig}>
+                  {uazapiSaving && <Loader2 className="w-4 h-4 animate-spin mr-1" />}Salvar
+                </Button>
+                <Button variant="outline" onClick={checkUazapi}>
+                  <RefreshCw className="w-4 h-4 mr-1" />Verificar
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                ℹ️ A UazapiGO só é usada para envios quando estiver marcada como <strong>Provedor ativo</strong> acima. Admin Token nunca é exibido após salvar.
+              </p>
             </CardContent>
           </Card>
 

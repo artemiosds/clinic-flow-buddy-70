@@ -13,6 +13,10 @@ interface ClinicaConfig {
   evolution_api_key: string;
   evolution_instance_name: string;
   nome_clinica: string;
+  whatsapp_provider?: "evolution" | "uazapi";
+  uazapi_base_url?: string;
+  uazapi_admin_token?: string;
+  uazapi_instance_name?: string;
 }
 
 interface UnitConfig {
@@ -50,7 +54,7 @@ const DEFAULT_UNIT_CONFIG: UnitConfig = {
 async function getClinicaConfig(supabase: any): Promise<ClinicaConfig | null> {
   const { data } = await supabase
     .from("clinica_config")
-    .select("evolution_base_url, evolution_api_key, evolution_instance_name, nome_clinica")
+    .select("evolution_base_url, evolution_api_key, evolution_instance_name, nome_clinica, whatsapp_provider, uazapi_base_url, uazapi_admin_token, uazapi_instance_name")
     .limit(1)
     .maybeSingle();
   return (data as ClinicaConfig) ?? null;
@@ -135,6 +139,27 @@ async function sendEvolutionMessage(config: ClinicaConfig, phone: string, messag
   );
   const body = await resp.text();
   return { ok: resp.ok, body };
+}
+
+async function sendUazapiMessage(config: ClinicaConfig, phone: string, message: string) {
+  const base = String(config.uazapi_base_url || "").replace(/\/$/, "");
+  const resp = await fetch(`${base}/send/text`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      token: String(config.uazapi_admin_token || ""),
+    },
+    body: JSON.stringify({ number: phone, text: message }),
+  });
+  const body = await resp.text();
+  return { ok: resp.ok, body };
+}
+
+async function sendProviderMessage(config: ClinicaConfig, phone: string, message: string) {
+  const provider = config.whatsapp_provider || "evolution";
+  return provider === "uazapi"
+    ? sendUazapiMessage(config, phone, message)
+    : sendEvolutionMessage(config, phone, message);
 }
 
 // ============================================================
@@ -277,9 +302,14 @@ serve(async (req) => {
     const { agendamento_id, tipo, telefone_teste, telefone_direto, paciente_nome_direto, dados_direto } = body;
 
     const config = await getClinicaConfig(supabase);
-    if (!config?.evolution_instance_name) {
+    const provider = config?.whatsapp_provider || "evolution";
+    const providerOk =
+      provider === "uazapi"
+        ? !!(config?.uazapi_base_url && config?.uazapi_admin_token)
+        : !!config?.evolution_instance_name;
+    if (!config || !providerOk) {
       return new Response(
-        JSON.stringify({ success: false, error: "Evolution API não configurada." }),
+        JSON.stringify({ success: false, error: `Provedor "${provider}" não configurado.` }),
         { status: 400, headers: corsHeaders },
       );
     }
@@ -294,7 +324,7 @@ serve(async (req) => {
         );
       }
       const message = buildMessage("teste", { paciente_nome: "Teste" });
-      const result = await sendEvolutionMessage(config, normalized, message);
+      const result = await sendProviderMessage(config, normalized, message);
       await supabase.from("notification_logs").insert({
         evento: "teste", canal: "whatsapp_evolution",
         destinatario_telefone: telefone_teste,
