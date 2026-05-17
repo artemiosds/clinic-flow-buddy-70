@@ -222,6 +222,7 @@ const App = () => (
                     <Route path="historico-triagem" element={<ModuleRoute modulo="historico_triagem"><HistoricoTriagem /></ModuleRoute>} />
                     <Route path="bloqueios" element={<ModuleRoute modulo="feriados_bloqueios"><Bloqueios /></ModuleRoute>} />
                     <Route path="tratamentos" element={<ModuleRoute modulo="gestao_tratamentos"><Tratamentos /></ModuleRoute>} />
+                    <Route path="faltosos" element={<Suspense fallback={<PageLoader />}><Faltosos /></Suspense>} />
                     
                     <Route path="enfermagem" element={<ModuleRoute modulo="avaliacao_enfermagem"><AvaliacaoEnfermagem /></ModuleRoute>} />
                     <Route path="avaliacao_enfermagem" element={<Navigate to="/painel/enfermagem" replace />} />
