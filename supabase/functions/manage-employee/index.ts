@@ -192,6 +192,12 @@ serve(async (req) => {
         mergedCustom.aceita_encaminhamento_externo = !!body.aceita_encaminhamento_externo;
         customDataChanged = true;
       }
+      for (const ck of ['data_admissao', 'tipo_vinculo', 'turno_trabalho', 'observacoes_internas']) {
+        if (body[ck] !== undefined) {
+          mergedCustom[ck] = body[ck] == null ? '' : String(body[ck]);
+          customDataChanged = true;
+        }
+      }
       if (customDataChanged) {
         dbFields.custom_data = mergedCustom;
       }
