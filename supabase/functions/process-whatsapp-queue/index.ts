@@ -259,7 +259,7 @@ serve(async (req) => {
       const { min, max } = effectiveDelays(cfg);
       await new Promise((r) => setTimeout(r, randomDelay(min, max)));
 
-      const result = await sendEvolution(evoCfg, msg.telefone, msg.mensagem);
+      const result = await sendMessage(evoCfg, msg.telefone, msg.mensagem);
 
       if (result.ok) {
         await supabase.from("whatsapp_queue").update({
