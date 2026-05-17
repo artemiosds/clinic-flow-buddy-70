@@ -141,6 +141,27 @@ async function sendEvolutionMessage(config: ClinicaConfig, phone: string, messag
   return { ok: resp.ok, body };
 }
 
+async function sendUazapiMessage(config: ClinicaConfig, phone: string, message: string) {
+  const base = String(config.uazapi_base_url || "").replace(/\/$/, "");
+  const resp = await fetch(`${base}/send/text`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      token: String(config.uazapi_admin_token || ""),
+    },
+    body: JSON.stringify({ number: phone, text: message }),
+  });
+  const body = await resp.text();
+  return { ok: resp.ok, body };
+}
+
+async function sendProviderMessage(config: ClinicaConfig, phone: string, message: string) {
+  const provider = config.whatsapp_provider || "evolution";
+  return provider === "uazapi"
+    ? sendUazapiMessage(config, phone, message)
+    : sendEvolutionMessage(config, phone, message);
+}
+
 // ============================================================
 // VALIDAÇÕES ANTI-BAN
 // ============================================================
