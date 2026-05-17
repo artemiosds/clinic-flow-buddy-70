@@ -8,7 +8,6 @@ import {
   Loader2,
   FileText,
   ChevronDown,
-  ChevronUp,
   Activity,
   Calendar,
   UserCheck,
@@ -18,7 +17,26 @@ import {
   Stethoscope,
   AlertTriangle,
   RefreshCw,
+  MoreVertical,
+  Eye,
+  Printer,
+  Copy,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
 
 // ============================================================
 // TIPOS E CONSTANTES
