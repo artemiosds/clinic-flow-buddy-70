@@ -159,6 +159,12 @@ const Funcionarios: React.FC = () => {
         toast.error('O Conselho Profissional (Tipo, Número e UF) é obrigatório para este perfil.');
         return;
       }
+      const cnsDigits = normalizeCNS(cns);
+      if (!cnsDigits || cnsDigits.length !== 15) {
+        setShowCnsError(true);
+        toast.error('CNS do profissional é obrigatório (15 dígitos) para geração do BPA-I.');
+        return;
+      }
     }
     // Unit master: force unit to their own and block editing global master
     if (isUnitMaster) {
