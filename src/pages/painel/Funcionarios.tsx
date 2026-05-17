@@ -24,6 +24,7 @@ import CustomFieldsRenderer from '@/components/CustomFieldsRenderer';
 import { useCustomFields } from '@/hooks/useCustomFields';
 import CboAutocomplete, { CboValue } from '@/components/CboAutocomplete';
 import { roleLabels, roleColors } from "@/lib/roleUtils";
+import { formatCNS, normalizeCNS, isCNSValid } from '@/lib/cnsUtils';
 
 interface FuncionarioDB {
   id: string;
