@@ -558,12 +558,13 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[95vw] max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <FileText className="w-5 h-5" /> Gerar Documento Clínico
+          <DialogTitle className="flex items-center gap-2 flex-wrap break-words pr-6">
+            <FileText className="w-5 h-5 shrink-0" />
+            <span className="break-words">Gerar Documento Clínico</span>
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="break-words">
             {paciente?.nome ? `Paciente: ${paciente.nome}` : 'Selecione um modelo e preencha os campos'}
           </DialogDescription>
         </DialogHeader>
