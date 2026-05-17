@@ -438,6 +438,25 @@ const Funcionarios: React.FC = () => {
                         Obrigatório para geração do BPA-I (SIA/SUS).
                       </p>
                     </div>
+
+                    <div>
+                      <Label>CNS do Profissional (Cartão Nacional de Saúde) *</Label>
+                      <Input
+                        value={formatCNS(cns)}
+                        onChange={e => {
+                          const d = normalizeCNS(e.target.value);
+                          setCns(d);
+                          if (d.length === 15) setShowCnsError(false);
+                        }}
+                        placeholder="000 0000 0000 0000"
+                        inputMode="numeric"
+                        maxLength={18}
+                        className={showCnsError && !isCNSValid(cns) ? 'border-destructive focus-visible:ring-destructive' : ''}
+                      />
+                      <p className="text-[11px] text-muted-foreground mt-1">
+                        15 dígitos. Obrigatório para identificar o profissional no BPA-I (SIA/SUS).
+                      </p>
+                    </div>
                     
                     <div className="grid grid-cols-2 gap-3">
                       <div>
