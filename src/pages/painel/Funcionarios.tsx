@@ -24,6 +24,7 @@ import CustomFieldsRenderer from '@/components/CustomFieldsRenderer';
 import { useCustomFields } from '@/hooks/useCustomFields';
 import CboAutocomplete, { CboValue } from '@/components/CboAutocomplete';
 import { roleLabels, roleColors } from "@/lib/roleUtils";
+import { formatCNS, normalizeCNS, isCNSValid } from '@/lib/cnsUtils';
 
 interface FuncionarioDB {
   id: string;
@@ -68,7 +69,9 @@ const Funcionarios: React.FC = () => {
     profissao: '', tipo_conselho: '', numero_conselho: '', uf_conselho: '', pode_agendar_retorno: false, coren: '',
   });
   const [cbo, setCbo] = useState<CboValue | null>(null);
+  const [cns, setCns] = useState<string>('');
   const [showCboError, setShowCboError] = useState(false);
+  const [showCnsError, setShowCnsError] = useState(false);
   const canManage = can('funcionarios', 'can_edit');
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -118,7 +121,9 @@ const Funcionarios: React.FC = () => {
     } else {
       setCbo(null);
     }
+    setCns(normalizeCNS(cd.cns || ''));
     setShowCboError(false);
+    setShowCnsError(false);
     setCustomData(cd);
     setDialogOpen(true);
   };
@@ -128,7 +133,9 @@ const Funcionarios: React.FC = () => {
     const defaultUnit = isUnitMaster ? (user?.unidadeId || '') : '';
     setForm({ nome: '', usuario: '', email: '', cpf: '', senha: '', setor: '', unidade_id: defaultUnit, sala_id: '', cargo: '', role: '' as UserRole, tempo_atendimento: 30, profissao: '', tipo_conselho: '', numero_conselho: '', uf_conselho: '', pode_agendar_retorno: false, coren: '' });
     setCbo(null);
+    setCns('');
     setShowCboError(false);
+    setShowCnsError(false);
     setCustomData({});
     setDialogOpen(true);
   };
@@ -150,6 +157,12 @@ const Funcionarios: React.FC = () => {
       }
       if (!form.tipo_conselho || !form.numero_conselho || !form.uf_conselho) {
         toast.error('O Conselho Profissional (Tipo, Número e UF) é obrigatório para este perfil.');
+        return;
+      }
+      const cnsDigits = normalizeCNS(cns);
+      if (!cnsDigits || cnsDigits.length !== 15) {
+        setShowCnsError(true);
+        toast.error('CNS do profissional é obrigatório (15 dígitos) para geração do BPA-I.');
         return;
       }
     }
@@ -190,6 +203,7 @@ const Funcionarios: React.FC = () => {
           coren: form.coren,
           cbo_codigo: cbo?.codigo || '',
           cbo_descricao: cbo?.descricao || '',
+          cns: normalizeCNS(cns),
           aceita_encaminhamento_externo: !!customData?.aceita_encaminhamento_externo,
         };
         if (form.senha) updateData.senha = form.senha;
@@ -233,6 +247,7 @@ const Funcionarios: React.FC = () => {
             coren: form.coren,
             cbo_codigo: cbo?.codigo || '',
             cbo_descricao: cbo?.descricao || '',
+            cns: normalizeCNS(cns),
             aceita_encaminhamento_externo: !!customData?.aceita_encaminhamento_externo,
             criado_por: user?.id || '',
           },
@@ -423,6 +438,25 @@ const Funcionarios: React.FC = () => {
                         Obrigatório para geração do BPA-I (SIA/SUS).
                       </p>
                     </div>
+
+                    <div>
+                      <Label>CNS do Profissional (Cartão Nacional de Saúde) *</Label>
+                      <Input
+                        value={formatCNS(cns)}
+                        onChange={e => {
+                          const d = normalizeCNS(e.target.value);
+                          setCns(d);
+                          if (d.length === 15) setShowCnsError(false);
+                        }}
+                        placeholder="000 0000 0000 0000"
+                        inputMode="numeric"
+                        maxLength={18}
+                        className={showCnsError && !isCNSValid(cns) ? 'border-destructive focus-visible:ring-destructive' : ''}
+                      />
+                      <p className="text-[11px] text-muted-foreground mt-1">
+                        15 dígitos. Obrigatório para identificar o profissional no BPA-I (SIA/SUS).
+                      </p>
+                    </div>
                     
                     <div className="grid grid-cols-2 gap-3">
                       <div>
@@ -540,6 +574,9 @@ const Funcionarios: React.FC = () => {
                         )}
                         {(f.custom_data as any)?.cbo_codigo && (
                           <p className="text-xs text-muted-foreground font-mono">CBO {(f.custom_data as any).cbo_codigo}</p>
+                        )}
+                        {(f.custom_data as any)?.cns && (
+                          <p className="text-xs text-muted-foreground font-mono">CNS {formatCNS((f.custom_data as any).cns)}</p>
                         )}
                         {unidadeNome && <p className="text-xs text-muted-foreground">{unidadeNome}</p>}
                         {f.role === 'profissional' && f.pode_agendar_retorno && (
