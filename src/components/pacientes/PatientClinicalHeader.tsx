@@ -25,7 +25,7 @@ interface PatientHeaderProps {
 }
 
 const PatientHeader: React.FC<PatientHeaderProps> = ({ 
-  nome, idade, sexo, cpf, cns, profissional, dataNasc, telefone, email, endereco, numeroProntuario, alertas = [], risco = 'baixo', className, onEdit 
+  nome, idade, sexo, cpf, cns, profissional, dataNasc, telefone, email, endereco, numeroProntuario, alertas = [], risco = 'baixo', statusFalta, totalFaltas, className, onEdit 
 }) => {
   const [expanded, setExpanded] = React.useState(false);
   const riskStyles = {
