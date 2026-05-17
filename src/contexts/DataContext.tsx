@@ -370,7 +370,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loadUnidades = useCallback(async () => {
     try {
-      let query = supabase.from("unidades" as any).select("id,nome,nome_exibicao,endereco,telefone,whatsapp,ativo");
+      let query = supabase.from("unidades" as any).select("id,nome,nome_exibicao,endereco,telefone,whatsapp,ativo,custom_data");
       // Unit isolation: non-global users only see their own unit
       if (!isGlobalAdmin && userUnidadeId) query = query.eq('id', userUnidadeId);
       const { data, error } = await query;
@@ -384,6 +384,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             telefone: u.telefone || "",
             whatsapp: u.whatsapp || "",
             ativo: u.ativo,
+            cnes: (u.custom_data?.cnes || '').toString(),
+            custom_data: u.custom_data || {},
           })),
         );
     } catch (err) {
