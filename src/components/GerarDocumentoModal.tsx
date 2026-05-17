@@ -558,8 +558,8 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[95vw] max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="w-[95vw] max-w-3xl max-h-[90vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="p-6 pb-3 border-b shrink-0">
           <DialogTitle className="flex items-center gap-2 flex-wrap break-words pr-6">
             <FileText className="w-5 h-5 shrink-0" />
             <span className="break-words">Gerar Documento Clínico</span>
