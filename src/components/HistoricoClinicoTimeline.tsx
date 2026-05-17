@@ -405,15 +405,19 @@ const EventBadges: React.FC<{
 
 const TimelineEventCard: React.FC<{
   event: TimelineEvent;
-  isExpanded: boolean;
-  onToggle: () => void;
   isCurrentProfessional?: boolean;
-}> = React.memo(({ event, isExpanded, onToggle, isCurrentProfessional }) => {
+  onView: (e: TimelineEvent) => void;
+  onPrint: (e: TimelineEvent) => void;
+  onCopy: (e: TimelineEvent) => void;
+}> = React.memo(({ event, isCurrentProfessional, onView, onPrint, onCopy }) => {
   const config = TYPE_CONFIG[event.type] || TYPE_CONFIG.consulta;
-  const hasLongSummary = Boolean(event.summary) && event.summary.length > SUMMARY_EXPAND_THRESHOLD;
+  const [expanded, setExpanded] = useState(false);
+  const hasSummary = Boolean(event.summary && event.summary.trim());
+  // Heurística: muitas linhas ou texto longo → mostra "Ver mais"
+  const isLong = hasSummary && (event.summary.length > 220 || event.summary.split("\n").length > 3);
 
   return (
-    <div className="relative group">
+    <div className="relative group w-full">
       <div
         className={`
           absolute -left-5 top-2 w-7 h-7 rounded-full
@@ -429,7 +433,7 @@ const TimelineEventCard: React.FC<{
 
       <Card
         className={`
-          border-0 shadow-sm ml-2 transition-shadow hover:shadow-md
+          border-0 shadow-sm ml-2 w-full transition-shadow hover:shadow-md
           ${isCurrentProfessional ? "ring-2 ring-primary/20 bg-primary/5" : ""}
         `}
       >
@@ -450,44 +454,73 @@ const TimelineEventCard: React.FC<{
               </div>
 
               {(event.professional || event.specialtyOrType) && (
-                <p className="text-sm text-foreground mt-0.5 font-medium truncate">
+                <p className="text-sm text-foreground mt-0.5 font-medium break-words">
                   {event.professional || event.specialtyOrType}
                   {isCurrentProfessional && <span className="text-xs text-primary ml-1">(você)</span>}
                 </p>
               )}
 
-              {event.unidade && <p className="text-xs text-muted-foreground">📍 {event.unidade}</p>}
+              {event.unidade && <p className="text-xs text-muted-foreground break-words">📍 {event.unidade}</p>}
 
-              {event.procedimentos && <p className="text-xs text-muted-foreground mt-1">📋 {event.procedimentos}</p>}
+              {event.procedimentos && (
+                <p className="text-xs text-muted-foreground mt-1 break-words">📋 {event.procedimentos}</p>
+              )}
 
-              {event.summary && !isExpanded && (
-                <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                  {event.summary.length > SUMMARY_PREVIEW_LENGTH
-                    ? `${event.summary.substring(0, SUMMARY_PREVIEW_LENGTH)}…`
-                    : event.summary}
-                </p>
+              {hasSummary ? (
+                <div
+                  className={`text-xs text-foreground mt-1 whitespace-pre-wrap break-words ${
+                    !expanded && isLong ? "line-clamp-3" : ""
+                  }`}
+                  style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
+                >
+                  {event.summary}
+                </div>
+              ) : (
+                <p className="text-xs italic text-muted-foreground mt-1">Sem registro de evolução</p>
+              )}
+
+              {isLong && (
+                <button
+                  type="button"
+                  onClick={() => setExpanded((v) => !v)}
+                  className="text-xs text-primary hover:underline mt-1 font-medium"
+                >
+                  {expanded ? "Ver menos" : "Ver mais"}
+                </button>
               )}
             </div>
 
-            {hasLongSummary && (
+            <div className="flex items-center gap-0.5 shrink-0">
               <Button
                 size="sm"
                 variant="ghost"
-                className="h-6 w-6 p-0 shrink-0"
-                onClick={onToggle}
-                aria-label={isExpanded ? "Recolher" : "Expandir"}
-                aria-expanded={isExpanded}
+                className="h-7 w-7 p-0"
+                onClick={() => onView(event)}
+                title="Ver completo"
+                aria-label="Ver completo"
               >
-                {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                <Eye className="w-3.5 h-3.5" />
               </Button>
-            )}
-          </div>
-
-          {isExpanded && event.summary && (
-            <div className="mt-2 text-xs border-t pt-2 text-foreground whitespace-pre-wrap animate-in fade-in-0 slide-in-from-top-1 duration-200">
-              {event.summary}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="sm" variant="ghost" className="h-7 w-7 p-0" aria-label="Mais ações">
+                    <MoreVertical className="w-3.5 h-3.5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-44">
+                  <DropdownMenuItem onClick={() => onView(event)} className="gap-2">
+                    <Eye className="w-3.5 h-3.5" /> Ver completo
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onPrint(event)} className="gap-2">
+                    <Printer className="w-3.5 h-3.5" /> Imprimir atendimento
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onCopy(event)} className="gap-2">
+                    <Copy className="w-3.5 h-3.5" /> Copiar evolução
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
-          )}
+          </div>
         </CardContent>
       </Card>
     </div>
@@ -502,20 +535,45 @@ TimelineEventCard.displayName = "TimelineEventCard";
 
 export const HistoricoClinicoTimeline: React.FC<Props> = ({ pacienteId, unidades, currentProfissionalId }) => {
   const { events, loading, error, reload } = useTimeline(pacienteId, unidades);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [viewEvent, setViewEvent] = useState<TimelineEvent | null>(null);
 
   useEffect(() => {
     setPage(1);
-    setExpandedId(null);
   }, [pacienteId]);
 
   const paginatedEvents = useMemo(() => events.slice(0, page * PAGE_SIZE), [events, page]);
   const remaining = events.length - paginatedEvents.length;
 
-  const handleToggle = useCallback((id: string) => {
-    setExpandedId((prev) => (prev === id ? null : id));
+  const handleCopy = useCallback((e: TimelineEvent) => {
+    const txt = e.summary || "Sem registro de evolução";
+    navigator.clipboard.writeText(txt).then(
+      () => toast.success("Evolução copiada"),
+      () => toast.error("Não foi possível copiar"),
+    );
   }, []);
+
+  const handlePrint = useCallback((e: TimelineEvent) => {
+    const config = TYPE_CONFIG[e.type] || TYPE_CONFIG.consulta;
+    const w = window.open("", "_blank", "width=900,height=700");
+    if (!w) return;
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Atendimento ${formatDateBR(e.date)}</title>
+      <style>body{font-family:Inter,Arial,sans-serif;padding:24px;color:#111;line-height:1.5}
+      h1{font-size:18px;margin:0 0 4px}h2{font-size:14px;margin:16px 0 4px;color:#555}
+      .meta{font-size:12px;color:#555;margin-bottom:12px}
+      .box{white-space:pre-wrap;word-break:break-word;border:1px solid #ddd;padding:12px;border-radius:6px;font-size:13px}
+      </style></head><body>
+      <h1>${config.label} — ${formatDateBR(e.date)}${e.time ? " " + e.time : ""}</h1>
+      <div class="meta">${[e.professional, e.specialtyOrType, e.unidade].filter(Boolean).join(" • ")}</div>
+      ${e.procedimentos ? `<h2>Procedimentos</h2><div class="box">${e.procedimentos}</div>` : ""}
+      <h2>Evolução</h2>
+      <div class="box">${(e.summary || "Sem registro de evolução").replace(/</g, "&lt;")}</div>
+      <script>window.onload=()=>{window.print();setTimeout(()=>window.close(),300);}</script>
+      </body></html>`;
+    w.document.write(html);
+    w.document.close();
+  }, []);
+
 
   const handleLoadMore = useCallback(() => {
     setPage((prev) => prev + 1);
