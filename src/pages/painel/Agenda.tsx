@@ -701,10 +701,20 @@ const Agenda: React.FC = () => {
     if (!pac || !prof || !newAg.hora) return;
     // Bloqueio por excesso de faltas
     try {
-      const { data: pacStatus } = await (supabase as any).from("pacientes").select("status_falta, total_faltas").eq("id", pac.id).maybeSingle();
+      const { data: pacStatus } = await (supabase as any).from("pacientes").select("status_falta, total_faltas, faltas_consecutivas").eq("id", pac.id).maybeSingle();
       if (pacStatus?.status_falta === "BLOQUEADO") {
-        toast.error(`Paciente bloqueado por excesso de faltas (${pacStatus.total_faltas}). Encaminhado para a lista de espera.`);
+        toast.error(
+          `🚫 ${pac.nome} está BLOQUEADO por excesso de faltas (${pacStatus.total_faltas} faltas totais, ${pacStatus.faltas_consecutivas} consecutivas). ` +
+          `Apenas Master ou Gestor podem remover o bloqueio em Pacientes Faltosos (/painel/faltosos).`,
+          { duration: 8000 }
+        );
         return;
+      }
+      if (pacStatus?.status_falta === "FALTOSO") {
+        toast.warning(
+          `⚠️ ${pac.nome} está marcado como FALTOSO (${pacStatus.total_faltas} faltas). Confirme a presença e oriente sobre a política de faltas.`,
+          { duration: 6000 }
+        );
       }
     } catch {}
     if (selectedDate < todayLocalStr()) {
