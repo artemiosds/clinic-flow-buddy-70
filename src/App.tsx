@@ -73,6 +73,7 @@ const Auditoria                   = lazyRetry(() => import("./pages/painel/Audit
 const Triagem                     = lazyRetry(() => import("./pages/painel/Triagem"));
 const Bloqueios                   = lazyRetry(() => import("./pages/painel/Bloqueios"));
 const Tratamentos                 = lazyRetry(() => import("./pages/painel/Tratamentos"));
+const Faltosos                    = lazyRetry(() => import("./pages/painel/Faltosos"));
 
 const AvaliacaoEnfermagem         = lazyRetry(() => import("./pages/painel/AvaliacaoEnfermagem"));
 const AvaliacaoMultiprofissional  = lazyRetry(() => import("./pages/painel/AvaliacaoMultiprofissional"));
