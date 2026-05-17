@@ -143,24 +143,47 @@ const ConfigWhatsApp: React.FC = () => {
     }
   }, [hookLoading, configuracoes]);
 
-  // Check connection whenever config is loaded or changed
+  // Load from clinica_config (source of truth read by edge functions)
   useEffect(() => {
-    if (evolutionConfig.evolution_instance_name && evolutionConfig.evolution_api_key) {
-      const check = async () => {
-        try {
-          const resp = await fetch(
-            `${evolutionConfig.evolution_base_url}/instance/connectionState/${evolutionConfig.evolution_instance_name}`,
-            { headers: { apikey: evolutionConfig.evolution_api_key } }
-          );
-          if (resp.ok) {
-            const state = await resp.json();
-            setEvolutionStatus(state?.instance?.state === 'open' ? 'connected' : 'disconnected');
-          } else { setEvolutionStatus('error'); }
-        } catch { setEvolutionStatus('error'); }
-      };
-      check();
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from('clinica_config')
+          .select('*')
+          .limit(1)
+          .maybeSingle();
+        if (data) {
+          setEvolutionConfig({
+            nome_clinica: (data as any).nome_clinica || '',
+            logo_url: (data as any).logo_url || '',
+            telefone: (data as any).telefone || '',
+            evolution_base_url: (data as any).evolution_base_url || 'https://api.agendamento-saude-sms-oriximina.site',
+            evolution_api_key: (data as any).evolution_api_key || '',
+            evolution_instance_name: (data as any).evolution_instance_name || '',
+          });
+          setUazapiConfig({
+            uazapi_base_url: (data as any).uazapi_base_url || 'https://free.uazapi.com',
+            uazapi_admin_token: (data as any).uazapi_admin_token || '',
+            uazapi_instance_name: (data as any).uazapi_instance_name || '',
+          });
+          setWhatsappProvider(((data as any).whatsapp_provider as any) || 'evolution');
+          setEvolutionKeyMasked(!!(data as any).evolution_api_key);
+          setUazapiTokenMasked(!!(data as any).uazapi_admin_token);
+        }
+      } catch (e) { /* ignore */ }
+      setEvolutionLoading(false);
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (!hookLoading) {
+      const waCfg = configuracoes['config_whatsapp_reminders'];
+      if (waCfg) {
+        setHorasLembrete1(waCfg.horas_lembrete_1 || 24);
+        setHorasLembrete2(waCfg.horas_lembrete_2 || 2);
+      }
     }
-  }, [evolutionConfig.evolution_instance_name, evolutionConfig.evolution_api_key, evolutionConfig.evolution_base_url]);
+  }, [hookLoading, configuracoes]);
 
   // Logs
   const [logs, setLogs] = useState<NotifLog[]>([]);
