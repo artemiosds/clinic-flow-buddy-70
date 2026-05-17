@@ -18,12 +18,14 @@ interface PatientHeaderProps {
   numeroProntuario?: string;
   alertas?: string[];
   risco?: 'baixo' | 'medio' | 'alto';
+  statusFalta?: 'REGULAR' | 'FALTOSO' | 'BLOQUEADO' | string;
+  totalFaltas?: number;
   className?: string;
   onEdit?: () => void;
 }
 
 const PatientHeader: React.FC<PatientHeaderProps> = ({ 
-  nome, idade, sexo, cpf, cns, profissional, dataNasc, telefone, email, endereco, numeroProntuario, alertas = [], risco = 'baixo', className, onEdit 
+  nome, idade, sexo, cpf, cns, profissional, dataNasc, telefone, email, endereco, numeroProntuario, alertas = [], risco = 'baixo', statusFalta, totalFaltas, className, onEdit 
 }) => {
   const [expanded, setExpanded] = React.useState(false);
   const riskStyles = {
@@ -52,6 +54,16 @@ const PatientHeader: React.FC<PatientHeaderProps> = ({
                 <Badge variant="outline" className={cn("text-[10px] uppercase font-bold px-1.5 h-4.5 shrink-0", riskStyles[risco])}>
                   Risco {risco}
                 </Badge>
+                {statusFalta === "BLOQUEADO" && (
+                  <Badge className="bg-destructive text-destructive-foreground text-[10px] uppercase font-bold px-1.5 h-4.5 shrink-0" title={`Bloqueado por excesso de faltas (${totalFaltas ?? 0})`}>
+                    🚫 Bloqueado
+                  </Badge>
+                )}
+                {statusFalta === "FALTOSO" && (
+                  <Badge className="bg-warning/15 text-warning border border-warning/30 text-[10px] uppercase font-bold px-1.5 h-4.5 shrink-0" title={`${totalFaltas ?? 0} faltas registradas`}>
+                    ⚠️ Faltoso
+                  </Badge>
+                )}
               </div>
               {onEdit && (
                 <Button 
