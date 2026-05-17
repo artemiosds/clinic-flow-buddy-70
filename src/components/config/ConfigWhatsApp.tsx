@@ -82,12 +82,28 @@ const ConfigWhatsApp: React.FC = () => {
   const userUnitId = user?.unidadeId || '';
   const { atualizarConfiguracao, configuracoes, loading: hookLoading } = useConfiguracao(userUnitId);
 
+  // Provider selector
+  const [whatsappProvider, setWhatsappProvider] = useState<'evolution' | 'uazapi'>('evolution');
+
   // Evolution API config
   const [evolutionConfig, setEvolutionConfig] = useState({
     nome_clinica: '', logo_url: '', telefone: '',
     evolution_base_url: 'https://api.agendamento-saude-sms-oriximina.site',
     evolution_api_key: '', evolution_instance_name: '',
   });
+
+  // UazapiGO config
+  const [uazapiConfig, setUazapiConfig] = useState({
+    uazapi_base_url: 'https://free.uazapi.com',
+    uazapi_admin_token: '',
+    uazapi_instance_name: '',
+  });
+  const [uazapiSaving, setUazapiSaving] = useState(false);
+  const [uazapiTesting, setUazapiTesting] = useState(false);
+  const [uazapiStatus, setUazapiStatus] = useState<'idle' | 'connected' | 'disconnected' | 'error'>('idle');
+  // Masked-token UX (consistent with Evolution): true while user has not chosen to edit
+  const [uazapiTokenMasked, setUazapiTokenMasked] = useState(false);
+  const [evolutionKeyMasked, setEvolutionKeyMasked] = useState(false);
   const [evolutionInstances, setEvolutionInstances] = useState<{ instanceName: string; state: string }[]>([]);
   const [evolutionLoading, setEvolutionLoading] = useState(true);
   const [evolutionSaving, setEvolutionSaving] = useState(false);
