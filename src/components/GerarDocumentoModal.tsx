@@ -671,7 +671,7 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
           )}
         </div>
 
-        <DialogFooter className="gap-2 flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between w-full">
+        <DialogFooter className="gap-2 flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between w-full border-t p-4 shrink-0 bg-background">
           <div className="flex gap-2 flex-wrap w-full sm:w-auto">
             <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1 sm:flex-none">Fechar</Button>
             {selected && !savedDocId && (
