@@ -23,7 +23,7 @@ serve(async (req) => {
     const { action } = body;
 
     if (action === "create") {
-      const { nome, usuario, email, cpf, senha, setor, unidade_id, sala_id, cargo, role, criado_por, tempo_atendimento, profissao, tipo_conselho, numero_conselho, uf_conselho, pode_agendar_retorno, coren, cbo_codigo, cbo_descricao, cns, aceita_encaminhamento_externo } = body;
+      const { nome, usuario, email, cpf, senha, setor, unidade_id, sala_id, cargo, role, criado_por, tempo_atendimento, profissao, tipo_conselho, numero_conselho, uf_conselho, pode_agendar_retorno, coren, cbo_codigo, cbo_descricao, cns, aceita_encaminhamento_externo, ativo: ativoIn, data_admissao, tipo_vinculo, turno_trabalho, observacoes_internas } = body;
 
       if (!nome || !usuario || !email || !senha) {
         return new Response(
@@ -100,7 +100,7 @@ serve(async (req) => {
           sala_id: sala_id || "",
           cargo: cargo || "",
           role: role || "recepcao",
-          ativo: true,
+          ativo: ativoIn === undefined ? true : !!ativoIn,
           criado_por: criado_por || "",
           tempo_atendimento: tempo_atendimento || 30,
           profissao: profissao || "",
@@ -114,6 +114,10 @@ serve(async (req) => {
             ...(cbo_codigo ? { cbo_codigo: String(cbo_codigo), cbo_descricao: String(cbo_descricao || '') } : {}),
             ...(cns ? { cns: String(cns).replace(/\D/g, '').slice(0, 15) } : {}),
             ...(aceita_encaminhamento_externo !== undefined ? { aceita_encaminhamento_externo: !!aceita_encaminhamento_externo } : {}),
+            ...(data_admissao ? { data_admissao: String(data_admissao) } : {}),
+            ...(tipo_vinculo ? { tipo_vinculo: String(tipo_vinculo) } : {}),
+            ...(turno_trabalho ? { turno_trabalho: String(turno_trabalho) } : {}),
+            ...(observacoes_internas ? { observacoes_internas: String(observacoes_internas) } : {}),
           },
         })
         .select()
@@ -187,6 +191,12 @@ serve(async (req) => {
       if (body.aceita_encaminhamento_externo !== undefined) {
         mergedCustom.aceita_encaminhamento_externo = !!body.aceita_encaminhamento_externo;
         customDataChanged = true;
+      }
+      for (const ck of ['data_admissao', 'tipo_vinculo', 'turno_trabalho', 'observacoes_internas']) {
+        if (body[ck] !== undefined) {
+          mergedCustom[ck] = body[ck] == null ? '' : String(body[ck]);
+          customDataChanged = true;
+        }
       }
       if (customDataChanged) {
         dbFields.custom_data = mergedCustom;
