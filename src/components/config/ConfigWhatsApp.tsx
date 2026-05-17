@@ -469,9 +469,40 @@ const ConfigWhatsApp: React.FC = () => {
 
         {/* ─── CONEXÃO ─── */}
         <TabsContent value="conexao" className="space-y-4 mt-4">
+          {/* Provider selector */}
+          <Card className="shadow-card border-0">
+            <CardContent className="p-5">
+              <div className="flex flex-col md:flex-row md:items-center gap-4">
+                <div className="flex-1">
+                  <h3 className="font-semibold text-foreground flex items-center gap-2"><Zap className="w-4 h-4 text-primary" /> Provedor de envio ativo</h3>
+                  <p className="text-xs text-muted-foreground mt-1">Apenas o provedor selecionado envia mensagens. Nunca os dois ao mesmo tempo.</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Select
+                    value={whatsappProvider}
+                    onValueChange={(v: any) => { setWhatsappProvider(v); persistProvider(v); }}
+                  >
+                    <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="evolution">Evolution API</SelectItem>
+                      <SelectItem value="uazapi">UazapiGO</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Badge className="bg-primary/10 text-primary border-0">
+                    {whatsappProvider === 'evolution' ? 'Evolution API' : 'UazapiGO'}
+                  </Badge>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Evolution API */}
           <Card className="shadow-card border-0">
             <CardContent className="p-5 space-y-4">
-              <h3 className="font-semibold text-foreground flex items-center gap-2"><Smartphone className="w-4 h-4" /> Evolution API</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold text-foreground flex items-center gap-2"><Smartphone className="w-4 h-4" /> Evolution API</h3>
+                {whatsappProvider === 'evolution' ? statusBadge(evolutionStatus) : <Badge variant="outline">Alternativa</Badge>}
+              </div>
               {evolutionLoading ? (
                 <div className="flex items-center justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
               ) : (
@@ -483,7 +514,23 @@ const ConfigWhatsApp: React.FC = () => {
                   <Separator />
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div><Label>Base URL</Label><Input value={evolutionConfig.evolution_base_url} onChange={e => setEvolutionConfig(p => ({ ...p, evolution_base_url: e.target.value }))} /></div>
-                    <div><Label>API Key</Label><Input type="password" value={evolutionConfig.evolution_api_key} onChange={e => setEvolutionConfig(p => ({ ...p, evolution_api_key: e.target.value }))} /></div>
+                    <div>
+                      <Label>API Key</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          type="password"
+                          placeholder={evolutionKeyMasked ? '••••••••••••••••' : 'Cole a API Key'}
+                          value={evolutionKeyMasked ? '' : evolutionConfig.evolution_api_key}
+                          disabled={evolutionKeyMasked}
+                          onChange={e => setEvolutionConfig(p => ({ ...p, evolution_api_key: e.target.value }))}
+                        />
+                        {evolutionKeyMasked && (
+                          <Button type="button" variant="outline" onClick={() => { setEvolutionKeyMasked(false); setEvolutionConfig(p => ({ ...p, evolution_api_key: '' })); }}>
+                            Alterar
+                          </Button>
+                        )}
+                      </div>
+                    </div>
                   </div>
                   <div>
                     <Label>Instância</Label>
@@ -508,6 +555,54 @@ const ConfigWhatsApp: React.FC = () => {
                   </div>
                 </>
               )}
+            </CardContent>
+          </Card>
+
+          {/* UazapiGO */}
+          <Card className="shadow-card border-0">
+            <CardContent className="p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold text-foreground flex items-center gap-2">
+                  <Smartphone className="w-4 h-4" /> UazapiGO
+                  {whatsappProvider !== 'uazapi' && <Badge variant="outline" className="ml-2">Alternativa</Badge>}
+                </h3>
+                {whatsappProvider === 'uazapi' ? statusBadge(uazapiStatus) : null}
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div><Label>Server URL</Label><Input placeholder="https://free.uazapi.com" value={uazapiConfig.uazapi_base_url} onChange={e => setUazapiConfig(p => ({ ...p, uazapi_base_url: e.target.value }))} /></div>
+                <div>
+                  <Label>Admin Token</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="password"
+                      placeholder={uazapiTokenMasked ? '••••••••••••••••' : 'Token da instância UazapiGO'}
+                      value={uazapiTokenMasked ? '' : uazapiConfig.uazapi_admin_token}
+                      disabled={uazapiTokenMasked}
+                      onChange={e => setUazapiConfig(p => ({ ...p, uazapi_admin_token: e.target.value }))}
+                    />
+                    {uazapiTokenMasked && (
+                      <Button type="button" variant="outline" onClick={() => { setUazapiTokenMasked(false); setUazapiConfig(p => ({ ...p, uazapi_admin_token: '' })); }}>
+                        Alterar
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div>
+                <Label>Nome/ID da Instância</Label>
+                <Input placeholder="ex: 7MF67B" value={uazapiConfig.uazapi_instance_name} onChange={e => setUazapiConfig(p => ({ ...p, uazapi_instance_name: e.target.value }))} />
+              </div>
+              <div className="flex gap-2">
+                <Button className="gradient-primary text-primary-foreground flex-1" disabled={uazapiSaving} onClick={saveUazapiConfig}>
+                  {uazapiSaving && <Loader2 className="w-4 h-4 animate-spin mr-1" />}Salvar
+                </Button>
+                <Button variant="outline" onClick={checkUazapi}>
+                  <RefreshCw className="w-4 h-4 mr-1" />Verificar
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                ℹ️ A UazapiGO só é usada para envios quando estiver marcada como <strong>Provedor ativo</strong> acima. Admin Token nunca é exibido após salvar.
+              </p>
             </CardContent>
           </Card>
 
