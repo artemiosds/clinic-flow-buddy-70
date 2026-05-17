@@ -30,9 +30,21 @@ export const PacienteCard: React.FC<PacienteCardProps> = React.memo(({ p, onView
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
-            <h3 className="font-bold text-foreground truncate group-hover:text-primary transition-colors">
-              {p.nome}
-            </h3>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="font-bold text-foreground truncate group-hover:text-primary transition-colors">
+                {p.nome}
+              </h3>
+              {p.status_falta === "BLOQUEADO" && (
+                <Badge className="bg-destructive text-destructive-foreground text-[9px] font-bold uppercase h-4 px-1.5" title={`Bloqueado por ${p.total_faltas || 0} faltas`}>
+                  🚫 Bloqueado
+                </Badge>
+              )}
+              {p.status_falta === "FALTOSO" && (
+                <Badge className="bg-warning/15 text-warning border border-warning/30 text-[9px] font-bold uppercase h-4 px-1.5" title={`${p.total_faltas || 0} faltas registradas`}>
+                  ⚠️ Faltoso
+                </Badge>
+              )}
+            </div>
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
               ID: {p.id.slice(0, 8)}
             </p>
