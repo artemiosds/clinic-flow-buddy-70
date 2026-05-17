@@ -302,9 +302,14 @@ serve(async (req) => {
     const { agendamento_id, tipo, telefone_teste, telefone_direto, paciente_nome_direto, dados_direto } = body;
 
     const config = await getClinicaConfig(supabase);
-    if (!config?.evolution_instance_name) {
+    const provider = config?.whatsapp_provider || "evolution";
+    const providerOk =
+      provider === "uazapi"
+        ? !!(config?.uazapi_base_url && config?.uazapi_admin_token)
+        : !!config?.evolution_instance_name;
+    if (!config || !providerOk) {
       return new Response(
-        JSON.stringify({ success: false, error: "Evolution API não configurada." }),
+        JSON.stringify({ success: false, error: `Provedor "${provider}" não configurado.` }),
         { status: 400, headers: corsHeaders },
       );
     }
@@ -319,7 +324,7 @@ serve(async (req) => {
         );
       }
       const message = buildMessage("teste", { paciente_nome: "Teste" });
-      const result = await sendEvolutionMessage(config, normalized, message);
+      const result = await sendProviderMessage(config, normalized, message);
       await supabase.from("notification_logs").insert({
         evento: "teste", canal: "whatsapp_evolution",
         destinatario_telefone: telefone_teste,
