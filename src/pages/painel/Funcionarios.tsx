@@ -133,7 +133,9 @@ const Funcionarios: React.FC = () => {
     const defaultUnit = isUnitMaster ? (user?.unidadeId || '') : '';
     setForm({ nome: '', usuario: '', email: '', cpf: '', senha: '', setor: '', unidade_id: defaultUnit, sala_id: '', cargo: '', role: '' as UserRole, tempo_atendimento: 30, profissao: '', tipo_conselho: '', numero_conselho: '', uf_conselho: '', pode_agendar_retorno: false, coren: '' });
     setCbo(null);
+    setCns('');
     setShowCboError(false);
+    setShowCnsError(false);
     setCustomData({});
     setDialogOpen(true);
   };
