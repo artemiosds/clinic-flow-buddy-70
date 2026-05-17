@@ -127,8 +127,7 @@ const Faltosos: React.FC = () => {
     <div className="p-4 sm:p-6 space-y-4 max-w-7xl mx-auto">
       <PageHeader
         title="Pacientes Faltosos"
-        description="Controle de faltas, alertas e bloqueios automáticos por excesso de faltas."
-        icon={AlertTriangle}
+        subtitle="Controle de faltas, alertas e bloqueios automáticos por excesso de faltas."
       />
 
       <Card className="shadow-card border-0">
