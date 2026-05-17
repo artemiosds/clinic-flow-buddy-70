@@ -923,6 +923,7 @@ const Agenda: React.FC = () => {
     whatsappService.sendByAgendamento(ag.id, "falta").catch(() => {});
     await handleVagaLiberada({ id: ag.id, data: ag.data, hora: ag.hora, profissionalId: ag.profissionalId, profissionalNome: ag.profissionalNome, unidadeId: ag.unidadeId, salaId: ag.salaId, tipo: ag.tipo }, "falta", user);
     await Promise.all([refreshAgendamentos(), refreshFila()]);
+    try { await (supabase as any).rpc("atualizar_status_falta", { p_paciente_id: ag.pacienteId }); } catch (e) { console.warn("atualizar_status_falta:", e); }
     toast.success(`Falta registrada para ${ag.pacienteNome}.`);
     setFaltaTarget(null);
   };
