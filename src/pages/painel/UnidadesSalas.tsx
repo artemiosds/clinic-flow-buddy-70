@@ -100,6 +100,9 @@ const UnidadesSalas: React.FC = () => {
                     {u.nomeExibicao && <p className="text-xs text-primary font-medium">Exibido como: {u.nomeExibicao}</p>}
                     <p className="text-sm text-muted-foreground mt-1">{u.endereco}</p>
                     <p className="text-sm text-muted-foreground">{u.telefone} • {u.whatsapp}</p>
+                    {((u as any).cnes || (u as any).custom_data?.cnes) && (
+                      <p className="text-xs text-primary font-mono mt-1">CNES {(u as any).cnes || (u as any).custom_data?.cnes}</p>
+                    )}
                     <span className="text-xs text-muted-foreground">{salas.filter(s => s.unidadeId === u.id).length} sala(s)</span>
                   </div>
                   <div className="flex gap-1">
