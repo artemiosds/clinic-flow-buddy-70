@@ -35,6 +35,11 @@ const UnidadesSalas: React.FC = () => {
 
   const handleSaveUnit = async () => {
     if (!unitForm.nome || saving) return;
+    const cnesDigits = formatCnes(unitForm.cnes);
+    if (unitForm.cnes && cnesDigits.length !== 7) {
+      toast.error('CNES deve ter 7 dígitos.');
+      return;
+    }
     setSaving(true);
     try {
       if (editUnitId) {
