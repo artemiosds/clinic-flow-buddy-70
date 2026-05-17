@@ -595,8 +595,9 @@ export const HistoricoClinicoTimeline: React.FC<Props> = ({ pacienteId, unidades
             <TimelineEventCard
               key={event.id}
               event={event}
-              isExpanded={expandedId === event.id}
-              onToggle={() => handleToggle(event.id)}
+              onView={setViewEvent}
+              onPrint={handlePrint}
+              onCopy={handleCopy}
               isCurrentProfessional={
                 Boolean(currentProfissionalId) &&
                 event.professional.toLowerCase().includes(currentProfissionalId?.toLowerCase() || "")
@@ -614,6 +615,50 @@ export const HistoricoClinicoTimeline: React.FC<Props> = ({ pacienteId, unidades
           </div>
         )}
       </ScrollArea>
+
+      <Dialog open={!!viewEvent} onOpenChange={(o) => !o && setViewEvent(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {viewEvent ? `${(TYPE_CONFIG[viewEvent.type] || TYPE_CONFIG.consulta).label} — ${formatDateBR(viewEvent.date)}${viewEvent.time ? " " + viewEvent.time : ""}` : ""}
+            </DialogTitle>
+            <DialogDescription>
+              {viewEvent ? [viewEvent.professional, viewEvent.specialtyOrType, viewEvent.unidade].filter(Boolean).join(" • ") : ""}
+            </DialogDescription>
+          </DialogHeader>
+          {viewEvent && (
+            <div className="space-y-3 text-sm">
+              {viewEvent.procedimentos && (
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground mb-1">Procedimentos</p>
+                  <div className="border rounded p-3 whitespace-pre-wrap break-words" style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}>
+                    {viewEvent.procedimentos}
+                  </div>
+                </div>
+              )}
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground mb-1">Evolução</p>
+                <div className="border rounded p-3 whitespace-pre-wrap break-words" style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}>
+                  {viewEvent.summary || <span className="italic text-muted-foreground">Sem registro de evolução</span>}
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter className="gap-2">
+            {viewEvent && (
+              <>
+                <Button variant="outline" onClick={() => handleCopy(viewEvent)} className="gap-2">
+                  <Copy className="w-4 h-4" /> Copiar
+                </Button>
+                <Button variant="outline" onClick={() => handlePrint(viewEvent)} className="gap-2">
+                  <Printer className="w-4 h-4" /> Imprimir
+                </Button>
+              </>
+            )}
+            <Button onClick={() => setViewEvent(null)}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
