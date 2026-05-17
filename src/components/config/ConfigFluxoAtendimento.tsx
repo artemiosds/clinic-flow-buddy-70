@@ -392,7 +392,52 @@ const ConfigFluxoAtendimento: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* 5.7 Controle de Faltas */}
+      <FaltasConfigCard />
     </div>
+  );
+};
+
+const FaltasConfigCard: React.FC = () => {
+  const { user } = useAuth();
+  const { atualizarConfiguracao, configuracoes, loading } = useConfiguracao(user?.unidadeId);
+  const cfg = configuracoes['config_fluxo_faltas'] || { limiteAlerta: 2, limiteBloqueio: 4, notificarSistema: true, notificarWhatsapp: false };
+  const [local, setLocal] = useState(cfg);
+  useEffect(() => { setLocal(configuracoes['config_fluxo_faltas'] || cfg); /* eslint-disable-next-line */ }, [loading]);
+  const save = (next: any) => { setLocal(next); atualizarConfiguracao('config_fluxo_faltas', next, { auditAcao: 'ALTERAR_CONFIG_FALTAS', silent: true }); };
+  return (
+    <Card className="shadow-card border-0">
+      <CardContent className="p-5">
+        <h3 className="font-semibold font-display text-foreground mb-1">Controle de Faltas</h3>
+        <p className="text-xs text-muted-foreground mb-4">Define a partir de quantas faltas o paciente é marcado como FALTOSO ou BLOQUEADO automaticamente.</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <Label className="text-xs">Faltas para gerar alerta FALTOSO</Label>
+            <Input type="number" min={1} value={local.limiteAlerta ?? 2}
+              onChange={e => setLocal({ ...local, limiteAlerta: parseInt(e.target.value) || 2 })}
+              onBlur={() => save(local)} className="h-9" />
+          </div>
+          <div>
+            <Label className="text-xs">Faltas para gerar BLOQUEIO</Label>
+            <Input type="number" min={1} value={local.limiteBloqueio ?? 4}
+              onChange={e => setLocal({ ...local, limiteBloqueio: parseInt(e.target.value) || 4 })}
+              onBlur={() => save(local)} className="h-9" />
+          </div>
+        </div>
+        <div className="mt-4 space-y-2">
+          <Label className="text-xs">Tipo de notificação</Label>
+          <div className="flex items-center justify-between p-2 bg-muted/30 rounded">
+            <span className="text-sm">Sistema (interna ao profissional)</span>
+            <Switch checked={!!local.notificarSistema} onCheckedChange={v => save({ ...local, notificarSistema: v })} />
+          </div>
+          <div className="flex items-center justify-between p-2 bg-muted/30 rounded">
+            <span className="text-sm">WhatsApp</span>
+            <Switch checked={!!local.notificarWhatsapp} onCheckedChange={v => save({ ...local, notificarWhatsapp: v })} />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 
