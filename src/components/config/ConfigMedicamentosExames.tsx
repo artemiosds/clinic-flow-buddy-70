@@ -728,7 +728,9 @@ const ConfigMedicamentosExames: React.FC = () => {
                           {m.concentracao} {m.forma_farmaceutica && `— ${m.forma_farmaceutica}`} {m.via_padrao && `— via ${m.via_padrao}`}
                         </div>
                         <div className="flex gap-1.5 mt-1 flex-wrap">
-                          <Badge variant={m.origem === 'RENAME' ? 'default' : 'secondary'} className="text-[9px]">{m.origem || 'PERSONALIZADO'}</Badge>
+                          <Badge variant={m.origem === 'RENAME' ? 'default' : m.origem === 'REME' ? 'outline' : 'secondary'} className="text-[9px]">{m.origem || 'PERSONALIZADO'}</Badge>
+                          <TipoBadge tipo={deriveTipo(m as any)} />
+                          <EstoqueBadge m={m} />
                           {!m.is_global && <Badge variant="outline" className="text-[9px]">Local</Badge>}
                         </div>
                       </div>
