@@ -13,6 +13,10 @@ interface ClinicaConfig {
   evolution_api_key: string;
   evolution_instance_name: string;
   nome_clinica: string;
+  whatsapp_provider?: "evolution" | "uazapi";
+  uazapi_base_url?: string;
+  uazapi_admin_token?: string;
+  uazapi_instance_name?: string;
 }
 
 interface UnitConfig {
@@ -50,7 +54,7 @@ const DEFAULT_UNIT_CONFIG: UnitConfig = {
 async function getClinicaConfig(supabase: any): Promise<ClinicaConfig | null> {
   const { data } = await supabase
     .from("clinica_config")
-    .select("evolution_base_url, evolution_api_key, evolution_instance_name, nome_clinica")
+    .select("evolution_base_url, evolution_api_key, evolution_instance_name, nome_clinica, whatsapp_provider, uazapi_base_url, uazapi_admin_token, uazapi_instance_name")
     .limit(1)
     .maybeSingle();
   return (data as ClinicaConfig) ?? null;
