@@ -69,7 +69,9 @@ const Funcionarios: React.FC = () => {
     profissao: '', tipo_conselho: '', numero_conselho: '', uf_conselho: '', pode_agendar_retorno: false, coren: '',
   });
   const [cbo, setCbo] = useState<CboValue | null>(null);
+  const [cns, setCns] = useState<string>('');
   const [showCboError, setShowCboError] = useState(false);
+  const [showCnsError, setShowCnsError] = useState(false);
   const canManage = can('funcionarios', 'can_edit');
   const [searchTerm, setSearchTerm] = useState('');
 
