@@ -467,7 +467,7 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
               </div>
             </DialogContent>
           </Dialog>
-          <Button size="sm" variant="outline" onClick={() => setDocModalOpen(true)} className="h-8">
+          <Button size="sm" variant="outline" onClick={() => setDocModalOpen(true)} className="h-8 shrink-0">
             <FileSignature className="w-3.5 h-3.5 mr-1" /> Gerar documento
           </Button>
         </div>
