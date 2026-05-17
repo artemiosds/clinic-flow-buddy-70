@@ -18,6 +18,8 @@ interface PatientHeaderProps {
   numeroProntuario?: string;
   alertas?: string[];
   risco?: 'baixo' | 'medio' | 'alto';
+  statusFalta?: 'REGULAR' | 'FALTOSO' | 'BLOQUEADO' | string;
+  totalFaltas?: number;
   className?: string;
   onEdit?: () => void;
 }
