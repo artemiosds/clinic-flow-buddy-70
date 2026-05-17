@@ -868,6 +868,9 @@ const Agenda: React.FC = () => {
       const whatsappTipo = statusToWhatsapp[newStatus];
       if (whatsappTipo) whatsappService.sendByAgendamento(agId, whatsappTipo).catch(() => {});
       if (newStatus === "cancelado" || newStatus === "falta") await handleVagaLiberada({ id: agId, data: ag.data, hora: ag.hora, profissionalId: ag.profissionalId, profissionalNome: ag.profissionalNome, unidadeId: ag.unidadeId, salaId: ag.salaId, tipo: ag.tipo }, newStatus === "cancelado" ? "cancelamento" : "falta", user);
+      if (newStatus === "concluido" || newStatus === "confirmado_chegada" || newStatus === "apto_atendimento") {
+        try { await (supabase as any).rpc("resetar_faltas_paciente", { p_paciente_id: ag.pacienteId }); } catch (e) { console.warn("resetar_faltas_paciente:", e); }
+      }
       if (ag.googleEventId && newStatus === "cancelado" && configuracoes.googleCalendar.removerCancelar) { try { await gcal.deleteEvent(ag.googleEventId); await updateAgendamento(agId, { syncStatus: "ok" }); await refreshAgendamentos(); } catch {} }
     } catch (err) { console.error("Error updating status:", err); toast.error("Erro ao atualizar status.", { id: toastId }); } finally { setStatusUpdating(false); }
   };
