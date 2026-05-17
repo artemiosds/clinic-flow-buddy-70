@@ -22,12 +22,14 @@ const UnidadesSalas: React.FC = () => {
   const [roomDialog, setRoomDialog] = useState(false);
   const [editUnitId, setEditUnitId] = useState<string | null>(null);
   const [editRoomId, setEditRoomId] = useState<string | null>(null);
-  const [unitForm, setUnitForm] = useState({ nome: '', nomeExibicao: '', endereco: '', telefone: '', whatsapp: '' });
+  const [unitForm, setUnitForm] = useState({ nome: '', nomeExibicao: '', endereco: '', telefone: '', whatsapp: '', cnes: '' });
   const [roomForm, setRoomForm] = useState({ nome: '', unidadeId: '' });
   const [saving, setSaving] = useState(false);
 
-  const openNewUnit = () => { setEditUnitId(null); setUnitForm({ nome: '', nomeExibicao: '', endereco: '', telefone: '', whatsapp: '' }); setCustomData({}); setUnitDialog(true); };
-  const openEditUnit = (u: typeof unidades[0]) => { setEditUnitId(u.id); setUnitForm({ nome: u.nome, nomeExibicao: u.nomeExibicao || '', endereco: u.endereco, telefone: u.telefone, whatsapp: u.whatsapp }); setCustomData({}); setUnitDialog(true); };
+  const formatCnes = (v: string) => (v || '').replace(/\D/g, '').slice(0, 7);
+
+  const openNewUnit = () => { setEditUnitId(null); setUnitForm({ nome: '', nomeExibicao: '', endereco: '', telefone: '', whatsapp: '', cnes: '' }); setCustomData({}); setUnitDialog(true); };
+  const openEditUnit = (u: typeof unidades[0]) => { setEditUnitId(u.id); setUnitForm({ nome: u.nome, nomeExibicao: u.nomeExibicao || '', endereco: u.endereco, telefone: u.telefone, whatsapp: u.whatsapp, cnes: (u as any).cnes || (u as any).custom_data?.cnes || '' }); setCustomData({}); setUnitDialog(true); };
   const openNewRoom = () => { setEditRoomId(null); setRoomForm({ nome: '', unidadeId: '' }); setRoomDialog(true); };
   const openEditRoom = (s: typeof salas[0]) => { setEditRoomId(s.id); setRoomForm({ nome: s.nome, unidadeId: s.unidadeId }); setRoomDialog(true); };
 
