@@ -91,6 +91,8 @@ export interface Unidade {
   telefone: string;
   whatsapp: string;
   ativo: boolean;
+  cnes?: string;
+  custom_data?: Record<string, any>;
 }
 
 export interface Sala {

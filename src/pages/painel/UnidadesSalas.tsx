@@ -22,17 +22,24 @@ const UnidadesSalas: React.FC = () => {
   const [roomDialog, setRoomDialog] = useState(false);
   const [editUnitId, setEditUnitId] = useState<string | null>(null);
   const [editRoomId, setEditRoomId] = useState<string | null>(null);
-  const [unitForm, setUnitForm] = useState({ nome: '', nomeExibicao: '', endereco: '', telefone: '', whatsapp: '' });
+  const [unitForm, setUnitForm] = useState({ nome: '', nomeExibicao: '', endereco: '', telefone: '', whatsapp: '', cnes: '' });
   const [roomForm, setRoomForm] = useState({ nome: '', unidadeId: '' });
   const [saving, setSaving] = useState(false);
 
-  const openNewUnit = () => { setEditUnitId(null); setUnitForm({ nome: '', nomeExibicao: '', endereco: '', telefone: '', whatsapp: '' }); setCustomData({}); setUnitDialog(true); };
-  const openEditUnit = (u: typeof unidades[0]) => { setEditUnitId(u.id); setUnitForm({ nome: u.nome, nomeExibicao: u.nomeExibicao || '', endereco: u.endereco, telefone: u.telefone, whatsapp: u.whatsapp }); setCustomData({}); setUnitDialog(true); };
+  const formatCnes = (v: string) => (v || '').replace(/\D/g, '').slice(0, 7);
+
+  const openNewUnit = () => { setEditUnitId(null); setUnitForm({ nome: '', nomeExibicao: '', endereco: '', telefone: '', whatsapp: '', cnes: '' }); setCustomData({}); setUnitDialog(true); };
+  const openEditUnit = (u: typeof unidades[0]) => { setEditUnitId(u.id); setUnitForm({ nome: u.nome, nomeExibicao: u.nomeExibicao || '', endereco: u.endereco, telefone: u.telefone, whatsapp: u.whatsapp, cnes: (u as any).cnes || (u as any).custom_data?.cnes || '' }); setCustomData({}); setUnitDialog(true); };
   const openNewRoom = () => { setEditRoomId(null); setRoomForm({ nome: '', unidadeId: '' }); setRoomDialog(true); };
   const openEditRoom = (s: typeof salas[0]) => { setEditRoomId(s.id); setRoomForm({ nome: s.nome, unidadeId: s.unidadeId }); setRoomDialog(true); };
 
   const handleSaveUnit = async () => {
     if (!unitForm.nome || saving) return;
+    const cnesDigits = formatCnes(unitForm.cnes);
+    if (unitForm.cnes && cnesDigits.length !== 7) {
+      toast.error('CNES deve ter 7 dígitos.');
+      return;
+    }
     setSaving(true);
     try {
       if (editUnitId) {
@@ -93,6 +100,9 @@ const UnidadesSalas: React.FC = () => {
                     {u.nomeExibicao && <p className="text-xs text-primary font-medium">Exibido como: {u.nomeExibicao}</p>}
                     <p className="text-sm text-muted-foreground mt-1">{u.endereco}</p>
                     <p className="text-sm text-muted-foreground">{u.telefone} • {u.whatsapp}</p>
+                    {((u as any).cnes || (u as any).custom_data?.cnes) && (
+                      <p className="text-xs text-primary font-mono mt-1">CNES {(u as any).cnes || (u as any).custom_data?.cnes}</p>
+                    )}
                     <span className="text-xs text-muted-foreground">{salas.filter(s => s.unidadeId === u.id).length} sala(s)</span>
                   </div>
                   <div className="flex gap-1">
@@ -158,6 +168,18 @@ const UnidadesSalas: React.FC = () => {
             <div className="grid grid-cols-2 gap-3">
               <div><Label>Telefone</Label><Input value={unitForm.telefone} onChange={e => setUnitForm(p => ({ ...p, telefone: e.target.value }))} /></div>
               <div><Label>WhatsApp</Label><Input value={unitForm.whatsapp} onChange={e => setUnitForm(p => ({ ...p, whatsapp: e.target.value }))} /></div>
+            </div>
+            <div>
+              <Label>CNES do Estabelecimento</Label>
+              <Input
+                value={unitForm.cnes}
+                onChange={e => setUnitForm(p => ({ ...p, cnes: formatCnes(e.target.value) }))}
+                placeholder="0000000 (7 dígitos)"
+                inputMode="numeric"
+                maxLength={7}
+                className={unitForm.cnes && formatCnes(unitForm.cnes).length !== 7 ? 'border-destructive' : ''}
+              />
+              <p className="text-xs text-muted-foreground mt-1">Usado na geração do BPA-I (SIA/SUS).</p>
             </div>
             {customConfig.fields.length > 0 && (
               <CustomFieldsRenderer
