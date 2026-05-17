@@ -17,7 +17,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useConfiguracao } from '@/hooks/useConfiguracao';
 import { auditService } from '@/services/auditService';
 import { RENAME_MEDICATIONS } from '@/data/seedRenameMedications';
+import { REME_MEDICATIONS } from '@/data/seedRemeMedications';
 import { EXAMES_PADRAO } from '@/data/seedExamesPadrao';
+
+type MedTipo = 'comum' | 'controlado' | 'psicotropico' | 'antibiotico';
 
 interface Medication {
   id: string;
@@ -35,7 +38,59 @@ interface Medication {
   profissional_id: string | null;
   ativo: boolean;
   updated_at?: string;
+  // Novos campos
+  nome_comercial?: string;
+  codigo_rename?: string | null;
+  codigo_reme?: string | null;
+  tipo?: MedTipo;
+  estoque_quantidade?: number;
+  estoque_minimo?: number;
+  estoque_unidade?: string;
+  estoque_localizacao?: string;
 }
+
+const deriveTipo = (m: { classe_terapeutica?: string; principio_ativo?: string; tipo?: MedTipo }): MedTipo => {
+  if (m.tipo && m.tipo !== 'comum') return m.tipo;
+  const cls = (m.classe_terapeutica || '').toLowerCase();
+  const pa = (m.principio_ativo || '').toLowerCase();
+  if (cls.includes('antibió')) return 'antibiotico';
+  if (cls.includes('opioide') || ['morfina','codeína','codeina','tramadol','fentanil','metilfenidato'].some(p => pa.includes(p))) return 'controlado';
+  if (cls.includes('psicotróp') || cls.includes('antidepress') || cls.includes('ansiolít') || cls.includes('antipsicót') || cls.includes('benzodiazep') ||
+      ['diazepam','clonazepam','fluoxetina','amitriptilina','sertralina','haloperidol','carbamazepina','fenobarbital','midazolam','risperidona','olanzapina','quetiapina','lorazepam'].some(p => pa.includes(p))) return 'psicotropico';
+  return 'comum';
+};
+
+const estoqueStatus = (m: Medication): 'sem_controle' | 'disponivel' | 'baixo' | 'indisponivel' => {
+  const qtd = m.estoque_quantidade ?? 0;
+  const min = m.estoque_minimo ?? 0;
+  if (!min && !qtd) return 'sem_controle';
+  if (qtd <= 0) return 'indisponivel';
+  if (qtd <= min) return 'baixo';
+  return 'disponivel';
+};
+
+const TipoBadge: React.FC<{ tipo?: MedTipo }> = ({ tipo }) => {
+  if (!tipo || tipo === 'comum') return null;
+  const map: Record<string, { label: string; cls: string }> = {
+    controlado: { label: 'CONTROLADO', cls: 'bg-destructive text-destructive-foreground' },
+    psicotropico: { label: 'PSICOTRÓPICO', cls: 'bg-destructive text-destructive-foreground' },
+    antibiotico: { label: 'ANTIBIÓTICO', cls: 'bg-orange-500 text-white' },
+  };
+  const v = map[tipo];
+  return <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${v.cls}`}>{v.label}</span>;
+};
+
+const EstoqueBadge: React.FC<{ m: Medication }> = ({ m }) => {
+  const st = estoqueStatus(m);
+  if (st === 'sem_controle') return null;
+  const map = {
+    disponivel: { label: `Disponível${m.estoque_quantidade ? ` (${m.estoque_quantidade})` : ''}`, cls: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300' },
+    baixo: { label: `Estoque baixo (${m.estoque_quantidade})`, cls: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300' },
+    indisponivel: { label: 'Indisponível', cls: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300' },
+  } as const;
+  const v = map[st as keyof typeof map];
+  return <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded ${v.cls}`}>{v.label}</span>;
+};
 
 interface ExamType {
   id: string;
@@ -148,38 +203,31 @@ const ConfigMedicamentosExames: React.FC = () => {
     setSeeding('med');
     try {
       const existingKeys = new Set(meds.map(m => dedupKeyMed(m)));
+      const existingCodes = new Set(meds.map(m => (m as any).codigo_rename).filter(Boolean));
       const toInsert = RENAME_MEDICATIONS
-        .filter(m => !existingKeys.has(dedupKeyMed(m)))
+        .filter(m => !(m.codigo_rename && existingCodes.has(m.codigo_rename)) && !existingKeys.has(dedupKeyMed(m)))
         .map(m => ({
-          nome: m.nome,
-          principio_ativo: m.principio_ativo,
-          concentracao: m.concentracao,
-          forma_farmaceutica: m.forma_farmaceutica,
-          via_padrao: m.via_padrao,
-          classe_terapeutica: m.classe_terapeutica,
-          apresentacao: m.apresentacao,
-          dosagem_padrao: m.dosagem_padrao || m.concentracao,
-          origem: 'RENAME',
-          observacoes: '',
-          is_global: true,
-          ativo: true,
+          nome: m.nome, principio_ativo: m.principio_ativo, concentracao: m.concentracao,
+          forma_farmaceutica: m.forma_farmaceutica, via_padrao: m.via_padrao,
+          classe_terapeutica: m.classe_terapeutica, apresentacao: m.apresentacao,
+          dosagem_padrao: m.dosagem_padrao || m.concentracao, origem: 'RENAME',
+          observacoes: '', is_global: true, ativo: true,
+          nome_comercial: m.nome_comercial || '',
+          codigo_rename: m.codigo_rename || null,
+          tipo: deriveTipo(m as any),
         }));
 
       let inserted = 0;
       const ignored = RENAME_MEDICATIONS.length - toInsert.length;
-
-      // Insere em lotes para não estourar limite
       const chunkSize = 50;
       for (let i = 0; i < toInsert.length; i += chunkSize) {
         const chunk = toInsert.slice(i, i + chunkSize);
-        const { error } = await supabase.from('medications').insert(chunk);
+        const { error } = await supabase.from('medications').insert(chunk as any);
         if (!error) inserted += chunk.length;
       }
 
       await auditService.log({
-        acao: 'IMPORTAR_BASE_RENAME',
-        entidade: 'medications',
-        modulo: 'configuracoes',
+        acao: 'IMPORTAR_BASE_RENAME', entidade: 'medications', modulo: 'configuracoes',
         user: user ? { id: user.id, nome: user.nome, role: user.role, unidadeId: user.unidadeId } : null,
         detalhes: { inseridos: inserted, ignorados_duplicados: ignored, total_base: RENAME_MEDICATIONS.length },
       });
@@ -192,6 +240,48 @@ const ConfigMedicamentosExames: React.FC = () => {
     } finally {
       setSeeding(null);
       setRestoreDialog(null);
+    }
+  };
+
+  const seedReme = async () => {
+    setSeeding('med');
+    try {
+      const existingKeys = new Set(meds.map(m => dedupKeyMed(m)));
+      const existingCodes = new Set(meds.map(m => (m as any).codigo_reme).filter(Boolean));
+      const toInsert = REME_MEDICATIONS
+        .filter(m => !existingCodes.has(m.codigo_reme) && !existingKeys.has(dedupKeyMed(m)))
+        .map(m => ({
+          nome: m.nome, principio_ativo: m.principio_ativo, concentracao: m.concentracao,
+          forma_farmaceutica: m.forma_farmaceutica, via_padrao: m.via_padrao,
+          classe_terapeutica: m.classe_terapeutica, apresentacao: m.apresentacao,
+          dosagem_padrao: m.dosagem_padrao || m.concentracao, origem: 'REME',
+          observacoes: '', is_global: true, ativo: true,
+          nome_comercial: m.nome_comercial || '',
+          codigo_reme: m.codigo_reme,
+          tipo: deriveTipo(m as any),
+        }));
+
+      let inserted = 0;
+      const ignored = REME_MEDICATIONS.length - toInsert.length;
+      const chunkSize = 50;
+      for (let i = 0; i < toInsert.length; i += chunkSize) {
+        const { error } = await supabase.from('medications').insert(toInsert.slice(i, i + chunkSize) as any);
+        if (!error) inserted += Math.min(chunkSize, toInsert.length - i);
+      }
+
+      await auditService.log({
+        acao: 'IMPORTAR_BASE_REME', entidade: 'medications', modulo: 'configuracoes',
+        user: user ? { id: user.id, nome: user.nome, role: user.role, unidadeId: user.unidadeId } : null,
+        detalhes: { inseridos: inserted, ignorados_duplicados: ignored, total_base: REME_MEDICATIONS.length },
+      });
+
+      toast.success(`Base REME carregada: ${inserted} novos, ${ignored} já existiam`);
+      await loadData();
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao carregar base REME');
+    } finally {
+      setSeeding(null);
     }
   };
 
@@ -638,7 +728,9 @@ const ConfigMedicamentosExames: React.FC = () => {
                           {m.concentracao} {m.forma_farmaceutica && `— ${m.forma_farmaceutica}`} {m.via_padrao && `— via ${m.via_padrao}`}
                         </div>
                         <div className="flex gap-1.5 mt-1 flex-wrap">
-                          <Badge variant={m.origem === 'RENAME' ? 'default' : 'secondary'} className="text-[9px]">{m.origem || 'PERSONALIZADO'}</Badge>
+                          <Badge variant={m.origem === 'RENAME' ? 'default' : m.origem === 'REME' ? 'outline' : 'secondary'} className="text-[9px]">{m.origem || 'PERSONALIZADO'}</Badge>
+                          <TipoBadge tipo={deriveTipo(m as any)} />
+                          <EstoqueBadge m={m} />
                           {!m.is_global && <Badge variant="outline" className="text-[9px]">Local</Badge>}
                         </div>
                       </div>
@@ -840,6 +932,10 @@ const ConfigMedicamentosExames: React.FC = () => {
                   <Button onClick={() => setRestoreDialog('med')} disabled={!!seeding} variant="default">
                     {seeding === 'med' ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <RotateCcw className="w-4 h-4 mr-1" />}
                     Carregar / Restaurar base RENAME
+                  </Button>
+                  <Button onClick={seedReme} disabled={!!seeding} variant="secondary">
+                    {seeding === 'med' ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <RotateCcw className="w-4 h-4 mr-1" />}
+                    Carregar / Restaurar base REME ({REME_MEDICATIONS.length})
                   </Button>
                   <Button onClick={exportMedsCsv} variant="outline"><Download className="w-4 h-4 mr-1" />Exportar CSV</Button>
                 </div>

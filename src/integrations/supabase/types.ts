@@ -1644,17 +1644,25 @@ export type Database = {
           apresentacao: string
           ativo: boolean
           classe_terapeutica: string
+          codigo_reme: string | null
+          codigo_rename: string | null
           concentracao: string
           created_at: string
           dosagem_padrao: string
+          estoque_localizacao: string
+          estoque_minimo: number
+          estoque_quantidade: number
+          estoque_unidade: string
           forma_farmaceutica: string
           id: string
           is_global: boolean
           nome: string
+          nome_comercial: string
           observacoes: string
           origem: string
           principio_ativo: string
           profissional_id: string | null
+          tipo: string
           updated_at: string
           via_padrao: string
         }
@@ -1662,17 +1670,25 @@ export type Database = {
           apresentacao?: string
           ativo?: boolean
           classe_terapeutica?: string
+          codigo_reme?: string | null
+          codigo_rename?: string | null
           concentracao?: string
           created_at?: string
           dosagem_padrao?: string
+          estoque_localizacao?: string
+          estoque_minimo?: number
+          estoque_quantidade?: number
+          estoque_unidade?: string
           forma_farmaceutica?: string
           id?: string
           is_global?: boolean
           nome: string
+          nome_comercial?: string
           observacoes?: string
           origem?: string
           principio_ativo?: string
           profissional_id?: string | null
+          tipo?: string
           updated_at?: string
           via_padrao?: string
         }
@@ -1680,17 +1696,25 @@ export type Database = {
           apresentacao?: string
           ativo?: boolean
           classe_terapeutica?: string
+          codigo_reme?: string | null
+          codigo_rename?: string | null
           concentracao?: string
           created_at?: string
           dosagem_padrao?: string
+          estoque_localizacao?: string
+          estoque_minimo?: number
+          estoque_quantidade?: number
+          estoque_unidade?: string
           forma_farmaceutica?: string
           id?: string
           is_global?: boolean
           nome?: string
+          nome_comercial?: string
           observacoes?: string
           origem?: string
           principio_ativo?: string
           profissional_id?: string | null
+          tipo?: string
           updated_at?: string
           via_padrao?: string
         }

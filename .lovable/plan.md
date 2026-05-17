@@ -1,31 +1,89 @@
-The issue involves professionals being unable to save procedures in the medical record (prontuário). The error message "Erro ao salvar: Não foi possível salvar os procedimentos do prontuário" (or similar) occurs during "Salvar Rascunho", "Finalizar Prontuário", or "Salvar Alterações".
+## Objetivo
+Expandir o módulo de Medicamentos (base, busca, classificação, alertas, estoque) e refletir tudo no Prontuário, sem quebrar nada existente.
 
-### Analysis:
-1.  **Multiple Save Flows**: The `Prontuario.tsx` file has multiple save flows: `handleSave`, `performAutosave`, and `handleRegistrarSessaoOnly`. All of them attempt to delete existing procedures and re-insert the selected ones into the `prontuario_procedimentos` table.
-2.  **Missing Fields**: In some flows (like `handleRegistrarSessaoOnly`), the `prontuario_procedimentos` insert might be missing required fields or sending incorrect types. Specifically, the table schema shows `prontuario_id` as a UUID and `observacao` as a non-nullable text field.
-3.  **RLS Policies**: There are three RLS policies on `prontuario_procedimentos`. One of them, "Staff manage prontuario_procedimentos", allows Staff to perform ALL operations if `is_staff_member()` is true. Another "Permitir acesso total para autenticados" allows all authenticated users. However, if a professional is not correctly identified as staff or if the `with_check` fails, the insert might be blocked.
-4.  **Autosave/Manual Conflict**: The autosave logic also performs deletions and insertions, which might conflict with manual saves if triggered simultaneously.
-5.  **Error Handling**: The current error handling often wraps specific errors in generic messages, making it hard to see the underlying database failure (e.g., foreign key violation, null constraint, or RLS denial).
+---
 
-### Proposed Fixes:
+## 1. Banco de dados (1 migration)
 
-#### 1. Robust `buildProntuarioProcedimentoLinks`
-Standardize the payload generation to ensure all required fields are present and correctly typed. Ensure `observacao` is always an empty string if no JSON content is provided, satisfying the NOT NULL constraint.
+Adicionar colunas à tabela `medications` (sem apagar dados):
 
-#### 2. Synchronized Procedure Saving
-Create a centralized `saveProcedimentos` function that handles the delete-then-insert logic with better error reporting and ensuring the `prontuario_id` is valid.
+- `nome_comercial text default ''`
+- `codigo_rename text` (UNIQUE quando não nulo)
+- `codigo_reme text`
+- `tipo text default 'comum'` — `comum | controlado | psicotropico | antibiotico`
+- `estoque_quantidade integer default 0`
+- `estoque_minimo integer default 0`
+- `estoque_unidade text default ''` — comprimidos, ampolas, frascos…
+- `estoque_localizacao text default ''`
 
-#### 3. Update Save Flows
-Refactor `handleSave`, `performAutosave`, and `handleRegistrarSessaoOnly` to use the centralized procedure saving logic. Ensure that the `prontuario_id` is always obtained before attempting to save procedures.
+Índices de busca (pg_trgm):
+```sql
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+CREATE INDEX idx_medications_nome_trgm        ON medications USING GIN (nome gin_trgm_ops);
+CREATE INDEX idx_medications_principio_trgm   ON medications USING GIN (principio_ativo gin_trgm_ops);
+CREATE INDEX idx_medications_comercial_trgm   ON medications USING GIN (nome_comercial gin_trgm_ops);
+CREATE INDEX idx_medications_classe_trgm      ON medications USING GIN (classe_terapeutica gin_trgm_ops);
+CREATE INDEX idx_medications_tipo             ON medications (tipo);
+```
 
-#### 4. Improved Error Logging
-Add detailed console logging for Supabase errors in the procedure saving process to help identify RLS or constraint issues during development.
+Backfill: marcar `tipo='antibiotico'` onde `classe_terapeutica ILIKE '%antibió%'`, `tipo='psicotropico'` onde classe ILIKE '%psicotrop%' ou principio em {diazepam, clonazepam, fluoxetina, amitriptilina, sertralina, haloperidol, carbamazepina, fenobarbital}.
 
-#### 5. RLS Verification
-Ensure the `prontuario_procedimentos` table has a policy that explicitly allows professionals to manage records linked to their own prontuários. If the current "Staff manage" policy is insufficient, I will add a targeted policy.
+---
 
-### Technical Details:
-- Modify `src/pages/painel/Prontuario.tsx`.
-- Centralize procedure persistence logic.
-- Ensure `observacao` is never null/undefined.
-- Add specific error catching for the `prontuario_procedimentos` operations.
+## 2. Seeds RENAME e REME
+
+- `src/data/seedRenameMedications.ts`: expandir de ~84 para ~250 itens curados da RENAME (cobertura ampla: cardio, endócrino, infecto, dor, saúde mental, respiratório, GI, dermato, oftalmo, pediátrico, hormônios, vacinas/imunobiológicos comuns, antineoplásicos básicos). Cada item passa a ter `tipo`, `codigo_rename`, `nome_comercial` (quando aplicável).
+- Novo `src/data/seedRemeMedications.ts`: ~80 itens REME complementares (foco municipal — fitoterápicos, suplementos, soluções básicas, kits curativo, antissépticos).
+- Deduplicação por `codigo_rename`/`codigo_reme` quando existir, senão pela chave atual (principio+concentração+forma+via).
+
+> ⚠️ Observação importante: não existe API oficial pública estável da RENAME completa. Vou entregar uma lista curada substancial (~250 RENAME + ~80 REME). Se você tiver um CSV oficial, podemos importar depois pelo mesmo botão.
+
+---
+
+## 3. UI — ConfigMedicamentosExames
+
+- Botão **"Carregar / Restaurar base REME"** ao lado do RENAME.
+- Listagem: badges
+  - Origem: `RENAME` / `REME` / `PERSONALIZADO`
+  - Tipo: `CONTROLADO` (vermelho), `PSICOTRÓPICO` (vermelho), `ANTIBIÓTICO` (laranja)
+  - Estoque: verde (disponível) / amarelo (baixo) / vermelho (indisponível) / cinza (não controlado)
+- Filtros: classe terapêutica (select), tipo, origem, status de estoque.
+- Form de edição: novos campos (nome comercial, código RENAME/REME, tipo, estoque quantidade/mínimo/unidade/localização).
+
+---
+
+## 4. UI — PrescricaoMedicamentos (Prontuário)
+
+- Busca passa a casar com: nome, principio_ativo, nome_comercial, classe_terapeutica, codigo_rename, forma_farmaceutica, tipo.
+- Filtro por classe terapêutica na busca.
+- Cada resultado mostra badges (tipo + estoque).
+- Ao selecionar:
+  - Controlado/Psicotrópico → toast/alert "Medicamento controlado — exige receita especial".
+  - Antibiótico → toast "Exige receituário".
+  - Estoque 0 → alert "Medicamento sem estoque disponível na unidade".
+- Sem alterar a estrutura de salvamento da prescrição.
+
+---
+
+## 5. Notificação de estoque baixo
+
+- Registro em `notification_logs` quando `estoque_quantidade <= estoque_minimo` (disparado no update via UI; sem trigger novo para evitar tocar schemas reservados).
+- Painel já existente de notificações exibirá. (Sem novo canal.)
+
+---
+
+## Arquivos afetados
+- migration nova
+- `src/data/seedRenameMedications.ts` (expandir)
+- `src/data/seedRemeMedications.ts` (novo)
+- `src/components/config/ConfigMedicamentosExames.tsx` (UI + import REME + badges + filtros + estoque)
+- `src/components/PrescricaoMedicamentos.tsx` (busca + badges + alertas)
+- `src/integrations/supabase/types.ts` (regen automática após migration)
+
+---
+
+## Perguntas rápidas antes de começar
+
+1. **Volume RENAME**: ~250 itens curados está OK, ou prefere que eu tente carregar uma lista bem maior (com risco de itens menos relevantes)?
+2. **REME**: posso entregar uma lista genérica municipal (~80 itens). Você tem a lista oficial REME de Oriximiná em algum lugar?
+3. **Estoque por unidade?** Hoje `medications` é global. O estoque deve ser **por unidade de saúde** (criar tabela `medication_stock` por `unidade_id`) ou **global** (campos direto em `medications`, como descrito acima)?
