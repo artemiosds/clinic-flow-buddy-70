@@ -100,7 +100,7 @@ serve(async (req) => {
           sala_id: sala_id || "",
           cargo: cargo || "",
           role: role || "recepcao",
-          ativo: true,
+          ativo: ativoIn === undefined ? true : !!ativoIn,
           criado_por: criado_por || "",
           tempo_atendimento: tempo_atendimento || 30,
           profissao: profissao || "",
@@ -114,6 +114,10 @@ serve(async (req) => {
             ...(cbo_codigo ? { cbo_codigo: String(cbo_codigo), cbo_descricao: String(cbo_descricao || '') } : {}),
             ...(cns ? { cns: String(cns).replace(/\D/g, '').slice(0, 15) } : {}),
             ...(aceita_encaminhamento_externo !== undefined ? { aceita_encaminhamento_externo: !!aceita_encaminhamento_externo } : {}),
+            ...(data_admissao ? { data_admissao: String(data_admissao) } : {}),
+            ...(tipo_vinculo ? { tipo_vinculo: String(tipo_vinculo) } : {}),
+            ...(turno_trabalho ? { turno_trabalho: String(turno_trabalho) } : {}),
+            ...(observacoes_internas ? { observacoes_internas: String(observacoes_internas) } : {}),
           },
         })
         .select()
