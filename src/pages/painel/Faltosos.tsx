@@ -26,7 +26,7 @@ interface PacienteFalta {
 
 const Faltosos: React.FC = () => {
   const { user, isGlobalAdmin } = useAuth();
-  const { unidadeId } = useUnidadeFilter();
+  const { userUnidadeId: unidadeId } = useUnidadeFilter();
   const [list, setList] = useState<PacienteFalta[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtroStatus, setFiltroStatus] = useState<string>("todos");
