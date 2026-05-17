@@ -441,17 +441,17 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 shrink-0">
           <FileText className="w-4 h-4 text-primary" /> Histórico Clínico
         </h3>
-        <div className="flex items-center gap-2">
-          <Button size="sm" variant="outline" onClick={() => setHistoricoOpen(true)} className="h-8">
+        <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap no-scrollbar -mx-1 px-1 sm:mx-0 sm:px-0 sm:overflow-visible sm:flex-wrap sm:justify-end">
+          <Button size="sm" variant="outline" onClick={() => setHistoricoOpen(true)} className="h-8 shrink-0">
             <History className="w-3.5 h-3.5 mr-1" /> Histórico completo
           </Button>
           <Dialog>
             <DialogTrigger asChild>
-              <Button size="sm" variant="outline" className="h-8">
+              <Button size="sm" variant="outline" className="h-8 shrink-0">
                 <Paperclip className="w-3.5 h-3.5 mr-1" /> Documentos
               </Button>
             </DialogTrigger>
@@ -467,7 +467,7 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
               </div>
             </DialogContent>
           </Dialog>
-          <Button size="sm" variant="outline" onClick={() => setDocModalOpen(true)} className="h-8">
+          <Button size="sm" variant="outline" onClick={() => setDocModalOpen(true)} className="h-8 shrink-0">
             <FileSignature className="w-3.5 h-3.5 mr-1" /> Gerar documento
           </Button>
         </div>
