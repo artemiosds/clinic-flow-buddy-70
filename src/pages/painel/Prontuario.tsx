@@ -1676,6 +1676,7 @@ const ProntuarioPage: React.FC = () => {
       if (prontuarioId) {
         await saveProntuarioProcedimentos(prontuarioId, profIdFin);
       }
+      try { if (record?.paciente_id) await (supabase as any).rpc("resetar_faltas_paciente", { p_paciente_id: record.paciente_id }); } catch (e) { console.warn("resetar_faltas_paciente:", e); }
 
       const procedureDone = procTexto || form.procedimentos_texto?.trim() || form.outro_procedimento?.trim() || form.queixa_principal?.trim() || 'Sessão registrada';
       const result = await treatmentService.registerCompletedSession({

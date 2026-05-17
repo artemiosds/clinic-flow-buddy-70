@@ -73,6 +73,7 @@ const Auditoria                   = lazyRetry(() => import("./pages/painel/Audit
 const Triagem                     = lazyRetry(() => import("./pages/painel/Triagem"));
 const Bloqueios                   = lazyRetry(() => import("./pages/painel/Bloqueios"));
 const Tratamentos                 = lazyRetry(() => import("./pages/painel/Tratamentos"));
+const Faltosos                    = lazyRetry(() => import("./pages/painel/Faltosos"));
 
 const AvaliacaoEnfermagem         = lazyRetry(() => import("./pages/painel/AvaliacaoEnfermagem"));
 const AvaliacaoMultiprofissional  = lazyRetry(() => import("./pages/painel/AvaliacaoMultiprofissional"));
@@ -221,6 +222,7 @@ const App = () => (
                     <Route path="historico-triagem" element={<ModuleRoute modulo="historico_triagem"><HistoricoTriagem /></ModuleRoute>} />
                     <Route path="bloqueios" element={<ModuleRoute modulo="feriados_bloqueios"><Bloqueios /></ModuleRoute>} />
                     <Route path="tratamentos" element={<ModuleRoute modulo="gestao_tratamentos"><Tratamentos /></ModuleRoute>} />
+                    <Route path="faltosos" element={<Suspense fallback={<PageLoader />}><Faltosos /></Suspense>} />
                     
                     <Route path="enfermagem" element={<ModuleRoute modulo="avaliacao_enfermagem"><AvaliacaoEnfermagem /></ModuleRoute>} />
                     <Route path="avaliacao_enfermagem" element={<Navigate to="/painel/enfermagem" replace />} />

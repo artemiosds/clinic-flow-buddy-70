@@ -699,6 +699,14 @@ const Agenda: React.FC = () => {
       pac = { id: data.id, nome: data.nome, telefone: data.telefone || "", email: data.email || "" } as typeof pac;
     }
     if (!pac || !prof || !newAg.hora) return;
+    // Bloqueio por excesso de faltas
+    try {
+      const { data: pacStatus } = await (supabase as any).from("pacientes").select("status_falta, total_faltas").eq("id", pac.id).maybeSingle();
+      if (pacStatus?.status_falta === "BLOQUEADO") {
+        toast.error(`Paciente bloqueado por excesso de faltas (${pacStatus.total_faltas}). Encaminhado para a lista de espera.`);
+        return;
+      }
+    } catch {}
     if (selectedDate < todayLocalStr()) {
       if (!isMaster) { toast.error("Não é possível agendar em data passada."); return; }
       const confirmouPassado = window.confirm("⚠️ Atenção: Você está agendando em DATA PASSADA como MASTER. Deseja continuar com o registro retroativo?");
@@ -860,6 +868,9 @@ const Agenda: React.FC = () => {
       const whatsappTipo = statusToWhatsapp[newStatus];
       if (whatsappTipo) whatsappService.sendByAgendamento(agId, whatsappTipo).catch(() => {});
       if (newStatus === "cancelado" || newStatus === "falta") await handleVagaLiberada({ id: agId, data: ag.data, hora: ag.hora, profissionalId: ag.profissionalId, profissionalNome: ag.profissionalNome, unidadeId: ag.unidadeId, salaId: ag.salaId, tipo: ag.tipo }, newStatus === "cancelado" ? "cancelamento" : "falta", user);
+      if (newStatus === "concluido" || newStatus === "confirmado_chegada" || newStatus === "apto_atendimento") {
+        try { await (supabase as any).rpc("resetar_faltas_paciente", { p_paciente_id: ag.pacienteId }); } catch (e) { console.warn("resetar_faltas_paciente:", e); }
+      }
       if (ag.googleEventId && newStatus === "cancelado" && configuracoes.googleCalendar.removerCancelar) { try { await gcal.deleteEvent(ag.googleEventId); await updateAgendamento(agId, { syncStatus: "ok" }); await refreshAgendamentos(); } catch {} }
     } catch (err) { console.error("Error updating status:", err); toast.error("Erro ao atualizar status.", { id: toastId }); } finally { setStatusUpdating(false); }
   };
@@ -915,6 +926,7 @@ const Agenda: React.FC = () => {
     whatsappService.sendByAgendamento(ag.id, "falta").catch(() => {});
     await handleVagaLiberada({ id: ag.id, data: ag.data, hora: ag.hora, profissionalId: ag.profissionalId, profissionalNome: ag.profissionalNome, unidadeId: ag.unidadeId, salaId: ag.salaId, tipo: ag.tipo }, "falta", user);
     await Promise.all([refreshAgendamentos(), refreshFila()]);
+    try { await (supabase as any).rpc("atualizar_status_falta", { p_paciente_id: ag.pacienteId }); } catch (e) { console.warn("atualizar_status_falta:", e); }
     toast.success(`Falta registrada para ${ag.pacienteNome}.`);
     setFaltaTarget(null);
   };
