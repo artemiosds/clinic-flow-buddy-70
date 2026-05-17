@@ -121,28 +121,6 @@ const ConfigWhatsApp: React.FC = () => {
   const [horasLembrete1, setHorasLembrete1] = useState(24);
   const [horasLembrete2, setHorasLembrete2] = useState(2);
 
-  useEffect(() => {
-    if (!hookLoading) {
-      const clinicaCfg = configuracoes['config_clinica'];
-      if (clinicaCfg) {
-        setEvolutionConfig({
-          nome_clinica: clinicaCfg.nome_clinica || '',
-          logo_url: clinicaCfg.logo_url || '',
-          telefone: clinicaCfg.telefone || '',
-          evolution_base_url: clinicaCfg.evolution_base_url || 'https://api.agendamento-saude-sms-oriximina.site',
-          evolution_api_key: clinicaCfg.evolution_api_key || '',
-          evolution_instance_name: clinicaCfg.evolution_instance_name || '',
-        });
-      }
-      const waCfg = configuracoes['config_whatsapp_reminders'];
-      if (waCfg) {
-        setHorasLembrete1(waCfg.horas_lembrete_1 || 24);
-        setHorasLembrete2(waCfg.horas_lembrete_2 || 2);
-      }
-      setEvolutionLoading(false);
-    }
-  }, [hookLoading, configuracoes]);
-
   // Load from clinica_config (source of truth read by edge functions)
   useEffect(() => {
     (async () => {
