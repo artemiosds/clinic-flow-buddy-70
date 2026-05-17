@@ -23,7 +23,7 @@ serve(async (req) => {
     const { action } = body;
 
     if (action === "create") {
-      const { nome, usuario, email, cpf, senha, setor, unidade_id, sala_id, cargo, role, criado_por, tempo_atendimento, profissao, tipo_conselho, numero_conselho, uf_conselho, pode_agendar_retorno, coren, cbo_codigo, cbo_descricao, aceita_encaminhamento_externo } = body;
+      const { nome, usuario, email, cpf, senha, setor, unidade_id, sala_id, cargo, role, criado_por, tempo_atendimento, profissao, tipo_conselho, numero_conselho, uf_conselho, pode_agendar_retorno, coren, cbo_codigo, cbo_descricao, cns, aceita_encaminhamento_externo } = body;
 
       if (!nome || !usuario || !email || !senha) {
         return new Response(
@@ -112,6 +112,7 @@ serve(async (req) => {
           coren: coren || "",
           custom_data: {
             ...(cbo_codigo ? { cbo_codigo: String(cbo_codigo), cbo_descricao: String(cbo_descricao || '') } : {}),
+            ...(cns ? { cns: String(cns).replace(/\D/g, '').slice(0, 15) } : {}),
             ...(aceita_encaminhamento_externo !== undefined ? { aceita_encaminhamento_externo: !!aceita_encaminhamento_externo } : {}),
           },
         })
@@ -177,6 +178,10 @@ serve(async (req) => {
       if (body.cbo_codigo !== undefined || body.cbo_descricao !== undefined) {
         mergedCustom.cbo_codigo = String(body.cbo_codigo || '');
         mergedCustom.cbo_descricao = String(body.cbo_descricao || '');
+        customDataChanged = true;
+      }
+      if (body.cns !== undefined) {
+        mergedCustom.cns = String(body.cns || '').replace(/\D/g, '').slice(0, 15);
         customDataChanged = true;
       }
       if (body.aceita_encaminhamento_externo !== undefined) {
