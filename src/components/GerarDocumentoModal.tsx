@@ -671,30 +671,30 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
           )}
         </div>
 
-        <DialogFooter className="gap-2 flex-wrap items-center sm:justify-between w-full">
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>Fechar</Button>
+        <DialogFooter className="gap-2 flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between w-full">
+          <div className="flex gap-2 flex-wrap w-full sm:w-auto">
+            <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1 sm:flex-none">Fechar</Button>
             {selected && !savedDocId && (
-              <Button variant="secondary" onClick={handleSaveDraft} disabled={salvando} className="gap-1.5">
+              <Button variant="secondary" onClick={handleSaveDraft} disabled={salvando} className="gap-1.5 flex-1 sm:flex-none">
                 <Save className="w-4 h-4" /> Salvar Rascunho
               </Button>
             )}
           </div>
           
-          <div className="flex gap-2 items-center">
+          <div className="flex gap-2 items-center flex-wrap w-full sm:w-auto justify-end">
             {selected && (
               <>
                 {!savedDocId ? (
                   <Button
                     onClick={handleSignAndFinalize}
                     disabled={salvando || (isEncaminhamento && !profDestinoId)}
-                    className="gap-1.5"
+                    className="gap-1.5 w-full sm:w-auto whitespace-nowrap"
                   >
                     {salvando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Printer className="w-4 h-4" />}
                     Imprimir e Finalizar
                   </Button>
                 ) : (
-                  <div className="flex items-center gap-3 bg-muted/50 p-1 px-2 rounded-lg border border-primary/20">
+                  <div className="flex items-center gap-2 bg-muted/50 p-1 px-2 rounded-lg border border-primary/20 flex-wrap w-full sm:w-auto">
                     <span className="text-[10px] font-bold text-primary uppercase">Assinatura:</span>
                     <AutentiqueSignatureActions 
                       documentoId={savedDocId}
@@ -703,13 +703,13 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
                       unidadeId={unidade}
                       titulo={`${selected.nome} - ${paciente?.nome}`}
                     />
-                    <Separator orientation="vertical" className="h-6" />
+                    <Separator orientation="vertical" className="h-6 hidden sm:block" />
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={handleSignAndFinalize}
                       disabled={salvando}
-                      className="gap-1.5 h-8 text-[11px]"
+                      className="gap-1.5 h-8 text-[11px] whitespace-nowrap"
                     >
                       <Printer className="w-3.5 h-3.5" /> Finalizar s/ Digital
                     </Button>
