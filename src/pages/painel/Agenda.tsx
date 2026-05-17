@@ -699,6 +699,14 @@ const Agenda: React.FC = () => {
       pac = { id: data.id, nome: data.nome, telefone: data.telefone || "", email: data.email || "" } as typeof pac;
     }
     if (!pac || !prof || !newAg.hora) return;
+    // Bloqueio por excesso de faltas
+    try {
+      const { data: pacStatus } = await (supabase as any).from("pacientes").select("status_falta, total_faltas").eq("id", pac.id).maybeSingle();
+      if (pacStatus?.status_falta === "BLOQUEADO") {
+        toast.error(`Paciente bloqueado por excesso de faltas (${pacStatus.total_faltas}). Encaminhado para a lista de espera.`);
+        return;
+      }
+    } catch {}
     if (selectedDate < todayLocalStr()) {
       if (!isMaster) { toast.error("Não é possível agendar em data passada."); return; }
       const confirmouPassado = window.confirm("⚠️ Atenção: Você está agendando em DATA PASSADA como MASTER. Deseja continuar com o registro retroativo?");
