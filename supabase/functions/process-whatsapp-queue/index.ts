@@ -38,7 +38,7 @@ function randomDelay(minSec: number, maxSec: number) {
 async function getClinicaConfig(supabase: any) {
   const { data } = await supabase
     .from("clinica_config")
-    .select("evolution_base_url, evolution_api_key, evolution_instance_name")
+    .select("evolution_base_url, evolution_api_key, evolution_instance_name, whatsapp_provider, uazapi_base_url, uazapi_admin_token, uazapi_instance_name")
     .limit(1)
     .maybeSingle();
   return data;
@@ -59,6 +59,30 @@ async function sendEvolution(cfg: any, phone: string, message: string) {
   } catch (e) {
     return { ok: false, body: e instanceof Error ? e.message : "fetch_error" };
   }
+}
+
+async function sendUazapi(cfg: any, phone: string, message: string) {
+  try {
+    const base = String(cfg.uazapi_base_url || "").replace(/\/$/, "");
+    const resp = await fetch(`${base}/send/text`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        token: cfg.uazapi_admin_token,
+      },
+      body: JSON.stringify({ number: phone, text: message }),
+    });
+    const body = await resp.text();
+    return { ok: resp.ok, body };
+  } catch (e) {
+    return { ok: false, body: e instanceof Error ? e.message : "fetch_error" };
+  }
+}
+
+async function sendMessage(cfg: any, phone: string, message: string) {
+  const provider = cfg?.whatsapp_provider || "evolution";
+  if (provider === "uazapi") return sendUazapi(cfg, phone, message);
+  return sendEvolution(cfg, phone, message);
 }
 
 // Telefone BR válido = 13 dígitos começando em 55
