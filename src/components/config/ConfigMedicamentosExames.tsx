@@ -203,38 +203,31 @@ const ConfigMedicamentosExames: React.FC = () => {
     setSeeding('med');
     try {
       const existingKeys = new Set(meds.map(m => dedupKeyMed(m)));
+      const existingCodes = new Set(meds.map(m => (m as any).codigo_rename).filter(Boolean));
       const toInsert = RENAME_MEDICATIONS
-        .filter(m => !existingKeys.has(dedupKeyMed(m)))
+        .filter(m => !(m.codigo_rename && existingCodes.has(m.codigo_rename)) && !existingKeys.has(dedupKeyMed(m)))
         .map(m => ({
-          nome: m.nome,
-          principio_ativo: m.principio_ativo,
-          concentracao: m.concentracao,
-          forma_farmaceutica: m.forma_farmaceutica,
-          via_padrao: m.via_padrao,
-          classe_terapeutica: m.classe_terapeutica,
-          apresentacao: m.apresentacao,
-          dosagem_padrao: m.dosagem_padrao || m.concentracao,
-          origem: 'RENAME',
-          observacoes: '',
-          is_global: true,
-          ativo: true,
+          nome: m.nome, principio_ativo: m.principio_ativo, concentracao: m.concentracao,
+          forma_farmaceutica: m.forma_farmaceutica, via_padrao: m.via_padrao,
+          classe_terapeutica: m.classe_terapeutica, apresentacao: m.apresentacao,
+          dosagem_padrao: m.dosagem_padrao || m.concentracao, origem: 'RENAME',
+          observacoes: '', is_global: true, ativo: true,
+          nome_comercial: m.nome_comercial || '',
+          codigo_rename: m.codigo_rename || null,
+          tipo: deriveTipo(m as any),
         }));
 
       let inserted = 0;
       const ignored = RENAME_MEDICATIONS.length - toInsert.length;
-
-      // Insere em lotes para não estourar limite
       const chunkSize = 50;
       for (let i = 0; i < toInsert.length; i += chunkSize) {
         const chunk = toInsert.slice(i, i + chunkSize);
-        const { error } = await supabase.from('medications').insert(chunk);
+        const { error } = await supabase.from('medications').insert(chunk as any);
         if (!error) inserted += chunk.length;
       }
 
       await auditService.log({
-        acao: 'IMPORTAR_BASE_RENAME',
-        entidade: 'medications',
-        modulo: 'configuracoes',
+        acao: 'IMPORTAR_BASE_RENAME', entidade: 'medications', modulo: 'configuracoes',
         user: user ? { id: user.id, nome: user.nome, role: user.role, unidadeId: user.unidadeId } : null,
         detalhes: { inseridos: inserted, ignorados_duplicados: ignored, total_base: RENAME_MEDICATIONS.length },
       });
@@ -247,6 +240,48 @@ const ConfigMedicamentosExames: React.FC = () => {
     } finally {
       setSeeding(null);
       setRestoreDialog(null);
+    }
+  };
+
+  const seedReme = async () => {
+    setSeeding('med');
+    try {
+      const existingKeys = new Set(meds.map(m => dedupKeyMed(m)));
+      const existingCodes = new Set(meds.map(m => (m as any).codigo_reme).filter(Boolean));
+      const toInsert = REME_MEDICATIONS
+        .filter(m => !existingCodes.has(m.codigo_reme) && !existingKeys.has(dedupKeyMed(m)))
+        .map(m => ({
+          nome: m.nome, principio_ativo: m.principio_ativo, concentracao: m.concentracao,
+          forma_farmaceutica: m.forma_farmaceutica, via_padrao: m.via_padrao,
+          classe_terapeutica: m.classe_terapeutica, apresentacao: m.apresentacao,
+          dosagem_padrao: m.dosagem_padrao || m.concentracao, origem: 'REME',
+          observacoes: '', is_global: true, ativo: true,
+          nome_comercial: m.nome_comercial || '',
+          codigo_reme: m.codigo_reme,
+          tipo: deriveTipo(m as any),
+        }));
+
+      let inserted = 0;
+      const ignored = REME_MEDICATIONS.length - toInsert.length;
+      const chunkSize = 50;
+      for (let i = 0; i < toInsert.length; i += chunkSize) {
+        const { error } = await supabase.from('medications').insert(toInsert.slice(i, i + chunkSize) as any);
+        if (!error) inserted += Math.min(chunkSize, toInsert.length - i);
+      }
+
+      await auditService.log({
+        acao: 'IMPORTAR_BASE_REME', entidade: 'medications', modulo: 'configuracoes',
+        user: user ? { id: user.id, nome: user.nome, role: user.role, unidadeId: user.unidadeId } : null,
+        detalhes: { inseridos: inserted, ignorados_duplicados: ignored, total_base: REME_MEDICATIONS.length },
+      });
+
+      toast.success(`Base REME carregada: ${inserted} novos, ${ignored} já existiam`);
+      await loadData();
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao carregar base REME');
+    } finally {
+      setSeeding(null);
     }
   };
 
