@@ -574,7 +574,11 @@ export type Database = {
           logo_url: string
           nome_clinica: string
           telefone: string
+          uazapi_admin_token: string
+          uazapi_base_url: string
+          uazapi_instance_name: string
           updated_at: string
+          whatsapp_provider: string
         }
         Insert: {
           created_at?: string
@@ -586,7 +590,11 @@ export type Database = {
           logo_url?: string
           nome_clinica?: string
           telefone?: string
+          uazapi_admin_token?: string
+          uazapi_base_url?: string
+          uazapi_instance_name?: string
           updated_at?: string
+          whatsapp_provider?: string
         }
         Update: {
           created_at?: string
@@ -598,7 +606,11 @@ export type Database = {
           logo_url?: string
           nome_clinica?: string
           telefone?: string
+          uazapi_admin_token?: string
+          uazapi_base_url?: string
+          uazapi_instance_name?: string
           updated_at?: string
+          whatsapp_provider?: string
         }
         Relationships: []
       }
