@@ -558,8 +558,8 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[95vw] max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="w-[95vw] max-w-3xl max-h-[90vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="p-6 pb-3 border-b shrink-0">
           <DialogTitle className="flex items-center gap-2 flex-wrap break-words pr-6">
             <FileText className="w-5 h-5 shrink-0" />
             <span className="break-words">Gerar Documento Clínico</span>
@@ -569,7 +569,7 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-4 overflow-y-auto flex-1 px-6 py-4">
           {/* Model selector */}
           <div className="space-y-1.5">
             <Label className="text-[13px] font-bold">Selecionar modelo</Label>
@@ -671,7 +671,7 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
           )}
         </div>
 
-        <DialogFooter className="gap-2 flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between w-full">
+        <DialogFooter className="gap-2 flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between w-full border-t p-4 shrink-0 bg-background">
           <div className="flex gap-2 flex-wrap w-full sm:w-auto">
             <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1 sm:flex-none">Fechar</Button>
             {selected && !savedDocId && (
