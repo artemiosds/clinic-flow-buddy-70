@@ -268,15 +268,91 @@ const ConfigWhatsApp: React.FC = () => {
     .replace(/\{\{data\}\}/g, '20/04/2026')
     .replace(/\{\{hora\}\}/g, '14:00');
 
-  // Save Evolution config
+  // Persist provider choice directly into clinica_config (source of truth used by edge functions)
+  const persistProvider = async (provider: 'evolution' | 'uazapi') => {
+    try {
+      const { data: row } = await supabase.from('clinica_config').select('id').limit(1).maybeSingle();
+      if (row?.id) {
+        await supabase.from('clinica_config').update({ whatsapp_provider: provider } as any).eq('id', row.id);
+      } else {
+        await supabase.from('clinica_config').insert({ whatsapp_provider: provider, nome_clinica: evolutionConfig.nome_clinica || '' } as any);
+      }
+      toast.success(`Provedor ativo: ${provider === 'evolution' ? 'Evolution API' : 'UazapiGO'}`);
+    } catch (e: any) { toast.error(`Erro ao definir provedor: ${e.message}`); }
+  };
+
+  // Save Evolution config — writes to BOTH system_config (UI cache) and clinica_config (edge function source)
   const saveEvolutionConfig = async () => {
     setEvolutionSaving(true);
     try {
-      await atualizarConfiguracao('config_clinica', evolutionConfig, { auditAcao: 'ALTERAR_CONFIG_CLINICA' });
-      toast.success('Configurações salvas!');
+      await atualizarConfiguracao('config_clinica', evolutionConfig, { auditAcao: 'ALTERAR_CONFIG_CLINICA', silent: true });
+      const { data: row } = await supabase.from('clinica_config').select('id, evolution_api_key').limit(1).maybeSingle();
+      const payload: any = {
+        nome_clinica: evolutionConfig.nome_clinica,
+        logo_url: evolutionConfig.logo_url,
+        telefone: evolutionConfig.telefone,
+        evolution_base_url: evolutionConfig.evolution_base_url,
+        evolution_instance_name: evolutionConfig.evolution_instance_name,
+      };
+      // Only persist API key if user changed it (i.e., field is not masked)
+      if (!evolutionKeyMasked && evolutionConfig.evolution_api_key) {
+        payload.evolution_api_key = evolutionConfig.evolution_api_key;
+      }
+      if (row?.id) {
+        await supabase.from('clinica_config').update(payload).eq('id', row.id);
+      } else {
+        await supabase.from('clinica_config').insert({ ...payload, evolution_api_key: payload.evolution_api_key || '' });
+      }
+      toast.success('Evolution API salva!');
+      setEvolutionKeyMasked(true);
     } catch (err: any) { toast.error(`Erro: ${err.message}`); }
     setEvolutionSaving(false);
   };
+
+  // Save UazapiGO config
+  const saveUazapiConfig = async () => {
+    if (!uazapiConfig.uazapi_base_url || !uazapiConfig.uazapi_instance_name) {
+      toast.error('Informe Server URL e Nome/ID da Instância.');
+      return;
+    }
+    setUazapiSaving(true);
+    try {
+      const { data: row } = await supabase.from('clinica_config').select('id').limit(1).maybeSingle();
+      const payload: any = {
+        uazapi_base_url: uazapiConfig.uazapi_base_url,
+        uazapi_instance_name: uazapiConfig.uazapi_instance_name,
+      };
+      if (!uazapiTokenMasked && uazapiConfig.uazapi_admin_token) {
+        payload.uazapi_admin_token = uazapiConfig.uazapi_admin_token;
+      }
+      if (row?.id) {
+        await supabase.from('clinica_config').update(payload).eq('id', row.id);
+      } else {
+        await supabase.from('clinica_config').insert({ ...payload, uazapi_admin_token: payload.uazapi_admin_token || '', nome_clinica: '' });
+      }
+      toast.success('UazapiGO salva!');
+      setUazapiTokenMasked(true);
+    } catch (err: any) { toast.error(`Erro: ${err.message}`); }
+    setUazapiSaving(false);
+  };
+
+  // Verify UazapiGO instance status
+  const checkUazapi = async () => {
+    try {
+      // uazapi style: GET /instance/status with header token
+      const resp = await fetch(
+        `${uazapiConfig.uazapi_base_url.replace(/\/$/, '')}/instance/status`,
+        { headers: { token: uazapiConfig.uazapi_admin_token } as any },
+      );
+      if (resp.ok) {
+        const j = await resp.json().catch(() => ({}));
+        const connected = j?.instance?.status === 'connected' || j?.connected === true || j?.status === 'connected';
+        setUazapiStatus(connected ? 'connected' : 'disconnected');
+        toast[connected ? 'success' : 'warning'](connected ? 'UazapiGO conectada!' : 'Instância UazapiGO desconectada.');
+      } else { setUazapiStatus('error'); toast.error(`Falha (${resp.status})`); }
+    } catch (e: any) { setUazapiStatus('error'); toast.error(`Erro: ${e.message}`); }
+  };
+
 
   const checkConnection = async () => {
     if (!evolutionConfig.evolution_instance_name || !evolutionConfig.evolution_api_key) {
