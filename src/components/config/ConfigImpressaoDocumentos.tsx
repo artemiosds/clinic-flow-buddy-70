@@ -284,6 +284,19 @@ const LogoUploadCard: React.FC<LogoUploadCardProps> = ({
             disabled={!active && !url}
           />
         </div>
+
+        {/* Rounded toggle */}
+        <div className="w-full flex items-center justify-between text-[11px] pt-1 border-t border-border/60 mt-1">
+          <Label className="text-[11px] text-muted-foreground cursor-pointer" htmlFor={`rounded-${side}`}>
+            Logo redonda
+          </Label>
+          <Switch
+            id={`rounded-${side}`}
+            checked={rounded}
+            onCheckedChange={onRoundedChange}
+            aria-label={`Logo redonda ${side}`}
+          />
+        </div>
       </div>
     </div>
   );
