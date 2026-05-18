@@ -1,5 +1,6 @@
 import { PageHeader } from '@/components/layout/PageHeader';
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { useDebounce } from "@/hooks/useDebounce";
 import FichaPacienteCabecalho from "@/components/FichaPacienteCabecalho";
 import { useProntuarioStructure } from "@/hooks/useProntuarioStructure";
 import { useProntuarioTiposConfig } from "@/hooks/useProntuarioTiposConfig";
@@ -219,6 +220,22 @@ const ProntuarioPage: React.FC = () => {
   useEffect(() => { editIdRef.current = editId; }, [editId]);
   useEffect(() => { formRef.current = form; }, [form]);
   const [search, setSearch] = useState("");
+  // PERF: debounce text search so filtering doesn't run on every keystroke.
+  const debouncedSearch = useDebounce(search, 300);
+  // PERF: refs to track stray timeouts created in handlers so we clear them on unmount.
+  const pendingTimeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const safeTimeout = useCallback((fn: () => void, ms: number) => {
+    const id = setTimeout(() => {
+      pendingTimeoutsRef.current = pendingTimeoutsRef.current.filter((x) => x !== id);
+      fn();
+    }, ms);
+    pendingTimeoutsRef.current.push(id);
+    return id;
+  }, []);
+  useEffect(() => () => {
+    pendingTimeoutsRef.current.forEach(clearTimeout);
+    pendingTimeoutsRef.current = [];
+  }, []);
   const [activeAtendimento, setActiveAtendimento] = useState<{ agendamentoId: string; horaInicio: string } | null>(
     null,
   );
@@ -438,10 +455,10 @@ const ProntuarioPage: React.FC = () => {
       if (effectiveError) {
         setSoapErrors(true);
         setSessaoHighlightSOAP(true);
-        setTimeout(() => {
+        safeTimeout(() => {
           soapRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }, 100);
-        setTimeout(() => setSessaoHighlightSOAP(false), 4000);
+        safeTimeout(() => setSessaoHighlightSOAP(false), 4000);
         toast.error(effectiveError);
         return;
       }
@@ -451,10 +468,10 @@ const ProntuarioPage: React.FC = () => {
     }
 
     setSessaoHighlightSOAP(true);
-    setTimeout(() => {
+    safeTimeout(() => {
       soapRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }, 100);
-    setTimeout(() => setSessaoHighlightSOAP(false), 4000);
+    safeTimeout(() => setSessaoHighlightSOAP(false), 4000);
   };
 
   const sessionSoapPayload = useMemo(
@@ -2022,19 +2039,27 @@ const ProntuarioPage: React.FC = () => {
   };
 
   const queryPacienteId = searchParams.get("pacienteId");
-  const filtered = prontuarios.filter((p) => {
-    if (queryPacienteId) return p.paciente_id === queryPacienteId;
-    if (!search) return true;
-    const term = search.toLowerCase();
-    // Search by patient name, professional name, CPF or CNS
-    const pac = pacientes.find((px) => px.id === p.paciente_id);
-    return (
-      p.paciente_nome.toLowerCase().includes(term) ||
-      p.profissional_nome.toLowerCase().includes(term) ||
-      (pac?.cpf || "").replace(/[.\-/]/g, "").includes(term.replace(/[.\-/]/g, "")) ||
-      ((pac as any)?.cns || "").includes(term)
-    );
-  });
+  // PERF: index pacientes by id once, then filter against debouncedSearch in a memo.
+  const pacientesById = useMemo(() => {
+    const map = new Map<string, typeof pacientes[number]>();
+    for (const p of pacientes) map.set(p.id, p);
+    return map;
+  }, [pacientes]);
+  const filtered = useMemo(() => {
+    if (queryPacienteId) return prontuarios.filter((p) => p.paciente_id === queryPacienteId);
+    if (!debouncedSearch) return prontuarios;
+    const term = debouncedSearch.toLowerCase();
+    const termDigits = term.replace(/[.\-/]/g, "");
+    return prontuarios.filter((p) => {
+      const pac = pacientesById.get(p.paciente_id) as any;
+      return (
+        p.paciente_nome.toLowerCase().includes(term) ||
+        p.profissional_nome.toLowerCase().includes(term) ||
+        (pac?.cpf || "").replace(/[.\-/]/g, "").includes(termDigits) ||
+        (pac?.cns || "").includes(term)
+      );
+    });
+  }, [prontuarios, queryPacienteId, debouncedSearch, pacientesById]);
   const queryPacienteNome = searchParams.get("pacienteNome");
 
   return (
