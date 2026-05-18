@@ -58,6 +58,7 @@ import SoapFieldsAdaptive from "@/components/SoapFieldsAdaptive";
 import TriagemDetalhada from "@/components/TriagemDetalhada";
 import ProntuarioAnexos from "@/components/ProntuarioAnexos";
 import ResultadosExames from "@/components/ResultadosExames";
+import ProcedimentosCidCards from "@/components/prontuario/ProcedimentosCidCards";
 import { isMedico, hasDropdownSoap } from "@/data/soapOptionsByProfession";
 import { useSoapCustomOptions } from "@/hooks/useSoapCustomOptions";
 import { Stamp } from "lucide-react";
