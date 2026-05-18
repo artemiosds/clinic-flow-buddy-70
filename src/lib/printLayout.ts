@@ -15,14 +15,16 @@ export interface DocumentConfig {
   logoEsquerda: string;
   logoCentro: string;
   logoDireita: string;
-  /** Max-height in px for each logo (default 64). Width is auto, proportion preserved. */
   logoEsquerdaTamanho: number;
   logoCentroTamanho: number;
   logoDireitaTamanho: number;
-  /** Whether each logo is rendered (independent of URL — allows quickly hiding without deleting). */
   logoEsquerdaAtiva: boolean;
   logoCentroAtiva: boolean;
   logoDireitaAtiva: boolean;
+  /** Renderiza a logo como círculo (border-radius 9999px + object-fit cover). */
+  logoEsquerdaRedonda: boolean;
+  logoCentroRedonda: boolean;
+  logoDireitaRedonda: boolean;
   linha1: string;
   linha2: string;
   rodapeTexto: string;
@@ -38,6 +40,9 @@ const DEFAULT_CONFIG: DocumentConfig = {
   logoEsquerdaAtiva: true,
   logoCentroAtiva: true,
   logoDireitaAtiva: true,
+  logoEsquerdaRedonda: false,
+  logoCentroRedonda: false,
+  logoDireitaRedonda: false,
   linha1: 'SECRETARIA MUNICIPAL DE SAÚDE DE ORIXIMINÁ',
   linha2: 'CAPS II',
   rodapeTexto: '',
@@ -68,6 +73,9 @@ export async function loadDocumentConfig(): Promise<DocumentConfig> {
         logoEsquerdaAtiva: cab.logoEsquerdaAtiva !== false,
         logoCentroAtiva: cab.logoCentroAtiva !== false,
         logoDireitaAtiva: cab.logoDireitaAtiva !== false,
+        logoEsquerdaRedonda: cab.logoEsquerdaRedonda === true,
+        logoCentroRedonda: cab.logoCentroRedonda === true,
+        logoDireitaRedonda: cab.logoDireitaRedonda === true,
         linha1: cab.linha1 || DEFAULT_CONFIG.linha1,
         linha2: cab.linha2 || DEFAULT_CONFIG.linha2,
         rodapeTexto: cfg.rodapeTexto || '',
@@ -336,21 +344,26 @@ export function docHeader(title: string, config: DocumentConfig, extraRight?: st
 
   const now = new Date().toLocaleString('pt-BR');
 
+  const roundStyle = (size: number, rounded: boolean) =>
+    rounded
+      ? `width:${size}px;height:${size}px;border-radius:9999px;object-fit:cover;background:#fff;`
+      : `max-height:${size}px;max-width:${size * 2}px;width:auto;height:auto;object-fit:contain;`;
+
   const leftSlot = leftUrl
     ? `<div class="logo-left" style="flex:0 0 auto;min-width:${hL * 1.6}px;display:flex;justify-content:flex-start;">
-         <img src="${leftUrl}" alt="Logo institucional esquerda" style="max-height:${hL}px;max-width:${hL * 2}px;width:auto;height:auto;object-fit:contain;" onerror="this.style.display='none'" />
+         <img src="${leftUrl}" alt="Logo institucional esquerda" style="${roundStyle(hL, config.logoEsquerdaRedonda)}" onerror="this.style.display='none'" />
        </div>`
     : `<div class="logo-left" style="flex:0 0 auto;"></div>`;
 
   const rightSlot = rightUrl
     ? `<div class="logo-right" style="flex:0 0 auto;min-width:${hR * 1.6}px;display:flex;justify-content:flex-end;">
-         <img src="${rightUrl}" alt="Logo institucional direita" style="max-height:${hR}px;max-width:${hR * 2}px;width:auto;height:auto;object-fit:contain;" onerror="this.style.display='none'" />
+         <img src="${rightUrl}" alt="Logo institucional direita" style="${roundStyle(hR, config.logoDireitaRedonda)}" onerror="this.style.display='none'" />
        </div>`
     : `<div class="logo-right" style="flex:0 0 auto;"></div>`;
 
   const centerLogoHtml = centerUrl
     ? `<div class="logo-center" style="display:flex;justify-content:center;margin-bottom:6px;">
-         <img src="${centerUrl}" alt="Logo institucional central" style="max-height:${hC}px;max-width:${hC * 2.4}px;width:auto;height:auto;object-fit:contain;" onerror="this.style.display='none'" />
+         <img src="${centerUrl}" alt="Logo institucional central" style="${roundStyle(hC, config.logoCentroRedonda)}" onerror="this.style.display='none'" />
        </div>`
     : '';
 

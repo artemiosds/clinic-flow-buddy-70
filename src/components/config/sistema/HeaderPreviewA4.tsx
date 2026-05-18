@@ -11,6 +11,9 @@ interface HeaderPreviewA4Props {
   logoEsquerdaAtiva?: boolean;
   logoCentroAtiva?: boolean;
   logoDireitaAtiva?: boolean;
+  logoEsquerdaRedonda?: boolean;
+  logoCentroRedonda?: boolean;
+  logoDireitaRedonda?: boolean;
   linha1: string;
   linha2: string;
   rodape: string;
@@ -35,6 +38,9 @@ const HeaderPreviewA4: React.FC<HeaderPreviewA4Props> = ({
   logoEsquerdaAtiva = true,
   logoCentroAtiva = true,
   logoDireitaAtiva = true,
+  logoEsquerdaRedonda = false,
+  logoCentroRedonda = false,
+  logoDireitaRedonda = false,
   linha1,
   linha2,
   rodape,
@@ -52,21 +58,25 @@ const HeaderPreviewA4: React.FC<HeaderPreviewA4Props> = ({
   const hC = Math.round(logoCentroTamanho * scale);
   const hR = Math.round(logoDireitaTamanho * scale);
 
-  const renderSideLogo = (url: string, active: boolean, height: number, label: string) => {
+  const renderSideLogo = (url: string, active: boolean, height: number, label: string, rounded: boolean) => {
     if (!active) return <div style={{ minWidth: 8 }} />;
     if (url) {
       return (
         <img
           src={url}
           alt={label}
-          style={{ maxHeight: height, maxWidth: height * 2, objectFit: 'contain' }}
+          style={
+            rounded
+              ? { width: height, height, borderRadius: 9999, objectFit: 'cover', background: '#fff' }
+              : { maxHeight: height, maxWidth: height * 2, objectFit: 'contain' }
+          }
         />
       );
     }
     return (
       <div
-        className="flex items-center justify-center bg-muted/40 rounded"
-        style={{ width: height, height }}
+        className="flex items-center justify-center bg-muted/40"
+        style={{ width: height, height, borderRadius: rounded ? 9999 : 4 }}
       >
         <ImageIcon className="w-4 h-4 text-muted-foreground/40" />
       </div>
@@ -86,7 +96,7 @@ const HeaderPreviewA4: React.FC<HeaderPreviewA4Props> = ({
           {/* Header */}
           <div className="flex items-center justify-between gap-2 pb-2 border-b-2 border-primary">
             <div className="flex-shrink-0 flex items-center justify-start" style={{ minWidth: 8 }}>
-              {renderSideLogo(logoEsquerda, showLeft, hL, 'Logo esq')}
+              {renderSideLogo(logoEsquerda, showLeft, hL, 'Logo esq', logoEsquerdaRedonda)}
             </div>
             <div
               className="flex-1 px-2 min-w-0"
@@ -102,7 +112,11 @@ const HeaderPreviewA4: React.FC<HeaderPreviewA4Props> = ({
                   <img
                     src={logoCentro}
                     alt="Logo centro"
-                    style={{ maxHeight: hC, maxWidth: hC * 2.4, objectFit: 'contain' }}
+                    style={
+                      logoCentroRedonda
+                        ? { width: hC, height: hC, borderRadius: 9999, objectFit: 'cover', background: '#fff' }
+                        : { maxHeight: hC, maxWidth: hC * 2.4, objectFit: 'contain' }
+                    }
                   />
                 </div>
               )}
@@ -110,7 +124,7 @@ const HeaderPreviewA4: React.FC<HeaderPreviewA4Props> = ({
               <div className="opacity-80 mt-0.5 truncate">{linha2 || 'Linha 2'}</div>
             </div>
             <div className="flex-shrink-0 flex items-center justify-end" style={{ minWidth: 8 }}>
-              {renderSideLogo(logoDireita, showRight, hR, 'Logo dir')}
+              {renderSideLogo(logoDireita, showRight, hR, 'Logo dir', logoDireitaRedonda)}
             </div>
           </div>
 

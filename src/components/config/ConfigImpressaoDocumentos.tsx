@@ -54,6 +54,9 @@ interface ImpressaoConfig {
     logoEsquerdaAtiva: boolean;
     logoCentroAtiva: boolean;
     logoDireitaAtiva: boolean;
+    logoEsquerdaRedonda: boolean;
+    logoCentroRedonda: boolean;
+    logoDireitaRedonda: boolean;
     fonte: string;
     tamanhoFonte: number;
     alinhamento: "center" | "left" | "right";
@@ -93,6 +96,9 @@ const DEFAULT: ImpressaoConfig = {
     logoEsquerdaAtiva: true,
     logoCentroAtiva: true,
     logoDireitaAtiva: true,
+    logoEsquerdaRedonda: false,
+    logoCentroRedonda: false,
+    logoDireitaRedonda: false,
     fonte: "Arial",
     tamanhoFonte: 12,
     alinhamento: "center",
@@ -133,12 +139,14 @@ interface LogoUploadCardProps {
   url: string;
   size: number;
   active: boolean;
+  rounded: boolean;
   uploading: boolean;
   onUpload: (file: File) => void;
   onRemove: () => void;
   onSizeChange: (n: number) => void;
   onSizeCommit: () => void;
   onActiveChange: (v: boolean) => void;
+  onRoundedChange: (v: boolean) => void;
 }
 
 const LogoUploadCard: React.FC<LogoUploadCardProps> = ({
@@ -148,12 +156,14 @@ const LogoUploadCard: React.FC<LogoUploadCardProps> = ({
   url,
   size,
   active,
+  rounded,
   uploading,
   onUpload,
   onRemove,
   onSizeChange,
   onSizeCommit,
   onActiveChange,
+  onRoundedChange,
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -211,12 +221,16 @@ const LogoUploadCard: React.FC<LogoUploadCardProps> = ({
             <img
               src={url}
               alt={title}
-              style={{ maxHeight: Math.min(size, 96), maxWidth: size * 2 }}
-              className="object-contain rounded bg-white p-1 border border-border"
+              style={
+                rounded
+                  ? { width: Math.min(size, 96), height: Math.min(size, 96), borderRadius: 9999, objectFit: 'cover' }
+                  : { maxHeight: Math.min(size, 96), maxWidth: size * 2 }
+              }
+              className={cn("bg-white p-1 border border-border", rounded ? "" : "object-contain rounded")}
             />
           </div>
         ) : (
-          <div className="w-20 h-20 rounded-lg bg-muted flex flex-col items-center justify-center gap-1">
+          <div className={cn("w-20 h-20 bg-muted flex flex-col items-center justify-center gap-1", rounded ? "rounded-full" : "rounded-lg")}>
             <ImageIcon className="w-7 h-7 text-muted-foreground/60" />
             <span className="text-[9px] text-muted-foreground">Arraste aqui</span>
           </div>
@@ -268,6 +282,19 @@ const LogoUploadCard: React.FC<LogoUploadCardProps> = ({
             onValueChange={(v) => onSizeChange(v[0])}
             onValueCommit={onSizeCommit}
             disabled={!active && !url}
+          />
+        </div>
+
+        {/* Rounded toggle */}
+        <div className="w-full flex items-center justify-between text-[11px] pt-1 border-t border-border/60 mt-1">
+          <Label className="text-[11px] text-muted-foreground cursor-pointer" htmlFor={`rounded-${side}`}>
+            Logo redonda
+          </Label>
+          <Switch
+            id={`rounded-${side}`}
+            checked={rounded}
+            onCheckedChange={onRoundedChange}
+            aria-label={`Logo redonda ${side}`}
           />
         </div>
       </div>
@@ -445,12 +472,14 @@ const ConfigImpressaoDocumentos: React.FC = () => {
                   url={config.cabecalho.logoEsquerda}
                   size={config.cabecalho.logoEsquerdaTamanho}
                   active={config.cabecalho.logoEsquerdaAtiva}
+                  rounded={config.cabecalho.logoEsquerdaRedonda}
                   uploading={uploadingLeft}
                   onUpload={(f) => uploadLogo(f, "esquerda")}
                   onRemove={() => removeLogo("esquerda")}
                   onSizeChange={(n) => update("cabecalho.logoEsquerdaTamanho", n)}
                   onSizeCommit={saveField}
                   onActiveChange={(v) => save({ ...config, cabecalho: { ...config.cabecalho, logoEsquerdaAtiva: v } })}
+                  onRoundedChange={(v) => save({ ...config, cabecalho: { ...config.cabecalho, logoEsquerdaRedonda: v } })}
                 />
                 <LogoUploadCard
                   side="centro"
@@ -459,12 +488,14 @@ const ConfigImpressaoDocumentos: React.FC = () => {
                   url={config.cabecalho.logoCentro}
                   size={config.cabecalho.logoCentroTamanho}
                   active={config.cabecalho.logoCentroAtiva}
+                  rounded={config.cabecalho.logoCentroRedonda}
                   uploading={uploadingCenter}
                   onUpload={(f) => uploadLogo(f, "centro")}
                   onRemove={() => removeLogo("centro")}
                   onSizeChange={(n) => update("cabecalho.logoCentroTamanho", n)}
                   onSizeCommit={saveField}
                   onActiveChange={(v) => save({ ...config, cabecalho: { ...config.cabecalho, logoCentroAtiva: v } })}
+                  onRoundedChange={(v) => save({ ...config, cabecalho: { ...config.cabecalho, logoCentroRedonda: v } })}
                 />
                 <LogoUploadCard
                   side="direita"
@@ -473,12 +504,14 @@ const ConfigImpressaoDocumentos: React.FC = () => {
                   url={config.cabecalho.logoDireita}
                   size={config.cabecalho.logoDireitaTamanho}
                   active={config.cabecalho.logoDireitaAtiva}
+                  rounded={config.cabecalho.logoDireitaRedonda}
                   uploading={uploadingRight}
                   onUpload={(f) => uploadLogo(f, "direita")}
                   onRemove={() => removeLogo("direita")}
                   onSizeChange={(n) => update("cabecalho.logoDireitaTamanho", n)}
                   onSizeCommit={saveField}
                   onActiveChange={(v) => save({ ...config, cabecalho: { ...config.cabecalho, logoDireitaAtiva: v } })}
+                  onRoundedChange={(v) => save({ ...config, cabecalho: { ...config.cabecalho, logoDireitaRedonda: v } })}
                 />
               </div>
 
@@ -624,6 +657,9 @@ const ConfigImpressaoDocumentos: React.FC = () => {
                 logoEsquerdaAtiva={config.cabecalho.logoEsquerdaAtiva}
                 logoCentroAtiva={config.cabecalho.logoCentroAtiva}
                 logoDireitaAtiva={config.cabecalho.logoDireitaAtiva}
+                logoEsquerdaRedonda={config.cabecalho.logoEsquerdaRedonda}
+                logoCentroRedonda={config.cabecalho.logoCentroRedonda}
+                logoDireitaRedonda={config.cabecalho.logoDireitaRedonda}
                 linha1={config.cabecalho.linha1}
                 linha2={config.cabecalho.linha2}
                 rodape={config.rodapeTexto}
