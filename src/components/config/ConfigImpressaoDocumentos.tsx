@@ -472,12 +472,14 @@ const ConfigImpressaoDocumentos: React.FC = () => {
                   url={config.cabecalho.logoEsquerda}
                   size={config.cabecalho.logoEsquerdaTamanho}
                   active={config.cabecalho.logoEsquerdaAtiva}
+                  rounded={config.cabecalho.logoEsquerdaRedonda}
                   uploading={uploadingLeft}
                   onUpload={(f) => uploadLogo(f, "esquerda")}
                   onRemove={() => removeLogo("esquerda")}
                   onSizeChange={(n) => update("cabecalho.logoEsquerdaTamanho", n)}
                   onSizeCommit={saveField}
                   onActiveChange={(v) => save({ ...config, cabecalho: { ...config.cabecalho, logoEsquerdaAtiva: v } })}
+                  onRoundedChange={(v) => save({ ...config, cabecalho: { ...config.cabecalho, logoEsquerdaRedonda: v } })}
                 />
                 <LogoUploadCard
                   side="centro"
@@ -486,12 +488,14 @@ const ConfigImpressaoDocumentos: React.FC = () => {
                   url={config.cabecalho.logoCentro}
                   size={config.cabecalho.logoCentroTamanho}
                   active={config.cabecalho.logoCentroAtiva}
+                  rounded={config.cabecalho.logoCentroRedonda}
                   uploading={uploadingCenter}
                   onUpload={(f) => uploadLogo(f, "centro")}
                   onRemove={() => removeLogo("centro")}
                   onSizeChange={(n) => update("cabecalho.logoCentroTamanho", n)}
                   onSizeCommit={saveField}
                   onActiveChange={(v) => save({ ...config, cabecalho: { ...config.cabecalho, logoCentroAtiva: v } })}
+                  onRoundedChange={(v) => save({ ...config, cabecalho: { ...config.cabecalho, logoCentroRedonda: v } })}
                 />
                 <LogoUploadCard
                   side="direita"
@@ -500,12 +504,14 @@ const ConfigImpressaoDocumentos: React.FC = () => {
                   url={config.cabecalho.logoDireita}
                   size={config.cabecalho.logoDireitaTamanho}
                   active={config.cabecalho.logoDireitaAtiva}
+                  rounded={config.cabecalho.logoDireitaRedonda}
                   uploading={uploadingRight}
                   onUpload={(f) => uploadLogo(f, "direita")}
                   onRemove={() => removeLogo("direita")}
                   onSizeChange={(n) => update("cabecalho.logoDireitaTamanho", n)}
                   onSizeCommit={saveField}
                   onActiveChange={(v) => save({ ...config, cabecalho: { ...config.cabecalho, logoDireitaAtiva: v } })}
+                  onRoundedChange={(v) => save({ ...config, cabecalho: { ...config.cabecalho, logoDireitaRedonda: v } })}
                 />
               </div>
 
