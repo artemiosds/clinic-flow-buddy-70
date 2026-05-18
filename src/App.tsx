@@ -96,12 +96,22 @@ const LoginExterno                = lazyRetry(() => import("./pages/LoginExterno
 const AgendamentoExterno          = lazyRetry(() => import("./pages/AgendamentoExterno"));
 const NotFound                    = lazyRetry(() => import("./pages/NotFound"));
 
+/**
+ * Performance tiers (override per useQuery as needed):
+ * - Static (CID-10, SIGTAP, medicamentos, exames, especialidades, CBO):   staleTime 30min
+ * - Semi-static (unidades, salas, funcionarios, disponibilidades, config): staleTime 5min
+ * - Dynamic (agendamentos, fila, prontuários, atendimentos):              staleTime 30s
+ *
+ * Default below = semi-static (5min). Dynamic queries MUST override with `staleTime: 30_000`.
+ */
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 1, // 1 minute — avoids repeated requests but stays fresh
-      gcTime: 1000 * 60 * 10,   // 10 minutes garbage collection
+      staleTime: 1000 * 60 * 5,   // 5 minutes — covers majority of reads
+      gcTime: 1000 * 60 * 15,     // 15 minutes garbage collection
       refetchOnWindowFocus: false,
+      refetchOnMount: false,      // trust cache; explicit invalidations drive refresh
+      refetchOnReconnect: 'always',
       retry: 1,
     },
     mutations: {
