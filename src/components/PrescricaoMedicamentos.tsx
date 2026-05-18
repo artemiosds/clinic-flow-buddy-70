@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, Plus, X, Printer, Ban, Pill } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { openPrintDocument } from "@/lib/printLayout";
 
 interface MedicationType {
   id: string;
