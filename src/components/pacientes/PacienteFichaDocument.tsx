@@ -211,7 +211,7 @@ export const PacienteFichaDocument: React.FC<PacienteFichaDocumentProps> = ({
   const p = data.paciente;
   const dc = data.dadosClinicos;
   const sv = data.sinaisVitais;
-  const documentTitle = somenteDadosPessoais ? 'FICHA DE ATENDIMENTO CLÍNICO — DADOS PESSOAIS' : 'FICHA DE ATENDIMENTO COMPLETA';
+  const documentTitle = somenteDadosPessoais ? 'FICHA DE ATENDIMENTO CLÍNICO' : 'FICHA DE ATENDIMENTO COMPLETA';
 
   const leftLogo = institutionalConfig.logoEsquerdaAtiva !== false
     ? resolveLogoUrl(institutionalConfig.logoEsquerda, logoSmsFallback)
