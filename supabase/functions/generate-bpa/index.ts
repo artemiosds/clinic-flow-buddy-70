@@ -149,6 +149,7 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const competencia: string = onlyDigits(String(body?.competencia || '')).slice(0, 6);
     const unidadeId: string = String(body?.unidade_id || '');
+    const profissionalIdFiltro: string = String(body?.profissional_id || '');
     const cnesOverride: string = onlyDigits(String(body?.cnes || ''));
 
     if (competencia.length !== 6) {
