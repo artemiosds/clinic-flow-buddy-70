@@ -79,6 +79,7 @@ const DEFAULT: ImpressaoConfig = {
     linha2: "CAPS II",
     logoUrl: "",
     logoEsquerda: "",
+    logoCentro: "",
     logoDireita: "",
     fonte: "Arial",
     tamanhoFonte: 12,
