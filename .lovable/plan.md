@@ -1,89 +1,100 @@
+# Plano — Cabeçalho/Rodapé Institucional Global em todos os documentos
+
 ## Objetivo
-Expandir o módulo de Medicamentos (base, busca, classificação, alertas, estoque) e refletir tudo no Prontuário, sem quebrar nada existente.
+Unificar TODOS os documentos impressos e PDFs do sistema sob um único template institucional global, com 3 logos configuráveis (esquerda, centro, direita) — cada uma com tamanho próprio, formato redondo opcional e on/off independente. Preview, impressão e PDF devem ser idênticos. Inclui correção crítica da Ficha do Paciente na página Pacientes.
 
----
+## Escopo
 
-## 1. Banco de dados (1 migration)
+### 1. Expandir configuração global
+- Estender `system_config.configuracoes.config_impressao_documentos` (já existente) com:
+  - `logos.left/center/right`: `{ enabled, url, size, rounded }`
+  - `header`: linha1, linha2, linha3 (opcional), linha4 (opcional), fonte, tamanho, cor, alinhamento
+  - `footer`: enabled, texto, mostrarPaginacao, mostrarDataGeracao
+  - `layout`: paper (A4 default), margens
+- Manter compatibilidade com chaves antigas (`logoEsquerda`, `logoDireita`, `logoCentro` já adicionada).
 
-Adicionar colunas à tabela `medications` (sem apagar dados):
+### 2. UI de Configuração (`ConfigImpressaoDocumentos.tsx` + `HeaderPreviewA4.tsx`)
+- Adicionar toggle **"Logo redonda"** por logo (esquerda, centro, direita).
+- Adicionar campos opcionais de linhas 3 e 4 no cabeçalho (ex.: Unidade/Setor, CNES).
+- Refinar preview A4 para usar o MESMO componente render do print (single source of truth) via iframe ou render compartilhado.
+- Validações: tamanho 32–160px, máx 2MB upload, manter proporção.
 
-- `nome_comercial text default ''`
-- `codigo_rename text` (UNIQUE quando não nulo)
-- `codigo_reme text`
-- `tipo text default 'comum'` — `comum | controlado | psicotropico | antibiotico`
-- `estoque_quantidade integer default 0`
-- `estoque_minimo integer default 0`
-- `estoque_unidade text default ''` — comprimidos, ampolas, frascos…
-- `estoque_localizacao text default ''`
+### 3. Componente compartilhado de template
+Criar `src/lib/institutionalDocument.ts`:
+- `buildInstitutionalHeaderHTML(config, { documentTitle, unidade, emissionDate })`
+- `buildInstitutionalFooterHTML(config, { pageInfo })`
+- `getInstitutionalCSS({ paper, margins, fontFamily, fontSize })`
+- Lógica de reorganização para 1, 2 ou 3 logos (flex justify dinâmico).
+- Logo redonda: `border-radius: 9999px; object-fit: cover`.
 
-Índices de busca (pg_trgm):
-```sql
-CREATE EXTENSION IF NOT EXISTS pg_trgm;
-CREATE INDEX idx_medications_nome_trgm        ON medications USING GIN (nome gin_trgm_ops);
-CREATE INDEX idx_medications_principio_trgm   ON medications USING GIN (principio_ativo gin_trgm_ops);
-CREATE INDEX idx_medications_comercial_trgm   ON medications USING GIN (nome_comercial gin_trgm_ops);
-CREATE INDEX idx_medications_classe_trgm      ON medications USING GIN (classe_terapeutica gin_trgm_ops);
-CREATE INDEX idx_medications_tipo             ON medications (tipo);
-```
+### 4. Refatorar `src/lib/printLayout.ts`
+- `openPrintDocument(title, body, meta, opts)` passa a SEMPRE injetar header/footer institucionais via `buildInstitutionalHeaderHTML/Footer`.
+- Remover headers customizados antigos; aceitar override opcional por documento (futuro).
+- CSS A4 padronizado com `@page`, `.document-page`, `break-inside: avoid`.
 
-Backfill: marcar `tipo='antibiotico'` onde `classe_terapeutica ILIKE '%antibió%'`, `tipo='psicotropico'` onde classe ILIKE '%psicotrop%' ou principio em {diazepam, clonazepam, fluoxetina, amitriptilina, sertralina, haloperidol, carbamazepina, fenobarbital}.
+### 5. Ficha do Paciente — correção crítica
+Localizar e refatorar:
+- `src/lib/printFichaPaciente.ts` (Imprimir Ficha na página Pacientes)
+- `src/components/FichaImpressao.tsx`
+- Botão "Imprimir Ficha" em `src/pages/painel/Pacientes.tsx`
 
----
+Novo template `printFichaPaciente`:
+- Usa `openPrintDocument` (herda header/footer global).
+- Título: **"FICHA CADASTRAL DO PACIENTE"**.
+- 5 blocos estruturados: Identificação, Endereço, Contato, Complementares/SUS, Documentos.
+- Campos vazios → "Não informado" (sem `null`/`undefined`).
+- A4, sem botões, sem tela crua.
 
-## 2. Seeds RENAME e REME
+### 6. Aplicar a todos os documentos
+Garantir que estes módulos passem por `openPrintDocument` (sem header próprio):
+- Prontuário (`prontuarioPdf.ts`, `WorkspaceProntuario`)
+- Histórico Clínico (`HistoricoClinicoTimeline.tsx`) ✅ já migrado
+- Receituário (`PrescricaoMedicamentos.tsx`) ✅ já migrado
+- Solicitação de Exames (`SolicitacaoExames.tsx`) ✅ já migrado
+- Encaminhamento UBS (`EncaminhamentoUBSSection.tsx`) ✅ já migrado
+- Ficha do Funcionário ✅ já migrado
+- Relatórios (`Relatorios.tsx`) ✅ já migrado
+- Relatório de Alta (`RelatorioAlta.tsx`) — verificar título correto
+- Documentos gerados (`GerarDocumentoModal.tsx`, `DocumentosHistorico.tsx`)
+- Atestados/Declarações via `documentSignature`
 
-- `src/data/seedRenameMedications.ts`: expandir de ~84 para ~250 itens curados da RENAME (cobertura ampla: cardio, endócrino, infecto, dor, saúde mental, respiratório, GI, dermato, oftalmo, pediátrico, hormônios, vacinas/imunobiológicos comuns, antineoplásicos básicos). Cada item passa a ter `tipo`, `codigo_rename`, `nome_comercial` (quando aplicável).
-- Novo `src/data/seedRemeMedications.ts`: ~80 itens REME complementares (foco municipal — fitoterápicos, suplementos, soluções básicas, kits curativo, antissépticos).
-- Deduplicação por `codigo_rename`/`codigo_reme` quando existir, senão pela chave atual (principio+concentração+forma+via).
+Auditar imports de `window.print()` e `new Blob([html])` para garantir 100% via shell único.
 
-> ⚠️ Observação importante: não existe API oficial pública estável da RENAME completa. Vou entregar uma lista curada substancial (~250 RENAME + ~80 REME). Se você tiver um CSV oficial, podemos importar depois pelo mesmo botão.
+### 7. Storage de logos
+- Continuar usando bucket existente `document-logos` (já em uso em `InstituicaoSection`).
+- Não salvar base64 no JSON; salvar apenas URL pública.
 
----
+### 8. Loading/erro/auditoria
+- Toasts em salvar configuração ✅ já existem.
+- Log de auditoria em `audit_logs` ao salvar config institucional (motivo_alteracao opcional).
+- Console.error em falhas com prefixo `[DocumentConfig]`.
 
-## 3. UI — ConfigMedicamentosExames
+## Arquivos a criar/editar
+- **Criar:** `src/lib/institutionalDocument.ts`
+- **Criar:** `src/lib/printFichaPaciente.ts` (rewrite)
+- **Editar:** `src/lib/printLayout.ts` — usar institutionalDocument
+- **Editar:** `src/components/config/ConfigImpressaoDocumentos.tsx` — adicionar toggle redondo + linhas extras
+- **Editar:** `src/components/config/sistema/HeaderPreviewA4.tsx` — refletir formato redondo
+- **Editar:** `src/pages/painel/Pacientes.tsx` — apontar para novo printFichaPaciente
+- **Editar:** `src/components/FichaImpressao.tsx` — migrar para shell único
+- **Editar:** `src/lib/prontuarioPdf.ts` — usar openPrintDocument
+- **Editar:** `src/pages/painel/RelatorioAlta.tsx` — título correto + shell único
+- **Editar:** `src/components/GerarDocumentoModal.tsx` — shell único
+- **Auditar:** demais módulos com `window.print()` isolado
 
-- Botão **"Carregar / Restaurar base REME"** ao lado do RENAME.
-- Listagem: badges
-  - Origem: `RENAME` / `REME` / `PERSONALIZADO`
-  - Tipo: `CONTROLADO` (vermelho), `PSICOTRÓPICO` (vermelho), `ANTIBIÓTICO` (laranja)
-  - Estoque: verde (disponível) / amarelo (baixo) / vermelho (indisponível) / cinza (não controlado)
-- Filtros: classe terapêutica (select), tipo, origem, status de estoque.
-- Form de edição: novos campos (nome comercial, código RENAME/REME, tipo, estoque quantidade/mínimo/unidade/localização).
+## Detalhes técnicos
+- 1 logo ativa → `justify-content: center`
+- 2 logos ativas → `justify-content: space-between` (texto entre elas)
+- 3 logos ativas → grid 3 colunas com texto sobre logo central
+- Print CSS: `@page { size: A4; margin: 16mm; }`, `.no-print { display: none !important; }`
+- `running()` headers/footers para paginação X de Y quando suportado pelo browser.
 
----
+## Fora de escopo (mantido como está)
+- Lógica clínica, BPA, Agenda, dados de Pacientes.
+- Personalização por unidade/profissional (arquitetura preparada, mas não ativada).
 
-## 4. UI — PrescricaoMedicamentos (Prontuário)
+## Validação
+Executar os 14 testes do prompt: 3 logos, 1 logo, 2 logos, Imprimir Ficha, PDF Ficha, Prontuário, Relatório Alta, Atestado, Receita, Encaminhamento, Impressão x PDF idênticos, logo redonda, fallback documento antigo.
 
-- Busca passa a casar com: nome, principio_ativo, nome_comercial, classe_terapeutica, codigo_rename, forma_farmaceutica, tipo.
-- Filtro por classe terapêutica na busca.
-- Cada resultado mostra badges (tipo + estoque).
-- Ao selecionar:
-  - Controlado/Psicotrópico → toast/alert "Medicamento controlado — exige receita especial".
-  - Antibiótico → toast "Exige receituário".
-  - Estoque 0 → alert "Medicamento sem estoque disponível na unidade".
-- Sem alterar a estrutura de salvamento da prescrição.
-
----
-
-## 5. Notificação de estoque baixo
-
-- Registro em `notification_logs` quando `estoque_quantidade <= estoque_minimo` (disparado no update via UI; sem trigger novo para evitar tocar schemas reservados).
-- Painel já existente de notificações exibirá. (Sem novo canal.)
-
----
-
-## Arquivos afetados
-- migration nova
-- `src/data/seedRenameMedications.ts` (expandir)
-- `src/data/seedRemeMedications.ts` (novo)
-- `src/components/config/ConfigMedicamentosExames.tsx` (UI + import REME + badges + filtros + estoque)
-- `src/components/PrescricaoMedicamentos.tsx` (busca + badges + alertas)
-- `src/integrations/supabase/types.ts` (regen automática após migration)
-
----
-
-## Perguntas rápidas antes de começar
-
-1. **Volume RENAME**: ~250 itens curados está OK, ou prefere que eu tente carregar uma lista bem maior (com risco de itens menos relevantes)?
-2. **REME**: posso entregar uma lista genérica municipal (~80 itens). Você tem a lista oficial REME de Oriximiná em algum lugar?
-3. **Estoque por unidade?** Hoje `medications` é global. O estoque deve ser **por unidade de saúde** (criar tabela `medication_stock` por `unidade_id`) ou **global** (campos direto em `medications`, como descrito acima)?
+## Estimativa
+Trabalho grande (~10-12 arquivos). Posso entregar em uma única passada após sua aprovação.
