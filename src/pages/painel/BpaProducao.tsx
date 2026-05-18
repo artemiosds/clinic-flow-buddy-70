@@ -79,15 +79,38 @@ export const resolveCompetenciaRange = (competencia: string) => {
   };
 };
 
+// ─── Filtros: fonte única de verdade ─────────────────────────────────────────
+interface BpaFilters {
+  competencia: string;
+  unidadeId: string;       // 'all' | id
+  profissionalId: string;  // 'all' | id
+  origem: string;          // 'all' | 'prontuario' | 'pts' | 'paciente' | 'outro_prontuario_mesmo_paciente'
+  status: string;          // 'all' | 'ok' | 'pendente'
+  sigtap: string;          // texto livre
+  paciente: string;        // texto livre (nome)
+}
+
 const BpaProducao: React.FC = () => {
   const { user } = useAuth();
   const { unidades } = useData();
   const [linhas, setLinhas] = useState<LinhaBPA[]>([]);
   const [pacMap, setPacMap] = useState<Record<string, { cns: string; cpf: string; nome: string; data_nascimento: string; raca_cor: string; nacionalidade: string }>>({});
-  const [profMap, setProfMap] = useState<Record<string, { cbo: string }>>({});
+  const [profMap, setProfMap] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(false);
-  const [competencia, setCompetencia] = useState<string>(currentCompetencia());
-  const [unidadeFiltro, setUnidadeFiltro] = useState<string>(user?.unidadeId || 'all');
+
+  const [filters, setFilters] = useState<BpaFilters>({
+    competencia: currentCompetencia(),
+    unidadeId: user?.unidadeId || 'all',
+    profissionalId: 'all',
+    origem: 'all',
+    status: 'all',
+    sigtap: '',
+    paciente: '',
+  });
+  const setFilter = <K extends keyof BpaFilters>(key: K, value: BpaFilters[K]) =>
+    setFilters((prev) => ({ ...prev, [key]: value }));
+
+  const { competencia, unidadeId: unidadeFiltro } = filters;
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalCompetencia, setModalCompetencia] = useState<string>(currentCompetencia());
