@@ -45,6 +45,7 @@ export async function loadDocumentConfig(): Promise<DocumentConfig> {
     if (cfg) {
       _cachedConfig = {
         logoEsquerda: cfg.cabecalho?.logoEsquerda || cfg.cabecalho?.logoUrl || '',
+        logoCentro: cfg.cabecalho?.logoCentro || '',
         logoDireita: cfg.cabecalho?.logoDireita || '',
         linha1: cfg.cabecalho?.linha1 || DEFAULT_CONFIG.linha1,
         linha2: cfg.cabecalho?.linha2 || DEFAULT_CONFIG.linha2,
