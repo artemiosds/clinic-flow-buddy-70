@@ -372,6 +372,13 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = "co
     const hL = Math.max(28, Math.min(140, config?.logoEsquerdaTamanho || 64));
     const hC = Math.max(28, Math.min(140, config?.logoCentroTamanho || 56));
     const hR = Math.max(28, Math.min(140, config?.logoDireitaTamanho || 64));
+    const roundL = config?.logoEsquerdaRedonda === true;
+    const roundC = config?.logoCentroRedonda === true;
+    const roundR = config?.logoDireitaRedonda === true;
+    const styleFor = (size: number, rounded: boolean) =>
+      rounded
+        ? `width:${size}px;height:${size}px;border-radius:9999px;object-fit:cover;background:#fff;`
+        : `max-height:${size}px;max-width:${size * 2}px;object-fit:contain;`;
     const linha1 = config?.linha1 || "Secretaria Municipal de Saúde de Oriximiná";
     const linha2 = config?.linha2 || "CAPS II";
 
