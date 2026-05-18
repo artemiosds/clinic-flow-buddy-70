@@ -443,27 +443,42 @@ const ConfigImpressaoDocumentos: React.FC = () => {
                   title="Logo Esquerda"
                   subtitle="Ex: SMS Oriximiná"
                   url={config.cabecalho.logoEsquerda}
+                  size={config.cabecalho.logoEsquerdaTamanho}
+                  active={config.cabecalho.logoEsquerdaAtiva}
                   uploading={uploadingLeft}
                   onUpload={(f) => uploadLogo(f, "esquerda")}
                   onRemove={() => removeLogo("esquerda")}
+                  onSizeChange={(n) => update("cabecalho.logoEsquerdaTamanho", n)}
+                  onSizeCommit={saveField}
+                  onActiveChange={(v) => save({ ...config, cabecalho: { ...config.cabecalho, logoEsquerdaAtiva: v } })}
                 />
                 <LogoUploadCard
                   side="centro"
                   title="Logo Centro"
                   subtitle="Opcional — ex: brasão"
                   url={config.cabecalho.logoCentro}
+                  size={config.cabecalho.logoCentroTamanho}
+                  active={config.cabecalho.logoCentroAtiva}
                   uploading={uploadingCenter}
                   onUpload={(f) => uploadLogo(f, "centro")}
                   onRemove={() => removeLogo("centro")}
+                  onSizeChange={(n) => update("cabecalho.logoCentroTamanho", n)}
+                  onSizeCommit={saveField}
+                  onActiveChange={(v) => save({ ...config, cabecalho: { ...config.cabecalho, logoCentroAtiva: v } })}
                 />
                 <LogoUploadCard
                   side="direita"
                   title="Logo Direita"
                   subtitle="Ex: CAPS II"
                   url={config.cabecalho.logoDireita}
+                  size={config.cabecalho.logoDireitaTamanho}
+                  active={config.cabecalho.logoDireitaAtiva}
                   uploading={uploadingRight}
                   onUpload={(f) => uploadLogo(f, "direita")}
                   onRemove={() => removeLogo("direita")}
+                  onSizeChange={(n) => update("cabecalho.logoDireitaTamanho", n)}
+                  onSizeCommit={saveField}
+                  onActiveChange={(v) => save({ ...config, cabecalho: { ...config.cabecalho, logoDireitaAtiva: v } })}
                 />
               </div>
 
