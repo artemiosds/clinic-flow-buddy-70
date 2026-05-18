@@ -63,8 +63,8 @@ interface QuotaRow {
 
 const ProfissionaisExternos: React.FC = () => {
   const { user } = useAuth();
-  const { unidades, funcionarios } = useData();
-  const { unidadesVisiveis } = useUnidadeFilter();
+  const { unidades, funcionarios, disponibilidades } = useData();
+  const { unidadesVisiveis, profissionaisVisiveis } = useUnidadeFilter();
   const { can } = usePermissions();
   const canManage = can("funcionarios", "can_edit");
 
@@ -412,7 +412,19 @@ const ProfissionaisExternos: React.FC = () => {
     }
   };
 
-  const profissionaisInternos = useMemo(() => funcionarios.filter((f: any) => f.role === "profissional" && f.ativo), [funcionarios]);
+  // Inclui todos os profissionais ativos visíveis para a unidade + qualquer profissional
+  // que possua disponibilidade cadastrada (mesmo que o cadastro principal esteja em outra unidade).
+  const profissionaisInternos = useMemo(() => {
+    const base = new Map<string, any>();
+    profissionaisVisiveis.forEach((f: any) => base.set(f.id, f));
+    const profsComDisp = new Set(disponibilidades.map((d: any) => d.profissionalId));
+    funcionarios.forEach((f: any) => {
+      if (f.role === "profissional" && f.ativo && profsComDisp.has(f.id) && !base.has(f.id)) {
+        base.set(f.id, f);
+      }
+    });
+    return Array.from(base.values()).sort((a: any, b: any) => (a.nome || "").localeCompare(b.nome || ""));
+  }, [profissionaisVisiveis, funcionarios, disponibilidades]);
 
   const filteredExternos = externos.filter(e => {
     if (!searchTerm.trim()) return true;
