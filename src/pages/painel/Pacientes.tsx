@@ -737,7 +737,14 @@ const Pacientes: React.FC = () => {
 
 
   // Abrir ficha de impressão
-  const handleOpenFicha = async (p: (typeof pacientes)[0], mode: FichaPrintMode = 'completa') => {
+  const handleOpenFicha = async (p: (typeof pacientes)[0] | null, mode: FichaPrintMode = 'completa') => {
+    if (!p?.id) {
+      toast.error('Paciente não selecionado para impressão.');
+      console.error('[FichaPaciente] Paciente não selecionado para preview.', { modo: mode });
+      return;
+    }
+
+    setFichaData(null);
     setFichaPrintMode(mode);
     setFichaLoading(true);
     setFichaOpen(true);
