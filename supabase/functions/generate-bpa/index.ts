@@ -202,6 +202,7 @@ Deno.serve(async (req) => {
       .lte('data_atendimento', dataFim)
       .order('data_atendimento', { ascending: true });
     if (unidadeId) prontQuery = prontQuery.eq('unidade_id', unidadeId);
+    if (profissionalIdFiltro) prontQuery = prontQuery.eq('profissional_id', profissionalIdFiltro);
 
     const { data: prontuarios, error: prontErr } = await prontQuery;
     if (prontErr) throw prontErr;
