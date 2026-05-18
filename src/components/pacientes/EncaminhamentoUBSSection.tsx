@@ -243,106 +243,46 @@ const EncaminhamentoUBSSection: React.FC<EncaminhamentoUBSSectionProps> = ({
     }
   };
 
-  const handlePrint = (enc: Encaminhamento) => {
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
+  const handlePrint = async (enc: Encaminhamento) => {
+    const meta: Record<string, string> = {
+      Paciente: pacienteNome || '—',
+      Data: format(new Date(enc.data_encaminhamento), 'dd/MM/yyyy'),
+    };
 
-    const html = `
-      <html>
-        <head>
-          <title>Encaminhamento - ${pacienteNome || 'Paciente'}</title>
-          <style>
-            body { font-family: sans-serif; padding: 40px; color: #333; line-height: 1.6; }
-            .header { text-align: center; border-bottom: 2px solid #0c4a6e; padding-bottom: 20px; margin-bottom: 30px; }
-            .header h1 { color: #0c4a6e; margin: 0; font-size: 24px; }
-            .header p { margin: 5px 0; color: #666; }
-            .section { margin-bottom: 25px; }
-            .section-title { font-weight: bold; text-transform: uppercase; font-size: 14px; color: #0c4a6e; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 10px; }
-            .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-            .label { font-size: 12px; color: #777; font-weight: bold; text-transform: uppercase; }
-            .value { font-size: 16px; margin-top: 2px; }
-            .full { grid-column: 1 / -1; }
-            .footer { margin-top: 80px; text-align: center; }
-            .signature { border-top: 1px solid #333; width: 300px; margin: 0 auto; padding-top: 10px; }
-            @media print {
-              .no-print { display: none; }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <h1>ENCAMINHAMENTO MÉDICO / MULTIDISCIPLINAR</h1>
-            <p>Secretaria Municipal de Saúde</p>
-          </div>
+    const body = `
+      <div class="section">
+        <div class="section-title">Informações do Encaminhamento</div>
+        <div class="info-grid">
+          <div><div class="info-label">Especialidade Destino</div><div class="info-value">${enc.especialidade_destino}</div></div>
+          <div><div class="info-label">Unidade/Origem</div><div class="info-value">${enc.ubs_origem || '—'}</div></div>
+          <div><div class="info-label">Tipo Encaminhamento</div><div class="info-value">${enc.tipo_encaminhamento || '—'}</div></div>
+          <div><div class="info-label">Profissional Solicitante</div><div class="info-value">${enc.profissional_solicitante || '—'}</div></div>
+          <div><div class="info-label">CID-10</div><div class="info-value">${enc.cid || '—'}</div></div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-title">Diagnóstico Resumido</div>
+        <div class="section-content">${enc.diagnostico_resumido || '—'}</div>
+      </div>
+      <div class="section">
+        <div class="section-title">Justificativa Clínica</div>
+        <div class="section-content">${enc.justificativa || '—'}</div>
+      </div>
+      <div class="signature">
+        <div class="signature-line"></div>
+        <div class="name">${enc.profissional_solicitante || 'Assinatura do Profissional'}</div>
+        <div class="role">Carimbo e Registro</div>
+      </div>`;
 
-          <div class="section">
-            <div class="section-title">Dados do Paciente</div>
-            <div class="grid">
-              <div>
-                <div class="label">Nome do Paciente</div>
-                <div class="value">${pacienteNome || '—'}</div>
-              </div>
-              <div>
-                <div class="label">Data do Encaminhamento</div>
-                <div class="value">${format(new Date(enc.data_encaminhamento), 'dd/MM/yyyy')}</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="section">
-            <div class="section-title">Informações do Encaminhamento</div>
-            <div class="grid">
-              <div>
-                <div class="label">Especialidade Destino</div>
-                <div class="value">${enc.especialidade_destino}</div>
-              </div>
-              <div>
-                <div class="label">Unidade/Origem</div>
-                <div class="value">${enc.ubs_origem || '—'}</div>
-              </div>
-              <div>
-                <div class="label">Tipo Encaminhamento</div>
-                <div class="value">${enc.tipo_encaminhamento || '—'}</div>
-              </div>
-              <div>
-                <div class="label">Profissional Solicitante</div>
-                <div class="value">${enc.profissional_solicitante || '—'}</div>
-              </div>
-              <div>
-                <div class="label">CID-10</div>
-                <div class="value">${enc.cid || '—'}</div>
-              </div>
-              <div class="full">
-                <div class="label">Diagnóstico Resumido</div>
-                <div class="value">${enc.diagnostico_resumido || '—'}</div>
-              </div>
-              <div class="full">
-                <div class="label">Justificativa Clínica</div>
-                <div class="value">${enc.justificativa || '—'}</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="footer">
-            <div class="signature">
-              <strong>${enc.profissional_solicitante || 'Assinatura do Profissional'}</strong>
-              <div>Carimbo e Registro</div>
-            </div>
-            <p style="font-size: 10px; color: #999; margin-top: 40px;">Documento gerado pelo sistema em ${format(new Date(), 'dd/MM/yyyy HH:mm')}</p>
-          </div>
-          
-          <script>
-            window.onload = () => {
-              window.print();
-              setTimeout(() => window.close(), 500);
-            };
-          </script>
-        </body>
-      </html>
-    `;
-
-    printWindow.document.write(html);
-    printWindow.document.close();
+    try {
+      await openPrintDocument('ENCAMINHAMENTO MÉDICO / MULTIDISCIPLINAR', body, meta);
+    } catch (err: any) {
+      if (err?.message === 'POPUP_BLOCKED') {
+        toast.error('Pop-up bloqueado', { description: 'Permita pop-ups deste site e tente novamente.' });
+      } else {
+        toast.error('Erro ao gerar encaminhamento', { description: err?.message ?? String(err) });
+      }
+    }
   };
 
   const getStatusBadge = (status: string) => {
