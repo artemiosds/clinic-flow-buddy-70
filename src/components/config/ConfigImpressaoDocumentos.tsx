@@ -292,8 +292,9 @@ const ConfigImpressaoDocumentos: React.FC = () => {
 
   const saveField = () => save(config);
 
-  const uploadLogo = async (file: File, side: "esquerda" | "direita") => {
-    const setUploading = side === "esquerda" ? setUploadingLeft : setUploadingRight;
+  const uploadLogo = async (file: File, side: LogoSide) => {
+    const setUploading =
+      side === "esquerda" ? setUploadingLeft : side === "centro" ? setUploadingCenter : setUploadingRight;
     setUploading(true);
     try {
       const ext = file.name.split(".").pop() || "png";
@@ -305,7 +306,7 @@ const ConfigImpressaoDocumentos: React.FC = () => {
 
       const { data: urlData } = supabase.storage.from("document-logos").getPublicUrl(path);
       const url = urlData.publicUrl;
-      const key = side === "esquerda" ? "logoEsquerda" : "logoDireita";
+      const key = side === "esquerda" ? "logoEsquerda" : side === "centro" ? "logoCentro" : "logoDireita";
       const updated = { ...config, cabecalho: { ...config.cabecalho, [key]: url } };
       await save(updated);
       toast.success(`Logo ${side} atualizada`);
@@ -315,8 +316,8 @@ const ConfigImpressaoDocumentos: React.FC = () => {
     setUploading(false);
   };
 
-  const removeLogo = async (side: "esquerda" | "direita") => {
-    const key = side === "esquerda" ? "logoEsquerda" : "logoDireita";
+  const removeLogo = async (side: LogoSide) => {
+    const key = side === "esquerda" ? "logoEsquerda" : side === "centro" ? "logoCentro" : "logoDireita";
     const updated = { ...config, cabecalho: { ...config.cabecalho, [key]: "" } };
     await save(updated);
     toast.success("Logo removida");
