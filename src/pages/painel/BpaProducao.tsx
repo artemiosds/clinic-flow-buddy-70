@@ -79,15 +79,38 @@ export const resolveCompetenciaRange = (competencia: string) => {
   };
 };
 
+// ─── Filtros: fonte única de verdade ─────────────────────────────────────────
+interface BpaFilters {
+  competencia: string;
+  unidadeId: string;       // 'all' | id
+  profissionalId: string;  // 'all' | id
+  origem: string;          // 'all' | 'prontuario' | 'pts' | 'paciente' | 'outro_prontuario_mesmo_paciente'
+  status: string;          // 'all' | 'ok' | 'pendente'
+  sigtap: string;          // texto livre
+  paciente: string;        // texto livre (nome)
+}
+
 const BpaProducao: React.FC = () => {
   const { user } = useAuth();
   const { unidades } = useData();
   const [linhas, setLinhas] = useState<LinhaBPA[]>([]);
   const [pacMap, setPacMap] = useState<Record<string, { cns: string; cpf: string; nome: string; data_nascimento: string; raca_cor: string; nacionalidade: string }>>({});
-  const [profMap, setProfMap] = useState<Record<string, { cbo: string }>>({});
+  const [profMap, setProfMap] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(false);
-  const [competencia, setCompetencia] = useState<string>(currentCompetencia());
-  const [unidadeFiltro, setUnidadeFiltro] = useState<string>(user?.unidadeId || 'all');
+
+  const [filters, setFilters] = useState<BpaFilters>({
+    competencia: currentCompetencia(),
+    unidadeId: user?.unidadeId || 'all',
+    profissionalId: 'all',
+    origem: 'all',
+    status: 'all',
+    sigtap: '',
+    paciente: '',
+  });
+  const setFilter = <K extends keyof BpaFilters>(key: K, value: BpaFilters[K]) =>
+    setFilters((prev) => ({ ...prev, [key]: value }));
+
+  const { competencia, unidadeId: unidadeFiltro } = filters;
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalCompetencia, setModalCompetencia] = useState<string>(currentCompetencia());
@@ -405,40 +428,98 @@ const BpaProducao: React.FC = () => {
 
   useEffect(() => { load(); }, [competencia, unidadeFiltro]);
 
-  const validateRow = (l: LinhaBPA): { isValid: boolean; errors: string[] } => {
+  // Helper compartilhado: normaliza uma LinhaBPA usando os maps em memória
+  const toBpaLine = (l: LinhaBPA): BpaLine => {
     const pac = pacMap[l.paciente_id];
     const prof = profMap[l.profissional_id];
     const uni = unidades.find(u => u.id === l.unidade_id);
-    
-    const bpaLine = normalizeBpaData({
+    return normalizeBpaData({
       ...l,
       paciente_custom: (pac as any)?.custom_data || {},
       paciente_sexo: (pac as any)?.sexo || '',
       paciente_nascimento: pac?.data_nascimento || '',
       paciente_cns: pac?.cns || '',
       paciente_cpf: pac?.cpf || '',
-      profissional_custom: prof, // Agora prof já contém profissao, cargo, cbo e custom_data
+      profissional_custom: prof,
       unidade_custom: (uni as any)?.custom_data || {},
       unidade_nome: uni?.nome || '',
     });
-
-    const v = validateBpaLine(bpaLine);
-    return {
-      isValid: v.isValid,
-      errors: v.errors
-    };
   };
 
+  const validateRow = (l: LinhaBPA): { isValid: boolean; errors: string[] } => {
+    const v = validateBpaLine(toBpaLine(l));
+    return { isValid: v.isValid, errors: v.errors };
+  };
+
+  // ─── FONTE ÚNICA: aplica filtros em memória a partir de `linhas` ──────────
+  const linhasFiltradas = useMemo(() => {
+    const { profissionalId, origem, status, sigtap, paciente } = filters;
+    const sigtapNorm = sigtap.replace(/\D/g, '');
+    const pacNorm = paciente.trim().toLowerCase();
+
+    return linhas.filter((l) => {
+      if (profissionalId !== 'all' && l.profissional_id !== profissionalId) return false;
+      if (origem !== 'all' && (l.fonte_procedimento || '') !== origem) return false;
+      if (sigtapNorm && !(l.codigo_sigtap || '').includes(sigtapNorm)) return false;
+      if (pacNorm && !(l.paciente_nome || '').toLowerCase().includes(pacNorm)) return false;
+      if (status !== 'all') {
+        const ok = validateRow(l).isValid;
+        if (status === 'ok' && !ok) return false;
+        if (status === 'pendente' && ok) return false;
+      }
+      return true;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [linhas, filters, pacMap, profMap, unidades]);
+
+  // Profissionais disponíveis no dataset carregado (para o select)
+  const profissionaisOpts = useMemo(() => {
+    const map = new Map<string, string>();
+    linhas.forEach((l) => {
+      if (l.profissional_id && !map.has(l.profissional_id)) {
+        map.set(l.profissional_id, l.profissional_nome || '—');
+      }
+    });
+    return Array.from(map.entries())
+      .map(([id, nome]) => ({ id, nome }))
+      .sort((a, b) => a.nome.localeCompare(b.nome));
+  }, [linhas]);
+
+  // Cabeçalho BPA-I dinâmico (derivado dos filtros e maps atuais)
+  const headerBpa = useMemo(() => {
+    const profSel = filters.profissionalId !== 'all' ? profMap[filters.profissionalId] : null;
+    const uniId = filters.unidadeId !== 'all'
+      ? filters.unidadeId
+      : (profissionaisOpts.length === 1
+          ? linhas.find(l => l.profissional_id === profissionaisOpts[0].id)?.unidade_id
+          : '') || '';
+    const uni = uniId ? unidades.find(u => u.id === uniId) : null;
+    const uniCustom: any = (uni as any)?.custom_data || {};
+    const profCustom: any = profSel?.custom_data || {};
+    const nomeProf = filters.profissionalId !== 'all'
+      ? (profissionaisOpts.find(p => p.id === filters.profissionalId)?.nome || '—')
+      : null;
+    return {
+      profissionalId: filters.profissionalId !== 'all' ? filters.profissionalId : '',
+      profissionalNome: nomeProf,
+      cns: String(profCustom.cns || profSel?.cns || '').replace(/\D/g, '').slice(0, 15),
+      cbo: String(profCustom.cbo_codigo || profSel?.cbo || '').replace(/\D/g, '').slice(0, 6),
+      profissao: profSel?.profissao || profCustom.profissao || '',
+      unidadeId: uniId,
+      unidadeNome: uni?.nome || (filters.unidadeId === 'all' ? 'Todas as unidades' : '—'),
+      cnes: String(uniCustom.cnes || '').replace(/\D/g, '').slice(0, 7),
+    };
+  }, [filters.profissionalId, filters.unidadeId, profMap, unidades, profissionaisOpts, linhas]);
 
   const stats = useMemo(() => {
     let validos = 0, pendentes = 0;
-    linhas.forEach((l) => {
+    linhasFiltradas.forEach((l) => {
       const v = validateRow(l);
       if (v.isValid) validos++; else pendentes++;
     });
-    return { total: linhas.length, validos, pendentes };
+    return { total: linhasFiltradas.length, validos, pendentes };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [linhas, pacMap, profMap, unidades]);
+  }, [linhasFiltradas, pacMap, profMap, unidades]);
 
   const getCnesFromUnidade = (uniId: string): string => {
     if (!uniId) return '';
@@ -448,10 +529,10 @@ const BpaProducao: React.FC = () => {
   };
 
   const openGenerateModal = () => {
-    const uniSelecionada = unidadeFiltro !== 'all' ? unidadeFiltro : (user?.unidadeId || '');
+    const uniSelecionada = unidadeFiltro !== 'all' ? unidadeFiltro : (headerBpa.unidadeId || user?.unidadeId || '');
     setModalCompetencia(competencia);
     setModalUnidade(uniSelecionada);
-    setModalCnes(getCnesFromUnidade(uniSelecionada));
+    setModalCnes(getCnesFromUnidade(uniSelecionada) || headerBpa.cnes || '');
     setModalOpen(true);
   };
 
@@ -463,14 +544,15 @@ const BpaProducao: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modalUnidade, modalOpen]);
 
-  // Pendências previstas para a competência/unidade do modal (preview)
+  // Preview do modal: usa EXATAMENTE o mesmo conjunto filtrado da tela
   const modalPreview = useMemo(() => {
     if (!modalOpen) return { validos: 0, pendentes: 0, total: 0 };
     const filtroComp = modalCompetencia;
     let validos = 0, pendentes = 0, total = 0;
-    linhas.forEach((l) => {
+    linhasFiltradas.forEach((l) => {
       const lComp = (l.data || '').replace(/-/g, '').slice(0, 6);
       if (filtroComp && lComp !== filtroComp) return;
+      if (modalUnidade && l.unidade_id !== modalUnidade) return;
       total += 1;
       const v = validateRow(l);
       if (v.isValid) validos++; else pendentes++;
@@ -499,6 +581,7 @@ const BpaProducao: React.FC = () => {
           competencia: modalCompetencia,
           unidade_id: modalUnidade || '',
           cnes: modalCnes || '',
+          profissional_id: filters.profissionalId !== 'all' ? filters.profissionalId : '',
         },
       });
 
@@ -568,21 +651,21 @@ const BpaProducao: React.FC = () => {
         </Button>
       </div>
 
-      {/* Filtros */}
+      {/* Filtros — fonte única de verdade */}
       <Card className="shadow-card border-0">
-        <CardContent className="p-4 flex flex-col sm:flex-row gap-3">
-          <div className="w-full sm:w-[180px]">
+        <CardContent className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div>
             <Label className="text-xs">Competência (AAAAMM)</Label>
             <Input
               value={competencia}
-              onChange={(e) => setCompetencia(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              onChange={(e) => setFilter('competencia', e.target.value.replace(/\D/g, '').slice(0, 6))}
               maxLength={6}
               placeholder="202504"
             />
           </div>
-          <div className="flex-1">
+          <div>
             <Label className="text-xs">Unidade</Label>
-            <Select value={unidadeFiltro} onValueChange={setUnidadeFiltro}>
+            <Select value={filters.unidadeId} onValueChange={(v) => setFilter('unidadeId', v)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas as unidades</SelectItem>
@@ -592,32 +675,72 @@ const BpaProducao: React.FC = () => {
               </SelectContent>
             </Select>
           </div>
+          <div>
+            <Label className="text-xs">Profissional</Label>
+            <Select value={filters.profissionalId} onValueChange={(v) => setFilter('profissionalId', v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os profissionais</SelectItem>
+                {profissionaisOpts.map(p => (
+                  <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">Status</Label>
+            <Select value={filters.status} onValueChange={(v) => setFilter('status', v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="ok">Válidos (OK)</SelectItem>
+                <SelectItem value="pendente">Pendentes</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">Origem do procedimento</Label>
+            <Select value={filters.origem} onValueChange={(v) => setFilter('origem', v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as origens</SelectItem>
+                <SelectItem value="prontuario">Prontuário</SelectItem>
+                <SelectItem value="pts">PTS</SelectItem>
+                <SelectItem value="paciente">Paciente</SelectItem>
+                <SelectItem value="outro_prontuario_mesmo_paciente">Herança (outro prontuário)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">SIGTAP</Label>
+            <Input
+              value={filters.sigtap}
+              onChange={(e) => setFilter('sigtap', e.target.value.replace(/\D/g, '').slice(0, 10))}
+              placeholder="Código SIGTAP"
+            />
+          </div>
+          <div>
+            <Label className="text-xs">Paciente</Label>
+            <Input
+              value={filters.paciente}
+              onChange={(e) => setFilter('paciente', e.target.value)}
+              placeholder="Nome do paciente"
+            />
+          </div>
           <div className="flex items-end gap-2">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => {
-                const bpaLines: BpaLine[] = linhas.map(l => {
-                  const pac = pacMap[l.paciente_id];
-                  const prof = profMap[l.profissional_id];
-                  const uni = unidades.find(u => u.id === l.unidade_id);
-                  return normalizeBpaData({
-                    ...l,
-                    paciente_custom: (pac as any)?.custom_data || {},
-                    paciente_sexo: (pac as any)?.sexo || '',
-                    paciente_nascimento: pac?.data_nascimento || '',
-                    paciente_cns: pac?.cns || '',
-                    paciente_cpf: pac?.cpf || '',
-                    profissional_custom: prof,
-
-                    unidade_custom: (uni as any)?.custom_data || {},
-                    unidade_nome: uni?.nome || '',
-                  });
-                });
+                const bpaLines: BpaLine[] = linhasFiltradas.map(toBpaLine);
+                if (bpaLines.length === 0) {
+                  toast.error('Não há dados para exportar com os filtros atuais.');
+                  return;
+                }
                 exportBpaToXlsx(bpaLines, competencia);
-                toast.success('XLSX de conferência gerado com sucesso!');
+                toast.success(`XLSX gerado (${bpaLines.length} linha(s) filtradas).`);
               }}
-              className="gap-2 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
-              disabled={linhas.length === 0}
+              className="gap-2 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 w-full"
+              disabled={linhasFiltradas.length === 0}
             >
               <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
               Conferência (XLSX)
@@ -626,12 +749,50 @@ const BpaProducao: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Stats */}
+      {/* Cabeçalho BPA-I — derivado da seleção */}
+      <Card className="shadow-card border-0 border-l-4 border-l-primary">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Cabeçalho BPA-I</p>
+            <Badge variant="outline" className="text-[10px]">
+              {filters.profissionalId === 'all' ? 'Visão geral' : 'Profissional selecionado'}
+            </Badge>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
+            <div>
+              <p className="text-[10px] uppercase text-muted-foreground">Profissional</p>
+              <p className="font-medium truncate">{headerBpa.profissionalNome || <span className="italic text-muted-foreground">— selecione —</span>}</p>
+              {headerBpa.profissao && <p className="text-[10px] text-muted-foreground">{headerBpa.profissao}</p>}
+            </div>
+            <div>
+              <p className="text-[10px] uppercase text-muted-foreground">CNS do profissional</p>
+              <p className={cn("font-mono", !headerBpa.cns && headerBpa.profissionalNome && "text-destructive")}>{headerBpa.cns || (headerBpa.profissionalNome ? 'faltando' : '—')}</p>
+            </div>
+            <div>
+              <p className="text-[10px] uppercase text-muted-foreground">CBO</p>
+              <p className={cn("font-mono", !headerBpa.cbo && headerBpa.profissionalNome && "text-destructive")}>{headerBpa.cbo || (headerBpa.profissionalNome ? 'faltando' : '—')}</p>
+            </div>
+            <div>
+              <p className="text-[10px] uppercase text-muted-foreground">Unidade</p>
+              <p className="font-medium truncate">{headerBpa.unidadeNome}</p>
+            </div>
+            <div>
+              <p className="text-[10px] uppercase text-muted-foreground">CNES</p>
+              <p className={cn("font-mono", !headerBpa.cnes && filters.unidadeId !== 'all' && "text-destructive")}>{headerBpa.cnes || (filters.unidadeId !== 'all' ? 'faltando' : '—')}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Stats — usam EXATAMENTE o mesmo conjunto filtrado */}
       <div className="grid grid-cols-3 gap-3">
         <Card className="shadow-card border-0">
           <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Total no mês</p>
+            <p className="text-xs text-muted-foreground">Total (filtrado)</p>
             <p className="text-2xl font-bold text-foreground">{stats.total}</p>
+            {linhas.length !== stats.total && (
+              <p className="text-[10px] text-muted-foreground mt-0.5">de {linhas.length} no período</p>
+            )}
           </CardContent>
         </Card>
         <Card className="shadow-card border-0">
@@ -651,6 +812,7 @@ const BpaProducao: React.FC = () => {
         </Card>
       </div>
 
+
       {/* Grade */}
       <Card className="shadow-card border-0">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -665,9 +827,11 @@ const BpaProducao: React.FC = () => {
             <div className="flex justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
-          ) : linhas.length === 0 ? (
+          ) : linhasFiltradas.length === 0 ? (
             <div className="p-8 text-center text-muted-foreground text-sm">
-              Nenhum prontuário neste período.
+              {linhas.length === 0
+                ? 'Nenhum prontuário neste período.'
+                : 'Nenhuma linha corresponde aos filtros aplicados.'}
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -687,7 +851,7 @@ const BpaProducao: React.FC = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {linhas.map((l) => {
+                  {linhasFiltradas.map((l) => {
                     const pac = pacMap[l.paciente_id];
                     const prof = profMap[l.profissional_id];
                     const v = validateRow(l);
