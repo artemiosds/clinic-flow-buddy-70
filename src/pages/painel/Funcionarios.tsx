@@ -28,6 +28,7 @@ import { useCustomFields } from '@/hooks/useCustomFields';
 import CboAutocomplete, { CboValue } from '@/components/CboAutocomplete';
 import { roleLabels, roleColors } from "@/lib/roleUtils";
 import { formatCNS, normalizeCNS, isCNSValid } from '@/lib/cnsUtils';
+import { openPrintDocument } from '@/lib/printLayout';
 
 interface FuncionarioDB {
   id: string;
