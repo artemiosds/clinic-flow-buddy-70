@@ -826,15 +826,31 @@ const BpaProducao: React.FC = () => {
             <div className="flex justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
-          ) : linhas.length === 0 ? (
+          ) : linhasFiltradas.length === 0 ? (
             <div className="p-8 text-center text-muted-foreground text-sm">
-              Nenhum prontuário neste período.
+              {linhas.length === 0
+                ? 'Nenhum prontuário neste período.'
+                : 'Nenhuma linha corresponde aos filtros aplicados.'}
             </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-10">#</TableHead>
+                    <TableHead>Data</TableHead>
+                    <TableHead>Paciente</TableHead>
+                    <TableHead>CNS / CPF</TableHead>
+                    <TableHead>Nasc.</TableHead>
+                    <TableHead>Profissional</TableHead>
+                    <TableHead>CBO</TableHead>
+                    <TableHead>Procedimento</TableHead>
+                    <TableHead>SIGTAP</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {linhasFiltradas.map((l) => {
                     <TableHead className="w-10">#</TableHead>
                     <TableHead>Data</TableHead>
                     <TableHead>Paciente</TableHead>
