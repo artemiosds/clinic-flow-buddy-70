@@ -300,33 +300,58 @@ export function buildInstitutionalCSS(): string {
 /** For backward compatibility */
 export const institutionalCSS = buildInstitutionalCSS();
 
-/** Generate the standard document header HTML with dual logos */
+/**
+ * Generate the standard document header HTML.
+ * Supports up to three logos (left/center/right), each with independent size
+ * (max-height in px) and enabled flag. Layout reorganizes automatically when
+ * a logo is missing so there are no awkward gaps.
+ */
 export function docHeader(title: string, config: DocumentConfig, extraRight?: string): string {
-  const logoLeft = resolveLogoUrl(config.logoEsquerda, logoSmsFallback);
-  const logoRight = resolveLogoUrl(config.logoDireita, logoCapsFallback);
-  const hasCenterLogo = !!(config.logoCentro && config.logoCentro.trim());
+  const clamp = (n: number, min = 28, max = 140) => Math.max(min, Math.min(max, n || 64));
+
+  const showLeft = config.logoEsquerdaAtiva !== false;
+  const showCenter = config.logoCentroAtiva !== false && !!(config.logoCentro && config.logoCentro.trim());
+  const showRight = config.logoDireitaAtiva !== false;
+
+  // Apply fallback ONLY when the slot is active and no URL is set.
+  const leftUrl = showLeft ? resolveLogoUrl(config.logoEsquerda, logoSmsFallback) : '';
+  const rightUrl = showRight ? resolveLogoUrl(config.logoDireita, logoCapsFallback) : '';
+  const centerUrl = showCenter ? config.logoCentro : '';
+
+  const hL = clamp(config.logoEsquerdaTamanho);
+  const hC = clamp(config.logoCentroTamanho);
+  const hR = clamp(config.logoDireitaTamanho);
+
   const now = new Date().toLocaleString('pt-BR');
 
-  const centerLogoHtml = hasCenterLogo
+  const leftSlot = leftUrl
+    ? `<div class="logo-left" style="flex:0 0 auto;min-width:${hL * 1.6}px;display:flex;justify-content:flex-start;">
+         <img src="${leftUrl}" alt="Logo institucional esquerda" style="max-height:${hL}px;max-width:${hL * 2}px;width:auto;height:auto;object-fit:contain;" onerror="this.style.display='none'" />
+       </div>`
+    : `<div class="logo-left" style="flex:0 0 auto;"></div>`;
+
+  const rightSlot = rightUrl
+    ? `<div class="logo-right" style="flex:0 0 auto;min-width:${hR * 1.6}px;display:flex;justify-content:flex-end;">
+         <img src="${rightUrl}" alt="Logo institucional direita" style="max-height:${hR}px;max-width:${hR * 2}px;width:auto;height:auto;object-fit:contain;" onerror="this.style.display='none'" />
+       </div>`
+    : `<div class="logo-right" style="flex:0 0 auto;"></div>`;
+
+  const centerLogoHtml = centerUrl
     ? `<div class="logo-center" style="display:flex;justify-content:center;margin-bottom:6px;">
-         <img src="${config.logoCentro}" alt="Logo institucional" style="max-height:56px;max-width:140px;object-fit:contain;" />
+         <img src="${centerUrl}" alt="Logo institucional central" style="max-height:${hC}px;max-width:${hC * 2.4}px;width:auto;height:auto;object-fit:contain;" onerror="this.style.display='none'" />
        </div>`
     : '';
 
   return `
-    <div class="doc-header" style="position:relative;">
-      <div class="logo-left">
-        <img src="${logoLeft}" alt="Logo SMS Oriximiná" />
-      </div>
-      <div class="header-center">
+    <div class="doc-header" style="position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+      ${leftSlot}
+      <div class="header-center" style="flex:1;text-align:center;">
         ${centerLogoHtml}
         <h1>${config.linha1}</h1>
         <div class="subtitle">${config.linha2}</div>
         <div class="doc-title">${title}</div>
       </div>
-      <div class="logo-right">
-        <img src="${logoRight}" alt="Logo CAPS II" />
-      </div>
+      ${rightSlot}
       <div class="emit-date">
         ${extraRight || ''}
         <div>Emitido em: ${now}</div>
