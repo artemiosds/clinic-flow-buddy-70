@@ -851,20 +851,6 @@ const BpaProducao: React.FC = () => {
                 </TableHeader>
                 <TableBody>
                   {linhasFiltradas.map((l) => {
-                    <TableHead className="w-10">#</TableHead>
-                    <TableHead>Data</TableHead>
-                    <TableHead>Paciente</TableHead>
-                    <TableHead>CNS / CPF</TableHead>
-                    <TableHead>Nasc.</TableHead>
-                    <TableHead>Profissional</TableHead>
-                    <TableHead>CBO</TableHead>
-                    <TableHead>Procedimento</TableHead>
-                    <TableHead>SIGTAP</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {linhas.map((l) => {
                     const pac = pacMap[l.paciente_id];
                     const prof = profMap[l.profissional_id];
                     const v = validateRow(l);
