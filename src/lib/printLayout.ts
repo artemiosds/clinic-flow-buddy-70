@@ -334,16 +334,36 @@ export function docFooter(config: DocumentConfig, extraInfo?: string): string {
     </div>`;
 }
 
-/** Open a print window with full institutional layout (async — fetches config) */
+/**
+ * Open a print window with full institutional layout.
+ * IMPORTANT: window.open MUST be called synchronously inside the user click
+ * handler — otherwise the browser popup blocker silently kills the window.
+ * We open the window first with a loading placeholder, then fetch the config
+ * asynchronously and rewrite the document with the real content.
+ * Throws if the popup is blocked so callers can show a toast.
+ */
 export async function openPrintDocument(title: string, body: string, meta?: Record<string, string>): Promise<void> {
-  const config = await loadDocumentConfig();
+  // 1. Open window SYNCHRONOUSLY (preserves user-gesture trust)
   const printWindow = window.open('', '_blank');
-  if (!printWindow) return;
+  if (!printWindow) {
+    throw new Error('POPUP_BLOCKED');
+  }
 
+  // 2. Write a friendly loading placeholder immediately
+  try {
+    printWindow.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>${title}…</title>
+<style>body{font-family:Arial,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;color:#0369a1;font-size:14px;}</style>
+</head><body>Gerando documento…</body></html>`);
+  } catch { /* ignore */ }
+
+  // 3. Now fetch config (async) and rewrite the doc
+  const config = await loadDocumentConfig();
   const metaHtml = meta ? docMeta(meta) : '';
   const css = buildInstitutionalCSS();
 
-  printWindow.document.write(`<!DOCTYPE html>
+  try {
+    printWindow.document.open();
+    printWindow.document.write(`<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
@@ -359,6 +379,12 @@ export async function openPrintDocument(title: string, body: string, meta?: Reco
   ${docFooter(config)}
 </body>
 </html>`);
-  printWindow.document.close();
-  setTimeout(() => { printWindow.focus(); printWindow.print(); }, 400);
+    printWindow.document.close();
+    setTimeout(() => {
+      try { printWindow.focus(); printWindow.print(); } catch { /* ignore */ }
+    }, 400);
+  } catch (err) {
+    try { printWindow.close(); } catch { /* ignore */ }
+    throw err;
+  }
 }
