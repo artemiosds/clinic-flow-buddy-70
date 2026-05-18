@@ -11,6 +11,9 @@ interface HeaderPreviewA4Props {
   logoEsquerdaAtiva?: boolean;
   logoCentroAtiva?: boolean;
   logoDireitaAtiva?: boolean;
+  logoEsquerdaRedonda?: boolean;
+  logoCentroRedonda?: boolean;
+  logoDireitaRedonda?: boolean;
   linha1: string;
   linha2: string;
   rodape: string;
