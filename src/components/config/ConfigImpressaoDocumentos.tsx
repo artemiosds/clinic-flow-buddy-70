@@ -46,6 +46,7 @@ interface ImpressaoConfig {
     linha2: string;
     logoUrl: string;
     logoEsquerda: string;
+    logoCentro: string;
     logoDireita: string;
     fonte: string;
     tamanhoFonte: number;
