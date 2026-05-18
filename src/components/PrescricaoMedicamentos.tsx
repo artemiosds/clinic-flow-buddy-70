@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, Plus, X, Printer, Ban, Pill } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { openPrintDocument } from "@/lib/printLayout";
 
 interface MedicationType {
   id: string;
@@ -168,7 +169,7 @@ const PrescricaoMedicamentos: React.FC<PrescricaoMedicamentosProps> = ({
     toast.success("Medicamentos desabilitados para seu perfil.");
   };
 
-  const handlePrint = () => {
+  const handlePrint = async () => {
     if (value.length === 0) { toast.error("Nenhum medicamento na lista."); return; }
 
     const rows = value.map((m, i) =>
@@ -183,45 +184,33 @@ const PrescricaoMedicamentos: React.FC<PrescricaoMedicamentosProps> = ({
       ? `${profissionalTipoConselho} ${profissionalConselho}${profissionalUfConselho ? '/' + profissionalUfConselho : ''}`
       : '';
 
-    const html = `<!DOCTYPE html>
-<html><head><meta charset="utf-8"><title>Receituário Médico</title>
-<style>
-  @page { size: A5 portrait; margin: 12mm; }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Times New Roman', Georgia, serif; color: #000; background: #fff; font-size: 11pt; }
-  .header { text-align: center; margin-bottom: 16px; border-bottom: 2px solid #000; padding-bottom: 10px; }
-  .header h1 { font-size: 12pt; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
-  .header h2 { font-size: 10pt; font-weight: bold; margin-top: 2px; }
-  .header h3 { font-size: 11pt; font-weight: bold; margin-top: 8px; text-decoration: underline; }
-  .info { margin: 10px 0; font-size: 10pt; }
-  .info p { margin: 3px 0; }
-  .info span.label { font-weight: bold; }
-  .prescricoes { margin: 14px 0; }
-  .footer { margin-top: 30px; text-align: center; font-size: 10pt; }
-  .signature { margin-top: 40px; border-top: 1px solid #000; display: inline-block; padding-top: 4px; min-width: 250px; }
-  @media print { body { -webkit-print-color-adjust: exact; } }
-</style></head><body>
-<div class="header">
-  <h1>Secretaria Municipal de Saúde de Oriximiná</h1>
-  <h2>CAPS II</h2>
-  <h3>Receituário Médico</h3>
-</div>
-<div class="info">
-  <p><span class="label">Paciente:</span> ${pacienteNome || '—'}</p>
-  <p><span class="label">CPF:</span> ${pacienteCpf || '—'} &nbsp;&nbsp; <span class="label">CNS:</span> ${pacienteCns || '—'}</p>
-  <p><span class="label">Data:</span> ${dataAtendimento ? new Date(dataAtendimento + 'T12:00:00').toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR')}</p>
-  <p><span class="label">Convênio:</span> SUS</p>
-</div>
-<div class="prescricoes">${rows}</div>
-<div class="footer">
-  <p>${profissionalNome || ''}</p>
-  <p>${conselhoStr}</p>
-  <div class="signature">Assinatura / Carimbo</div>
-</div>
-</body></html>`;
+    const meta: Record<string, string> = {
+      Paciente: pacienteNome || '—',
+      CPF: pacienteCpf || '—',
+      CNS: pacienteCns || '—',
+      Data: dataAtendimento
+        ? new Date(dataAtendimento + 'T12:00:00').toLocaleDateString('pt-BR')
+        : new Date().toLocaleDateString('pt-BR'),
+      Convênio: 'SUS',
+    };
 
-    const w = window.open("", "_blank");
-    if (w) { w.document.write(html); w.document.close(); setTimeout(() => w.print(), 400); }
+    const body = `
+      <div class="prescricoes">${rows}</div>
+      <div class="signature">
+        <div class="signature-line"></div>
+        <div class="name">${profissionalNome || ''}</div>
+        <div class="role">${conselhoStr}</div>
+      </div>`;
+
+    try {
+      await openPrintDocument('RECEITUÁRIO MÉDICO', body, meta, { pageSize: 'A5', orientation: 'portrait' });
+    } catch (err: any) {
+      if (err?.message === 'POPUP_BLOCKED') {
+        toast.error('Pop-up bloqueado', { description: 'Permita pop-ups deste site e tente novamente.' });
+      } else {
+        toast.error('Erro ao gerar receituário', { description: err?.message ?? String(err) });
+      }
+    }
   };
 
   return (

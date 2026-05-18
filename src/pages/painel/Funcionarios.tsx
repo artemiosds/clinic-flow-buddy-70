@@ -28,6 +28,7 @@ import { useCustomFields } from '@/hooks/useCustomFields';
 import CboAutocomplete, { CboValue } from '@/components/CboAutocomplete';
 import { roleLabels, roleColors } from "@/lib/roleUtils";
 import { formatCNS, normalizeCNS, isCNSValid } from '@/lib/cnsUtils';
+import { openPrintDocument } from '@/lib/printLayout';
 
 interface FuncionarioDB {
   id: string;
@@ -391,23 +392,14 @@ const Funcionarios: React.FC = () => {
 
   const openProfile = (f: FuncionarioDB) => { setProfileFunc(f); setProfileOpen(true); };
 
-  const printFicha = (f: FuncionarioDB) => {
+  const printFicha = async (f: FuncionarioDB) => {
     const unidadeNome = unidades.find(u => u.id === f.unidade_id)?.nome || '—';
     const salaNome = salas.find(s => s.id === f.sala_id)?.nome || '—';
     const cd = (f.custom_data as any) || {};
     const row = (label: string, val: any) =>
-      `<tr><td style="padding:6px 10px;color:#666;border-bottom:1px solid #eee;width:38%;">${label}</td><td style="padding:6px 10px;border-bottom:1px solid #eee;">${val || '—'}</td></tr>`;
-    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Ficha — ${f.nome}</title>
-      <style>
-        body{font-family:Arial,sans-serif;color:#222;padding:24px;max-width:780px;margin:0 auto;}
-        h1{font-size:18px;border-bottom:2px solid #2A6F97;padding-bottom:6px;margin:0 0 6px;}
-        h2{font-size:13px;color:#2A6F97;margin:18px 0 6px;text-transform:uppercase;letter-spacing:.5px;}
-        table{width:100%;border-collapse:collapse;font-size:12.5px;}
-        .meta{font-size:11px;color:#777;margin-bottom:10px;}
-      </style></head><body>
-      <h1>Ficha do Funcionário</h1>
-      <div class="meta">Emitido em ${new Date().toLocaleString('pt-BR')}</div>
+      `<tr><td style="padding:6px 10px;color:#64748b;border-bottom:1px solid #e2e8f0;width:38%;">${label}</td><td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;">${val || '—'}</td></tr>`;
 
+    const body = `
       <h2>Dados Pessoais</h2>
       <table>
         ${row('Nome', f.nome)}
@@ -439,12 +431,18 @@ const Funcionarios: React.FC = () => {
         ${row('Cadastrado em', f.criado_em ? new Date(f.criado_em).toLocaleDateString('pt-BR') : '')}
       </table>
 
-      ${cd.observacoes_internas ? `<h2>Observações Internas</h2><div style="font-size:12.5px;white-space:pre-wrap;">${cd.observacoes_internas}</div>` : ''}
+      ${cd.observacoes_internas ? `<h2>Observações Internas</h2><div class="section-content" style="white-space:pre-wrap;">${cd.observacoes_internas}</div>` : ''}
+    `;
 
-      <script>window.onload=()=>setTimeout(()=>window.print(),200);</script>
-      </body></html>`;
-    const w = window.open('', '_blank');
-    if (w) { w.document.write(html); w.document.close(); }
+    try {
+      await openPrintDocument(`FICHA DO FUNCIONÁRIO — ${f.nome}`, body);
+    } catch (err: any) {
+      if (err?.message === 'POPUP_BLOCKED') {
+        toast.error('Pop-up bloqueado', { description: 'Permita pop-ups deste site e tente novamente.' });
+      } else {
+        toast.error('Erro ao gerar ficha', { description: err?.message ?? String(err) });
+      }
+    }
   };
 
   const renderCard = (f: FuncionarioDB, opts?: { inativo?: boolean }) => {

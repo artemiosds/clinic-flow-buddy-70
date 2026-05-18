@@ -1080,7 +1080,7 @@ ${dataRows}
     return `${day}/${m}/${y}`;
   };
 
-  const exportMapaPDF = useCallback(() => {
+  const exportMapaPDF = useCallback(async () => {
     if (mapaData.length === 0) return;
     const now = new Date().toLocaleString('pt-BR');
     const periodo = `${formatDateBR(mapaDateFrom)} a ${formatDateBR(mapaDateTo)}`;
@@ -1105,52 +1105,16 @@ ${dataRows}
       </table>
       <div style="margin-top:20px;font-size:9px;color:#64748b;">Gerado por: ${user?.nome || ''} — ${now}</div>`;
 
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) { toast.error('Pop-up bloqueado pelo navegador', { description: 'Permita pop-ups deste site e tente novamente.' }); return; }
-
-    const logoUrl = logoSmsFallback;
-    const logoUrlRight = logoCapsFallback;
-
-    printWindow.document.write(`<!DOCTYPE html>
-<html lang="pt-BR"><head><meta charset="UTF-8"><title>Mapa de Atendimentos — SMS Oriximiná</title>
-<style>
-  @page { size: A4 landscape; margin: 10mm; }
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family:'Segoe UI',Arial,sans-serif; padding:16px; color:#1e293b; font-size:10px; line-height:1.4; }
-  .doc-header { display:flex; align-items:center; gap:14px; padding:12px 16px; margin-bottom:12px;
-    background:linear-gradient(135deg,#0c4a6e,#0369a1); border-radius:6px; color:#fff;
-    -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-  .doc-header img { width:48px; height:48px; border-radius:8px; object-fit:cover; border:2px solid rgba(255,255,255,.3); }
-  .doc-header .header-text { flex:1; }
-  .doc-header h1 { font-size:13px; font-weight:700; }
-  .doc-header .subtitle { font-size:10px; opacity:.85; margin-top:1px; }
-  .doc-header .doc-title { font-size:11px; font-weight:700; margin-top:4px; text-transform:uppercase; }
-  .doc-header .emit-date { text-align:right; font-size:8px; opacity:.75; white-space:nowrap; }
-  .periodo { text-align:center; font-size:11px; color:#334155; margin-bottom:10px; font-weight:600; }
-  h2 { font-size:12px; color:#0369a1; margin:10px 0 6px; padding-bottom:3px; border-bottom:2px solid #e0f2fe; }
-  table { width:100%; border-collapse:collapse; margin-bottom:10px; }
-  th,td { border:1px solid #e2e8f0; padding:4px 6px; text-align:left; font-size:9px; }
-  th { background:#f1f5f9; font-weight:600; color:#334155; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-  tr:nth-child(even) { background:#f9f9f9; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-  tfoot td { border-top:2px solid #0369a1; }
-  @media print { body { padding:6px; } .no-print { display:none !important; } }
-</style></head><body>
-  <div class="doc-header">
-    <img src="${logoUrl}" alt="Logo SMS" />
-    <div class="header-text">
-      <h1>SECRETARIA MUNICIPAL DE SAÚDE DE ORIXIMINÁ</h1>
-      <div class="subtitle">CAPS II</div>
-      <div class="doc-title">Mapa de Atendimentos Concluídos</div>
-    </div>
-    <img src="${logoUrlRight}" alt="Logo CAPS II" style="max-height:48px;max-width:90px;object-fit:contain;" />
-    <div class="emit-date">Data de emissão:<br/>${now}</div>
-  </div>
-  <div class="periodo">Período: ${periodo}</div>
-  ${body}
-</body></html>`);
-
-    printWindow.document.close();
-    setTimeout(() => { printWindow.focus(); printWindow.print(); }, 400);
+    const tableHtml = `
+      <div style="text-align:center;font-size:11px;color:#334155;margin-bottom:10px;font-weight:600;">Período: ${periodo}</div>
+      ${body}
+      <div style="margin-top:20px;font-size:9px;color:#64748b;">Gerado por: ${user?.nome || ''} — ${now}</div>`;
+    try {
+      await openPrintDocument('MAPA DE ATENDIMENTOS CONCLUÍDOS', tableHtml, undefined, { pageSize: 'A4', orientation: 'landscape' });
+    } catch (err: any) {
+      if (err?.message === 'POPUP_BLOCKED') toast.error('Pop-up bloqueado pelo navegador', { description: 'Permita pop-ups deste site e tente novamente.' });
+      else toast.error('Erro ao gerar mapa', { description: err?.message ?? String(err) });
+    }
   }, [mapaData, mapaDateFrom, mapaDateTo, user]);
 
   const exportMapaCSV = useCallback(() => {

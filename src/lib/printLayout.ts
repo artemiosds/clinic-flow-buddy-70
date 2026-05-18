@@ -96,13 +96,24 @@ function resolveLogoUrl(configUrl: string, fallback: string): string {
   return fallback;
 }
 
+/** Options for institutional layout (page size, orientation, extra CSS). */
+export interface InstitutionalLayoutOptions {
+  pageSize?: 'A4' | 'A5';
+  orientation?: 'portrait' | 'landscape';
+  /** Extra CSS appended after institutional rules (for document-specific styles). */
+  extraCSS?: string;
+}
+
 /** Standard institutional CSS shared across all documents */
-export function buildInstitutionalCSS(): string {
+export function buildInstitutionalCSS(opts: InstitutionalLayoutOptions = {}): string {
+  const size = opts.pageSize || 'A4';
+  const orientation = opts.orientation || 'portrait';
+  const margin = size === 'A5' ? '12mm' : '25mm';
   return `
 <style>
   @page {
-    size: A4;
-    margin: 25mm;
+    size: ${size} ${orientation};
+    margin: ${margin};
     @bottom-center { content: "Página " counter(page) " de " counter(pages); font-size: 8pt; color: #666; }
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -294,6 +305,7 @@ export function buildInstitutionalCSS(): string {
     .doc-sign-footer { page-break-inside: avoid; }
     .e-signature-box { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   }
+  ${opts.extraCSS || ''}
 </style>`;
 }
 
@@ -388,7 +400,12 @@ export function docFooter(config: DocumentConfig, extraInfo?: string): string {
  * asynchronously and rewrite the document with the real content.
  * Throws if the popup is blocked so callers can show a toast.
  */
-export async function openPrintDocument(title: string, body: string, meta?: Record<string, string>): Promise<void> {
+export async function openPrintDocument(
+  title: string,
+  body: string,
+  meta?: Record<string, string>,
+  options?: InstitutionalLayoutOptions,
+): Promise<void> {
   // 1. Open window SYNCHRONOUSLY (preserves user-gesture trust)
   const printWindow = window.open('', '_blank');
   if (!printWindow) {
@@ -405,7 +422,7 @@ export async function openPrintDocument(title: string, body: string, meta?: Reco
   // 3. Now fetch config (async) and rewrite the doc
   const config = await loadDocumentConfig();
   const metaHtml = meta ? docMeta(meta) : '';
-  const css = buildInstitutionalCSS();
+  const css = buildInstitutionalCSS(options);
 
   try {
     printWindow.document.open();
