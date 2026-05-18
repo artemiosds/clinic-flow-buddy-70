@@ -657,6 +657,9 @@ const ConfigImpressaoDocumentos: React.FC = () => {
                 logoEsquerdaAtiva={config.cabecalho.logoEsquerdaAtiva}
                 logoCentroAtiva={config.cabecalho.logoCentroAtiva}
                 logoDireitaAtiva={config.cabecalho.logoDireitaAtiva}
+                logoEsquerdaRedonda={config.cabecalho.logoEsquerdaRedonda}
+                logoCentroRedonda={config.cabecalho.logoCentroRedonda}
+                logoDireitaRedonda={config.cabecalho.logoDireitaRedonda}
                 linha1={config.cabecalho.linha1}
                 linha2={config.cabecalho.linha2}
                 rodape={config.rodapeTexto}
