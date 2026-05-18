@@ -554,25 +554,34 @@ export const HistoricoClinicoTimeline: React.FC<Props> = ({ pacienteId, unidades
     );
   }, []);
 
-  const handlePrint = useCallback((e: TimelineEvent) => {
+  const handlePrint = useCallback(async (e: TimelineEvent) => {
     const config = TYPE_CONFIG[e.type] || TYPE_CONFIG.consulta;
-    const w = window.open("", "_blank", "width=900,height=700");
-    if (!w) return;
-    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Atendimento ${formatDateBR(e.date)}</title>
-      <style>body{font-family:Inter,Arial,sans-serif;padding:24px;color:#111;line-height:1.5}
-      h1{font-size:18px;margin:0 0 4px}h2{font-size:14px;margin:16px 0 4px;color:#555}
-      .meta{font-size:12px;color:#555;margin-bottom:12px}
-      .box{white-space:pre-wrap;word-break:break-word;border:1px solid #ddd;padding:12px;border-radius:6px;font-size:13px}
-      </style></head><body>
-      <h1>${config.label} — ${formatDateBR(e.date)}${e.time ? " " + e.time : ""}</h1>
-      <div class="meta">${[e.professional, e.specialtyOrType, e.unidade].filter(Boolean).join(" • ")}</div>
-      ${e.procedimentos ? `<h2>Procedimentos</h2><div class="box">${e.procedimentos}</div>` : ""}
-      <h2>Evolução</h2>
-      <div class="box">${(e.summary || "Sem registro de evolução").replace(/</g, "&lt;")}</div>
-      <script>window.onload=()=>{window.print();setTimeout(()=>window.close(),300);}</script>
-      </body></html>`;
-    w.document.write(html);
-    w.document.close();
+    const safe = (s: string) => (s || '').replace(/</g, '&lt;');
+    const meta: Record<string, string> = {};
+    if (e.professional) meta['Profissional'] = e.professional;
+    if (e.specialtyOrType) meta['Especialidade/Tipo'] = e.specialtyOrType;
+    if (e.unidade) meta['Unidade'] = e.unidade;
+
+    const body = `
+      ${e.procedimentos ? `<div class="section"><div class="section-title">Procedimentos</div><div class="section-content">${safe(e.procedimentos)}</div></div>` : ''}
+      <div class="section">
+        <div class="section-title">Evolução</div>
+        <div class="section-content">${safe(e.summary || 'Sem registro de evolução')}</div>
+      </div>`;
+
+    try {
+      await openPrintDocument(
+        `${config.label.toUpperCase()} — ${formatDateBR(e.date)}${e.time ? ' ' + e.time : ''}`,
+        body,
+        meta,
+      );
+    } catch (err: any) {
+      if (err?.message === 'POPUP_BLOCKED') {
+        toast.error('Pop-up bloqueado', { description: 'Permita pop-ups deste site e tente novamente.' });
+      } else {
+        toast.error('Erro ao gerar documento', { description: err?.message ?? String(err) });
+      }
+    }
   }, []);
 
 
