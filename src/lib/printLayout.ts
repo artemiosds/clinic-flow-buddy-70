@@ -13,6 +13,7 @@ import logoCapsFallback from '@/assets/logo-caps-ii.png';
 
 export interface DocumentConfig {
   logoEsquerda: string;
+  logoCentro: string;
   logoDireita: string;
   linha1: string;
   linha2: string;
@@ -21,6 +22,7 @@ export interface DocumentConfig {
 
 const DEFAULT_CONFIG: DocumentConfig = {
   logoEsquerda: '',
+  logoCentro: '',
   logoDireita: '',
   linha1: 'SECRETARIA MUNICIPAL DE SAÚDE DE ORIXIMINÁ',
   linha2: 'CAPS II',
