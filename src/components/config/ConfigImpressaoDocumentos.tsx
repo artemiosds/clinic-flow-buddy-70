@@ -239,6 +239,7 @@ const ConfigImpressaoDocumentos: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingLeft, setUploadingLeft] = useState(false);
+  const [uploadingCenter, setUploadingCenter] = useState(false);
   const [uploadingRight, setUploadingRight] = useState(false);
 
   const loadConfig = useCallback(async () => {
