@@ -17,6 +17,7 @@ interface HeaderPreviewA4Props {
 /** Real-time A4-simulated preview of the document header */
 const HeaderPreviewA4: React.FC<HeaderPreviewA4Props> = ({
   logoEsquerda,
+  logoCentro,
   logoDireita,
   linha1,
   linha2,
