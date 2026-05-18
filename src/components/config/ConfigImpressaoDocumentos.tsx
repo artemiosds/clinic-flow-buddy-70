@@ -139,12 +139,14 @@ interface LogoUploadCardProps {
   url: string;
   size: number;
   active: boolean;
+  rounded: boolean;
   uploading: boolean;
   onUpload: (file: File) => void;
   onRemove: () => void;
   onSizeChange: (n: number) => void;
   onSizeCommit: () => void;
   onActiveChange: (v: boolean) => void;
+  onRoundedChange: (v: boolean) => void;
 }
 
 const LogoUploadCard: React.FC<LogoUploadCardProps> = ({
@@ -154,12 +156,14 @@ const LogoUploadCard: React.FC<LogoUploadCardProps> = ({
   url,
   size,
   active,
+  rounded,
   uploading,
   onUpload,
   onRemove,
   onSizeChange,
   onSizeCommit,
   onActiveChange,
+  onRoundedChange,
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
