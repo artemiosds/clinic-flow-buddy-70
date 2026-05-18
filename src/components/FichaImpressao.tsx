@@ -442,6 +442,7 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = "co
       <img src="${logoLeft}" alt="Logo" onerror="this.style.display='none'" />
     </div>
     <div class="header-center">
+      ${logoCenter ? `<div style="display:flex;justify-content:center;margin-bottom:4px;"><img src="${logoCenter}" alt="Logo centro" style="max-height:44px;max-width:120px;object-fit:contain;" onerror="this.style.display='none'" /></div>` : ''}
       <h1>${linha1}</h1>
       <h2>${linha2}</h2>
       <div class="ficha-tipo">${somentePessoais ? "FICHA CADASTRAL SIMPLIFICADA" : "FICHA DE ATENDIMENTO COMPLETA"}</div>
