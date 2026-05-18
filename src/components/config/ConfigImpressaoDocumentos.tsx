@@ -221,12 +221,16 @@ const LogoUploadCard: React.FC<LogoUploadCardProps> = ({
             <img
               src={url}
               alt={title}
-              style={{ maxHeight: Math.min(size, 96), maxWidth: size * 2 }}
-              className="object-contain rounded bg-white p-1 border border-border"
+              style={
+                rounded
+                  ? { width: Math.min(size, 96), height: Math.min(size, 96), borderRadius: 9999, objectFit: 'cover' }
+                  : { maxHeight: Math.min(size, 96), maxWidth: size * 2 }
+              }
+              className={cn("bg-white p-1 border border-border", rounded ? "" : "object-contain rounded")}
             />
           </div>
         ) : (
-          <div className="w-20 h-20 rounded-lg bg-muted flex flex-col items-center justify-center gap-1">
+          <div className={cn("w-20 h-20 bg-muted flex flex-col items-center justify-center gap-1", rounded ? "rounded-full" : "rounded-lg")}>
             <ImageIcon className="w-7 h-7 text-muted-foreground/60" />
             <span className="text-[9px] text-muted-foreground">Arraste aqui</span>
           </div>
