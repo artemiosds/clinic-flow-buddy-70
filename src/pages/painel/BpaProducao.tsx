@@ -581,6 +581,7 @@ const BpaProducao: React.FC = () => {
           competencia: modalCompetencia,
           unidade_id: modalUnidade || '',
           cnes: modalCnes || '',
+          profissional_id: filters.profissionalId !== 'all' ? filters.profissionalId : '',
         },
       });
 
