@@ -1,940 +1,117 @@
-import React, { useCallback, useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Printer } from "lucide-react";
-import { loadDocumentConfig, type DocumentConfig } from "@/lib/printLayout";
-import logoSmsFallback from "@/assets/logo-sms-oriximina.jpeg";
-import logoCapsFallback from "@/assets/logo-caps-ii.png";
-
-interface FichaData {
-  paciente: {
-    // Identificação
-    nome_completo: string;
-    nome_mae: string;
-    data_nascimento: string;
-    sexo?: string;
-    cpf: string;
-    cns: string;
-    naturalidade?: string;
-    naturalidade_uf?: string;
-    nacionalidade?: string;
-    raca_cor?: string;
-    situacao_rua?: boolean;
-    menor_idade?: boolean;
-    nome_responsavel?: string;
-    cpf_responsavel?: string;
-
-    // Endereço
-    cep?: string;
-    tipo_logradouro?: string;
-    logradouro?: string;
-    numero?: string;
-    complemento?: string;
-    bairro?: string;
-    municipio?: string;
-    uf?: string;
-    endereco_legado?: string;
-
-    // Contato
-    telefone: string;
-    telefone_secundario?: string;
-    email?: string;
-
-    // Complementares
-    parentesco?: string;
-    observacoes?: string;
-    ubs_origem?: string;
-    profissional_solicitante?: string;
-    tipo_encaminhamento?: string;
-    especialidade_destino?: string;
-    unidade_vinculada?: string;
-    origem_cadastro?: string;
-  };
-  dadosClinicos: {
-    numero_prontuario: string;
-    cid: string;
-    tipo_atendimento: string;
-    unidade_origem: string;
-    unidade_atendimento: string;
-    data_atendimento: string;
-    especialidade?: string;
-    encaminhamento?: string;
-  };
-  sinaisVitais: {
-    pressao_arterial: string;
-    frequencia_cardiaca: string;
-    temperatura: string;
-    saturacao: string;
-    peso: string;
-    altura: string;
-    glicemia?: string;
-    frequencia_respiratoria?: string;
-  };
-  profissional: {
-    nome: string;
-    cargo: string;
-    registro: string;
-  };
-  evoluciones: Array<{
-    data: string;
-    observacao: string;
-    profissional: string;
-  }>;
-}
-
-const formatarData = (data: string): string => {
-  if (!data) return "___/___/______";
-  try {
-    const d = new Date(data.length <= 10 ? data + "T12:00:00" : data);
-    if (isNaN(d.getTime())) return "___/___/______";
-    return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
-  } catch {
-    return "___/___/______";
-  }
-};
-
-const calcIdade = (dataNasc: string): string => {
-  if (!dataNasc) return "__";
-  try {
-    const d = new Date(dataNasc.length <= 10 ? dataNasc + "T12:00:00" : dataNasc);
-    if (isNaN(d.getTime())) return "__";
-    const now = new Date();
-    let age = now.getFullYear() - d.getFullYear();
-    const m = now.getMonth() - d.getMonth();
-    if (m < 0 || (m === 0 && now.getDate() < d.getDate())) age--;
-    return age >= 0 ? `${age} anos` : "__";
-  } catch {
-    return "__";
-  }
-};
-
-const v = (valor: string | undefined): string => valor?.trim() || "";
-
-export type FichaPrintMode = "completa" | "dados_pessoais";
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { Button } from '@/components/ui/button';
+import { Loader2, Printer } from 'lucide-react';
+import { toast } from 'sonner';
+import { loadDocumentConfig, type DocumentConfig } from '@/lib/printLayout';
+import PacienteFichaDocument, {
+  type FichaPrintMode,
+  type PacienteFichaDocumentData,
+} from '@/components/pacientes/PacienteFichaDocument';
 
 interface FichaImpressaoProps {
-  data: FichaData;
+  data: PacienteFichaDocumentData;
   mode?: FichaPrintMode;
-  onPrintComplete?: () => void;
 }
 
-const resolveLogoUrl = (src: string): string => {
-  if (!src) return "";
-  if (src.startsWith("http")) return src;
-  // Se for um caminho relativo ou base64, tenta resolver para absoluto
-  if (src.startsWith("data:image")) return src;
-  if (src.startsWith("/")) return window.location.origin + src;
-  return src;
-};
+export type { FichaPrintMode } from '@/components/pacientes/PacienteFichaDocument';
 
-const PRINT_CSS = `
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  @page { size: A4 portrait; margin: 10mm 12mm 10mm 12mm; }
-  body {
-    font-family: 'Segoe UI', Arial, sans-serif;
-    font-size: 10.5px;
-    color: #1a1a1a;
-    line-height: 1.4;
-    background: #fff;
-    width: 100%;
-  }
-
-  /* ===== HEADER ===== */
-  .header {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    padding-bottom: 10px;
-    margin-bottom: 12px;
-    border-bottom: 2px solid #0c4a6e;
-  }
-  .header-logo img {
-    width: 60px;
-    height: 60px;
-    object-fit: contain;
-  }
-  .header-center {
-    flex: 1;
-    text-align: center;
-  }
-  .header-center h1 {
-    font-size: 14px;
-    font-weight: 800;
-    text-transform: uppercase;
-    color: #0c4a6e;
-    margin: 0;
-  }
-  .header-center h2 {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    color: #334155;
-    margin: 2px 0;
-  }
-  .header-center .ficha-tipo {
-    font-size: 11px;
-    font-weight: 800;
-    text-transform: uppercase;
-    background: #0c4a6e;
-    color: #fff;
-    display: inline-block;
-    padding: 2px 15px;
-    border-radius: 4px;
-    margin-top: 4px;
-  }
-  .header-right {
-    text-align: right;
-    font-size: 10px;
-    color: #475569;
-    min-width: 140px;
-  }
-  .header-right b { color: #0c4a6e; }
-
-  /* ===== SECTIONS ===== */
-  .bloco {
-    margin-top: 8px;
-    border: 1px solid #cbd5e1;
-    border-radius: 4px;
-    overflow: hidden;
-    page-break-inside: avoid;
-  }
-  .bloco-titulo {
-    font-size: 9.5px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    background: #f1f5f9;
-    color: #0c4a6e;
-    padding: 4px 10px;
-    border-bottom: 1px solid #cbd5e1;
-    display: flex;
-    justify-content: space-between;
-  }
-  .bloco-body {
-    padding: 6px 10px;
-  }
-
-  /* ===== GRID LAYOUTS ===== */
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 15px; }
-  .grid-3 { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 4px 15px; }
-  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px 12px; }
-  .grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px 10px; }
-  .grid-mixed { display: grid; grid-template-columns: 2fr 1fr 1.5fr; gap: 4px 15px; }
-  .grid-address { display: grid; grid-template-columns: 3fr 1fr 1.5fr; gap: 4px 15px; }
-
-  .campo { margin-bottom: 1px; }
-  .campo b {
-    font-size: 8px;
-    text-transform: uppercase;
-    color: #64748b;
-    font-weight: 700;
-    display: block;
-    margin-bottom: 1px;
-  }
-  .campo span {
-    color: #0f172a;
-    font-weight: 600;
-    font-size: 10.5px;
-    display: block;
-    min-height: 14px;
-  }
-  .campo-inline { display: flex; align-items: baseline; gap: 4px; }
-  .campo-inline b { display: inline; margin-bottom: 0; }
-  .campo-inline span { display: inline; }
-  .campo-full { grid-column: 1 / -1; }
-
-  /* ===== SPECIAL ELEMENTS ===== */
-  .badge-menor {
-    background: #fee2e2;
-    color: #991b1b;
-    padding: 1px 6px;
-    border-radius: 3px;
-    font-size: 8px;
-    font-weight: 800;
-    text-transform: uppercase;
-    margin-left: 8px;
-  }
-
-  /* ===== VITALS TABLE ===== */
-  .vitais-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 2px;
-  }
-  .vitais-table td {
-    border: 1px solid #e2e8f0;
-    padding: 5px 8px;
-    text-align: center;
-    width: 25%; /* Ajustado para 4 colunas */
-  }
-  .vitais-table td b {
-    display: block;
-    font-size: 7.5px;
-    text-transform: uppercase;
-    color: #64748b;
-    font-weight: 700;
-    margin-bottom: 1px;
-  }
-  .vitais-table td span {
-    font-weight: 700;
-    color: #0c4a6e;
-    font-size: 11px;
-  }
-
-  /* ===== EVOLUTION AREAS ===== */
-  .evo-item {
-    border-bottom: 1px solid #f1f5f9;
-    padding: 6px 0;
-  }
-  .evo-item:last-child { border-bottom: none; }
-  .evo-meta { font-size: 8.5px; color: #64748b; font-weight: 700; margin-bottom: 2px; }
-  .evo-text { font-size: 10px; color: #1e293b; line-height: 1.4; white-space: pre-wrap; }
-
-  .evo-line {
-    border-bottom: 1px solid #e2e8f0;
-    height: 22px;
-  }
-
-  /* ===== SIGNATURE ===== */
-  .assinatura-area {
-    margin-top: 25px;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    page-break-inside: avoid;
-  }
-  .assinatura-bloco {
-    text-align: center;
-    width: 250px;
-  }
-  .assinatura-traco {
-    border-top: 1px solid #334155;
-    margin-bottom: 4px;
-  }
-  .assinatura-nome {
-    font-size: 10px;
-    font-weight: 700;
-    color: #0f172a;
-    text-transform: uppercase;
-  }
-  .assinatura-label {
-    font-size: 8.5px;
-    color: #64748b;
-  }
-
-  .data-local {
-    font-size: 10px;
-    color: #475569;
-  }
-
-  /* ===== FOOTER ===== */
-  .rodape {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: 5px 12mm;
-    border-top: 1px solid #e2e8f0;
-    text-align: center;
-    font-size: 8px;
-    color: #94a3b8;
-    background: #fff;
-  }
-
-  @media print {
-    body { padding-bottom: 40px; }
-    .bloco { break-inside: avoid; border-color: #94a3b8; }
-    .header { border-bottom-width: 3px; }
-    .bloco-titulo { background: #f8fafc !important; -webkit-print-color-adjust: exact; }
-    .header-center .ficha-tipo { background: #0c4a6e !important; -webkit-print-color-adjust: exact; }
-    .evo-line { border-bottom-color: #cbd5e1 !important; }
-  }
-`;
-
-export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = "completa", onPrintComplete }) => {
-  const somentePessoais = mode === "dados_pessoais";
+export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'completa' }) => {
   const [config, setConfig] = useState<DocumentConfig | null>(null);
+  const [printHost, setPrintHost] = useState<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    let active = true;
+
     const fetchConfig = async () => {
       const cfg = await loadDocumentConfig();
-      setConfig(cfg);
+      if (active) setConfig(cfg);
     };
+
     fetchConfig();
+
+    const host = document.createElement('div');
+    host.className = 'patient-sheet-print-host';
+    document.body.appendChild(host);
+    setPrintHost(host);
+
+    return () => {
+      active = false;
+      host.remove();
+    };
   }, []);
 
-  const buildHTML = useCallback(() => {
-    const showLeft = config?.logoEsquerdaAtiva !== false;
-    const showCenter = config?.logoCentroAtiva !== false && !!config?.logoCentro;
-    const showRight = config?.logoDireitaAtiva !== false;
-    const logoLeft = showLeft ? (config?.logoEsquerda || resolveLogoUrl(logoSmsFallback)) : "";
-    const logoCenter = showCenter ? config!.logoCentro : "";
-    const logoRight = showRight ? (config?.logoDireita || resolveLogoUrl(logoCapsFallback)) : "";
-    const hL = Math.max(28, Math.min(140, config?.logoEsquerdaTamanho || 64));
-    const hC = Math.max(28, Math.min(140, config?.logoCentroTamanho || 56));
-    const hR = Math.max(28, Math.min(140, config?.logoDireitaTamanho || 64));
-    const roundL = config?.logoEsquerdaRedonda === true;
-    const roundC = config?.logoCentroRedonda === true;
-    const roundR = config?.logoDireitaRedonda === true;
-    const styleFor = (size: number, rounded: boolean) =>
-      rounded
-        ? `width:${size}px;height:${size}px;border-radius:9999px;object-fit:cover;background:#fff;`
-        : `max-height:${size}px;max-width:${size * 2}px;object-fit:contain;`;
-    const linha1 = config?.linha1 || "Secretaria Municipal de Saúde de Oriximiná";
-    const linha2 = config?.linha2 || "CAPS II";
-
-    const now = new Date();
-    const dataAtual = formatarData(now.toISOString());
-    const horaAtual = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-    const p = data.paciente;
-    const dc = data.dadosClinicos;
-    const sv = data.sinaisVitais;
-    const idade = calcIdade(p.data_nascimento);
-
-    const getRacaLabel = (val?: string) => {
-      const options: Record<string, string> = {
-        branca: "Branca",
-        preta: "Preta",
-        parda: "Parda",
-        amarela: "Amarela",
-        indigena: "Indígena",
-        nao_declarado: "Não declarado",
-      };
-      return options[val || ""] || "Não declarado";
-    };
-
-    const getSexoLabel = (val?: string) => {
-      const s = String(val || "").toUpperCase();
-      if (s === "M" || s === "MASCULINO") return "Masculino";
-      if (s === "F" || s === "FEMININO") return "Feminino";
-      if (s === "I" || s === "IGNORADO") return "Ignorado";
-      return "Não informado";
-    };
-
-    const val = (value: any, fallback = "—") => {
-      if (value === undefined || value === null || value === "") return fallback;
-      if (typeof value === "boolean") return value ? "Sim" : "Não";
-      return String(value).trim() || fallback;
-    };
-
-    const valVital = (v: any) => {
-      return "________";
-    };
-
-    const evolucaoHTML = "";
-
-    const linhasVazias = (titulo: string, numLinhas: number = 3) => `
-      <div class="bloco">
-        <div class="bloco-titulo">${titulo}</div>
-        <div class="bloco-body">
-          ${Array.from({ length: numLinhas }, () => '<div class="evo-line"></div>').join("")}
-        </div>
-      </div>
-    `;
-
-    const blocoCurto = (titulo: string) => `
-      <div class="bloco">
-        <div class="bloco-titulo">${titulo}</div>
-        <div class="bloco-body">
-          <div class="evo-line"></div>
-        </div>
-      </div>
-    `;
-
-    return `<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <title>Ficha Cadastral - ${val(p.nome_completo)}</title>
-  <style>${PRINT_CSS}</style>
-</head>
-<body>
-
-  <!-- CABEÇALHO -->
-  <div class="header">
-    <div class="header-logo" style="min-width:${logoLeft ? hL * 1.4 : 0}px;">
-      ${logoLeft ? `<img src="${logoLeft}" alt="Logo" style="${styleFor(hL, roundL)}" onerror="this.style.display='none'" />` : ''}
-    </div>
-    <div class="header-center">
-      ${logoCenter ? `<div style="display:flex;justify-content:center;margin-bottom:4px;"><img src="${logoCenter}" alt="Logo centro" style="${styleFor(hC, roundC)}" onerror="this.style.display='none'" /></div>` : ''}
-      <h1>${linha1}</h1>
-      <h2>${linha2}</h2>
-      <div class="ficha-tipo">${somentePessoais ? "FICHA CADASTRAL SIMPLIFICADA" : "FICHA DE ATENDIMENTO COMPLETA"}</div>
-    </div>
-    <div class="header-logo" style="min-width:${logoRight ? hR * 1.4 : 0}px;">
-      ${logoRight ? `<img src="${logoRight}" alt="Logo" style="${styleFor(hR, roundR)}" onerror="this.style.display='none'" />` : ''}
-    </div>
-    <div class="header-right">
-      <div><b>Data:</b> ${dataAtual}</div>
-      <div><b>Hora:</b> ${horaAtual}</div>
-      <div><b>Prontuário:</b> ${val(dc.numero_prontuario, "NOVO")}</div>
-    </div>
-  </div>
-
-  <!-- SEÇÃO 1: IDENTIFICAÇÃO -->
-  <div class="bloco">
-    <div class="bloco-titulo">
-      <span>1. Identificação do Paciente</span>
-      ${p.menor_idade ? '<span class="badge-menor">Paciente Menor de Idade</span>' : ""}
-    </div>
-    <div class="bloco-body">
-      <div class="grid-2">
-        <div class="campo campo-full"><b>Nome Completo</b><span style="font-size:12px; font-weight:700">${val(p.nome_completo, "Não informado")}</span></div>
-        <div class="campo"><b>Nome da Mãe</b><span>${val(p.nome_mae, "Não informado")}</span></div>
-        <div class="campo"><b>Naturalidade / UF</b><span>${val(p.naturalidade)} / ${val(p.naturalidade_uf, "—")}</span></div>
-      </div>
-      <div class="grid-5" style="margin-top:4px">
-        <div class="campo"><b>Data de Nasc.</b><span>${formatarData(p.data_nascimento)}</span></div>
-        <div class="campo"><b>Idade</b><span>${idade}</span></div>
-        <div class="campo"><b>Sexo</b><span>${getSexoLabel(p.sexo)}</span></div>
-        <div class="campo"><b>CPF</b><span>${val(p.cpf, "Não informado")}</span></div>
-        <div class="campo"><b>CNS (Cartão SUS)</b><span>${val(p.cns, "Não informado")}</span></div>
-      </div>
-      <div class="grid-3" style="margin-top:4px">
-        <div class="campo"><b>Nacionalidade</b><span>${val(p.nacionalidade, "Brasileira")}</span></div>
-        <div class="campo"><b>Raça / Cor (IBGE)</b><span>${getRacaLabel(p.raca_cor)}</span></div>
-        <div class="campo"><b>Situação de Rua?</b><span>${p.situacao_rua ? "Sim" : "Não"}</span></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- SEÇÃO 2: ENDEREÇO -->
-  <div class="bloco">
-    <div class="bloco-titulo">2. Endereço e Localização</div>
-    <div class="bloco-body">
-      <div class="grid-address">
-        <div class="campo"><b>Tipo de Logradouro / Logradouro</b><span>${val(p.tipo_logradouro)} ${val(p.logradouro, "Não informado")}</span></div>
-        <div class="campo"><b>Número</b><span>${val(p.numero, "S/N")}</span></div>
-        <div class="campo"><b>Complemento</b><span>${val(p.complemento, "—")}</span></div>
-      </div>
-      <div class="grid-3" style="margin-top:4px">
-        <div class="campo"><b>Bairro</b><span>${val(p.bairro, "Não informado")}</span></div>
-        <div class="campo"><b>Município de Residência</b><span>${val(p.municipio, "Oriximiná")}</span></div>
-        <div class="campo"><b>UF / CEP</b><span>${val(p.uf, "PA")} / ${val(p.cep, "—")}</span></div>
-      </div>
-      ${p.endereco_legado ? `<div class="campo" style="margin-top:4px; border-top:1px dashed #e2e8f0; padding-top:2px"><b>Endereço Completo (Referência)</b><span>${p.endereco_legado}</span></div>` : ""}
-    </div>
-  </div>
-
-  <!-- SEÇÃO 3: CONTATO -->
-  <div class="bloco">
-    <div class="bloco-titulo">3. Informações de Contato</div>
-    <div class="bloco-body">
-      <div class="grid-3">
-        <div class="campo"><b>Telefone Principal</b><span>${val(p.telefone, "Não informado")}</span></div>
-        <div class="campo"><b>Telefone Secundário</b><span>${val(p.telefone_secundario, "—")}</span></div>
-        <div class="campo"><b>E-mail</b><span>${val(p.email, "—")}</span></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- SEÇÃO 4: DADOS COMPLEMENTARES -->
-  <div class="bloco">
-    <div class="bloco-titulo">4. Dados Complementares / Responsável</div>
-    <div class="bloco-body">
-      <div class="grid-3">
-        <div class="campo"><b>Nome do Responsável</b><span>${val(p.nome_responsavel, "O próprio")}</span></div>
-        <div class="campo"><b>CPF do Responsável</b><span>${val(p.cpf_responsavel, "—")}</span></div>
-        <div class="campo"><b>Vínculo / Parentesco</b><span>${val(p.parentesco, "—")}</span></div>
-      </div>
-      <div class="grid-3" style="margin-top:4px">
-        <div class="campo"><b>Unidade Vinculada</b><span>${val(p.unidade_vinculada, "CAPS II")}</span></div>
-        <div class="campo"><b>UBS de Origem</b><span>${val(p.ubs_origem, "—")}</span></div>
-        <div class="campo"><b>Tipo Encaminhamento</b><span>${val(p.tipo_encaminhamento, "—")}</span></div>
-      </div>
-      <div class="grid-2" style="margin-top:4px">
-        <div class="campo"><b>Profissional Solicitante</b><span>${val(p.profissional_solicitante, "—")}</span></div>
-        <div class="campo"><b>Especialidade Destino</b><span>${val(p.especialidade_destino, "—")}</span></div>
-      </div>
-      <div class="campo" style="margin-top:4px"><b>Observações Cadastrais</b><span>${val(p.observacoes, "Nenhuma observação registrada.")}</span></div>
-    </div>
-  </div>
-
-  ${
-    !somentePessoais
-      ? `
-  <!-- SEÇÃO 5: DADOS DO ATENDIMENTO -->
-  <div class="bloco">
-    <div class="bloco-titulo">5. Dados do Atendimento</div>
-    <div class="bloco-body">
-      <div class="grid-3">
-        <div class="campo"><b>Unidade de Atendimento</b><span>________________</span></div>
-        <div class="campo"><b>Tipo de Atendimento</b><span>________________</span></div>
-        <div class="campo"><b>Especialidade</b><span>________________</span></div>
-      </div>
-      <div class="grid-2" style="margin-top:4px">
-        <div class="campo"><b>Unidade de Origem</b><span>________________</span></div>
-        <div class="campo"><b>CID / Diagnóstico</b><span>________________</span></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- SEÇÃO 6: TRIAGEM E SINAIS VITAIS -->
-  <div class="bloco">
-    <div class="bloco-titulo">6. Triagem / Sinais Vitais</div>
-    <div class="bloco-body">
-      <table class="vitais-table">
-        <tr>
-          <td><b>PA (Pressão)</b><span>________</span></td>
-          <td><b>FC (BPM)</b><span>________</span></td>
-          <td><b>FR (resp)</b><span>________</span></td>
-          <td><b>Temp (°C)</b><span>________</span></td>
-        </tr>
-        <tr>
-          <td><b>SpO2 (%)</b><span>________</span></td>
-          <td><b>Peso (kg)</b><span>________</span></td>
-          <td><b>Altura (m)</b><span>________</span></td>
-          <td><b>Glicemia</b><span>________</span></td>
-        </tr>
-      </table>
-    </div>
-  </div>
-
-  <!-- CAMPOS CLÍNICOS -->
-  ${linhasVazias("7. Queixa Principal", 2)}
-  
-  <div class="bloco">
-    <div class="bloco-titulo">8. Evolução Clínica</div>
-    <div class="bloco-body">
-      ${Array.from({ length: 12 }, () => '<div class="evo-line"></div>').join("")}
-    </div>
-  </div>
-
-  ${linhasVazias("9. Conduta / Prescrição", 4)}
-  
-  <div class="grid-2">
-    ${blocoCurto("10. Diagnóstico")}
-    ${blocoCurto("11. Retorno")}
-  </div>
-
-  ${linhasVazias("12. Medicação / Prescrição", 4)}
-  ${linhasVazias("13. Procedimentos", 3)}
-  `
-      : ""
-  }
-
-  <!-- ASSINATURA -->
-  <div class="assinatura-area">
-    <div class="data-local">Oriximiná &mdash; PA, ____/____/________</div>
-    <div class="assinatura-bloco">
-      <div class="assinatura-traco"></div>
-      <div class="assinatura-nome">${val(data.profissional.nome, "PROFISSIONAL RESPONSÁVEL")}</div>
-      <div class="assinatura-label">${val(data.profissional.cargo)} &mdash; ${val(data.profissional.registro)}</div>
-    </div>
-  </div>
-
-  <div class="rodape">
-    Impresso via Lovable Cloud &mdash; CAPS II Oriximiná &mdash; ${dataAtual} ${horaAtual} &mdash; ${somentePessoais ? "Ficha Cadastral Simplificada" : "Ficha de Atendimento Completa"}
-  </div>
-
-</body>
-</html>`;
-  }, [data, somentePessoais]);
+  const generatedAt = useMemo(() => new Date(), [data.paciente.id, mode]);
 
   const handlePrint = useCallback(() => {
-    const html = buildHTML();
-    
-    // Fallback para quando o navegador bloqueia window.open (comum em popups)
-    const printUsingIframe = () => {
-      const iframe = document.createElement("iframe");
-      iframe.style.position = "fixed";
-      iframe.style.top = "-9999px";
-      iframe.style.left = "-9999px";
-      iframe.style.width = "210mm";
-      iframe.style.height = "297mm";
-      document.body.appendChild(iframe);
-      
-      const doc = iframe.contentDocument || (iframe.contentWindow?.document);
-      if (doc) {
-        doc.open();
-        doc.write(html);
-        doc.close();
-        
-        // Aguarda renderização/imagens (importante para não sair em branco)
-        const checkReadyAndPrint = () => {
-          if (doc.readyState === "complete") {
-            setTimeout(() => {
-              iframe.contentWindow?.focus();
-              iframe.contentWindow?.print();
-              setTimeout(() => {
-                document.body.removeChild(iframe);
-                onPrintComplete?.();
-              }, 1000);
-            }, 500);
-          } else {
-            setTimeout(checkReadyAndPrint, 100);
-          }
-        };
-        checkReadyAndPrint();
-      }
-    };
-
-    try {
-      const win = window.open("", "_blank");
-      if (!win || win.closed || typeof win.closed === "undefined") {
-        printUsingIframe();
-        return;
-      }
-
-      win.document.open();
-      win.document.write(html);
-      win.document.close();
-      
-      // Monitora se o documento está carregado
-      const checkReady = setInterval(() => {
-        if (win.document.readyState === "complete") {
-          clearInterval(checkReady);
-          win.focus();
-          setTimeout(() => {
-            win.print();
-            // Fallback para navegadores que não suportam afterprint
-            let printed = false;
-            win.addEventListener("afterprint", () => {
-              printed = true;
-              win.close();
-              onPrintComplete?.();
-            });
-            // Se após 2 segundos o evento afterprint não disparou (o usuário pode ter cancelado ou o navegador não disparou),
-            // tentamos fechar via timeout caso o foco volte
-            window.addEventListener("focus", () => {
-              setTimeout(() => {
-                if (!printed && !win.closed) {
-                  // onPrintComplete?.(); // Opcional
-                }
-              }, 500);
-            }, { once: true });
-          }, 500);
-        }
-      }, 100);
-    } catch (e) {
-      console.error("Print error, falling back to iframe:", e);
-      printUsingIframe();
+    if (!data?.paciente?.id) {
+      console.error('[FichaPaciente] Paciente não selecionado para impressão.');
+      toast.error('Paciente não selecionado para impressão.');
+      return;
     }
-  }, [buildHTML, onPrintComplete]);
+
+    if (!config || !printHost) {
+      toast.error('A ficha ainda está sendo preparada para impressão.');
+      return;
+    }
+
+    console.log('[FichaPaciente] Imprimindo ficha', {
+      pacienteId: data.paciente.id,
+      nome: data.paciente.nome_completo,
+      modo: mode,
+    });
+
+    window.requestAnimationFrame(() => {
+      window.print();
+    });
+  }, [config, data, mode, printHost]);
+
+  if (!config) {
+    return (
+      <div className="flex min-h-[320px] flex-col items-center justify-center gap-3 text-muted-foreground">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        <p className="text-sm">Carregando configuração institucional da ficha...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-col items-center gap-6 py-4">
-      <div className="w-full border rounded-lg bg-white p-6 shadow-sm max-h-[70vh] overflow-y-auto">
-        <div className="flex items-center gap-4 mb-4 border-b-2 border-primary/20 pb-4">
-          {(config?.logoEsquerdaAtiva !== false) && (
-            <img
-              src={config?.logoEsquerda || logoSmsFallback}
-              alt="Logo"
-              style={{ maxHeight: (config?.logoEsquerdaTamanho || 64) * 0.6, maxWidth: 120 }}
-              className="object-contain"
-            />
-          )}
-          <div className="flex-1 text-center">
-            {config?.logoCentro && config?.logoCentroAtiva !== false && (
-              <div className="flex justify-center mb-1">
-                <img
-                  src={config.logoCentro}
-                  alt="Logo centro"
-                  style={{ maxHeight: (config?.logoCentroTamanho || 56) * 0.6, maxWidth: 130 }}
-                  className="object-contain"
-                />
-              </div>
-            )}
-            <h2 className="text-sm font-bold uppercase tracking-tight text-primary">
-              {config?.linha1 || "Prefeitura Municipal de Oriximiná"}
-            </h2>
-            <p className="text-[11px] font-bold text-muted-foreground uppercase">
-              {config?.linha2 || "CAPS II"}
-            </p>
-          </div>
-          {(config?.logoDireitaAtiva !== false) && (
-            <img
-              src={config?.logoDireita || logoCapsFallback}
-              alt="Logo"
-              style={{ maxHeight: (config?.logoDireitaTamanho || 64) * 0.6, maxWidth: 120 }}
-              className="object-contain"
-            />
-          )}
+    <>
+      <div className="flex flex-col items-center gap-4 py-4">
+        <div className="patient-sheet-preview-shell no-print">
+          <PacienteFichaDocument
+            data={data}
+            mode={mode}
+            institutionalConfig={config}
+            generatedAt={generatedAt}
+          />
         </div>
 
-        <div className="bg-primary/5 rounded px-3 py-1.5 mb-4 text-center">
-          <span className="text-xs font-bold text-primary uppercase tracking-wider">
-            {somentePessoais ? "Visualização da Ficha Cadastral" : "Visualização da Ficha Completa"}
-          </span>
-        </div>
-
-        <div className="space-y-4 text-sm">
-          {/* Identificação */}
-          <div className="border border-slate-200 rounded p-3">
-            <h3 className="text-[10px] font-bold uppercase text-primary mb-2 border-b border-slate-100 pb-1 flex justify-between">
-              1. Identificação do Paciente
-              {data.paciente.menor_idade && (
-                <span className="text-[9px] bg-red-100 text-red-700 px-1.5 rounded">Menor de Idade</span>
-              )}
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
-              <p>
-                <span className="text-[9px] font-bold uppercase text-slate-400">Nome:</span>{" "}
-                <span className="font-semibold">{data.paciente.nome_completo || "—"}</span>
-              </p>
-              <p>
-                <span className="text-[9px] font-bold uppercase text-slate-400">Mãe:</span>{" "}
-                {data.paciente.nome_mae || "—"}
-              </p>
-              <div className="grid grid-cols-3 gap-2">
-                <p>
-                  <span className="text-[9px] font-bold uppercase text-slate-400">CPF:</span> {data.paciente.cpf || "—"}
-                </p>
-                <p>
-                  <span className="text-[9px] font-bold uppercase text-slate-400">CNS:</span> {data.paciente.cns || "—"}
-                </p>
-                <p>
-                  <span className="text-[9px] font-bold uppercase text-slate-400">Nasc.:</span>{" "}
-                  {formatarData(data.paciente.data_nascimento)}
-                </p>
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                <p>
-                  <span className="text-[9px] font-bold uppercase text-slate-400">Sexo:</span>{" "}
-                  {data.paciente.sexo || "—"}
-                </p>
-                <p>
-                  <span className="text-[9px] font-bold uppercase text-slate-400">Naturalidade:</span>{" "}
-                  {data.paciente.naturalidade || "—"}
-                </p>
-                <p>
-                  <span className="text-[9px] font-bold uppercase text-slate-400">Raça:</span>{" "}
-                  {data.paciente.raca_cor || "—"}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Endereço */}
-          <div className="border border-slate-200 rounded p-3">
-            <h3 className="text-[10px] font-bold uppercase text-primary mb-2 border-b border-slate-100 pb-1">
-              2. Endereço e Localização
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
-              <p>
-                <span className="text-[9px] font-bold uppercase text-slate-400">Rua/Logradouro:</span>{" "}
-                {data.paciente.logradouro ? `${data.paciente.tipo_logradouro || ""} ${data.paciente.logradouro}` : "—"}
-              </p>
-              <div className="grid grid-cols-3 gap-2">
-                <p>
-                  <span className="text-[9px] font-bold uppercase text-slate-400">Nº:</span>{" "}
-                  {data.paciente.numero || "—"}
-                </p>
-                <p>
-                  <span className="text-[9px] font-bold uppercase text-slate-400">Bairro:</span>{" "}
-                  {data.paciente.bairro || "—"}
-                </p>
-                <p>
-                  <span className="text-[9px] font-bold uppercase text-slate-400">Município:</span>{" "}
-                  {data.paciente.municipio || "Oriximiná"}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Contato */}
-          <div className="border border-slate-200 rounded p-3">
-            <h3 className="text-[10px] font-bold uppercase text-primary mb-2 border-b border-slate-100 pb-1">
-              3. Contato
-            </h3>
-            <div className="grid grid-cols-3 gap-2">
-              <p>
-                <span className="text-[9px] font-bold uppercase text-slate-400">Telefone:</span>{" "}
-                {data.paciente.telefone || "—"}
-              </p>
-              <p>
-                <span className="text-[9px] font-bold uppercase text-slate-400">Secundário:</span>{" "}
-                {data.paciente.telefone_secundario || "—"}
-              </p>
-              <p>
-                <span className="text-[9px] font-bold uppercase text-slate-400">Email:</span>{" "}
-                {data.paciente.email || "—"}
-              </p>
-            </div>
-          </div>
-
-          {/* Dados Complementares */}
-          <div className="border border-slate-200 rounded p-3">
-            <h3 className="text-[10px] font-bold uppercase text-primary mb-2 border-b border-slate-100 pb-1">
-              4. Dados Complementares
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
-              <p>
-                <span className="text-[9px] font-bold uppercase text-slate-400">Responsável:</span>{" "}
-                {data.paciente.nome_responsavel || "O próprio"}
-              </p>
-              <p>
-                <span className="text-[9px] font-bold uppercase text-slate-400">Unidade Vinculada:</span>{" "}
-                {data.paciente.unidade_vinculada || "CAPS II"}
-              </p>
-            </div>
-          </div>
-
-          {/* Seção Clínica (Preview) - Sempre limpa */}
-          {!somentePessoais && (
-            <>
-              <div className="border border-slate-200 rounded p-3">
-                <h3 className="text-[10px] font-bold uppercase text-primary mb-2 border-b border-slate-100 pb-1">
-                  5. Dados do Atendimento
-                </h3>
-                <div className="grid grid-cols-2 gap-2">
-                  <p>
-                    <span className="text-[9px] font-bold uppercase text-slate-400">Unidade:</span> ________________
-                  </p>
-                  <p>
-                    <span className="text-[9px] font-bold uppercase text-slate-400">Tipo:</span> ________________
-                  </p>
-                </div>
-              </div>
-
-              <div className="border border-slate-200 rounded p-3">
-                <h3 className="text-[10px] font-bold uppercase text-primary mb-2 border-b border-slate-100 pb-1">
-                  6. Triagem / Sinais Vitais
-                </h3>
-                <div className="grid grid-cols-4 gap-2">
-                  <p>
-                    <span className="text-[9px] font-bold uppercase text-slate-400">PA:</span> ________
-                  </p>
-                  <p>
-                    <span className="text-[9px] font-bold uppercase text-slate-400">FC:</span> ________
-                  </p>
-                  <p>
-                    <span className="text-[9px] font-bold uppercase text-slate-400">FR:</span> ________
-                  </p>
-                  <p>
-                    <span className="text-[9px] font-bold uppercase text-slate-400">Temp:</span> ________
-                  </p>
-                  <p>
-                    <span className="text-[9px] font-bold uppercase text-slate-400">SpO2:</span> ________
-                  </p>
-                  <p>
-                    <span className="text-[9px] font-bold uppercase text-slate-400">Peso:</span> ________
-                  </p>
-                  <p>
-                    <span className="text-[9px] font-bold uppercase text-slate-400">Altura:</span> ________
-                  </p>
-                  <p>
-                    <span className="text-[9px] font-bold uppercase text-slate-400">Glicemia:</span> ________
-                  </p>
-                </div>
-              </div>
-
-              <div className="border border-slate-200 rounded p-3 bg-slate-50/50">
-                <p className="text-[9px] text-center text-slate-500 uppercase font-bold">
-                  Ficha pronta para preenchimento manual. Campos clínicos e evolução estão em branco na versão impressa.
-                </p>
-              </div>
-            </>
-          )}
+        <div className="no-print flex w-full max-w-xl flex-col gap-3">
+          <Button onClick={handlePrint} size="lg" className="w-full">
+            <Printer className="mr-2 h-4 w-4" />
+            Imprimir Ficha
+          </Button>
+          <p className="text-center text-xs text-muted-foreground">
+            Para melhor resultado no navegador, desmarque a opção de cabeçalhos e rodapés do navegador.
+          </p>
         </div>
       </div>
 
-      <div className="flex gap-4 w-full max-w-md">
-        <Button onClick={handlePrint} className="flex-1" size="lg">
-          <Printer className="w-4 h-4 mr-2" />
-          Imprimir Ficha
-        </Button>
-      </div>
-    </div>
+      {printHost
+        ? createPortal(
+            <div className="patient-sheet-print-host-inner">
+              <PacienteFichaDocument
+                data={data}
+                mode={mode}
+                institutionalConfig={config}
+                generatedAt={generatedAt}
+              />
+            </div>,
+            printHost,
+          )
+        : null}
+    </>
   );
 };
 

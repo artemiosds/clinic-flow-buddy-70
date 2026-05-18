@@ -1,295 +1,371 @@
-/* ============================================
-   FICHA DE ATENDIMENTO CLÍNICO — ESTILOS
-   Layout padrão hospitalar A4
-   ============================================ */
+.patient-sheet-preview-shell {
+  width: 100%;
+  overflow: auto;
+  border-radius: 0.75rem;
+  background: hsl(var(--muted) / 0.18);
+  padding: 1rem;
+}
 
-.ficha-container {
+.patient-sheet-document {
+  width: min(100%, 186mm);
+  margin: 0 auto;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.75rem;
+  box-shadow: 0 12px 30px hsl(var(--foreground) / 0.08);
+  padding: 12mm;
   font-family: 'Segoe UI', Arial, sans-serif;
   font-size: 11px;
-  color: #1e293b;
-  line-height: 1.5;
-  max-width: 210mm;
-  margin: 0 auto;
-  padding: 10mm 12mm;
-  background: #fff;
+  line-height: 1.45;
 }
 
-/* CABEÇALHO */
-.ficha-header {
+.patient-sheet-header {
+  border-bottom: 2px solid hsl(var(--primary));
+  padding-bottom: 10px;
+  margin-bottom: 12px;
+}
+
+.patient-sheet-header-grid {
+  display: grid;
+  grid-template-columns: minmax(72px, auto) minmax(0, 1fr) minmax(72px, auto);
+  align-items: center;
+  gap: 12px;
+}
+
+.patient-sheet-header-grid.logos-0,
+.patient-sheet-header-grid.logos-1 {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.patient-sheet-logo-slot {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding-bottom: 8px;
-  margin-bottom: 10px;
-  border-bottom: 3px double #1e3a5f;
 }
 
-.header-col {
-  flex: 1;
+.patient-sheet-logo-slot--left {
+  justify-content: flex-start;
 }
 
-.header-logo {
-  flex: 0 0 auto;
+.patient-sheet-logo-slot--right {
+  justify-content: flex-end;
 }
 
-.logo-img {
-  width: 52px;
-  height: 52px;
-  object-fit: cover;
-  border-radius: 4px;
-  border: 1px solid #cbd5e1;
+.patient-sheet-logo-slot--empty {
+  min-height: 1px;
 }
 
-.header-center {
-  text-align: center;
-}
-
-.unidade-nome {
-  font-size: 13px;
-  font-weight: 700;
-  color: #0f172a;
-  margin: 0;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.ficha-titulo {
-  font-size: 11px;
-  color: #475569;
-  margin: 2px 0 0;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-}
-
-.header-right {
-  text-align: right;
-  font-size: 9px;
-  color: #64748b;
-}
-
-.header-info {
-  margin: 1px 0;
-}
-
-/* SEÇÕES */
-.secao {
-  border: 1px solid #94a3b8;
-  border-radius: 3px;
-  padding: 8px 10px;
-  margin-bottom: 8px;
-  page-break-inside: avoid;
-}
-
-.secao-titulo {
-  font-size: 10px;
-  font-weight: 700;
-  color: #fff;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  background: #1e3a5f;
-  margin: -8px -10px 8px -10px;
-  padding: 4px 10px;
-  border-radius: 2px 2px 0 0;
-}
-
-/* CAMPOS */
-.campo-linha {
+.patient-sheet-main-logo-wrap {
   display: flex;
-  align-items: baseline;
-  margin-bottom: 4px;
-}
-
-.campo-label {
-  font-size: 8.5px;
-  color: #475569;
-  text-transform: uppercase;
-  font-weight: 700;
-  margin-right: 5px;
-  white-space: nowrap;
-  letter-spacing: 0.2px;
-}
-
-.campo-valor {
-  font-size: 11px;
-  color: #0f172a;
-  flex: 1;
-  font-weight: 500;
-}
-
-.campo-grid-2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 3px 14px;
-  margin-bottom: 4px;
-}
-
-.linha-tracejada {
-  border-bottom: 1px dotted #94a3b8;
-  min-height: 16px;
-  display: inline-block;
-  flex: 1;
-}
-
-.linha-tracejada-multipla {
-  margin-top: 4px;
-}
-
-.linha-tracejada-multipla .linha-tracejada {
-  display: block;
-  margin-bottom: 14px;
-}
-
-.campo-linha-vertical {
-  margin-bottom: 4px;
-}
-
-/* TABELA DE SINAIS VITAIS */
-.nota-triagem {
-  font-size: 9px;
-  color: #64748b;
-  font-style: italic;
-  margin-bottom: 4px;
-}
-
-.tabela-vitais {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 2px;
-  page-break-inside: avoid;
-}
-
-.tabela-vitais td {
-  border: 1px solid #94a3b8;
-  padding: 6px 8px;
-  text-align: left;
-  font-size: 10px;
-}
-
-.vitais-label {
-  font-weight: 700;
-  color: #334155;
-  font-size: 9px;
-  text-transform: uppercase;
-}
-
-/* EVOLUÇÃO CLÍNICA */
-.bloco-evolucao {
-  border: 1px solid #cbd5e1;
-  border-radius: 3px;
-  padding: 6px 8px;
+  justify-content: center;
   margin-bottom: 6px;
-  page-break-inside: avoid;
 }
 
-.bloco-vazio {
-  background: #f8fafc;
+.patient-sheet-logo-image {
+  display: block;
+  background: hsl(var(--background));
 }
 
-.evo-header {
-  display: flex;
-  align-items: baseline;
-  font-size: 10px;
-  gap: 4px;
-}
-
-.evo-observacao {
-  margin-top: 4px;
-  min-height: 28px;
-  font-size: 10px;
-  color: #334155;
-  line-height: 1.5;
-}
-
-/* ASSINATURA */
-.secao-assinatura {
-  margin-top: 20px;
-  text-align: right;
-  page-break-inside: avoid;
-}
-
-.assinatura-bloco {
-  display: inline-block;
+.patient-sheet-header-main {
   text-align: center;
-  width: 220px;
 }
 
-.assinatura-linha {
-  border-top: 1px solid #1e293b;
-  margin-bottom: 3px;
-  padding-top: 28px;
-}
-
-.assinatura-label {
-  font-size: 9px;
-  color: #64748b;
+.patient-sheet-header-line {
   margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0;
+  color: hsl(var(--primary));
 }
 
-/* RODAPÉ — apenas na impressão */
-.ficha-rodape {
-  margin-top: 16px;
-  padding-top: 6px;
-  border-top: 1px solid #94a3b8;
-  text-align: center;
+.patient-sheet-header-line--secondary {
+  margin-top: 2px;
+  font-size: 11px;
+  color: hsl(var(--muted-foreground));
+}
+
+.patient-sheet-document-title {
+  margin: 8px 0 0;
+  font-size: 14px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0;
+  color: hsl(var(--foreground));
+}
+
+.patient-sheet-header-meta {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  justify-content: center;
+  border-top: 1px solid hsl(var(--border));
+  padding-top: 8px;
+  font-size: 9px;
+  color: hsl(var(--muted-foreground));
+  text-transform: uppercase;
+}
+
+.patient-sheet-section {
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.5rem;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  break-inside: avoid;
+}
+
+.patient-sheet-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.patient-sheet-section-title {
+  margin: 0 0 8px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: hsl(var(--primary));
+  letter-spacing: 0;
+  padding-bottom: 4px;
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.patient-sheet-section-head .patient-sheet-section-title {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.patient-sheet-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: hsl(var(--destructive) / 0.12);
+  color: hsl(var(--destructive));
+  padding: 2px 8px;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.patient-sheet-grid {
+  display: grid;
+  gap: 6px 12px;
+  margin-top: 6px;
+}
+
+.patient-sheet-grid--1 { grid-template-columns: 1fr; }
+.patient-sheet-grid--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.patient-sheet-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.patient-sheet-grid--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.patient-sheet-grid--5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.patient-sheet-grid--3-wide { grid-template-columns: 2fr 0.7fr 1fr; }
+
+.patient-sheet-field {
+  min-width: 0;
+}
+
+.patient-sheet-field-label {
+  display: block;
+  margin-bottom: 2px;
   font-size: 8px;
-  color: #94a3b8;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
 }
 
-/* ============================================
-   PRINT STYLES
-   ============================================ */
+.patient-sheet-field-value {
+  display: block;
+  min-height: 16px;
+  font-size: 11px;
+  font-weight: 500;
+  color: hsl(var(--foreground));
+  overflow-wrap: anywhere;
+}
+
+.patient-sheet-field-value--emphasis {
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.patient-sheet-helper-text {
+  margin-top: 8px;
+  font-size: 9px;
+  color: hsl(var(--muted-foreground));
+}
+
+.patient-sheet-text-block {
+  min-height: 42px;
+  border: 1px dashed hsl(var(--border));
+  border-radius: 0.375rem;
+  background: hsl(var(--muted) / 0.18);
+  padding: 10px;
+  color: hsl(var(--foreground));
+  white-space: pre-wrap;
+}
+
+.patient-sheet-signature-block {
+  margin-top: 18px;
+  break-inside: avoid;
+  text-align: right;
+}
+
+.patient-sheet-signature-date {
+  font-size: 10px;
+  color: hsl(var(--muted-foreground));
+  margin-bottom: 20px;
+}
+
+.patient-sheet-signature-line {
+  width: 250px;
+  max-width: 100%;
+  margin-left: auto;
+  border-top: 1px solid hsl(var(--foreground));
+}
+
+.patient-sheet-signature-name {
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: hsl(var(--foreground));
+}
+
+.patient-sheet-signature-meta {
+  font-size: 9px;
+  color: hsl(var(--muted-foreground));
+}
+
+.patient-sheet-footer {
+  margin-top: 14px;
+  padding-top: 8px;
+  border-top: 1px solid hsl(var(--border));
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  justify-content: space-between;
+  font-size: 8px;
+  color: hsl(var(--muted-foreground));
+  text-transform: uppercase;
+}
+
+.patient-sheet-print-host {
+  display: none;
+}
+
+.patient-sheet-print-host-inner {
+  padding: 0;
+}
+
+@media (max-width: 900px) {
+  .patient-sheet-grid--5,
+  .patient-sheet-grid--4,
+  .patient-sheet-grid--3,
+  .patient-sheet-grid--3-wide,
+  .patient-sheet-grid--2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .patient-sheet-preview-shell {
+    padding: 0.5rem;
+  }
+
+  .patient-sheet-document {
+    width: 100%;
+    padding: 8mm;
+    border-radius: 0.5rem;
+  }
+
+  .patient-sheet-header-grid,
+  .patient-sheet-header-grid.logos-0,
+  .patient-sheet-header-grid.logos-1 {
+    grid-template-columns: 1fr;
+  }
+
+  .patient-sheet-logo-slot {
+    justify-content: center;
+  }
+
+  .patient-sheet-header-meta,
+  .patient-sheet-footer,
+  .patient-sheet-grid--5,
+  .patient-sheet-grid--4,
+  .patient-sheet-grid--3,
+  .patient-sheet-grid--3-wide,
+  .patient-sheet-grid--2 {
+    grid-template-columns: 1fr;
+    justify-content: flex-start;
+  }
+
+  .patient-sheet-footer {
+    flex-direction: column;
+  }
+}
+
 @media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm 12mm 14mm;
+  }
+
+  html,
+  body {
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
   body * {
-    visibility: hidden;
+    visibility: hidden !important;
   }
 
-  #ficha-impressao,
-  #ficha-impressao * {
-    visibility: visible;
+  .patient-sheet-print-host,
+  .patient-sheet-print-host * {
+    visibility: visible !important;
   }
 
-  #ficha-impressao {
+  .patient-sheet-print-host {
+    display: block !important;
     position: absolute;
-    left: 0;
-    top: 0;
+    inset: 0;
     width: 100%;
     padding: 0;
     margin: 0;
+    background: white;
   }
 
-  .no-print {
+  .patient-sheet-print-host-inner {
+    width: 100%;
+  }
+
+  .patient-sheet-document {
+    width: auto;
+    min-height: auto;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background: white;
+  }
+
+  .patient-sheet-section,
+  .patient-sheet-signature-block,
+  .patient-sheet-text-block {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .patient-sheet-preview-shell,
+  .no-print,
+  button,
+  nav,
+  [role='dialog'] button {
     display: none !important;
   }
-
-  .print-only {
-    display: block !important;
-  }
-
-  @page {
-    size: A4 portrait;
-    margin: 12mm 12mm 18mm 12mm;
-  }
-
-  .secao {
-    page-break-inside: avoid;
-  }
-
-  table {
-    page-break-inside: avoid;
-  }
-
-  .secao-assinatura {
-    page-break-inside: avoid;
-  }
-
-  .ficha-container {
-    padding: 0;
-    max-width: 100%;
-  }
-}
-
-/* Esconder rodapé na tela */
-.print-only {
-  display: none;
 }
