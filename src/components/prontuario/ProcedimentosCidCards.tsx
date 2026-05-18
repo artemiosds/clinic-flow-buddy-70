@@ -7,8 +7,16 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { procedureService, type ProcedimentoDB } from '@/services/procedureService';
+import { procedureService } from '@/services/procedureService';
+
+type ProcedimentoDB = {
+  id: string;
+  nome: string;
+  especialidade?: string;
+  origem?: string;
+  total_cids?: number;
+  [k: string]: any;
+};
 
 interface CidItem { codigo: string; descricao: string }
 
