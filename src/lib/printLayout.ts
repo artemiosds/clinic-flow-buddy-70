@@ -305,6 +305,7 @@ export function buildInstitutionalCSS(opts: InstitutionalLayoutOptions = {}): st
     .doc-sign-footer { page-break-inside: avoid; }
     .e-signature-box { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   }
+  ${opts.extraCSS || ''}
 </style>`;
 }
 
