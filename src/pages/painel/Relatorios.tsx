@@ -13,6 +13,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Download, FileText, Filter, Clock, Users, CalendarDays, TrendingUp, AlertTriangle, UserCheck, ListOrdered, Printer, BarChart3, HeartPulse, MapPin, Search, RefreshCw, Stethoscope, Brain, Ear, Dumbbell, Hand, Apple, Heart, Users2, Activity, PieChart as PieChartIcon, type LucideIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { openPrintDocument } from '@/lib/printLayout';
+import { toast } from 'sonner';
 import logoSmsFallback from '@/assets/logo-sms-oriximina.jpeg';
 import logoCapsFallback from '@/assets/logo-caps-ii.png';
 import { useUnidadeFilter } from '@/hooks/useUnidadeFilter';
@@ -87,6 +88,7 @@ const Relatorios: React.FC = () => {
   const [mapaGenerated, setMapaGenerated] = useState(false);
   const [mapaLoading, setMapaLoading] = useState(false);
   const [mapaProf, setMapaProf] = useState('all');
+  const [printing, setPrinting] = useState<string | null>(null); // qual export está em andamento
 
   const { unidadesVisiveis, profissionaisVisiveis } = useUnidadeFilter();
   const profissionais = profissionaisVisiveis;
@@ -893,7 +895,8 @@ ${dataRows}
   }, [filtered, porProfissional, faltasReport, pacientesReport, filaReport, unidades]);
 
   // === EXPORT PDF ===
-  const exportPDF = useCallback((type: string) => {
+  const exportPDF = useCallback(async (type: string) => {
+    if (printing) return; // evita clique duplo
     const un = filterUnit !== 'all' ? unidades.find(u => u.id === filterUnit)?.nome : 'Todas';
     const prof = filterProf !== 'all' ? profissionais.find(p => p.id === filterProf)?.nome : 'Todos';
     const periodo = `${dateFrom || 'Início'} a ${dateTo || 'Atual'}`;
@@ -963,14 +966,41 @@ ${dataRows}
         <table><thead><tr><th>Posição</th><th>Paciente</th><th>Unidade</th><th>Setor</th><th>Prioridade</th><th>Status</th><th>Chegada</th><th>Chamada</th></tr></thead><tbody>${filaRows}</tbody></table>`;
     }
 
+    if (!body || !body.trim()) {
+      toast.error('Não há dados para exportar', { description: 'Ajuste os filtros e tente novamente.' });
+      return;
+    }
+
     const titleMap: Record<string, string> = { geral: 'Relatório Geral', agendamentos: 'Relatório de Agendamentos', detalhado: 'Relatório Detalhado', produtividade: 'Relatório de Produtividade', faltas: 'Relatório de Faltas', pacientes: 'Relatório de Pacientes', fila: 'Relatório de Fila de Espera' };
 
-    openPrintDocument(
-      titleMap[type] || 'Relatório',
-      body,
-      { 'Período': periodo, 'Unidade': un || 'Todas', 'Profissional': prof || 'Todos' }
-    );
-  }, [filtered, porProfissional, faltasReport, pacientesReport, filaReport, stats, tempoStats, unidades, filteredAtendimentos, filterUnit, filterProf, dateFrom, dateTo, profissionais]);
+    setPrinting(type);
+    const toastId = toast.loading('Gerando documento…');
+    try {
+      await openPrintDocument(
+        titleMap[type] || 'Relatório',
+        body,
+        { 'Período': periodo, 'Unidade': un || 'Todas', 'Profissional': prof || 'Todos' }
+      );
+      toast.success('Documento pronto. Use a janela aberta para imprimir ou salvar em PDF.', { id: toastId });
+    } catch (err: any) {
+      console.error('[exportPDF] falha:', err);
+      if (err?.message === 'POPUP_BLOCKED') {
+        toast.error('Pop-up bloqueado pelo navegador', {
+          id: toastId,
+          description: 'Permita pop-ups deste site e tente novamente.',
+          action: { label: 'Tentar de novo', onClick: () => exportPDF(type) },
+        });
+      } else {
+        toast.error('Não foi possível gerar o PDF', {
+          id: toastId,
+          description: err?.message || 'Erro inesperado.',
+          action: { label: 'Tentar de novo', onClick: () => exportPDF(type) },
+        });
+      }
+    } finally {
+      setPrinting(null);
+    }
+  }, [filtered, porProfissional, faltasReport, pacientesReport, filaReport, stats, tempoStats, unidades, filteredAtendimentos, filterUnit, filterProf, dateFrom, dateTo, profissionais, printing]);
 
   // === MAPA DE ATENDIMENTO ===
   const generateMapa = useCallback(async () => {
@@ -1076,7 +1106,7 @@ ${dataRows}
       <div style="margin-top:20px;font-size:9px;color:#64748b;">Gerado por: ${user?.nome || ''} — ${now}</div>`;
 
     const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
+    if (!printWindow) { toast.error('Pop-up bloqueado pelo navegador', { description: 'Permita pop-ups deste site e tente novamente.' }); return; }
 
     const logoUrl = logoSmsFallback;
     const logoUrlRight = logoCapsFallback;
@@ -1166,14 +1196,14 @@ ${dataRows}
           <Button variant="outline" size="sm" className="hover:bg-accent/50" onClick={() => exportCSV(activeTab === 'geral' ? 'agendamentos' : activeTab)}>
             <Download className="w-4 h-4 mr-1" />CSV
           </Button>
-          <Button variant="outline" size="sm" className="hover:bg-accent/50" onClick={() => exportPDF(activeTab)}>
-            <FileText className="w-4 h-4 mr-1" />PDF
+          <Button variant="outline" size="sm" className="hover:bg-accent/50" onClick={() => exportPDF(activeTab)} disabled={printing !== null}>
+            <FileText className="w-4 h-4 mr-1" />{printing === activeTab ? 'Gerando…' : 'PDF'}
           </Button>
           <Button variant="outline" size="sm" className="hover:bg-accent/50" onClick={() => exportExcel(activeTab === 'geral' ? 'agendamentos' : activeTab)}>
             <Download className="w-4 h-4 mr-1" />Excel
           </Button>
-          <Button variant="outline" size="sm" className="hover:bg-accent/50" onClick={() => exportPDF(activeTab)}>
-            <Printer className="w-4 h-4 mr-1" />Imprimir
+          <Button variant="outline" size="sm" className="hover:bg-accent/50" onClick={() => exportPDF(activeTab)} disabled={printing !== null}>
+            <Printer className="w-4 h-4 mr-1" />{printing === activeTab ? 'Preparando…' : 'Imprimir'}
           </Button>
         </div>
       </div>
@@ -1512,7 +1542,7 @@ ${dataRows}
                     }).join('');
                     const totalRow = `<tr style="font-weight:700;background:#f1f5f9;"><td colspan="3">TOTAL</td><td style="text-align:center">${prodTotals.total}</td><td style="text-align:center">${prodTotals.concluidos}</td><td style="text-align:center">${prodTotals.faltas}</td><td style="text-align:center">${prodTotals.cancelados}</td><td style="text-align:center">${prodTotals.remarcados}</td><td style="text-align:center">${prodTotals.retornos}</td><td></td><td></td><td></td></tr>`;
                     const printWindow = window.open('', '_blank');
-                    if (!printWindow) return;
+                    if (!printWindow) { toast.error('Pop-up bloqueado pelo navegador', { description: 'Permita pop-ups deste site e tente novamente.' }); return; }
                     const logoUrl = logoSmsFallback;
                     const logoUrlRight = logoCapsFallback;
                     printWindow.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Relatório de Produtividade</title>
@@ -2367,7 +2397,7 @@ th{background:#f1f5f9;font-weight:600;}
                     return `<tr style="${i % 2 === 1 ? 'background:#f9f9f9;' : ''}"><td style="text-align:center">${String(r.num).padStart(2, '0')}</td><td>${r.paciente_nome}</td><td>${formatDateBR(r.data_nascimento)}</td><td>${formatCPF(r.cpf)}</td><td>${r.endereco || '-'}</td><td>${r.cns || '-'}</td><td>${r.telefone || '-'}</td><td>${r.profissional_nome}</td><td>${r.especialidade || '-'}</td><td>${proc}</td><td>${r.cid || '-'}</td></tr>`;
                   }).join('');
                   const printWindow = window.open('', '_blank');
-                  if (!printWindow) return;
+                  if (!printWindow) { toast.error('Pop-up bloqueado pelo navegador', { description: 'Permita pop-ups deste site e tente novamente.' }); return; }
                   const logoUrl = logoSmsFallback;
                   const logoUrlRight = logoCapsFallback;
                   printWindow.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Mapa de Atendimentos</title>
