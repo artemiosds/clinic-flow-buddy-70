@@ -966,14 +966,41 @@ ${dataRows}
         <table><thead><tr><th>Posição</th><th>Paciente</th><th>Unidade</th><th>Setor</th><th>Prioridade</th><th>Status</th><th>Chegada</th><th>Chamada</th></tr></thead><tbody>${filaRows}</tbody></table>`;
     }
 
+    if (!body || !body.trim()) {
+      toast.error('Não há dados para exportar', { description: 'Ajuste os filtros e tente novamente.' });
+      return;
+    }
+
     const titleMap: Record<string, string> = { geral: 'Relatório Geral', agendamentos: 'Relatório de Agendamentos', detalhado: 'Relatório Detalhado', produtividade: 'Relatório de Produtividade', faltas: 'Relatório de Faltas', pacientes: 'Relatório de Pacientes', fila: 'Relatório de Fila de Espera' };
 
-    openPrintDocument(
-      titleMap[type] || 'Relatório',
-      body,
-      { 'Período': periodo, 'Unidade': un || 'Todas', 'Profissional': prof || 'Todos' }
-    );
-  }, [filtered, porProfissional, faltasReport, pacientesReport, filaReport, stats, tempoStats, unidades, filteredAtendimentos, filterUnit, filterProf, dateFrom, dateTo, profissionais]);
+    setPrinting(type);
+    const toastId = toast.loading('Gerando documento…');
+    try {
+      await openPrintDocument(
+        titleMap[type] || 'Relatório',
+        body,
+        { 'Período': periodo, 'Unidade': un || 'Todas', 'Profissional': prof || 'Todos' }
+      );
+      toast.success('Documento pronto. Use a janela aberta para imprimir ou salvar em PDF.', { id: toastId });
+    } catch (err: any) {
+      console.error('[exportPDF] falha:', err);
+      if (err?.message === 'POPUP_BLOCKED') {
+        toast.error('Pop-up bloqueado pelo navegador', {
+          id: toastId,
+          description: 'Permita pop-ups deste site e tente novamente.',
+          action: { label: 'Tentar de novo', onClick: () => exportPDF(type) },
+        });
+      } else {
+        toast.error('Não foi possível gerar o PDF', {
+          id: toastId,
+          description: err?.message || 'Erro inesperado.',
+          action: { label: 'Tentar de novo', onClick: () => exportPDF(type) },
+        });
+      }
+    } finally {
+      setPrinting(null);
+    }
+  }, [filtered, porProfissional, faltasReport, pacientesReport, filaReport, stats, tempoStats, unidades, filteredAtendimentos, filterUnit, filterProf, dateFrom, dateTo, profissionais, printing]);
 
   // === MAPA DE ATENDIMENTO ===
   const generateMapa = useCallback(async () => {
