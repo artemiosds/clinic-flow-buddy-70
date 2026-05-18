@@ -708,11 +708,23 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = "co
     <div className="flex flex-col items-center gap-6 py-4">
       <div className="w-full border rounded-lg bg-white p-6 shadow-sm max-h-[70vh] overflow-y-auto">
         <div className="flex items-center gap-4 mb-4 border-b-2 border-primary/20 pb-4">
-          <img src={config?.logoEsquerda || logoSmsFallback} alt="Logo" className="w-12 h-12 object-contain" />
+          {(config?.logoEsquerdaAtiva !== false) && (
+            <img
+              src={config?.logoEsquerda || logoSmsFallback}
+              alt="Logo"
+              style={{ maxHeight: (config?.logoEsquerdaTamanho || 64) * 0.6, maxWidth: 120 }}
+              className="object-contain"
+            />
+          )}
           <div className="flex-1 text-center">
-            {config?.logoCentro && (
+            {config?.logoCentro && config?.logoCentroAtiva !== false && (
               <div className="flex justify-center mb-1">
-                <img src={config.logoCentro} alt="Logo centro" className="h-9 max-w-[110px] object-contain" />
+                <img
+                  src={config.logoCentro}
+                  alt="Logo centro"
+                  style={{ maxHeight: (config?.logoCentroTamanho || 56) * 0.6, maxWidth: 130 }}
+                  className="object-contain"
+                />
               </div>
             )}
             <h2 className="text-sm font-bold uppercase tracking-tight text-primary">
@@ -722,7 +734,14 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = "co
               {config?.linha2 || "CAPS II"}
             </p>
           </div>
-          <img src={config?.logoDireita || logoCapsFallback} alt="Logo" className="w-12 h-12 object-contain" />
+          {(config?.logoDireitaAtiva !== false) && (
+            <img
+              src={config?.logoDireita || logoCapsFallback}
+              alt="Logo"
+              style={{ maxHeight: (config?.logoDireitaTamanho || 64) * 0.6, maxWidth: 120 }}
+              className="object-contain"
+            />
+          )}
         </div>
 
         <div className="bg-primary/5 rounded px-3 py-1.5 mb-4 text-center">
