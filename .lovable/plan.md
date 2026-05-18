@@ -1,100 +1,99 @@
-# Plano — Cabeçalho/Rodapé Institucional Global em todos os documentos
+# Padrão Institucional Global — Cabeçalho/Rodapé únicos em todos os documentos
+
+## Contexto atual
+Já existe parte da base (`printLayout.ts`, `system_config.configuracoes.config_impressao_documentos`, suporte a 3 logos com tamanho/redondo, `PacienteFichaDocument`, `printFichaPaciente`). Falta: shell único realmente unificado (Preview = Impressão = PDF), aplicação consistente em TODOS módulos, e migração dos que ainda usam template próprio (Prontuário via jsPDF, Relatório de Alta, GerarDocumento, Avaliações, PTS, Triagem, etc.).
 
 ## Objetivo
-Unificar TODOS os documentos impressos e PDFs do sistema sob um único template institucional global, com 3 logos configuráveis (esquerda, centro, direita) — cada uma com tamanho próprio, formato redondo opcional e on/off independente. Preview, impressão e PDF devem ser idênticos. Inclui correção crítica da Ficha do Paciente na página Pacientes.
+Um único shell `DocumentShell` (header + footer institucionais) que TODO documento do sistema consome. Preview, impressão (`window.print()`) e exportação devem produzir HTML idêntico.
 
-## Escopo
+## Entregáveis
 
-### 1. Expandir configuração global
-- Estender `system_config.configuracoes.config_impressao_documentos` (já existente) com:
-  - `logos.left/center/right`: `{ enabled, url, size, rounded }`
-  - `header`: linha1, linha2, linha3 (opcional), linha4 (opcional), fonte, tamanho, cor, alinhamento
-  - `footer`: enabled, texto, mostrarPaginacao, mostrarDataGeracao
-  - `layout`: paper (A4 default), margens
-- Manter compatibilidade com chaves antigas (`logoEsquerda`, `logoDireita`, `logoCentro` já adicionada).
-
-### 2. UI de Configuração (`ConfigImpressaoDocumentos.tsx` + `HeaderPreviewA4.tsx`)
-- Adicionar toggle **"Logo redonda"** por logo (esquerda, centro, direita).
-- Adicionar campos opcionais de linhas 3 e 4 no cabeçalho (ex.: Unidade/Setor, CNES).
-- Refinar preview A4 para usar o MESMO componente render do print (single source of truth) via iframe ou render compartilhado.
-- Validações: tamanho 32–160px, máx 2MB upload, manter proporção.
-
-### 3. Componente compartilhado de template
-Criar `src/lib/institutionalDocument.ts`:
-- `buildInstitutionalHeaderHTML(config, { documentTitle, unidade, emissionDate })`
+### 1. Núcleo unificado (`src/lib/institutionalDocument.ts` — NOVO)
+- `buildInstitutionalHeaderHTML(config, { title, subtitle, emissionDate, unidade })`
 - `buildInstitutionalFooterHTML(config, { pageInfo })`
-- `getInstitutionalCSS({ paper, margins, fontFamily, fontSize })`
-- Lógica de reorganização para 1, 2 ou 3 logos (flex justify dinâmico).
-- Logo redonda: `border-radius: 9999px; object-fit: cover`.
+- `getInstitutionalCSS({ paper, margins, fontFamily, fontSize })` com `@page A4`, `.document-page`, `.document-section { break-inside: avoid }`, `.no-print`
+- Layouts: 1 logo → centralizado; 2 logos → space-between com texto entre; 3 logos → grid 3 colunas
+- Suporte `rounded` por logo (`border-radius:9999px; object-fit:cover`)
+- Fallback seguro quando config vazia
 
-### 4. Refatorar `src/lib/printLayout.ts`
-- `openPrintDocument(title, body, meta, opts)` passa a SEMPRE injetar header/footer institucionais via `buildInstitutionalHeaderHTML/Footer`.
-- Remover headers customizados antigos; aceitar override opcional por documento (futuro).
-- CSS A4 padronizado com `@page`, `.document-page`, `break-inside: avoid`.
+### 2. Refatorar `src/lib/printLayout.ts`
+- `openPrintDocument(title, bodyHTML, meta, opts)` SEMPRE injeta header/footer via `institutionalDocument`
+- Remove headers customizados antigos; aceita override futuro por tipo de documento
+- Helper `buildDocumentHTML()` exportado para uso em React (preview compartilhado)
 
-### 5. Ficha do Paciente — correção crítica
-Localizar e refatorar:
-- `src/lib/printFichaPaciente.ts` (Imprimir Ficha na página Pacientes)
-- `src/components/FichaImpressao.tsx`
-- Botão "Imprimir Ficha" em `src/pages/painel/Pacientes.tsx`
+### 3. Componente React `<InstitutionalDocumentShell>` (NOVO `src/components/print/InstitutionalDocumentShell.tsx`)
+- Renderiza HTML idêntico ao `openPrintDocument` (mesmo builder)
+- Usado em previews on-screen e em portais de impressão (garante Preview = Print)
 
-Novo template `printFichaPaciente`:
-- Usa `openPrintDocument` (herda header/footer global).
-- Título: **"FICHA CADASTRAL DO PACIENTE"**.
-- 5 blocos estruturados: Identificação, Endereço, Contato, Complementares/SUS, Documentos.
-- Campos vazios → "Não informado" (sem `null`/`undefined`).
-- A4, sem botões, sem tela crua.
+### 4. Configuração (já existe, ajustes finos)
+- `ConfigImpressaoDocumentos.tsx`: confirmar campos `enabled`, `rounded`, tamanho independente, linhas 3/4 do cabeçalho, controle do rodapé
+- `HeaderPreviewA4.tsx` → substituir por preview que usa o MESMO `InstitutionalDocumentShell` (single source of truth)
+- Auditoria em `audit_logs` ao salvar config (motivo opcional)
 
-### 6. Aplicar a todos os documentos
-Garantir que estes módulos passem por `openPrintDocument` (sem header próprio):
-- Prontuário (`prontuarioPdf.ts`, `WorkspaceProntuario`)
-- Histórico Clínico (`HistoricoClinicoTimeline.tsx`) ✅ já migrado
-- Receituário (`PrescricaoMedicamentos.tsx`) ✅ já migrado
-- Solicitação de Exames (`SolicitacaoExames.tsx`) ✅ já migrado
-- Encaminhamento UBS (`EncaminhamentoUBSSection.tsx`) ✅ já migrado
-- Ficha do Funcionário ✅ já migrado
-- Relatórios (`Relatorios.tsx`) ✅ já migrado
-- Relatório de Alta (`RelatorioAlta.tsx`) — verificar título correto
-- Documentos gerados (`GerarDocumentoModal.tsx`, `DocumentosHistorico.tsx`)
-- Atestados/Declarações via `documentSignature`
+### 5. Ficha do Paciente
+- `PacienteFichaDocument.tsx` passa a envelopar conteúdo em `<InstitutionalDocumentShell>` (remove header/footer próprios)
+- `FichaImpressao.tsx` e `printFichaPaciente.ts` continuam via portal — mesma fonte
+- Confere blocos: Identificação, Endereço, Contato, Complementares/SUS, Documentos. Campos vazios → "Não informado"
 
-Auditar imports de `window.print()` e `new Blob([html])` para garantir 100% via shell único.
+### 6. Migração de TODOS os módulos para o shell único
+Módulos a migrar (substituir header local por shell):
+- **Prontuário Clínico** (`src/lib/prontuarioPdf.ts`) — atualmente jsPDF → rewrite usando `openPrintDocument`
+- **Relatório de Alta** (`src/pages/painel/RelatorioAlta.tsx`) — título correto + shell
+- **Gerar Documento** (`src/components/GerarDocumentoModal.tsx`)
+- **Documentos Histórico** (`src/components/DocumentosHistorico.tsx`)
+- **Histórico Clínico Timeline** ✅ já migrado — revalidar
+- **Receituário** (`src/components/PrescricaoMedicamentos.tsx`) ✅ — revalidar
+- **Solicitação de Exames** (`src/components/SolicitacaoExames.tsx`) ✅ — revalidar
+- **Encaminhamento UBS** (`src/components/pacientes/EncaminhamentoUBSSection.tsx`) ✅ — revalidar
+- **Encaminhamentos Externo/Interno** (`EncaminhamentoExternoModal.tsx`, `EncaminhamentoInternoModal.tsx`)
+- **Ficha Funcionário** ✅ — revalidar
+- **Relatórios** (`src/pages/painel/Relatorios.tsx`) ✅ — revalidar
+- **Triagem / Avaliação Enfermagem / Avaliação Multi / PTS** — auditar e migrar onde houver impressão
+- **Assinatura Eletrônica** (`src/lib/documentSignature.ts`) — usar shell para PDF assinado
 
-### 7. Storage de logos
-- Continuar usando bucket existente `document-logos` (já em uso em `InstituicaoSection`).
-- Não salvar base64 no JSON; salvar apenas URL pública.
+Auditoria final: `rg "window.print\(\)|new Blob\(\[html"` para garantir 100% via shell único.
 
-### 8. Loading/erro/auditoria
-- Toasts em salvar configuração ✅ já existem.
-- Log de auditoria em `audit_logs` ao salvar config institucional (motivo_alteracao opcional).
-- Console.error em falhas com prefixo `[DocumentConfig]`.
+### 7. Storage
+- Continuar bucket público `document-logos`
+- Apenas URL no JSON (nada de base64)
 
-## Arquivos a criar/editar
-- **Criar:** `src/lib/institutionalDocument.ts`
-- **Criar:** `src/lib/printFichaPaciente.ts` (rewrite)
-- **Editar:** `src/lib/printLayout.ts` — usar institutionalDocument
-- **Editar:** `src/components/config/ConfigImpressaoDocumentos.tsx` — adicionar toggle redondo + linhas extras
-- **Editar:** `src/components/config/sistema/HeaderPreviewA4.tsx` — refletir formato redondo
-- **Editar:** `src/pages/painel/Pacientes.tsx` — apontar para novo printFichaPaciente
-- **Editar:** `src/components/FichaImpressao.tsx` — migrar para shell único
-- **Editar:** `src/lib/prontuarioPdf.ts` — usar openPrintDocument
-- **Editar:** `src/pages/painel/RelatorioAlta.tsx` — título correto + shell único
-- **Editar:** `src/components/GerarDocumentoModal.tsx` — shell único
-- **Auditar:** demais módulos com `window.print()` isolado
+### 8. Estados e UX
+- Loading/erro/sucesso na config (toasts já existem)
+- Console.error com prefixo `[DocumentConfig]`
+- Auditoria: salvar config, upload/remover logo
+
+## Arquivos a criar
+- `src/lib/institutionalDocument.ts`
+- `src/components/print/InstitutionalDocumentShell.tsx`
+
+## Arquivos a editar
+- `src/lib/printLayout.ts` (delega para institutionalDocument)
+- `src/lib/prontuarioPdf.ts` (rewrite: jsPDF → openPrintDocument)
+- `src/pages/painel/RelatorioAlta.tsx`
+- `src/components/GerarDocumentoModal.tsx`
+- `src/components/DocumentosHistorico.tsx`
+- `src/components/EncaminhamentoExternoModal.tsx`
+- `src/components/EncaminhamentoInternoModal.tsx`
+- `src/components/config/ConfigImpressaoDocumentos.tsx`
+- `src/components/config/sistema/HeaderPreviewA4.tsx` (passa a usar shell real)
+- `src/components/pacientes/PacienteFichaDocument.tsx` (envelopa com shell)
+- `src/lib/documentSignature.ts`
+- Auditar: Triagem, Avaliações, PTS, Atendimentos
 
 ## Detalhes técnicos
-- 1 logo ativa → `justify-content: center`
-- 2 logos ativas → `justify-content: space-between` (texto entre elas)
-- 3 logos ativas → grid 3 colunas com texto sobre logo central
-- Print CSS: `@page { size: A4; margin: 16mm; }`, `.no-print { display: none !important; }`
-- `running()` headers/footers para paginação X de Y quando suportado pelo browser.
+- `@page { size: A4; margin: 16mm; }`
+- `.document-page` 210×297mm, `.document-section { break-inside: avoid }`
+- 1 logo → `justify-content: center`
+- 2 logos → `justify-content: space-between`
+- 3 logos → `grid-template-columns: auto 1fr auto`
+- Logo redonda → `border-radius:9999px; object-fit:cover; width=height`
+- Fallback config vazia → header com nome institucional simples, sem quebrar
 
-## Fora de escopo (mantido como está)
-- Lógica clínica, BPA, Agenda, dados de Pacientes.
-- Personalização por unidade/profissional (arquitetura preparada, mas não ativada).
+## Fora de escopo
+Lógica clínica, BPA, Agenda, dados de Pacientes.
 
 ## Validação
-Executar os 14 testes do prompt: 3 logos, 1 logo, 2 logos, Imprimir Ficha, PDF Ficha, Prontuário, Relatório Alta, Atestado, Receita, Encaminhamento, Impressão x PDF idênticos, logo redonda, fallback documento antigo.
+Executar os 14 testes do prompt (3 logos / 1 logo / 2 logos / Ficha / PDF Ficha / Prontuário / Alta / Atestado / Receita / Encaminhamento / Impressão=PDF / Logo redonda / Doc antigo).
 
-## Estimativa
-Trabalho grande (~10-12 arquivos). Posso entregar em uma única passada após sua aprovação.
+## Tamanho
+Grande: ~14 arquivos. Entrego em uma passada após aprovação.

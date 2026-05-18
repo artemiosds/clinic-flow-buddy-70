@@ -653,6 +653,7 @@ const Pacientes: React.FC = () => {
     const unidade = pacienteData.unidade_id ? unidades.find(u => u.id === pacienteData.unidade_id) : null;
     
     const paciente = {
+      id: pacienteData.id,
       nome_completo: pacienteData.nome || "",
       nome_mae: pacienteData.nome_mae || "",
       data_nascimento: pacienteData.data_nascimento || "",
