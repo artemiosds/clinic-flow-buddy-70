@@ -96,7 +96,7 @@ const HeaderPreviewA4: React.FC<HeaderPreviewA4Props> = ({
           {/* Header */}
           <div className="flex items-center justify-between gap-2 pb-2 border-b-2 border-primary">
             <div className="flex-shrink-0 flex items-center justify-start" style={{ minWidth: 8 }}>
-              {renderSideLogo(logoEsquerda, showLeft, hL, 'Logo esq')}
+              {renderSideLogo(logoEsquerda, showLeft, hL, 'Logo esq', logoEsquerdaRedonda)}
             </div>
             <div
               className="flex-1 px-2 min-w-0"
@@ -112,7 +112,11 @@ const HeaderPreviewA4: React.FC<HeaderPreviewA4Props> = ({
                   <img
                     src={logoCentro}
                     alt="Logo centro"
-                    style={{ maxHeight: hC, maxWidth: hC * 2.4, objectFit: 'contain' }}
+                    style={
+                      logoCentroRedonda
+                        ? { width: hC, height: hC, borderRadius: 9999, objectFit: 'cover', background: '#fff' }
+                        : { maxHeight: hC, maxWidth: hC * 2.4, objectFit: 'contain' }
+                    }
                   />
                 </div>
               )}
@@ -120,7 +124,7 @@ const HeaderPreviewA4: React.FC<HeaderPreviewA4Props> = ({
               <div className="opacity-80 mt-0.5 truncate">{linha2 || 'Linha 2'}</div>
             </div>
             <div className="flex-shrink-0 flex items-center justify-end" style={{ minWidth: 8 }}>
-              {renderSideLogo(logoDireita, showRight, hR, 'Logo dir')}
+              {renderSideLogo(logoDireita, showRight, hR, 'Logo dir', logoDireitaRedonda)}
             </div>
           </div>
 
