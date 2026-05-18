@@ -88,6 +88,7 @@ const Relatorios: React.FC = () => {
   const [mapaGenerated, setMapaGenerated] = useState(false);
   const [mapaLoading, setMapaLoading] = useState(false);
   const [mapaProf, setMapaProf] = useState('all');
+  const [printing, setPrinting] = useState<string | null>(null); // qual export está em andamento
 
   const { unidadesVisiveis, profissionaisVisiveis } = useUnidadeFilter();
   const profissionais = profissionaisVisiveis;
