@@ -1542,7 +1542,7 @@ ${dataRows}
                     }).join('');
                     const totalRow = `<tr style="font-weight:700;background:#f1f5f9;"><td colspan="3">TOTAL</td><td style="text-align:center">${prodTotals.total}</td><td style="text-align:center">${prodTotals.concluidos}</td><td style="text-align:center">${prodTotals.faltas}</td><td style="text-align:center">${prodTotals.cancelados}</td><td style="text-align:center">${prodTotals.remarcados}</td><td style="text-align:center">${prodTotals.retornos}</td><td></td><td></td><td></td></tr>`;
                     const printWindow = window.open('', '_blank');
-                    if (!printWindow) return;
+                    if (!printWindow) { toast.error('Pop-up bloqueado pelo navegador', { description: 'Permita pop-ups deste site e tente novamente.' }); return; }
                     const logoUrl = logoSmsFallback;
                     const logoUrlRight = logoCapsFallback;
                     printWindow.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Relatório de Produtividade</title>
