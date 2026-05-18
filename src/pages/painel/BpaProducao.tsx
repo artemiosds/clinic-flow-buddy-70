@@ -650,21 +650,21 @@ const BpaProducao: React.FC = () => {
         </Button>
       </div>
 
-      {/* Filtros */}
+      {/* Filtros — fonte única de verdade */}
       <Card className="shadow-card border-0">
-        <CardContent className="p-4 flex flex-col sm:flex-row gap-3">
-          <div className="w-full sm:w-[180px]">
+        <CardContent className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div>
             <Label className="text-xs">Competência (AAAAMM)</Label>
             <Input
               value={competencia}
-              onChange={(e) => setCompetencia(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              onChange={(e) => setFilter('competencia', e.target.value.replace(/\D/g, '').slice(0, 6))}
               maxLength={6}
               placeholder="202504"
             />
           </div>
-          <div className="flex-1">
+          <div>
             <Label className="text-xs">Unidade</Label>
-            <Select value={unidadeFiltro} onValueChange={setUnidadeFiltro}>
+            <Select value={filters.unidadeId} onValueChange={(v) => setFilter('unidadeId', v)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas as unidades</SelectItem>
@@ -674,32 +674,72 @@ const BpaProducao: React.FC = () => {
               </SelectContent>
             </Select>
           </div>
+          <div>
+            <Label className="text-xs">Profissional</Label>
+            <Select value={filters.profissionalId} onValueChange={(v) => setFilter('profissionalId', v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os profissionais</SelectItem>
+                {profissionaisOpts.map(p => (
+                  <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">Status</Label>
+            <Select value={filters.status} onValueChange={(v) => setFilter('status', v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="ok">Válidos (OK)</SelectItem>
+                <SelectItem value="pendente">Pendentes</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">Origem do procedimento</Label>
+            <Select value={filters.origem} onValueChange={(v) => setFilter('origem', v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as origens</SelectItem>
+                <SelectItem value="prontuario">Prontuário</SelectItem>
+                <SelectItem value="pts">PTS</SelectItem>
+                <SelectItem value="paciente">Paciente</SelectItem>
+                <SelectItem value="outro_prontuario_mesmo_paciente">Herança (outro prontuário)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">SIGTAP</Label>
+            <Input
+              value={filters.sigtap}
+              onChange={(e) => setFilter('sigtap', e.target.value.replace(/\D/g, '').slice(0, 10))}
+              placeholder="Código SIGTAP"
+            />
+          </div>
+          <div>
+            <Label className="text-xs">Paciente</Label>
+            <Input
+              value={filters.paciente}
+              onChange={(e) => setFilter('paciente', e.target.value)}
+              placeholder="Nome do paciente"
+            />
+          </div>
           <div className="flex items-end gap-2">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => {
-                const bpaLines: BpaLine[] = linhas.map(l => {
-                  const pac = pacMap[l.paciente_id];
-                  const prof = profMap[l.profissional_id];
-                  const uni = unidades.find(u => u.id === l.unidade_id);
-                  return normalizeBpaData({
-                    ...l,
-                    paciente_custom: (pac as any)?.custom_data || {},
-                    paciente_sexo: (pac as any)?.sexo || '',
-                    paciente_nascimento: pac?.data_nascimento || '',
-                    paciente_cns: pac?.cns || '',
-                    paciente_cpf: pac?.cpf || '',
-                    profissional_custom: prof,
-
-                    unidade_custom: (uni as any)?.custom_data || {},
-                    unidade_nome: uni?.nome || '',
-                  });
-                });
+                const bpaLines: BpaLine[] = linhasFiltradas.map(toBpaLine);
+                if (bpaLines.length === 0) {
+                  toast.error('Não há dados para exportar com os filtros atuais.');
+                  return;
+                }
                 exportBpaToXlsx(bpaLines, competencia);
-                toast.success('XLSX de conferência gerado com sucesso!');
+                toast.success(`XLSX gerado (${bpaLines.length} linha(s) filtradas).`);
               }}
-              className="gap-2 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
-              disabled={linhas.length === 0}
+              className="gap-2 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 w-full"
+              disabled={linhasFiltradas.length === 0}
             >
               <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
               Conferência (XLSX)
@@ -708,12 +748,50 @@ const BpaProducao: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Stats */}
+      {/* Cabeçalho BPA-I — derivado da seleção */}
+      <Card className="shadow-card border-0 border-l-4 border-l-primary">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Cabeçalho BPA-I</p>
+            <Badge variant="outline" className="text-[10px]">
+              {filters.profissionalId === 'all' ? 'Visão geral' : 'Profissional selecionado'}
+            </Badge>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
+            <div>
+              <p className="text-[10px] uppercase text-muted-foreground">Profissional</p>
+              <p className="font-medium truncate">{headerBpa.profissionalNome || <span className="italic text-muted-foreground">— selecione —</span>}</p>
+              {headerBpa.profissao && <p className="text-[10px] text-muted-foreground">{headerBpa.profissao}</p>}
+            </div>
+            <div>
+              <p className="text-[10px] uppercase text-muted-foreground">CNS do profissional</p>
+              <p className={cn("font-mono", !headerBpa.cns && headerBpa.profissionalNome && "text-destructive")}>{headerBpa.cns || (headerBpa.profissionalNome ? 'faltando' : '—')}</p>
+            </div>
+            <div>
+              <p className="text-[10px] uppercase text-muted-foreground">CBO</p>
+              <p className={cn("font-mono", !headerBpa.cbo && headerBpa.profissionalNome && "text-destructive")}>{headerBpa.cbo || (headerBpa.profissionalNome ? 'faltando' : '—')}</p>
+            </div>
+            <div>
+              <p className="text-[10px] uppercase text-muted-foreground">Unidade</p>
+              <p className="font-medium truncate">{headerBpa.unidadeNome}</p>
+            </div>
+            <div>
+              <p className="text-[10px] uppercase text-muted-foreground">CNES</p>
+              <p className={cn("font-mono", !headerBpa.cnes && filters.unidadeId !== 'all' && "text-destructive")}>{headerBpa.cnes || (filters.unidadeId !== 'all' ? 'faltando' : '—')}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Stats — usam EXATAMENTE o mesmo conjunto filtrado */}
       <div className="grid grid-cols-3 gap-3">
         <Card className="shadow-card border-0">
           <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Total no mês</p>
+            <p className="text-xs text-muted-foreground">Total (filtrado)</p>
             <p className="text-2xl font-bold text-foreground">{stats.total}</p>
+            {linhas.length !== stats.total && (
+              <p className="text-[10px] text-muted-foreground mt-0.5">de {linhas.length} no período</p>
+            )}
           </CardContent>
         </Card>
         <Card className="shadow-card border-0">
@@ -732,6 +810,7 @@ const BpaProducao: React.FC = () => {
           </CardContent>
         </Card>
       </div>
+
 
       {/* Grade */}
       <Card className="shadow-card border-0">
