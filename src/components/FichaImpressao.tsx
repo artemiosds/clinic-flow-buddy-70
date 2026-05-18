@@ -363,9 +363,15 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = "co
   }, []);
 
   const buildHTML = useCallback(() => {
-    const logoLeft = config?.logoEsquerda || resolveLogoUrl(logoSmsFallback);
-    const logoCenter = config?.logoCentro || "";
-    const logoRight = config?.logoDireita || resolveLogoUrl(logoCapsFallback);
+    const showLeft = config?.logoEsquerdaAtiva !== false;
+    const showCenter = config?.logoCentroAtiva !== false && !!config?.logoCentro;
+    const showRight = config?.logoDireitaAtiva !== false;
+    const logoLeft = showLeft ? (config?.logoEsquerda || resolveLogoUrl(logoSmsFallback)) : "";
+    const logoCenter = showCenter ? config!.logoCentro : "";
+    const logoRight = showRight ? (config?.logoDireita || resolveLogoUrl(logoCapsFallback)) : "";
+    const hL = Math.max(28, Math.min(140, config?.logoEsquerdaTamanho || 64));
+    const hC = Math.max(28, Math.min(140, config?.logoCentroTamanho || 56));
+    const hR = Math.max(28, Math.min(140, config?.logoDireitaTamanho || 64));
     const linha1 = config?.linha1 || "Secretaria Municipal de Saúde de Oriximiná";
     const linha2 = config?.linha2 || "CAPS II";
 
