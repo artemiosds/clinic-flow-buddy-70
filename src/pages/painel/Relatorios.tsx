@@ -1080,7 +1080,7 @@ ${dataRows}
     return `${day}/${m}/${y}`;
   };
 
-  const exportMapaPDF = useCallback(() => {
+  const exportMapaPDF = useCallback(async () => {
     if (mapaData.length === 0) return;
     const now = new Date().toLocaleString('pt-BR');
     const periodo = `${formatDateBR(mapaDateFrom)} a ${formatDateBR(mapaDateTo)}`;
