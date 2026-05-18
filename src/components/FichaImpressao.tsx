@@ -704,6 +704,11 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = "co
         <div className="flex items-center gap-4 mb-4 border-b-2 border-primary/20 pb-4">
           <img src={config?.logoEsquerda || logoSmsFallback} alt="Logo" className="w-12 h-12 object-contain" />
           <div className="flex-1 text-center">
+            {config?.logoCentro && (
+              <div className="flex justify-center mb-1">
+                <img src={config.logoCentro} alt="Logo centro" className="h-9 max-w-[110px] object-contain" />
+              </div>
+            )}
             <h2 className="text-sm font-bold uppercase tracking-tight text-primary">
               {config?.linha1 || "Prefeitura Municipal de Oriximiná"}
             </h2>
