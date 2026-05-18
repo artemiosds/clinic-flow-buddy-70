@@ -364,6 +364,7 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = "co
 
   const buildHTML = useCallback(() => {
     const logoLeft = config?.logoEsquerda || resolveLogoUrl(logoSmsFallback);
+    const logoCenter = config?.logoCentro || "";
     const logoRight = config?.logoDireita || resolveLogoUrl(logoCapsFallback);
     const linha1 = config?.linha1 || "Secretaria Municipal de Saúde de Oriximiná";
     const linha2 = config?.linha2 || "CAPS II";
@@ -441,6 +442,7 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = "co
       <img src="${logoLeft}" alt="Logo" onerror="this.style.display='none'" />
     </div>
     <div class="header-center">
+      ${logoCenter ? `<div style="display:flex;justify-content:center;margin-bottom:4px;"><img src="${logoCenter}" alt="Logo centro" style="max-height:44px;max-width:120px;object-fit:contain;" onerror="this.style.display='none'" /></div>` : ''}
       <h1>${linha1}</h1>
       <h2>${linha2}</h2>
       <div class="ficha-tipo">${somentePessoais ? "FICHA CADASTRAL SIMPLIFICADA" : "FICHA DE ATENDIMENTO COMPLETA"}</div>
@@ -702,6 +704,11 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = "co
         <div className="flex items-center gap-4 mb-4 border-b-2 border-primary/20 pb-4">
           <img src={config?.logoEsquerda || logoSmsFallback} alt="Logo" className="w-12 h-12 object-contain" />
           <div className="flex-1 text-center">
+            {config?.logoCentro && (
+              <div className="flex justify-center mb-1">
+                <img src={config.logoCentro} alt="Logo centro" className="h-9 max-w-[110px] object-contain" />
+              </div>
+            )}
             <h2 className="text-sm font-bold uppercase tracking-tight text-primary">
               {config?.linha1 || "Prefeitura Municipal de Oriximiná"}
             </h2>

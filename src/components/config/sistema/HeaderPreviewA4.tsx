@@ -3,6 +3,7 @@ import { ImageIcon } from 'lucide-react';
 
 interface HeaderPreviewA4Props {
   logoEsquerda: string;
+  logoCentro?: string;
   logoDireita: string;
   linha1: string;
   linha2: string;
@@ -16,6 +17,7 @@ interface HeaderPreviewA4Props {
 /** Real-time A4-simulated preview of the document header */
 const HeaderPreviewA4: React.FC<HeaderPreviewA4Props> = ({
   logoEsquerda,
+  logoCentro,
   logoDireita,
   linha1,
   linha2,
@@ -53,6 +55,15 @@ const HeaderPreviewA4: React.FC<HeaderPreviewA4Props> = ({
                 lineHeight: 1.3,
               }}
             >
+              {logoCentro && (
+                <div className="flex justify-center mb-1">
+                  <img
+                    src={logoCentro}
+                    alt="Logo centro"
+                    className="max-h-10 max-w-[80px] object-contain"
+                  />
+                </div>
+              )}
               <div className="font-bold uppercase">{linha1 || 'Linha 1'}</div>
               <div className="opacity-80 mt-0.5">{linha2 || 'Linha 2'}</div>
             </div>

@@ -13,6 +13,7 @@ import logoCapsFallback from '@/assets/logo-caps-ii.png';
 
 export interface DocumentConfig {
   logoEsquerda: string;
+  logoCentro: string;
   logoDireita: string;
   linha1: string;
   linha2: string;
@@ -21,6 +22,7 @@ export interface DocumentConfig {
 
 const DEFAULT_CONFIG: DocumentConfig = {
   logoEsquerda: '',
+  logoCentro: '',
   logoDireita: '',
   linha1: 'SECRETARIA MUNICIPAL DE SAÚDE DE ORIXIMINÁ',
   linha2: 'CAPS II',
@@ -43,6 +45,7 @@ export async function loadDocumentConfig(): Promise<DocumentConfig> {
     if (cfg) {
       _cachedConfig = {
         logoEsquerda: cfg.cabecalho?.logoEsquerda || cfg.cabecalho?.logoUrl || '',
+        logoCentro: cfg.cabecalho?.logoCentro || '',
         logoDireita: cfg.cabecalho?.logoDireita || '',
         linha1: cfg.cabecalho?.linha1 || DEFAULT_CONFIG.linha1,
         linha2: cfg.cabecalho?.linha2 || DEFAULT_CONFIG.linha2,
@@ -280,7 +283,14 @@ export const institutionalCSS = buildInstitutionalCSS();
 export function docHeader(title: string, config: DocumentConfig, extraRight?: string): string {
   const logoLeft = resolveLogoUrl(config.logoEsquerda, logoSmsFallback);
   const logoRight = resolveLogoUrl(config.logoDireita, logoCapsFallback);
+  const hasCenterLogo = !!(config.logoCentro && config.logoCentro.trim());
   const now = new Date().toLocaleString('pt-BR');
+
+  const centerLogoHtml = hasCenterLogo
+    ? `<div class="logo-center" style="display:flex;justify-content:center;margin-bottom:6px;">
+         <img src="${config.logoCentro}" alt="Logo institucional" style="max-height:56px;max-width:140px;object-fit:contain;" />
+       </div>`
+    : '';
 
   return `
     <div class="doc-header" style="position:relative;">
@@ -288,6 +298,7 @@ export function docHeader(title: string, config: DocumentConfig, extraRight?: st
         <img src="${logoLeft}" alt="Logo SMS Oriximiná" />
       </div>
       <div class="header-center">
+        ${centerLogoHtml}
         <h1>${config.linha1}</h1>
         <div class="subtitle">${config.linha2}</div>
         <div class="doc-title">${title}</div>

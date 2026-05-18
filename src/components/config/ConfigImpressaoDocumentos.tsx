@@ -46,6 +46,7 @@ interface ImpressaoConfig {
     linha2: string;
     logoUrl: string;
     logoEsquerda: string;
+    logoCentro: string;
     logoDireita: string;
     fonte: string;
     tamanhoFonte: number;
@@ -78,6 +79,7 @@ const DEFAULT: ImpressaoConfig = {
     linha2: "CAPS II",
     logoUrl: "",
     logoEsquerda: "",
+    logoCentro: "",
     logoDireita: "",
     fonte: "Arial",
     tamanhoFonte: 12,
@@ -110,8 +112,10 @@ const DEFAULT: ImpressaoConfig = {
 
 const FONT_OPTIONS = ["Arial", "Times New Roman", "Helvetica", "Roboto", "Georgia", "Verdana"];
 
+type LogoSide = "esquerda" | "centro" | "direita";
+
 interface LogoUploadCardProps {
-  side: "esquerda" | "direita";
+  side: LogoSide;
   title: string;
   subtitle: string;
   url: string;
@@ -235,6 +239,7 @@ const ConfigImpressaoDocumentos: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingLeft, setUploadingLeft] = useState(false);
+  const [uploadingCenter, setUploadingCenter] = useState(false);
   const [uploadingRight, setUploadingRight] = useState(false);
 
   const loadConfig = useCallback(async () => {
@@ -287,8 +292,9 @@ const ConfigImpressaoDocumentos: React.FC = () => {
 
   const saveField = () => save(config);
 
-  const uploadLogo = async (file: File, side: "esquerda" | "direita") => {
-    const setUploading = side === "esquerda" ? setUploadingLeft : setUploadingRight;
+  const uploadLogo = async (file: File, side: LogoSide) => {
+    const setUploading =
+      side === "esquerda" ? setUploadingLeft : side === "centro" ? setUploadingCenter : setUploadingRight;
     setUploading(true);
     try {
       const ext = file.name.split(".").pop() || "png";
@@ -300,7 +306,7 @@ const ConfigImpressaoDocumentos: React.FC = () => {
 
       const { data: urlData } = supabase.storage.from("document-logos").getPublicUrl(path);
       const url = urlData.publicUrl;
-      const key = side === "esquerda" ? "logoEsquerda" : "logoDireita";
+      const key = side === "esquerda" ? "logoEsquerda" : side === "centro" ? "logoCentro" : "logoDireita";
       const updated = { ...config, cabecalho: { ...config.cabecalho, [key]: url } };
       await save(updated);
       toast.success(`Logo ${side} atualizada`);
@@ -310,8 +316,8 @@ const ConfigImpressaoDocumentos: React.FC = () => {
     setUploading(false);
   };
 
-  const removeLogo = async (side: "esquerda" | "direita") => {
-    const key = side === "esquerda" ? "logoEsquerda" : "logoDireita";
+  const removeLogo = async (side: LogoSide) => {
+    const key = side === "esquerda" ? "logoEsquerda" : side === "centro" ? "logoCentro" : "logoDireita";
     const updated = { ...config, cabecalho: { ...config.cabecalho, [key]: "" } };
     await save(updated);
     toast.success("Logo removida");
@@ -390,7 +396,7 @@ const ConfigImpressaoDocumentos: React.FC = () => {
             {/* Left: Controls */}
             <div className="space-y-6 min-w-0">
               {/* Logos */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <LogoUploadCard
                   side="esquerda"
                   title="Logo Esquerda"
@@ -399,6 +405,15 @@ const ConfigImpressaoDocumentos: React.FC = () => {
                   uploading={uploadingLeft}
                   onUpload={(f) => uploadLogo(f, "esquerda")}
                   onRemove={() => removeLogo("esquerda")}
+                />
+                <LogoUploadCard
+                  side="centro"
+                  title="Logo Centro"
+                  subtitle="Opcional — ex: brasão"
+                  url={config.cabecalho.logoCentro}
+                  uploading={uploadingCenter}
+                  onUpload={(f) => uploadLogo(f, "centro")}
+                  onRemove={() => removeLogo("centro")}
                 />
                 <LogoUploadCard
                   side="direita"
@@ -545,6 +560,7 @@ const ConfigImpressaoDocumentos: React.FC = () => {
             <div className="lg:w-[380px] flex-shrink-0">
               <HeaderPreviewA4
                 logoEsquerda={config.cabecalho.logoEsquerda}
+                logoCentro={config.cabecalho.logoCentro}
                 logoDireita={config.cabecalho.logoDireita}
                 linha1={config.cabecalho.linha1}
                 linha2={config.cabecalho.linha2}
