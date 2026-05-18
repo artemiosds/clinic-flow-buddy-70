@@ -3,6 +3,7 @@ import { ImageIcon } from 'lucide-react';
 
 interface HeaderPreviewA4Props {
   logoEsquerda: string;
+  logoCentro?: string;
   logoDireita: string;
   linha1: string;
   linha2: string;
