@@ -396,7 +396,7 @@ const ConfigImpressaoDocumentos: React.FC = () => {
             {/* Left: Controls */}
             <div className="space-y-6 min-w-0">
               {/* Logos */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <LogoUploadCard
                   side="esquerda"
                   title="Logo Esquerda"
@@ -405,6 +405,15 @@ const ConfigImpressaoDocumentos: React.FC = () => {
                   uploading={uploadingLeft}
                   onUpload={(f) => uploadLogo(f, "esquerda")}
                   onRemove={() => removeLogo("esquerda")}
+                />
+                <LogoUploadCard
+                  side="centro"
+                  title="Logo Centro"
+                  subtitle="Opcional — ex: brasão"
+                  url={config.cabecalho.logoCentro}
+                  uploading={uploadingCenter}
+                  onUpload={(f) => uploadLogo(f, "centro")}
+                  onRemove={() => removeLogo("centro")}
                 />
                 <LogoUploadCard
                   side="direita"
