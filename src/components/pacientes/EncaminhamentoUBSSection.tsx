@@ -18,6 +18,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import EspecialidadeCombobox from "@/components/EspecialidadeCombobox";
 import GenericCombobox from "@/components/GenericCombobox";
+import { openPrintDocument } from "@/lib/printLayout";
 
 const BUCKET = "paciente-documentos";
 
