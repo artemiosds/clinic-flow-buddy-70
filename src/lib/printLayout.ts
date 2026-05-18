@@ -400,7 +400,12 @@ export function docFooter(config: DocumentConfig, extraInfo?: string): string {
  * asynchronously and rewrite the document with the real content.
  * Throws if the popup is blocked so callers can show a toast.
  */
-export async function openPrintDocument(title: string, body: string, meta?: Record<string, string>): Promise<void> {
+export async function openPrintDocument(
+  title: string,
+  body: string,
+  meta?: Record<string, string>,
+  options?: InstitutionalLayoutOptions,
+): Promise<void> {
   // 1. Open window SYNCHRONOUSLY (preserves user-gesture trust)
   const printWindow = window.open('', '_blank');
   if (!printWindow) {
@@ -417,7 +422,7 @@ export async function openPrintDocument(title: string, body: string, meta?: Reco
   // 3. Now fetch config (async) and rewrite the doc
   const config = await loadDocumentConfig();
   const metaHtml = meta ? docMeta(meta) : '';
-  const css = buildInstitutionalCSS();
+  const css = buildInstitutionalCSS(options);
 
   try {
     printWindow.document.open();
