@@ -58,6 +58,7 @@ import SoapFieldsAdaptive from "@/components/SoapFieldsAdaptive";
 import TriagemDetalhada from "@/components/TriagemDetalhada";
 import ProntuarioAnexos from "@/components/ProntuarioAnexos";
 import ResultadosExames from "@/components/ResultadosExames";
+import ProcedimentosCidCards from "@/components/prontuario/ProcedimentosCidCards";
 import { isMedico, hasDropdownSoap } from "@/data/soapOptionsByProfession";
 import { useSoapCustomOptions } from "@/hooks/useSoapCustomOptions";
 import { Stamp } from "lucide-react";
@@ -2572,238 +2573,24 @@ const ProntuarioPage: React.FC = () => {
 
 
 
-            {/* Histórico de Procedimentos do Paciente */}
-            {isProfBlocoVisible('procedimentos') && form.paciente_id && pacienteProcHistory.length > 0 && (
-              <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
-                <Label className="mb-2 flex items-center gap-2 text-primary">
-                  <History className="h-4 w-4" /> Histórico do paciente
-                </Label>
-                <div className="flex flex-wrap gap-2">
-                  {pacienteProcHistory.slice(0, 6).map((h) => (
-                    <Button
-                      key={h.id}
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="h-auto py-1 text-xs"
-                      onClick={() => {
-                        if (!selectedProcIds.includes(h.id)) setSelectedProcIds((prev) => [...prev, h.id]);
-                      }}
-                    >
-                      <Clock className="h-3 w-3 mr-1" /> {h.nome}
-                      <span className="ml-1 text-muted-foreground">({h.ultima})</span>
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Procedimentos Realizados — checkboxes */}
+            {/* Procedimentos & CIDs — UI redesenhada (cards) */}
             {isProfBlocoVisible('procedimentos') && (
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <Label>Procedimentos Realizados</Label>
-                  {user?.role === 'master' && (
-                    <Button type="button" variant="outline" size="sm" onClick={() => setNovoProcOpen(true)}>
-                      <Plus className="h-3 w-3 mr-1" /> Novo Procedimento
-                    </Button>
-                  )}
-                </div>
-                <div className="relative mb-2">
-                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
-                  <Input
-                    value={procSearch}
-                    onChange={(e) => setProcSearch(e.target.value)}
-                    placeholder="Pesquisar procedimento (nome, código SIGTAP, especialidade)..."
-                    className="pl-7 h-8 text-sm"
-                  />
-                </div>
-                {filteredProcedimentos.length > 0 ? (
-                  <div className="flex flex-col gap-1.5 bg-muted/20 rounded-lg p-2 border max-h-72 overflow-y-auto">
-                    {filteredProcedimentos.map((proc) => {
-                      const checked = selectedProcIds.includes(proc.id);
-                      const cids = cidsByProc[proc.id] || [];
-                      const selCids = selectedCidsByProc[proc.id] || [];
-                      const isCustom = proc.origem === 'PERSONALIZADO';
-                      const isExpanded = expandedProcId === proc.id;
-                      const cidQuery = (cidSearchByProc[proc.id] || '').trim().toLowerCase();
-                      const filteredCids = cidQuery
-                        ? cids.filter((c) => c.codigo.toLowerCase().includes(cidQuery) || (c.descricao || '').toLowerCase().includes(cidQuery))
-                        : cids;
-                      const searchResults = cidSearchResults[proc.id] || [];
-                      return (
-                        <div key={proc.id} className={`rounded-md border bg-background transition-colors ${checked ? 'border-primary/40' : ''}`}>
-                          <div
-                            className="flex items-center gap-2 cursor-pointer hover:bg-muted/40 rounded-md px-2 py-1.5"
-                            onClick={() => toggleExpandProc(proc.id)}
-                          >
-                            <Checkbox
-                              id={`proc-${proc.id}`}
-                              checked={checked}
-                              onClick={(e) => e.stopPropagation()}
-                              onCheckedChange={(c) => {
-                                setSelectedProcIds((prev) => {
-                                  if (c) {
-                                    const p = procedimentos.find(p => p.id === proc.id);
-                                    if (p && (p.id || '').replace(/\D/g, '').length !== 10) {
-                                      toast.warning("Este procedimento não possui um código SIGTAP de 10 dígitos e será ignorado no BPA-I.");
-                                    }
-                                    return Array.from(new Set([...prev, proc.id]));
-                                  }
-                                  return prev.filter((id) => id !== proc.id);
-                                });
-                                if (c) loadCidsForProc(proc.id);
-                              }}
-                            />
-                            <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform shrink-0 ${isExpanded ? '' : '-rotate-90'}`} />
-                            {isCustom
-                              ? <PencilIcon className="h-3 w-3 text-accent-foreground shrink-0" />
-                              : <Tag className="h-3 w-3 text-muted-foreground shrink-0" />}
-                            <span className="text-sm flex-1 truncate select-none">
-                              {!isCustom && (
-                                <span className="font-mono text-[11px] text-muted-foreground mr-2">{proc.id}</span>
-                              )}
-                              {proc.nome}
-                            </span>
-                            {!isCustom && (proc.id || '').replace(/\D/g, '').length !== 10 && (
-                              <Badge variant="destructive" className="h-5 text-[10px] shrink-0 animate-pulse">
-                                <AlertTriangle className="h-3 w-3 mr-1" /> Sem SIGTAP
-                              </Badge>
-                            )}
-                            {checked && selCids.length > 0 && (
-                              <Badge variant="secondary" className="h-5 text-[10px] shrink-0">{selCids.length} CID</Badge>
-                            )}
-                          </div>
-                          {isExpanded && (
-                            <div className="px-3 pb-3 pt-1 border-t bg-muted/10">
-                              {proc.especialidade && (
-                                <p className="text-[11px] text-muted-foreground mb-2">{proc.especialidade}</p>
-                              )}
-                              {/* Lupa unificada de CIDs */}
-                              <div className="relative mb-2">
-                                <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
-                                <Input
-                                  value={cidSearchByProc[proc.id] || ''}
-                                  onChange={(e) => {
-                                    const v = e.target.value;
-                                    setCidSearchByProc((m) => ({ ...m, [proc.id]: v }));
-                                    const q = v.trim();
-                                    if (q.length < 2) {
-                                      setCidSearchResults((m) => ({ ...m, [proc.id]: [] }));
-                                      return;
-                                    }
-                                    setCidSearchLoading((m) => ({ ...m, [proc.id]: true }));
-                                    procedureService.searchCids(q).then((res) => {
-                                      setCidSearchResults((m) => ({ ...m, [proc.id]: res }));
-                                      setCidSearchLoading((m) => ({ ...m, [proc.id]: false }));
-                                    });
-                                  }}
-                                  placeholder="Pesquisar CIDs (filtra sugeridos e busca novos)..."
-                                  className="pl-7 h-8 text-xs"
-                                />
-                              </div>
-
-                              {/* CIDs sugeridos (filtrados) */}
-                              <p className="text-[11px] font-medium text-muted-foreground mb-1">📋 Sugeridos</p>
-                              {!cidsByProc[proc.id] ? (
-                                <p className="text-xs text-muted-foreground italic">Carregando...</p>
-                              ) : filteredCids.length === 0 ? (
-                                <p className="text-xs text-muted-foreground italic">
-                                  {cids.length === 0 ? 'Nenhum CID vinculado.' : 'Nenhum CID sugerido corresponde à busca.'}
-                                </p>
-                              ) : (
-                                <div className="flex flex-wrap gap-1.5">
-                                  {filteredCids.map((c) => {
-                                    const isSel = selCids.includes(c.codigo);
-                                    return (
-                                      <button
-                                        type="button"
-                                        key={c.codigo}
-                                        onClick={() => {
-                                          // Auto-marca o procedimento se o usuário escolher um CID sem ter marcado o proc
-                                          if (!checked) {
-                                            setSelectedProcIds((prev) => prev.includes(proc.id) ? prev : [...prev, proc.id]);
-                                          }
-                                          setSelectedCidsByProc((m) => ({
-                                            ...m,
-                                            [proc.id]: isSel
-                                              ? (m[proc.id] || []).filter((x) => x !== c.codigo)
-                                              : Array.from(new Set([...(m[proc.id] || []), c.codigo])),
-                                          }));
-                                        }}
-                                        className={
-                                          isSel
-                                            ? "inline-flex items-center gap-1 rounded-md border border-primary bg-primary px-2 py-0.5 text-[11px] font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
-                                            : "inline-flex items-center gap-1 rounded-md border border-border bg-background px-2 py-0.5 text-[11px] font-normal text-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-                                        }
-                                        aria-pressed={isSel}
-                                      >
-                                        {isSel && <CheckCircle className="h-3 w-3 shrink-0" />}
-                                        <span className="truncate max-w-[220px]">{c.codigo}{c.descricao ? ` · ${c.descricao.slice(0, 36)}` : ''}</span>
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              )}
-
-                              {/* Resultados externos da busca */}
-                              {cidSearchLoading[proc.id] && (
-                                <p className="text-xs text-muted-foreground italic mt-2">Buscando no catálogo...</p>
-                              )}
-                              {searchResults.length > 0 && (
-                                <>
-                                  <p className="text-[11px] font-medium text-muted-foreground mt-2 mb-1">🔎 Outros resultados</p>
-                                  <div className="flex flex-wrap gap-1 max-h-28 overflow-y-auto">
-                                    {searchResults
-                                      .filter((c) => !cids.some((x) => x.codigo === c.codigo))
-                                      .map((c) => {
-                                        const isSel = (selectedCidsByProc[proc.id] || []).includes(c.codigo);
-                                        return (
-                                          <button
-                                            type="button"
-                                            key={c.codigo}
-                                            onClick={() => {
-                                              if (!checked) {
-                                                setSelectedProcIds((prev) => prev.includes(proc.id) ? prev : [...prev, proc.id]);
-                                              }
-                                              // Adiciona ao catálogo local sem duplicar
-                                              setCidsByProc((m) => {
-                                                const existing = m[proc.id] || [];
-                                                if (existing.some((x) => x.codigo === c.codigo)) return m;
-                                                return { ...m, [proc.id]: [...existing, c] };
-                                              });
-                                              setSelectedCidsByProc((m) => ({
-                                                ...m,
-                                                [proc.id]: isSel
-                                                  ? (m[proc.id] || []).filter((x) => x !== c.codigo)
-                                                  : Array.from(new Set([...(m[proc.id] || []), c.codigo])),
-                                              }));
-                                            }}
-                                            className={
-                                              isSel
-                                                ? "inline-flex items-center gap-1 rounded-md border border-primary bg-primary px-2 py-0.5 text-[11px] font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
-                                                : "inline-flex items-center gap-1 rounded-md border border-dashed border-border bg-muted px-2 py-0.5 text-[11px] font-normal text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-                                            }
-                                            aria-pressed={isSel}
-                                          >
-                                            {isSel ? <CheckCircle className="h-3 w-3 shrink-0" /> : <Plus className="h-3 w-3 shrink-0" />}
-                                            <span className="truncate max-w-[220px]">{c.codigo}{c.descricao ? ` · ${c.descricao.slice(0, 36)}` : ''}</span>
-                                          </button>
-                                        );
-                                      })}
-                                  </div>
-                                </>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <p className="text-xs text-muted-foreground">Nenhum procedimento disponível para sua profissão.</p>
-                )}
-              </div>
+              <ProcedimentosCidCards
+                procedimentos={procedimentos}
+                selectedProcIds={selectedProcIds}
+                setSelectedProcIds={setSelectedProcIds}
+                cidsByProc={cidsByProc}
+                setCidsByProc={setCidsByProc}
+                selectedCidsByProc={selectedCidsByProc}
+                setSelectedCidsByProc={setSelectedCidsByProc}
+                loadCidsForProc={loadCidsForProc}
+                autosaveStatus={autosaveStatus}
+                autosaveAt={autosaveAt}
+                isMaster={user?.role === 'master'}
+                onNewProcedure={() => setNovoProcOpen(true)}
+                pacienteProcHistory={pacienteProcHistory}
+                profissao={user?.profissao}
+              />
             )}
 
             <div>
