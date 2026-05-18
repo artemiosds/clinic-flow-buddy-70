@@ -1196,14 +1196,14 @@ ${dataRows}
           <Button variant="outline" size="sm" className="hover:bg-accent/50" onClick={() => exportCSV(activeTab === 'geral' ? 'agendamentos' : activeTab)}>
             <Download className="w-4 h-4 mr-1" />CSV
           </Button>
-          <Button variant="outline" size="sm" className="hover:bg-accent/50" onClick={() => exportPDF(activeTab)}>
-            <FileText className="w-4 h-4 mr-1" />PDF
+          <Button variant="outline" size="sm" className="hover:bg-accent/50" onClick={() => exportPDF(activeTab)} disabled={printing !== null}>
+            <FileText className="w-4 h-4 mr-1" />{printing === activeTab ? 'Gerando…' : 'PDF'}
           </Button>
           <Button variant="outline" size="sm" className="hover:bg-accent/50" onClick={() => exportExcel(activeTab === 'geral' ? 'agendamentos' : activeTab)}>
             <Download className="w-4 h-4 mr-1" />Excel
           </Button>
-          <Button variant="outline" size="sm" className="hover:bg-accent/50" onClick={() => exportPDF(activeTab)}>
-            <Printer className="w-4 h-4 mr-1" />Imprimir
+          <Button variant="outline" size="sm" className="hover:bg-accent/50" onClick={() => exportPDF(activeTab)} disabled={printing !== null}>
+            <Printer className="w-4 h-4 mr-1" />{printing === activeTab ? 'Preparando…' : 'Imprimir'}
           </Button>
         </div>
       </div>
