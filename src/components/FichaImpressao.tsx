@@ -452,16 +452,16 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = "co
   <!-- CABEÇALHO -->
   <div class="header">
     <div class="header-logo" style="min-width:${logoLeft ? hL * 1.4 : 0}px;">
-      ${logoLeft ? `<img src="${logoLeft}" alt="Logo" style="max-height:${hL}px;max-width:${hL * 2}px;object-fit:contain;" onerror="this.style.display='none'" />` : ''}
+      ${logoLeft ? `<img src="${logoLeft}" alt="Logo" style="${styleFor(hL, roundL)}" onerror="this.style.display='none'" />` : ''}
     </div>
     <div class="header-center">
-      ${logoCenter ? `<div style="display:flex;justify-content:center;margin-bottom:4px;"><img src="${logoCenter}" alt="Logo centro" style="max-height:${hC}px;max-width:${hC * 2.4}px;object-fit:contain;" onerror="this.style.display='none'" /></div>` : ''}
+      ${logoCenter ? `<div style="display:flex;justify-content:center;margin-bottom:4px;"><img src="${logoCenter}" alt="Logo centro" style="${styleFor(hC, roundC)}" onerror="this.style.display='none'" /></div>` : ''}
       <h1>${linha1}</h1>
       <h2>${linha2}</h2>
       <div class="ficha-tipo">${somentePessoais ? "FICHA CADASTRAL SIMPLIFICADA" : "FICHA DE ATENDIMENTO COMPLETA"}</div>
     </div>
     <div class="header-logo" style="min-width:${logoRight ? hR * 1.4 : 0}px;">
-      ${logoRight ? `<img src="${logoRight}" alt="Logo" style="max-height:${hR}px;max-width:${hR * 2}px;object-fit:contain;" onerror="this.style.display='none'" />` : ''}
+      ${logoRight ? `<img src="${logoRight}" alt="Logo" style="${styleFor(hR, roundR)}" onerror="this.style.display='none'" />` : ''}
     </div>
     <div class="header-right">
       <div><b>Data:</b> ${dataAtual}</div>
