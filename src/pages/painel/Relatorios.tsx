@@ -1106,7 +1106,7 @@ ${dataRows}
       <div style="margin-top:20px;font-size:9px;color:#64748b;">Gerado por: ${user?.nome || ''} — ${now}</div>`;
 
     const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
+    if (!printWindow) { toast.error('Pop-up bloqueado pelo navegador', { description: 'Permita pop-ups deste site e tente novamente.' }); return; }
 
     const logoUrl = logoSmsFallback;
     const logoUrlRight = logoCapsFallback;
