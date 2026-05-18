@@ -48,6 +48,12 @@ interface ImpressaoConfig {
     logoEsquerda: string;
     logoCentro: string;
     logoDireita: string;
+    logoEsquerdaTamanho: number;
+    logoCentroTamanho: number;
+    logoDireitaTamanho: number;
+    logoEsquerdaAtiva: boolean;
+    logoCentroAtiva: boolean;
+    logoDireitaAtiva: boolean;
     fonte: string;
     tamanhoFonte: number;
     alinhamento: "center" | "left" | "right";
@@ -81,6 +87,12 @@ const DEFAULT: ImpressaoConfig = {
     logoEsquerda: "",
     logoCentro: "",
     logoDireita: "",
+    logoEsquerdaTamanho: 64,
+    logoCentroTamanho: 56,
+    logoDireitaTamanho: 64,
+    logoEsquerdaAtiva: true,
+    logoCentroAtiva: true,
+    logoDireitaAtiva: true,
     fonte: "Arial",
     tamanhoFonte: 12,
     alinhamento: "center",
