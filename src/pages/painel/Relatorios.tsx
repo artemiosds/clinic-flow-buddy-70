@@ -2397,7 +2397,7 @@ th{background:#f1f5f9;font-weight:600;}
                     return `<tr style="${i % 2 === 1 ? 'background:#f9f9f9;' : ''}"><td style="text-align:center">${String(r.num).padStart(2, '0')}</td><td>${r.paciente_nome}</td><td>${formatDateBR(r.data_nascimento)}</td><td>${formatCPF(r.cpf)}</td><td>${r.endereco || '-'}</td><td>${r.cns || '-'}</td><td>${r.telefone || '-'}</td><td>${r.profissional_nome}</td><td>${r.especialidade || '-'}</td><td>${proc}</td><td>${r.cid || '-'}</td></tr>`;
                   }).join('');
                   const printWindow = window.open('', '_blank');
-                  if (!printWindow) return;
+                  if (!printWindow) { toast.error('Pop-up bloqueado pelo navegador', { description: 'Permita pop-ups deste site e tente novamente.' }); return; }
                   const logoUrl = logoSmsFallback;
                   const logoUrlRight = logoCapsFallback;
                   printWindow.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Mapa de Atendimentos</title>
