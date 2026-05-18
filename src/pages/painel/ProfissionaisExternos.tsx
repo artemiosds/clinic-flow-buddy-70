@@ -63,8 +63,8 @@ interface QuotaRow {
 
 const ProfissionaisExternos: React.FC = () => {
   const { user } = useAuth();
-  const { unidades, funcionarios } = useData();
-  const { unidadesVisiveis } = useUnidadeFilter();
+  const { unidades, funcionarios, disponibilidades } = useData();
+  const { unidadesVisiveis, profissionaisVisiveis } = useUnidadeFilter();
   const { can } = usePermissions();
   const canManage = can("funcionarios", "can_edit");
 
