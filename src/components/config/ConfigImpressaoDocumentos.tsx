@@ -560,6 +560,7 @@ const ConfigImpressaoDocumentos: React.FC = () => {
             <div className="lg:w-[380px] flex-shrink-0">
               <HeaderPreviewA4
                 logoEsquerda={config.cabecalho.logoEsquerda}
+                logoCentro={config.cabecalho.logoCentro}
                 logoDireita={config.cabecalho.logoDireita}
                 linha1={config.cabecalho.linha1}
                 linha2={config.cabecalho.linha2}
