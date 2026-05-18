@@ -15,14 +15,16 @@ export interface DocumentConfig {
   logoEsquerda: string;
   logoCentro: string;
   logoDireita: string;
-  /** Max-height in px for each logo (default 64). Width is auto, proportion preserved. */
   logoEsquerdaTamanho: number;
   logoCentroTamanho: number;
   logoDireitaTamanho: number;
-  /** Whether each logo is rendered (independent of URL — allows quickly hiding without deleting). */
   logoEsquerdaAtiva: boolean;
   logoCentroAtiva: boolean;
   logoDireitaAtiva: boolean;
+  /** Renderiza a logo como círculo (border-radius 9999px + object-fit cover). */
+  logoEsquerdaRedonda: boolean;
+  logoCentroRedonda: boolean;
+  logoDireitaRedonda: boolean;
   linha1: string;
   linha2: string;
   rodapeTexto: string;
@@ -38,6 +40,9 @@ const DEFAULT_CONFIG: DocumentConfig = {
   logoEsquerdaAtiva: true,
   logoCentroAtiva: true,
   logoDireitaAtiva: true,
+  logoEsquerdaRedonda: false,
+  logoCentroRedonda: false,
+  logoDireitaRedonda: false,
   linha1: 'SECRETARIA MUNICIPAL DE SAÚDE DE ORIXIMINÁ',
   linha2: 'CAPS II',
   rodapeTexto: '',
