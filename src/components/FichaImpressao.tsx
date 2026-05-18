@@ -363,9 +363,15 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = "co
   }, []);
 
   const buildHTML = useCallback(() => {
-    const logoLeft = config?.logoEsquerda || resolveLogoUrl(logoSmsFallback);
-    const logoCenter = config?.logoCentro || "";
-    const logoRight = config?.logoDireita || resolveLogoUrl(logoCapsFallback);
+    const showLeft = config?.logoEsquerdaAtiva !== false;
+    const showCenter = config?.logoCentroAtiva !== false && !!config?.logoCentro;
+    const showRight = config?.logoDireitaAtiva !== false;
+    const logoLeft = showLeft ? (config?.logoEsquerda || resolveLogoUrl(logoSmsFallback)) : "";
+    const logoCenter = showCenter ? config!.logoCentro : "";
+    const logoRight = showRight ? (config?.logoDireita || resolveLogoUrl(logoCapsFallback)) : "";
+    const hL = Math.max(28, Math.min(140, config?.logoEsquerdaTamanho || 64));
+    const hC = Math.max(28, Math.min(140, config?.logoCentroTamanho || 56));
+    const hR = Math.max(28, Math.min(140, config?.logoDireitaTamanho || 64));
     const linha1 = config?.linha1 || "Secretaria Municipal de Saúde de Oriximiná";
     const linha2 = config?.linha2 || "CAPS II";
 
@@ -438,17 +444,17 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = "co
 
   <!-- CABEÇALHO -->
   <div class="header">
-    <div class="header-logo">
-      <img src="${logoLeft}" alt="Logo" onerror="this.style.display='none'" />
+    <div class="header-logo" style="min-width:${logoLeft ? hL * 1.4 : 0}px;">
+      ${logoLeft ? `<img src="${logoLeft}" alt="Logo" style="max-height:${hL}px;max-width:${hL * 2}px;object-fit:contain;" onerror="this.style.display='none'" />` : ''}
     </div>
     <div class="header-center">
-      ${logoCenter ? `<div style="display:flex;justify-content:center;margin-bottom:4px;"><img src="${logoCenter}" alt="Logo centro" style="max-height:44px;max-width:120px;object-fit:contain;" onerror="this.style.display='none'" /></div>` : ''}
+      ${logoCenter ? `<div style="display:flex;justify-content:center;margin-bottom:4px;"><img src="${logoCenter}" alt="Logo centro" style="max-height:${hC}px;max-width:${hC * 2.4}px;object-fit:contain;" onerror="this.style.display='none'" /></div>` : ''}
       <h1>${linha1}</h1>
       <h2>${linha2}</h2>
       <div class="ficha-tipo">${somentePessoais ? "FICHA CADASTRAL SIMPLIFICADA" : "FICHA DE ATENDIMENTO COMPLETA"}</div>
     </div>
-    <div class="header-logo">
-      <img src="${logoRight}" alt="Logo" onerror="this.style.display='none'" />
+    <div class="header-logo" style="min-width:${logoRight ? hR * 1.4 : 0}px;">
+      ${logoRight ? `<img src="${logoRight}" alt="Logo" style="max-height:${hR}px;max-width:${hR * 2}px;object-fit:contain;" onerror="this.style.display='none'" />` : ''}
     </div>
     <div class="header-right">
       <div><b>Data:</b> ${dataAtual}</div>
@@ -702,11 +708,23 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = "co
     <div className="flex flex-col items-center gap-6 py-4">
       <div className="w-full border rounded-lg bg-white p-6 shadow-sm max-h-[70vh] overflow-y-auto">
         <div className="flex items-center gap-4 mb-4 border-b-2 border-primary/20 pb-4">
-          <img src={config?.logoEsquerda || logoSmsFallback} alt="Logo" className="w-12 h-12 object-contain" />
+          {(config?.logoEsquerdaAtiva !== false) && (
+            <img
+              src={config?.logoEsquerda || logoSmsFallback}
+              alt="Logo"
+              style={{ maxHeight: (config?.logoEsquerdaTamanho || 64) * 0.6, maxWidth: 120 }}
+              className="object-contain"
+            />
+          )}
           <div className="flex-1 text-center">
-            {config?.logoCentro && (
+            {config?.logoCentro && config?.logoCentroAtiva !== false && (
               <div className="flex justify-center mb-1">
-                <img src={config.logoCentro} alt="Logo centro" className="h-9 max-w-[110px] object-contain" />
+                <img
+                  src={config.logoCentro}
+                  alt="Logo centro"
+                  style={{ maxHeight: (config?.logoCentroTamanho || 56) * 0.6, maxWidth: 130 }}
+                  className="object-contain"
+                />
               </div>
             )}
             <h2 className="text-sm font-bold uppercase tracking-tight text-primary">
@@ -716,7 +734,14 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = "co
               {config?.linha2 || "CAPS II"}
             </p>
           </div>
-          <img src={config?.logoDireita || logoCapsFallback} alt="Logo" className="w-12 h-12 object-contain" />
+          {(config?.logoDireitaAtiva !== false) && (
+            <img
+              src={config?.logoDireita || logoCapsFallback}
+              alt="Logo"
+              style={{ maxHeight: (config?.logoDireitaTamanho || 64) * 0.6, maxWidth: 120 }}
+              className="object-contain"
+            />
+          )}
         </div>
 
         <div className="bg-primary/5 rounded px-3 py-1.5 mb-4 text-center">

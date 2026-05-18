@@ -48,6 +48,12 @@ interface ImpressaoConfig {
     logoEsquerda: string;
     logoCentro: string;
     logoDireita: string;
+    logoEsquerdaTamanho: number;
+    logoCentroTamanho: number;
+    logoDireitaTamanho: number;
+    logoEsquerdaAtiva: boolean;
+    logoCentroAtiva: boolean;
+    logoDireitaAtiva: boolean;
     fonte: string;
     tamanhoFonte: number;
     alinhamento: "center" | "left" | "right";
@@ -81,6 +87,12 @@ const DEFAULT: ImpressaoConfig = {
     logoEsquerda: "",
     logoCentro: "",
     logoDireita: "",
+    logoEsquerdaTamanho: 64,
+    logoCentroTamanho: 56,
+    logoDireitaTamanho: 64,
+    logoEsquerdaAtiva: true,
+    logoCentroAtiva: true,
+    logoDireitaAtiva: true,
     fonte: "Arial",
     tamanhoFonte: 12,
     alinhamento: "center",
@@ -119,9 +131,14 @@ interface LogoUploadCardProps {
   title: string;
   subtitle: string;
   url: string;
+  size: number;
+  active: boolean;
   uploading: boolean;
   onUpload: (file: File) => void;
   onRemove: () => void;
+  onSizeChange: (n: number) => void;
+  onSizeCommit: () => void;
+  onActiveChange: (v: boolean) => void;
 }
 
 const LogoUploadCard: React.FC<LogoUploadCardProps> = ({
@@ -129,9 +146,14 @@ const LogoUploadCard: React.FC<LogoUploadCardProps> = ({
   title,
   subtitle,
   url,
+  size,
+  active,
   uploading,
   onUpload,
   onRemove,
+  onSizeChange,
+  onSizeCommit,
+  onActiveChange,
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -154,21 +176,22 @@ const LogoUploadCard: React.FC<LogoUploadCardProps> = ({
         <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
           <ImageLucide className="w-4 h-4 text-primary" />
         </div>
-        <div className="flex-1">
-          <Label className="text-[13px] font-bold block">{title}</Label>
-          <p className="text-[10px] text-muted-foreground">{subtitle}</p>
+        <div className="flex-1 min-w-0">
+          <Label className="text-[13px] font-bold block truncate">{title}</Label>
+          <p className="text-[10px] text-muted-foreground truncate">{subtitle}</p>
         </div>
-        {url && (
-          <div className="flex items-center gap-1 text-[10px] text-emerald-600 font-semibold">
-            <CheckCircle2 className="w-3 h-3" /> Ativa
-          </div>
-        )}
+        <Switch
+          checked={active}
+          onCheckedChange={onActiveChange}
+          aria-label={`Ativar logo ${side}`}
+        />
       </div>
 
       <div
         className={cn(
           "border-2 border-dashed rounded-lg p-4 transition-all",
           dragOver ? "border-primary bg-primary/5" : "border-border bg-muted/20",
+          !active && "opacity-50",
           "flex flex-col items-center gap-3",
         )}
         onDragOver={(e) => {
@@ -184,11 +207,12 @@ const LogoUploadCard: React.FC<LogoUploadCardProps> = ({
         }}
       >
         {url ? (
-          <div className="relative group">
+          <div className="relative group flex items-center justify-center" style={{ minHeight: 80 }}>
             <img
               src={url}
               alt={title}
-              className="max-h-20 max-w-[160px] object-contain rounded bg-white p-1 border border-border"
+              style={{ maxHeight: Math.min(size, 96), maxWidth: size * 2 }}
+              className="object-contain rounded bg-white p-1 border border-border"
             />
           </div>
         ) : (
@@ -199,7 +223,7 @@ const LogoUploadCard: React.FC<LogoUploadCardProps> = ({
         )}
 
         <div className="text-center">
-          <p className="text-[10px] text-muted-foreground">Recomendado: 200×80px • PNG/JPG/SVG • Máx 2MB</p>
+          <p className="text-[10px] text-muted-foreground">PNG/JPG/SVG • Máx 2MB</p>
         </div>
 
         <div className="flex gap-2 flex-wrap justify-center">
@@ -228,6 +252,23 @@ const LogoUploadCard: React.FC<LogoUploadCardProps> = ({
               <Trash2 className="w-3 h-3" /> Remover
             </Button>
           )}
+        </div>
+
+        {/* Size slider */}
+        <div className="w-full space-y-1 pt-1">
+          <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+            <span>Tamanho</span>
+            <span className="font-bold text-primary">{size}px</span>
+          </div>
+          <Slider
+            min={32}
+            max={120}
+            step={2}
+            value={[size]}
+            onValueChange={(v) => onSizeChange(v[0])}
+            onValueCommit={onSizeCommit}
+            disabled={!active && !url}
+          />
         </div>
       </div>
     </div>
@@ -402,27 +443,42 @@ const ConfigImpressaoDocumentos: React.FC = () => {
                   title="Logo Esquerda"
                   subtitle="Ex: SMS Oriximiná"
                   url={config.cabecalho.logoEsquerda}
+                  size={config.cabecalho.logoEsquerdaTamanho}
+                  active={config.cabecalho.logoEsquerdaAtiva}
                   uploading={uploadingLeft}
                   onUpload={(f) => uploadLogo(f, "esquerda")}
                   onRemove={() => removeLogo("esquerda")}
+                  onSizeChange={(n) => update("cabecalho.logoEsquerdaTamanho", n)}
+                  onSizeCommit={saveField}
+                  onActiveChange={(v) => save({ ...config, cabecalho: { ...config.cabecalho, logoEsquerdaAtiva: v } })}
                 />
                 <LogoUploadCard
                   side="centro"
                   title="Logo Centro"
                   subtitle="Opcional — ex: brasão"
                   url={config.cabecalho.logoCentro}
+                  size={config.cabecalho.logoCentroTamanho}
+                  active={config.cabecalho.logoCentroAtiva}
                   uploading={uploadingCenter}
                   onUpload={(f) => uploadLogo(f, "centro")}
                   onRemove={() => removeLogo("centro")}
+                  onSizeChange={(n) => update("cabecalho.logoCentroTamanho", n)}
+                  onSizeCommit={saveField}
+                  onActiveChange={(v) => save({ ...config, cabecalho: { ...config.cabecalho, logoCentroAtiva: v } })}
                 />
                 <LogoUploadCard
                   side="direita"
                   title="Logo Direita"
                   subtitle="Ex: CAPS II"
                   url={config.cabecalho.logoDireita}
+                  size={config.cabecalho.logoDireitaTamanho}
+                  active={config.cabecalho.logoDireitaAtiva}
                   uploading={uploadingRight}
                   onUpload={(f) => uploadLogo(f, "direita")}
                   onRemove={() => removeLogo("direita")}
+                  onSizeChange={(n) => update("cabecalho.logoDireitaTamanho", n)}
+                  onSizeCommit={saveField}
+                  onActiveChange={(v) => save({ ...config, cabecalho: { ...config.cabecalho, logoDireitaAtiva: v } })}
                 />
               </div>
 
@@ -562,6 +618,12 @@ const ConfigImpressaoDocumentos: React.FC = () => {
                 logoEsquerda={config.cabecalho.logoEsquerda}
                 logoCentro={config.cabecalho.logoCentro}
                 logoDireita={config.cabecalho.logoDireita}
+                logoEsquerdaTamanho={config.cabecalho.logoEsquerdaTamanho}
+                logoCentroTamanho={config.cabecalho.logoCentroTamanho}
+                logoDireitaTamanho={config.cabecalho.logoDireitaTamanho}
+                logoEsquerdaAtiva={config.cabecalho.logoEsquerdaAtiva}
+                logoCentroAtiva={config.cabecalho.logoCentroAtiva}
+                logoDireitaAtiva={config.cabecalho.logoDireitaAtiva}
                 linha1={config.cabecalho.linha1}
                 linha2={config.cabecalho.linha2}
                 rodape={config.rodapeTexto}
