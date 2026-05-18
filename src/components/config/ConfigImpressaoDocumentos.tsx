@@ -54,6 +54,9 @@ interface ImpressaoConfig {
     logoEsquerdaAtiva: boolean;
     logoCentroAtiva: boolean;
     logoDireitaAtiva: boolean;
+    logoEsquerdaRedonda: boolean;
+    logoCentroRedonda: boolean;
+    logoDireitaRedonda: boolean;
     fonte: string;
     tamanhoFonte: number;
     alinhamento: "center" | "left" | "right";
@@ -93,6 +96,9 @@ const DEFAULT: ImpressaoConfig = {
     logoEsquerdaAtiva: true,
     logoCentroAtiva: true,
     logoDireitaAtiva: true,
+    logoEsquerdaRedonda: false,
+    logoCentroRedonda: false,
+    logoDireitaRedonda: false,
     fonte: "Arial",
     tamanhoFonte: 12,
     alinhamento: "center",
