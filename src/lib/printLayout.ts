@@ -57,12 +57,19 @@ export async function loadDocumentConfig(): Promise<DocumentConfig> {
       .maybeSingle();
     const cfg = (data?.configuracoes as any)?.config_impressao;
     if (cfg) {
+      const cab = cfg.cabecalho || {};
       _cachedConfig = {
-        logoEsquerda: cfg.cabecalho?.logoEsquerda || cfg.cabecalho?.logoUrl || '',
-        logoCentro: cfg.cabecalho?.logoCentro || '',
-        logoDireita: cfg.cabecalho?.logoDireita || '',
-        linha1: cfg.cabecalho?.linha1 || DEFAULT_CONFIG.linha1,
-        linha2: cfg.cabecalho?.linha2 || DEFAULT_CONFIG.linha2,
+        logoEsquerda: cab.logoEsquerda || cab.logoUrl || '',
+        logoCentro: cab.logoCentro || '',
+        logoDireita: cab.logoDireita || '',
+        logoEsquerdaTamanho: Number(cab.logoEsquerdaTamanho) || DEFAULT_CONFIG.logoEsquerdaTamanho,
+        logoCentroTamanho: Number(cab.logoCentroTamanho) || DEFAULT_CONFIG.logoCentroTamanho,
+        logoDireitaTamanho: Number(cab.logoDireitaTamanho) || DEFAULT_CONFIG.logoDireitaTamanho,
+        logoEsquerdaAtiva: cab.logoEsquerdaAtiva !== false,
+        logoCentroAtiva: cab.logoCentroAtiva !== false,
+        logoDireitaAtiva: cab.logoDireitaAtiva !== false,
+        linha1: cab.linha1 || DEFAULT_CONFIG.linha1,
+        linha2: cab.linha2 || DEFAULT_CONFIG.linha2,
         rodapeTexto: cfg.rodapeTexto || '',
       };
     } else {
