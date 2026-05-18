@@ -38,6 +38,9 @@ const HeaderPreviewA4: React.FC<HeaderPreviewA4Props> = ({
   logoEsquerdaAtiva = true,
   logoCentroAtiva = true,
   logoDireitaAtiva = true,
+  logoEsquerdaRedonda = false,
+  logoCentroRedonda = false,
+  logoDireitaRedonda = false,
   linha1,
   linha2,
   rodape,
@@ -55,21 +58,25 @@ const HeaderPreviewA4: React.FC<HeaderPreviewA4Props> = ({
   const hC = Math.round(logoCentroTamanho * scale);
   const hR = Math.round(logoDireitaTamanho * scale);
 
-  const renderSideLogo = (url: string, active: boolean, height: number, label: string) => {
+  const renderSideLogo = (url: string, active: boolean, height: number, label: string, rounded: boolean) => {
     if (!active) return <div style={{ minWidth: 8 }} />;
     if (url) {
       return (
         <img
           src={url}
           alt={label}
-          style={{ maxHeight: height, maxWidth: height * 2, objectFit: 'contain' }}
+          style={
+            rounded
+              ? { width: height, height, borderRadius: 9999, objectFit: 'cover', background: '#fff' }
+              : { maxHeight: height, maxWidth: height * 2, objectFit: 'contain' }
+          }
         />
       );
     }
     return (
       <div
-        className="flex items-center justify-center bg-muted/40 rounded"
-        style={{ width: height, height }}
+        className="flex items-center justify-center bg-muted/40"
+        style={{ width: height, height, borderRadius: rounded ? 9999 : 4 }}
       >
         <ImageIcon className="w-4 h-4 text-muted-foreground/40" />
       </div>
