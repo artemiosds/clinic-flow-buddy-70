@@ -46,83 +46,6 @@ import { FichaImpressao, FichaPrintMode } from '@/components/FichaImpressao';
 import "@/styles/ficha-impressao.css";
 import { PacienteCard } from "@/components/pacientes/PacienteCard";
 
-interface FichaDados {
-  paciente: {
-    // Identificação
-    nome_completo: string;
-    nome_mae: string;
-    data_nascimento: string;
-    sexo?: string;
-    cpf: string;
-    cns: string;
-    naturalidade?: string;
-    naturalidade_uf?: string;
-    nacionalidade?: string;
-    raca_cor?: string;
-    situacao_rua?: boolean;
-    menor_idade?: boolean;
-    nome_responsavel?: string;
-    cpf_responsavel?: string;
-    
-    // Endereço
-    cep?: string;
-    tipo_logradouro?: string;
-    logradouro?: string;
-    numero?: string;
-    complemento?: string;
-    bairro?: string;
-    municipio?: string;
-    uf?: string;
-    endereco_legado?: string;
-
-    // Contato
-    telefone: string;
-    telefone_secundario?: string;
-    email?: string;
-
-    // Complementares
-    parentesco?: string;
-    observacoes?: string;
-    ubs_origem?: string;
-    profissional_solicitante?: string;
-    tipo_encaminhamento?: string;
-    especialidade_destino?: string;
-    unidade_vinculada?: string;
-    origem_cadastro?: string;
-  };
-  dadosClinicos: {
-    numero_prontuario: string;
-    cid: string;
-    tipo_atendimento: string;
-    unidade_origem: string;
-    unidade_atendimento: string;
-    data_atendimento: string;
-    especialidade?: string;
-    encaminhamento?: string;
-  };
-  sinaisVitais: {
-    pressao_arterial: string;
-    frequencia_cardiaca: string;
-    temperatura: string;
-    saturacao: string;
-    peso: string;
-    altura: string;
-    glicemia?: string;
-    frequencia_respiratoria?: string;
-  };
-  profissional: {
-    nome: string;
-    cargo: string;
-    registro: string;
-  };
-  evoluciones: Array<{
-    data: string;
-    observacao: string;
-    profissional: string;
-  }>;
-}
-
-
 const Pacientes: React.FC = () => {
   const navigate = useNavigate();
   const {
@@ -819,19 +742,15 @@ const Pacientes: React.FC = () => {
     setFichaOpen(true);
     try {
       const data = await fetchFichaData(p.id);
+      console.log('[FichaPaciente] Preview carregado', { pacienteId: p.id, nome: data.paciente.nome_completo, modo: mode });
       setFichaData(data);
     } catch (err) {
       console.error("Erro ao buscar dados da ficha:", err);
-      toast.error("Erro ao carregar dados para impressão. Verifique sua conexão.");
+      toast.error('Erro ao carregar a ficha do paciente. Verifique sua conexão.');
       setFichaOpen(false);
     } finally {
       setFichaLoading(false);
     }
-  };
-
-  const handlePrintComplete = () => {
-    setFichaOpen(false);
-    setFichaData(null);
   };
 
   return (
@@ -1349,7 +1268,7 @@ const Pacientes: React.FC = () => {
           <DialogHeader className="px-6 pt-6 pb-4 border-b flex flex-row items-center justify-between">
             <DialogTitle className="font-display flex items-center gap-2">
               <Printer className="w-5 h-5" />
-              {fichaPrintMode === 'dados_pessoais' ? 'Ficha Cadastral' : 'Ficha de Atendimento Clínico'}
+              Ficha de Atendimento Clínico
             </DialogTitle>
             <div className="flex gap-2">
               <Button size="sm" variant={fichaPrintMode === 'completa' ? 'default' : 'outline'} onClick={() => setFichaPrintMode('completa')}>Completa</Button>
@@ -1363,7 +1282,7 @@ const Pacientes: React.FC = () => {
                 <p className="text-sm text-muted-foreground">Carregando dados da ficha...</p>
               </div>
             ) : fichaData ? (
-              <FichaImpressao data={fichaData} mode={fichaPrintMode} onPrintComplete={handlePrintComplete} />
+              <FichaImpressao data={fichaData} mode={fichaPrintMode} />
             ) : (
               <div className="text-center py-16 text-muted-foreground">
                 <p>Erro ao carregar dados da ficha.</p>
