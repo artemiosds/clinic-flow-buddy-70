@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useData } from "@/contexts/DataContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -43,6 +43,7 @@ import { useUnidadeFilter } from "@/hooks/useUnidadeFilter";
 import { useNavigate } from "react-router-dom";
 import CadastroPacienteForm, { PacienteFormData, emptyPacienteForm } from "@/components/CadastroPacienteForm";
 import { FichaImpressao, FichaPrintMode } from '@/components/FichaImpressao';
+import type { PacienteFichaDocumentData } from '@/components/pacientes/PacienteFichaDocument';
 import "@/styles/ficha-impressao.css";
 import { PacienteCard } from "@/components/pacientes/PacienteCard";
 
@@ -102,7 +103,7 @@ const Pacientes: React.FC = () => {
   // Print ficha state
   const [fichaOpen, setFichaOpen] = useState(false);
   const [fichaLoading, setFichaLoading] = useState(false);
-  const [fichaData, setFichaData] = useState<FichaDados | null>(null);
+  const [fichaData, setFichaData] = useState<PacienteFichaDocumentData | null>(null);
   const [fichaPrintMode, setFichaPrintMode] = useState<FichaPrintMode>('completa');
 
   // Filter state
@@ -638,7 +639,7 @@ const Pacientes: React.FC = () => {
   };
 
   // Função para buscar dados da ficha em paralelo
-  const fetchFichaData = useCallback(async (pacienteId: string): Promise<FichaDados> => {
+  const fetchFichaData = useCallback(async (pacienteId: string): Promise<PacienteFichaDocumentData> => {
     // A) PACIENTE - SOMENTE DADOS CADASTRAIS ATUAIS
     const { data: pacienteData, error: pacienteError } = await supabase
       .from("pacientes")
