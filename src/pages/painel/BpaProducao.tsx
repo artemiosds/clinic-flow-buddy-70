@@ -428,40 +428,98 @@ const BpaProducao: React.FC = () => {
 
   useEffect(() => { load(); }, [competencia, unidadeFiltro]);
 
-  const validateRow = (l: LinhaBPA): { isValid: boolean; errors: string[] } => {
+  // Helper compartilhado: normaliza uma LinhaBPA usando os maps em memória
+  const toBpaLine = (l: LinhaBPA): BpaLine => {
     const pac = pacMap[l.paciente_id];
     const prof = profMap[l.profissional_id];
     const uni = unidades.find(u => u.id === l.unidade_id);
-    
-    const bpaLine = normalizeBpaData({
+    return normalizeBpaData({
       ...l,
       paciente_custom: (pac as any)?.custom_data || {},
       paciente_sexo: (pac as any)?.sexo || '',
       paciente_nascimento: pac?.data_nascimento || '',
       paciente_cns: pac?.cns || '',
       paciente_cpf: pac?.cpf || '',
-      profissional_custom: prof, // Agora prof já contém profissao, cargo, cbo e custom_data
+      profissional_custom: prof,
       unidade_custom: (uni as any)?.custom_data || {},
       unidade_nome: uni?.nome || '',
     });
-
-    const v = validateBpaLine(bpaLine);
-    return {
-      isValid: v.isValid,
-      errors: v.errors
-    };
   };
 
+  const validateRow = (l: LinhaBPA): { isValid: boolean; errors: string[] } => {
+    const v = validateBpaLine(toBpaLine(l));
+    return { isValid: v.isValid, errors: v.errors };
+  };
+
+  // ─── FONTE ÚNICA: aplica filtros em memória a partir de `linhas` ──────────
+  const linhasFiltradas = useMemo(() => {
+    const { profissionalId, origem, status, sigtap, paciente } = filters;
+    const sigtapNorm = sigtap.replace(/\D/g, '');
+    const pacNorm = paciente.trim().toLowerCase();
+
+    return linhas.filter((l) => {
+      if (profissionalId !== 'all' && l.profissional_id !== profissionalId) return false;
+      if (origem !== 'all' && (l.fonte_procedimento || '') !== origem) return false;
+      if (sigtapNorm && !(l.codigo_sigtap || '').includes(sigtapNorm)) return false;
+      if (pacNorm && !(l.paciente_nome || '').toLowerCase().includes(pacNorm)) return false;
+      if (status !== 'all') {
+        const ok = validateRow(l).isValid;
+        if (status === 'ok' && !ok) return false;
+        if (status === 'pendente' && ok) return false;
+      }
+      return true;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [linhas, filters, pacMap, profMap, unidades]);
+
+  // Profissionais disponíveis no dataset carregado (para o select)
+  const profissionaisOpts = useMemo(() => {
+    const map = new Map<string, string>();
+    linhas.forEach((l) => {
+      if (l.profissional_id && !map.has(l.profissional_id)) {
+        map.set(l.profissional_id, l.profissional_nome || '—');
+      }
+    });
+    return Array.from(map.entries())
+      .map(([id, nome]) => ({ id, nome }))
+      .sort((a, b) => a.nome.localeCompare(b.nome));
+  }, [linhas]);
+
+  // Cabeçalho BPA-I dinâmico (derivado dos filtros e maps atuais)
+  const headerBpa = useMemo(() => {
+    const profSel = filters.profissionalId !== 'all' ? profMap[filters.profissionalId] : null;
+    const uniId = filters.unidadeId !== 'all'
+      ? filters.unidadeId
+      : (profissionaisOpts.length === 1
+          ? linhas.find(l => l.profissional_id === profissionaisOpts[0].id)?.unidade_id
+          : '') || '';
+    const uni = uniId ? unidades.find(u => u.id === uniId) : null;
+    const uniCustom: any = (uni as any)?.custom_data || {};
+    const profCustom: any = profSel?.custom_data || {};
+    const nomeProf = filters.profissionalId !== 'all'
+      ? (profissionaisOpts.find(p => p.id === filters.profissionalId)?.nome || '—')
+      : null;
+    return {
+      profissionalId: filters.profissionalId !== 'all' ? filters.profissionalId : '',
+      profissionalNome: nomeProf,
+      cns: String(profCustom.cns || profSel?.cns || '').replace(/\D/g, '').slice(0, 15),
+      cbo: String(profCustom.cbo_codigo || profSel?.cbo || '').replace(/\D/g, '').slice(0, 6),
+      profissao: profSel?.profissao || profCustom.profissao || '',
+      unidadeId: uniId,
+      unidadeNome: uni?.nome || (filters.unidadeId === 'all' ? 'Todas as unidades' : '—'),
+      cnes: String(uniCustom.cnes || '').replace(/\D/g, '').slice(0, 7),
+    };
+  }, [filters.profissionalId, filters.unidadeId, profMap, unidades, profissionaisOpts, linhas]);
 
   const stats = useMemo(() => {
     let validos = 0, pendentes = 0;
-    linhas.forEach((l) => {
+    linhasFiltradas.forEach((l) => {
       const v = validateRow(l);
       if (v.isValid) validos++; else pendentes++;
     });
-    return { total: linhas.length, validos, pendentes };
+    return { total: linhasFiltradas.length, validos, pendentes };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [linhas, pacMap, profMap, unidades]);
+  }, [linhasFiltradas, pacMap, profMap, unidades]);
 
   const getCnesFromUnidade = (uniId: string): string => {
     if (!uniId) return '';
@@ -471,10 +529,10 @@ const BpaProducao: React.FC = () => {
   };
 
   const openGenerateModal = () => {
-    const uniSelecionada = unidadeFiltro !== 'all' ? unidadeFiltro : (user?.unidadeId || '');
+    const uniSelecionada = unidadeFiltro !== 'all' ? unidadeFiltro : (headerBpa.unidadeId || user?.unidadeId || '');
     setModalCompetencia(competencia);
     setModalUnidade(uniSelecionada);
-    setModalCnes(getCnesFromUnidade(uniSelecionada));
+    setModalCnes(getCnesFromUnidade(uniSelecionada) || headerBpa.cnes || '');
     setModalOpen(true);
   };
 
@@ -486,14 +544,15 @@ const BpaProducao: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modalUnidade, modalOpen]);
 
-  // Pendências previstas para a competência/unidade do modal (preview)
+  // Preview do modal: usa EXATAMENTE o mesmo conjunto filtrado da tela
   const modalPreview = useMemo(() => {
     if (!modalOpen) return { validos: 0, pendentes: 0, total: 0 };
     const filtroComp = modalCompetencia;
     let validos = 0, pendentes = 0, total = 0;
-    linhas.forEach((l) => {
+    linhasFiltradas.forEach((l) => {
       const lComp = (l.data || '').replace(/-/g, '').slice(0, 6);
       if (filtroComp && lComp !== filtroComp) return;
+      if (modalUnidade && l.unidade_id !== modalUnidade) return;
       total += 1;
       const v = validateRow(l);
       if (v.isValid) validos++; else pendentes++;
