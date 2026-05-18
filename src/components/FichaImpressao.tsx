@@ -364,6 +364,7 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = "co
 
   const buildHTML = useCallback(() => {
     const logoLeft = config?.logoEsquerda || resolveLogoUrl(logoSmsFallback);
+    const logoCenter = config?.logoCentro || "";
     const logoRight = config?.logoDireita || resolveLogoUrl(logoCapsFallback);
     const linha1 = config?.linha1 || "Secretaria Municipal de Saúde de Oriximiná";
     const linha2 = config?.linha2 || "CAPS II";
