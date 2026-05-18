@@ -895,7 +895,8 @@ ${dataRows}
   }, [filtered, porProfissional, faltasReport, pacientesReport, filaReport, unidades]);
 
   // === EXPORT PDF ===
-  const exportPDF = useCallback((type: string) => {
+  const exportPDF = useCallback(async (type: string) => {
+    if (printing) return; // evita clique duplo
     const un = filterUnit !== 'all' ? unidades.find(u => u.id === filterUnit)?.nome : 'Todas';
     const prof = filterProf !== 'all' ? profissionais.find(p => p.id === filterProf)?.nome : 'Todos';
     const periodo = `${dateFrom || 'Início'} a ${dateTo || 'Atual'}`;
