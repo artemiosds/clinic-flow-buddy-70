@@ -112,8 +112,10 @@ const DEFAULT: ImpressaoConfig = {
 
 const FONT_OPTIONS = ["Arial", "Times New Roman", "Helvetica", "Roboto", "Georgia", "Verdana"];
 
+type LogoSide = "esquerda" | "centro" | "direita";
+
 interface LogoUploadCardProps {
-  side: "esquerda" | "direita";
+  side: LogoSide;
   title: string;
   subtitle: string;
   url: string;
