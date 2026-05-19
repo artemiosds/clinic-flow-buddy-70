@@ -165,14 +165,14 @@ export function buildInstitutionalCSS(
   }
 
 
-  /* HEADER — dual logos */
+  /* HEADER — institutional */
   .doc-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 12px 0;
     margin-bottom: 12px;
-    border-bottom: 2px solid #0369a1;
+    border-bottom: 2px solid ${accent};
   }
   .doc-header .logo-left,
   .doc-header .logo-right {
@@ -186,24 +186,24 @@ export function buildInstitutionalCSS(
   }
   .doc-header .header-center {
     flex: 1;
-    text-align: center;
+    text-align: ${headerAlign};
     padding: 0 12px;
   }
   .doc-header h1 {
-    font-size: 12pt;
+    font-size: ${titlePt}pt;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    color: #0c4a6e;
+    color: ${accent};
     margin: 0;
   }
   .doc-header .subtitle {
-    font-size: 10pt;
+    font-size: ${bodyPt}pt;
     color: #334155;
     margin-top: 2px;
   }
   .doc-header .doc-title {
-    font-size: 13pt;
+    font-size: ${titlePt + 1}pt;
     font-weight: 700;
     margin-top: 8px;
     text-transform: uppercase;
@@ -221,6 +221,7 @@ export function buildInstitutionalCSS(
     right: 0;
     bottom: 14px;
   }
+
 
   /* META INFO BAR */
   .doc-meta {
