@@ -2339,38 +2339,25 @@ ${dataRows}
                 <Button variant="outline" size="sm" onClick={exportMapaCSV} disabled={!mapaGenerated || mapaData.length === 0} className="h-9">
                   <Download className="w-4 h-4 mr-1" />CSV
                 </Button>
-                <Button variant="outline" size="sm" disabled={!mapaGenerated || mapaData.length === 0} className="h-9" onClick={() => {
-                  const now = new Date().toLocaleString('pt-BR');
+                <Button variant="outline" size="sm" disabled={!mapaGenerated || mapaData.length === 0} className="h-9" onClick={async () => {
                   const periodo = `${formatDateBR(mapaDateFrom)} a ${formatDateBR(mapaDateTo)}`;
                   const formatCPF = (c: string) => { if (!c || c.length !== 11) return c || '-'; return c.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4'); };
                   const tableRows = mapaData.map((r, i) => {
                     const proc = r.procedimento_sigtap ? `${r.procedimento_sigtap}${r.nome_procedimento ? ' - ' + r.nome_procedimento : ''}` : '-';
                     return `<tr style="${i % 2 === 1 ? 'background:#f9f9f9;' : ''}"><td style="text-align:center">${String(r.num).padStart(2, '0')}</td><td>${r.paciente_nome}</td><td>${formatDateBR(r.data_nascimento)}</td><td>${formatCPF(r.cpf)}</td><td>${r.endereco || '-'}</td><td>${r.cns || '-'}</td><td>${r.telefone || '-'}</td><td>${r.profissional_nome}</td><td>${r.especialidade || '-'}</td><td>${proc}</td><td>${r.cid || '-'}</td></tr>`;
                   }).join('');
-                  const printWindow = window.open('', '_blank');
-                  if (!printWindow) { toast.error('Pop-up bloqueado pelo navegador', { description: 'Permita pop-ups deste site e tente novamente.' }); return; }
-                  const logoUrl = logoSmsFallback;
-                  const logoUrlRight = logoCapsFallback;
-                  printWindow.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Mapa de Atendimentos</title>
-<style>@page{size:A4 landscape;margin:10mm;}*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Arial,sans-serif;padding:16px;color:#1e293b;font-size:10px;}
-.header{display:flex;align-items:center;gap:14px;padding:12px 16px;margin-bottom:12px;border-bottom:2px solid #0369a1;}
-.header img{max-height:48px;max-width:90px;object-fit:contain;}
-.header h1{font-size:13px;font-weight:700;}
-.header .sub{font-size:10px;color:#555;margin-top:1px;}
-.periodo{text-align:center;font-size:11px;margin-bottom:10px;font-weight:600;}
-table{width:100%;border-collapse:collapse;margin-bottom:10px;}
-th,td{border:1px solid #ccc;padding:4px 6px;text-align:left;font-size:8px;}
-th{background:#f1f5f9;font-weight:600;}
-@media print{body{padding:6px;}.no-print{display:none!important;}}</style></head><body>
-<div class="header"><img src="${logoUrl}" alt="Logo SMS"/><div style="flex:1;text-align:center;"><h1>SECRETARIA MUNICIPAL DE SAÚDE DE ORIXIMINÁ</h1><div class="sub">CAPS II</div><div style="font-weight:700;margin-top:4px;text-transform:uppercase;">Mapa de Atendimentos Concluídos</div></div><img src="${logoUrlRight}" alt="Logo CAPS II"/><div style="margin-left:12px;font-size:8px;text-align:right;">Data: ${now}<br/>Período: ${periodo}</div></div>
-<table><thead><tr><th style="width:30px;text-align:center">Nº</th><th>Paciente</th><th>Dt Nasc</th><th>CPF</th><th>Endereço</th><th>CNS</th><th>Telefone</th><th>Profissional</th><th>Especialidade</th><th>Proc. SIGTAP</th><th>CID</th></tr></thead><tbody>${tableRows}</tbody>
-<tfoot><tr><td colspan="11" style="text-align:right;font-weight:600;padding:8px;">Total: ${mapaData.length} atendimentos</td></tr></tfoot></table>
-</body></html>`);
-                  printWindow.document.close();
-                  setTimeout(() => { printWindow.focus(); printWindow.print(); }, 400);
+                  const body = `
+                    <table><thead><tr><th style="width:30px;text-align:center">Nº</th><th>Paciente</th><th>Dt Nasc</th><th>CPF</th><th>Endereço</th><th>CNS</th><th>Telefone</th><th>Profissional</th><th>Especialidade</th><th>Proc. SIGTAP</th><th>CID</th></tr></thead><tbody>${tableRows}</tbody>
+                    <tfoot><tr><td colspan="11" style="text-align:right;font-weight:600;padding:8px;">Total: ${mapaData.length} atendimentos</td></tr></tfoot></table>`;
+                  try {
+                    await openPrintDocument('MAPA DE ATENDIMENTOS CONCLUÍDOS', body, { Período: periodo, Total: String(mapaData.length) }, { pageSize: 'A4', orientation: 'landscape' });
+                  } catch (err: any) {
+                    if (err?.message === 'POPUP_BLOCKED') toast.error('Pop-up bloqueado pelo navegador', { description: 'Permita pop-ups deste site e tente novamente.' });
+                  }
                 }}>
                   <Printer className="w-4 h-4 mr-1" />Imprimir
                 </Button>
+
               </div>
 
               {mapaGenerated && mapaData.length === 0 && (
