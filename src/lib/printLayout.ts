@@ -129,11 +129,25 @@ export interface InstitutionalLayoutOptions {
   extraCSS?: string;
 }
 
-/** Standard institutional CSS shared across all documents */
-export function buildInstitutionalCSS(opts: InstitutionalLayoutOptions = {}): string {
+/** Standard institutional CSS shared across all documents.
+ *  When a `config` is provided, the user-customized font, font-size, alignment
+ *  and accent color flow into the CSS so that every document reflects the
+ *  values saved in "Configurações > Impressão e Documentos". */
+export function buildInstitutionalCSS(
+  opts: InstitutionalLayoutOptions = {},
+  config?: DocumentConfig,
+): string {
   const size = opts.pageSize || 'A4';
   const orientation = opts.orientation || 'portrait';
   const margin = size === 'A5' ? '12mm' : '25mm';
+  const cfg = config ?? DEFAULT_CONFIG;
+  const fontFamily = `'${cfg.fonte.replace(/'/g, '')}', Arial, 'Helvetica Neue', Helvetica, sans-serif`;
+  // Painel salva em px; impressão usa pt → 1pt = 1.333px (≈ px * 0.75 = pt)
+  const bodyPt = Math.max(8, Math.round((cfg.tamanhoFonte || 12) * 0.75 * 10) / 10);
+  const titlePt = Math.round((bodyPt + 1) * 10) / 10;
+  const sectionPt = Math.round((bodyPt + 0.5) * 10) / 10;
+  const accent = cfg.corTitulo || '#0c4a6e';
+  const headerAlign = cfg.alinhamento || 'center';
   return `
 <style>
   @page {
@@ -143,12 +157,13 @@ export function buildInstitutionalCSS(opts: InstitutionalLayoutOptions = {}): st
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
-    font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif;
+    font-family: ${fontFamily};
     padding: 0;
     color: #1a1a1a;
-    font-size: 11pt;
+    font-size: ${bodyPt}pt;
     line-height: 1.5;
   }
+
 
   /* HEADER — dual logos */
   .doc-header {
