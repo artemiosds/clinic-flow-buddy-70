@@ -119,7 +119,7 @@ function section(label: string, raw: string | undefined): string {
     </div>`;
 }
 
-function buildProntuarioBody(p: ProntuarioLike): string {
+function buildProntuarioBody(p: ProntuarioLike, extraHtml = ""): string {
   const sections: Array<[string, string | undefined]> = [
     ["Queixa Principal", p.queixa_principal],
     ["S — Subjetivo", p.soap_subjetivo],
@@ -156,6 +156,7 @@ function buildProntuarioBody(p: ProntuarioLike): string {
       <div><span class="info-label">ID</span><div class="info-value">${escapeHtml((p.id || "").slice(0, 8))}</div></div>
     </div>
     ${sectionsHtml || '<div class="section"><div class="section-content">Sem conteúdo clínico registrado.</div></div>'}
+    ${extraHtml || ""}
     ${signature}
   `;
 }
