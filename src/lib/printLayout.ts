@@ -388,10 +388,11 @@ export function docHeader(title: string, config: DocumentConfig, extraRight?: st
        </div>`
     : '';
 
+  const align = config.alinhamento || 'center';
   return `
     <div class="doc-header" style="position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;">
       ${leftSlot}
-      <div class="header-center" style="flex:1;text-align:center;">
+      <div class="header-center" style="flex:1;text-align:${align};">
         ${centerLogoHtml}
         <h1>${config.linha1}</h1>
         <div class="subtitle">${config.linha2}</div>
