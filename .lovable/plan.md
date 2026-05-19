@@ -1,103 +1,128 @@
-# Padronização Global de Impressão / PDF / Pré-visualização
+# Personalização Dinâmica do Prontuário — o que falta
 
-## 1. Mapeamento atual
+O sistema **já tem** uma base sólida e não precisa ser refeito. Falta unificar, adicionar dimensões (especialidade/tipo), regras condicionais, validações ricas e reflexo na impressão.
 
-**Camada compartilhada já existe** em `src/lib/printLayout.ts`:
-- `loadDocumentConfig()` → lê `system_config.configuracoes.config_impressao`
-- `buildInstitutionalCSS()` → CSS único (`@page`, header, footer, tabelas, seções)
-- `docHeader()`, `docFooter()`, `docMeta()` → blocos HTML reutilizáveis
-- `openPrintDocument(title, body, meta, opts)` → abre janela, injeta header+CSS+body+footer e chama `print()`
+## 1. O que já existe (manter)
 
-**Módulos que JÁ consomem o shell** (corretos):
-Prontuário, Histórico Clínico, Histórico Timeline, Histórico Completo Modal, Workspace Prontuário, Relatório de Alta, Receituário, Solicitação de Exames, Encaminhamento UBS, Encam. Externo/Interno, Ficha Paciente (via `printFichaPaciente` + `fichaPacienteHtml`), Ficha Funcionário, Modelos de Documento, Gerar Documento Modal, Documentos Histórico, Modal Ver Encaminhamento, Auditoria, Encaminhamentos, Relatórios (parcial), Portal Paciente.
+- **Fonte única**: `system_config.configuracoes.custom_fields_config` (lido via `useCustomFields`), com resolução por `screen` × `unidade` (global + override por unidade).
+- **Estrutura `ScreenConfig`**: `fields` (custom), `hiddenNative` (ocultar nativos), `labelOverrides` (renomear), `orderedNames` (ordem unificada nativo+custom).
+- **Renderer compartilhado**: `CustomFieldsRenderer` (todas telas) e `DynamicProntuarioFields` (prontuário com SOAP/builtin).
+- **UI de configuração**: `ConfigPersonalizarCampos` com DnD, criar/editar/excluir, ocultar/renomear nativos.
+- **Persistência**: `custom_data jsonb` em `pacientes`, `agendamentos`, `prontuarios`, etc. — campos antigos sobrevivem como chaves órfãs no JSON.
+- **Tipos atuais**: text, number, date, checkbox, radio, select, textarea.
 
-**Pontos fora do padrão** (causa raiz da divergência):
-1. `src/components/ChartCard.tsx` — usa `window.open` próprio com CSS hardcoded para imprimir gráficos.
-2. `src/pages/painel/Relatorios.tsx` linhas 1508 e 2363 — duas chamadas `window.open('', '_blank')` com HTML/CSS inline próprios.
-3. `src/components/config/ConfigImpressaoDocumentos.tsx` — `handlePreview` abre janela direto, e botão "Imprimir teste" chama `window.print()` da página de configuração (imprime a UI, não um doc de teste).
+## 2. O que falta (entregar)
 
-## 2. Causa raiz do "configurado ≠ impresso"
+### 2.1 Estender `CustomFieldDef` (não-quebra: tudo opcional)
 
-O painel `Configurações > Impressão e Documentos` salva campos `cabecalho.fonte`, `cabecalho.tamanhoFonte`, `cabecalho.alinhamento`, `cabecalho.cor` em `system_config.configuracoes.config_impressao`. **`loadDocumentConfig()` em `printLayout.ts` nunca lê esses campos** — só lê logos, linhas 1/2 e rodapé. E `buildInstitutionalCSS()` **hardcoda** `font-family: Arial`, `font-size: 11pt`, cor `#0c4a6e` para o título.
-
-Resultado: o usuário muda fonte/tamanho/cor no painel, salva com sucesso, e nenhum documento muda — porque os valores nunca chegam ao CSS. Esta é a fonte número 1 das reclamações "preview ≠ impressão" (na verdade os dois saem iguais, mas nenhum reflete o configurado).
-
-Causas secundárias:
-- `Relatorios.tsx` e `ChartCard.tsx` têm templates HTML/CSS próprios → ignoram totalmente a configuração.
-- O preview do painel de configuração abre janela própria (não passa por `openPrintDocument`), então futuras alterações no shell podem divergir do preview.
-
-## 3. Refatoração
-
-### 3.1 Estender `DocumentConfig` e `loadDocumentConfig` (`src/lib/printLayout.ts`)
-Adicionar campos lidos do JSON salvo:
 ```ts
-fonte: string;            // 'Arial' | 'Times New Roman' | 'Calibri' | 'Helvetica' | 'Georgia'
-tamanhoFonte: number;     // px no painel → convertido para pt no CSS
-alinhamento: 'left'|'center'|'right';
-corTitulo: string;        // hex
+export interface CustomFieldDef {
+  // ... já existentes
+  // NOVO
+  secao?: string;                          // agrupamento visual ("Anamnese", "Exame Físico"…)
+  especialidades?: string[];               // [] = todas; senão filtra por profissao/specialty
+  tiposProntuario?: string[];              // ['avaliacao_inicial','retorno',...]; [] = todos
+  validacao?: {
+    minLength?: number; maxLength?: number;
+    min?: number; max?: number;
+    pattern?: string;                      // regex
+    mascara?: 'cpf'|'cnpj'|'telefone'|'cep'|'data'|'custom';
+    mascaraCustom?: string;                // '999.999.999-99'
+  };
+  condicional?: {
+    campo: string;                         // nome de outro campo (nativo ou custom)
+    operador: 'eq'|'neq'|'in'|'notin'|'gt'|'lt'|'filled'|'empty';
+    valor?: any;
+  }[];                                     // AND entre regras
+  placeholder?: string;
+  ajuda?: string;                          // tooltip / helpText
+}
 ```
-Com fallback seguro para os defaults atuais quando o JSON não tem o campo.
 
-### 3.2 Tornar `buildInstitutionalCSS` consciente da config
-Mudar assinatura para aceitar `config?: DocumentConfig` (mantendo backcompat) e usar as variáveis no CSS:
-- `body { font-family: <fonte>; font-size: <tamanhoFonte * 0.75>pt; }` (px→pt)
-- `.doc-header h1 { color: <corTitulo>; text-align: <alinhamento>; }`
-- `.doc-header { border-bottom-color: <corTitulo>; }`
-- `h2, .section-title { color: <corTitulo>; }`
-- `.doc-footer { border-top-color: <corTitulo>; }`
+Novos `CustomFieldType`: `phone`, `cpf`, `cnpj`, `cep`, `email`, `url`, `time`, `currency`, `file` (upload via Storage).
 
-`openPrintDocument` passa a injetar a config carregada no CSS:
+### 2.2 Unificar prontuário em uma só configuração
+
+Hoje há **duas** fontes para o prontuário:
+- `custom_fields_config['prontuario']` (genérica)
+- `config_prontuario_tipos` (`useProntuarioTiposConfig` — tem `tiposProntuario` + `soapLabels`)
+
+**Ação**: migrar `useProntuarioTiposConfig` para ler de `custom_fields_config['prontuario']` aplicando filtro `especialidades + tiposProntuario`. Manter leitura legada como fallback (lê uma vez, grava no novo formato — zero quebra).
+
+### 2.3 Engine de regras condicionais
+
+Criar `src/lib/customFieldRules.ts`:
 ```ts
-const css = buildInstitutionalCSS(options, config);
+export function evaluateCondition(rules, allValues): boolean
+export function filterVisibleFields(fields, allValues, ctx: {especialidade?, tipoProntuario?}): CustomFieldDef[]
 ```
+Usado por `CustomFieldsRenderer` e `DynamicProntuarioFields` (uma chamada, todo lugar).
 
-### 3.3 Migrar `ChartCard.tsx`
-Substituir `window.open + HTML inline` por `openPrintDocument(title, '<div>'+svgHTML+'</div>', undefined, { extraCSS: 'svg{max-width:100%;height:auto;}' })`. Gráfico passa a sair com cabeçalho/rodapé institucional.
+### 2.4 Engine de validação
 
-### 3.4 Migrar os 2 pontos de `Relatorios.tsx`
-Linhas 1508 e 2363: extrair o body HTML que já é construído inline e passar via `openPrintDocument(titulo, body, meta)`. Remover o `<html>/<head>/<style>` improvisado.
+`src/lib/customFieldValidation.ts` com `validateField(field, value)` e `applyMask(field, raw)`. Plugar em `onChange` dos renderers e em `onSubmit` (bloqueia salvar se inválido).
 
-### 3.5 Corrigir preview e "imprimir teste" do painel de config
-Em `ConfigImpressaoDocumentos.tsx`:
-- `handlePreview` → substituir pelo `openPrintDocument('ATESTADO MÉDICO (PRÉ-VISUALIZAÇÃO)', body, meta)` para que o preview consuma exatamente o mesmo pipeline.
-- Botão "Imprimir teste" → trocar `window.print()` por uma chamada ao mesmo `handlePreview()` (com auto-print). Hoje ele imprime a tela de configuração, o que é bug.
-- Após `save()`, chamar `invalidateDocumentConfigCache()` para refletir mudanças imediatamente sem esperar TTL de 1min.
+### 2.5 Reflexo em impressão / PDF
 
-### 3.6 Garantir conversão correta de unidades
-- Painel salva `tamanhoFonte` em **px**. CSS de impressão usa **pt**. Conversão: `pt = px * 0.75`.
-- Logos: painel salva tamanho em **px**, `docHeader` já usa em px com `max-height`/`width`. Manter.
-- Margens da `@page`: continuar 25mm (A4) / 12mm (A5). Não há campo no painel para isto hoje — fora do escopo.
+Adicionar `src/lib/customFieldsPrint.ts` → `renderCustomFieldsHtml(screen, customData, unidadeId)` que devolve HTML institucional (`.ficha-section` por `secao`). Plugar em:
+- `fichaPacienteHtml.ts` (Ficha Paciente — seção "Dados Complementares")
+- `prontuarioPdf.ts` (Prontuário — após SOAP, agrupado por seção)
+- `HistoricoCompletoModal` e visualização do prontuário (mesmo helper, modo `mode:'view'`).
 
-### 3.7 Pré-visualização da Ficha (`FichaImpressao.tsx`)
-Já usa `docHeader+docFooter+buildInstitutionalCSS` em iframe. Passar a `buildInstitutionalCSS(opts, config)` para refletir fonte/cor configuradas. Sem outras mudanças.
+Resultado: **um único helper** alimenta criação, edição, visualização e impressão.
 
-## 4. Arquivos a editar
+### 2.6 UI — ampliar `ConfigPersonalizarCampos`
 
-- `src/lib/printLayout.ts` — estender `DocumentConfig`, `loadDocumentConfig`, `buildInstitutionalCSS`, `openPrintDocument`.
-- `src/components/ChartCard.tsx` — migrar para `openPrintDocument`.
-- `src/pages/painel/Relatorios.tsx` — substituir 2 `window.open` inline.
-- `src/components/config/ConfigImpressaoDocumentos.tsx` — preview/imprimir teste via shell + invalidar cache no save.
-- `src/components/FichaImpressao.tsx` — passar `config` ao `buildInstitutionalCSS`.
+No modal "Novo Campo Personalizado" adicionar (collapsibles para não poluir):
+- **Seção** (combobox livre, autocomplete das seções já criadas)
+- **Especialidades** (multi-select; vazio = todas)
+- **Tipos de prontuário** (chips: avaliação, retorno, sessão, urgência, procedimento — só aparece para screen `prontuario`)
+- **Validação** (min/max, máscara pré-definida ou regex)
+- **Regras condicionais** (linhas: "Mostrar quando [campo] [operador] [valor]", AND)
+- Novos tipos: telefone, CPF, CNPJ, CEP, email, hora, moeda, arquivo
 
-Nenhum arquivo novo. Nenhuma mudança em regra de negócio, dados, schema, agenda, BPA ou lógica clínica.
+### 2.7 Compatibilidade retroativa
 
-## 5. Critérios de aceite
+- Campos antigos em `custom_data` que não existem mais na config: continuam armazenados (não apagamos JSON), mostrados em modo view como "Campos legados" (read-only collapsible).
+- Renomear `nome` de um campo: gerar `legacyNames: string[]` para o renderer fazer fallback de leitura.
+- Migração silenciosa de `config_prontuario_tipos` → `custom_fields_config['prontuario']` na primeira carga (Master only).
 
-- Alterar fonte/tamanho/cor em `Configurações > Impressão e Documentos` reflete imediatamente em:
-  preview do painel, Ficha do Paciente, Prontuário, Histórico, Receituário, Solicitação de Exames, Encaminhamentos, Relatório de Alta, Relatórios, Auditoria, Documentos Histórico, Gerar Documento, Ficha Funcionário, Modelos, Gráficos (ChartCard).
-- Preview, `window.print()` e "Salvar como PDF" do navegador produzem HTML idêntico (mesma fonte, mesmo CSS, mesmo header/footer) — porque todos passam pelo mesmo `openPrintDocument`.
-- Não restam `window.open('','_blank')` com HTML inline próprio em src/ (validado por `rg`).
-- Logos com 1/2/3 slots + opção redonda continuam funcionando.
+## 3. Arquivos a tocar
 
-## 6. Validação
+**Novos**
+- `src/lib/customFieldRules.ts`
+- `src/lib/customFieldValidation.ts`
+- `src/lib/customFieldsPrint.ts`
 
-```bash
-rg -n "window\.open\(['\"]\s*['\"]" src --type ts --type tsx
-```
-Resultado esperado: somente `printLayout.ts` (legítimo) e links externos (`signedUrl`, WhatsApp).
+**Editados (incremental, sem quebra)**
+- `src/hooks/useCustomFields.ts` — estender tipo + helper `getFieldsForContext({especialidade, tipoProntuario})`
+- `src/components/CustomFieldsRenderer.tsx` — novos tipos, máscaras, validação, condicionais, agrupamento por seção
+- `src/components/DynamicProntuarioFields.tsx` — usar o filtro unificado
+- `src/components/config/ConfigPersonalizarCampos.tsx` — UI estendida no modal
+- `src/hooks/useProntuarioTiposConfig.ts` — adapter para nova fonte (migração suave)
+- `src/lib/fichaPacienteHtml.ts`, `src/lib/prontuarioPdf.ts` — injetar `renderCustomFieldsHtml`
 
-Teste manual: alterar fonte para "Times New Roman" 14px e cor `#7e22ce`, imprimir 5 documentos diferentes → todos saem com Times 10.5pt e título roxo.
+## 4. Garantias
 
-## Fora de escopo
+| Requisito | Como |
+|---|---|
+| Fonte única | `system_config.custom_fields_config` (já existe) |
+| Reflexo em todas telas | `CustomFieldsRenderer` + `customFieldsPrint.ts` compartilhados |
+| Por especialidade | filtro `especialidades` no resolver |
+| Por tipo de prontuário | filtro `tiposProntuario` no resolver |
+| Condicional | `evaluateCondition` em runtime |
+| Ordem / seção | `orderedNames` + `secao` agrupador |
+| Validação | `validateField` no submit |
+| Sem quebrar dados antigos | `custom_data jsonb` preserva tudo + `legacyNames` |
 
-Margens da página configuráveis, orientação configurável, templates por tipo de documento (atestado/receita) com layouts próprios, assinatura digital, Agenda/BPA, lógica clínica.
+## 5. Extras sugeridos
+
+- Botão **"Duplicar campo"** e **"Importar/Exportar JSON"** da configuração de uma tela.
+- **Preview ao vivo** no modal de criação (renderiza o campo com o tipo escolhido).
+- **Marcar como "destacado"** → renderiza em card próprio no topo da seção.
+- **Histórico de alterações** da config (já temos `auditService.log`, basta exibir).
+- **Templates prontos** ("Fisioterapia respiratória", "Triagem pediátrica") aplicáveis com 1 clique.
+
+---
+
+Posso implementar tudo na sequência: (a) tipos + engines, (b) renderers, (c) UI, (d) impressão. Confirmar para começar.
