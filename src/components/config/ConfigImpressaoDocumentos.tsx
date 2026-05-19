@@ -31,12 +31,8 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
   invalidateDocumentConfigCache,
-  loadDocumentConfig,
-  docHeader,
-  docFooter,
-  buildInstitutionalCSS,
-  docMeta,
 } from "@/lib/printLayout";
+
 
 const CONFIG_KEY = "config_impressao";
 
