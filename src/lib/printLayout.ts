@@ -28,6 +28,14 @@ export interface DocumentConfig {
   linha1: string;
   linha2: string;
   rodapeTexto: string;
+  /** Fonte base de todos os documentos (configurável). */
+  fonte: string;
+  /** Tamanho de fonte do corpo, em px (convertido para pt no CSS). */
+  tamanhoFonte: number;
+  /** Alinhamento do título institucional no cabeçalho. */
+  alinhamento: 'left' | 'center' | 'right';
+  /** Cor do título e das bordas institucionais (hex). */
+  corTitulo: string;
 }
 
 const DEFAULT_CONFIG: DocumentConfig = {
@@ -46,7 +54,12 @@ const DEFAULT_CONFIG: DocumentConfig = {
   linha1: 'SECRETARIA MUNICIPAL DE SAÚDE DE ORIXIMINÁ',
   linha2: 'CAPS II',
   rodapeTexto: '',
+  fonte: 'Arial',
+  tamanhoFonte: 12,
+  alinhamento: 'center',
+  corTitulo: '#0c4a6e',
 };
+
 
 let _cachedConfig: DocumentConfig | null = null;
 let _cacheTimestamp = 0;
@@ -79,6 +92,10 @@ export async function loadDocumentConfig(): Promise<DocumentConfig> {
         linha1: cab.linha1 || DEFAULT_CONFIG.linha1,
         linha2: cab.linha2 || DEFAULT_CONFIG.linha2,
         rodapeTexto: cfg.rodapeTexto || '',
+        fonte: (cab.fonte && String(cab.fonte).trim()) || DEFAULT_CONFIG.fonte,
+        tamanhoFonte: Number(cab.tamanhoFonte) > 0 ? Number(cab.tamanhoFonte) : DEFAULT_CONFIG.tamanhoFonte,
+        alinhamento: (cab.alinhamento === 'left' || cab.alinhamento === 'right') ? cab.alinhamento : 'center',
+        corTitulo: (cab.cor && String(cab.cor).trim()) || DEFAULT_CONFIG.corTitulo,
       };
     } else {
       _cachedConfig = { ...DEFAULT_CONFIG };
@@ -112,11 +129,25 @@ export interface InstitutionalLayoutOptions {
   extraCSS?: string;
 }
 
-/** Standard institutional CSS shared across all documents */
-export function buildInstitutionalCSS(opts: InstitutionalLayoutOptions = {}): string {
+/** Standard institutional CSS shared across all documents.
+ *  When a `config` is provided, the user-customized font, font-size, alignment
+ *  and accent color flow into the CSS so that every document reflects the
+ *  values saved in "Configurações > Impressão e Documentos". */
+export function buildInstitutionalCSS(
+  opts: InstitutionalLayoutOptions = {},
+  config?: DocumentConfig,
+): string {
   const size = opts.pageSize || 'A4';
   const orientation = opts.orientation || 'portrait';
   const margin = size === 'A5' ? '12mm' : '25mm';
+  const cfg = config ?? DEFAULT_CONFIG;
+  const fontFamily = `'${cfg.fonte.replace(/'/g, '')}', Arial, 'Helvetica Neue', Helvetica, sans-serif`;
+  // Painel salva em px; impressão usa pt → 1pt = 1.333px (≈ px * 0.75 = pt)
+  const bodyPt = Math.max(8, Math.round((cfg.tamanhoFonte || 12) * 0.75 * 10) / 10);
+  const titlePt = Math.round((bodyPt + 1) * 10) / 10;
+  const sectionPt = Math.round((bodyPt + 0.5) * 10) / 10;
+  const accent = cfg.corTitulo || '#0c4a6e';
+  const headerAlign = cfg.alinhamento || 'center';
   return `
 <style>
   @page {
@@ -126,21 +157,22 @@ export function buildInstitutionalCSS(opts: InstitutionalLayoutOptions = {}): st
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
-    font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif;
+    font-family: ${fontFamily};
     padding: 0;
     color: #1a1a1a;
-    font-size: 11pt;
+    font-size: ${bodyPt}pt;
     line-height: 1.5;
   }
 
-  /* HEADER — dual logos */
+
+  /* HEADER — institutional */
   .doc-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 12px 0;
     margin-bottom: 12px;
-    border-bottom: 2px solid #0369a1;
+    border-bottom: 2px solid ${accent};
   }
   .doc-header .logo-left,
   .doc-header .logo-right {
@@ -154,24 +186,24 @@ export function buildInstitutionalCSS(opts: InstitutionalLayoutOptions = {}): st
   }
   .doc-header .header-center {
     flex: 1;
-    text-align: center;
+    text-align: ${headerAlign};
     padding: 0 12px;
   }
   .doc-header h1 {
-    font-size: 12pt;
+    font-size: ${titlePt}pt;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    color: #0c4a6e;
+    color: ${accent};
     margin: 0;
   }
   .doc-header .subtitle {
-    font-size: 10pt;
+    font-size: ${bodyPt}pt;
     color: #334155;
     margin-top: 2px;
   }
   .doc-header .doc-title {
-    font-size: 13pt;
+    font-size: ${titlePt + 1}pt;
     font-weight: 700;
     margin-top: 8px;
     text-transform: uppercase;
@@ -189,6 +221,7 @@ export function buildInstitutionalCSS(opts: InstitutionalLayoutOptions = {}): st
     right: 0;
     bottom: 14px;
   }
+
 
   /* META INFO BAR */
   .doc-meta {
@@ -218,13 +251,13 @@ export function buildInstitutionalCSS(opts: InstitutionalLayoutOptions = {}): st
   /* SUMMARY CARDS */
   .summary { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
   .stat { background: #f0f9ff; border: 1px solid #bae6fd; padding: 8px 14px; border-radius: 6px; text-align: center; min-width: 85px; }
-  .stat strong { display: block; font-size: 16pt; color: #0369a1; }
+  .stat strong { display: block; font-size: 16pt; color: ; }
   .stat small { font-size: 8pt; color: #64748b; }
 
   /* SECTION TITLES */
   h2 {
     font-size: 12pt;
-    color: #0369a1;
+    color: ;
     margin: 16px 0 8px;
     padding-bottom: 4px;
     border-bottom: 1.5px solid #bae6fd;
@@ -248,7 +281,7 @@ export function buildInstitutionalCSS(opts: InstitutionalLayoutOptions = {}): st
 
   /* SECTIONS (prontuário) */
   .section { margin-bottom: 18px; page-break-inside: avoid; }
-  .section-title { font-weight: 700; font-size: 10pt; text-transform: uppercase; color: #0369a1; border-bottom: 1.5px solid #bae6fd; padding-bottom: 4px; margin-bottom: 8px; }
+  .section-title { font-weight: 700; font-size: 10pt; text-transform: uppercase; color: ; border-bottom: 1.5px solid #bae6fd; padding-bottom: 4px; margin-bottom: 8px; }
   .section-content { font-size: 11pt; line-height: 1.6; white-space: pre-wrap; min-height: 18px; text-align: justify; color: #1e293b; }
 
   /* INFO GRID */
@@ -280,7 +313,7 @@ export function buildInstitutionalCSS(opts: InstitutionalLayoutOptions = {}): st
     border: 1px solid #94a3b8; border-radius: 4px; padding: 10px 14px;
     font-size: 8pt; line-height: 1.5; color: #475569; max-width: 380px;
   }
-  .e-signature-box .sig-title { font-weight: 700; font-size: 9pt; color: #0369a1; margin-bottom: 4px; text-align: center; }
+  .e-signature-box .sig-title { font-weight: 700; font-size: 9pt; color: ; margin-bottom: 4px; text-align: center; }
   .e-signature-box .sig-legal { font-size: 7pt; color: #94a3b8; margin-top: 6px; font-style: italic; }
 
   /* CARIMBO BLOCK */
@@ -295,7 +328,7 @@ export function buildInstitutionalCSS(opts: InstitutionalLayoutOptions = {}): st
   .doc-footer {
     margin-top: 30px;
     padding-top: 8px;
-    border-top: 1.5px solid #0369a1;
+    border-top: 1.5px solid ${accent};
     font-size: 8pt;
     color: #64748b;
     display: flex;
@@ -435,7 +468,7 @@ export async function openPrintDocument(
   // 3. Now fetch config (async) and rewrite the doc
   const config = await loadDocumentConfig();
   const metaHtml = meta ? docMeta(meta) : '';
-  const css = buildInstitutionalCSS(options);
+  const css = buildInstitutionalCSS(options, config);
 
   try {
     printWindow.document.open();

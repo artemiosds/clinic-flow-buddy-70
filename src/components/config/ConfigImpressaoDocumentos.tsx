@@ -31,12 +31,8 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
   invalidateDocumentConfigCache,
-  loadDocumentConfig,
-  docHeader,
-  docFooter,
-  buildInstitutionalCSS,
-  docMeta,
 } from "@/lib/printLayout";
+
 
 const CONFIG_KEY = "config_impressao";
 
@@ -392,34 +388,41 @@ const ConfigImpressaoDocumentos: React.FC = () => {
   };
 
   const handlePreview = async () => {
-    const cfg = await loadDocumentConfig();
-    const previewWindow = window.open("", "_blank");
-    if (!previewWindow) return;
-    const css = buildInstitutionalCSS();
-    const meta = docMeta({
-      Paciente: "João da Silva",
-      CPF: "123.456.789-00",
-      Data: new Date().toLocaleDateString("pt-BR"),
-    });
+    // Usa exatamente o mesmo pipeline (openPrintDocument) que todos os
+    // documentos do sistema — garante que o preview seja fiel ao impresso.
+    const { openPrintDocument } = await import("@/lib/printLayout");
     const body = `
-      <div class="doc-content">
-        <div class="content-block" style="margin-top:16px;">
-          <p>Atesto para os devidos fins que o(a) paciente <strong>João da Silva</strong>, portador(a) do CPF <strong>123.456.789-00</strong>, compareceu nesta unidade de saúde na data de hoje para consulta médica, necessitando de <strong>3 (três)</strong> dias de afastamento de suas atividades laborais.</p>
-          <br/>
-          <p>Este documento é uma pré-visualização do layout padrão dos documentos clínicos gerados pelo sistema.</p>
-        </div>
-        <div class="signature" style="margin-top:60px;">
-          <div class="signature-line"></div>
-          <div class="name">Dr. Maria Santos</div>
-          <div class="role">Fisioterapia — CREFITO-12 12345/PA</div>
-        </div>
+      <div class="content-block" style="margin-top:16px;">
+        <p>Atesto para os devidos fins que o(a) paciente <strong>João da Silva</strong>, portador(a) do CPF <strong>123.456.789-00</strong>, compareceu nesta unidade de saúde na data de hoje para consulta médica, necessitando de <strong>3 (três)</strong> dias de afastamento de suas atividades laborais.</p>
+        <br/>
+        <p>Este documento é uma pré-visualização do layout padrão aplicado a todos os documentos clínicos gerados pelo sistema (prontuário, receituário, encaminhamentos, ficha do paciente, relatórios e demais impressões).</p>
+      </div>
+      <div class="signature" style="margin-top:60px;">
+        <div class="signature-line"></div>
+        <div class="name">Dr. Maria Santos</div>
+        <div class="role">Fisioterapia — CREFITO-12 12345/PA</div>
       </div>
     `;
-    previewWindow.document.write(
-      `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"/><title>Pré-visualização</title>${css}</head><body>${docHeader("ATESTADO MÉDICO", cfg)}${meta}${body}${docFooter(cfg)}</body></html>`,
-    );
-    previewWindow.document.close();
+    try {
+      await openPrintDocument(
+        "ATESTADO MÉDICO (PRÉ-VISUALIZAÇÃO)",
+        body,
+        {
+          Paciente: "João da Silva",
+          CPF: "123.456.789-00",
+          Data: new Date().toLocaleDateString("pt-BR"),
+        },
+      );
+    } catch (err: any) {
+      if (err?.message === "POPUP_BLOCKED") {
+        toast.error("Pop-up bloqueado. Permita pop-ups para pré-visualizar.");
+      } else {
+        console.error("[DocumentConfig] Erro ao pré-visualizar", err);
+        toast.error("Erro ao abrir pré-visualização.");
+      }
+    }
   };
+
 
   if (loading) {
     return (
@@ -452,9 +455,10 @@ const ConfigImpressaoDocumentos: React.FC = () => {
               <Button variant="outline" size="sm" onClick={handlePreview} className="gap-1.5">
                 <Eye className="w-4 h-4" /> Pré-visualizar
               </Button>
-              <Button variant="default" size="sm" onClick={() => window.print()} className="gap-1.5">
+              <Button variant="default" size="sm" onClick={handlePreview} className="gap-1.5">
                 <Printer className="w-4 h-4" /> Imprimir teste
               </Button>
+
             </div>
           </div>
         </div>

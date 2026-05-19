@@ -1,6 +1,8 @@
 import React, { useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Printer } from 'lucide-react';
+import { openPrintDocument } from '@/lib/printLayout';
+import { toast } from 'sonner';
 
 interface Props {
   title: string;
@@ -12,20 +14,23 @@ interface Props {
 export const ChartCard: React.FC<Props> = ({ title, children, actions, className = '' }) => {
   const ref = useRef<HTMLDivElement>(null);
 
-  const handlePrint = () => {
+  const handlePrint = async () => {
     if (!ref.current) return;
-    const w = window.open('', '_blank');
-    if (!w) return;
     const clone = ref.current.cloneNode(true) as HTMLElement;
-    w.document.write(`<!DOCTYPE html><html><head><title>${title}</title>
-<style>
-  body { font-family: 'Inter', sans-serif; padding: 40px; background: #fff; }
-  h2 { font-size: 18px; font-weight: 600; margin-bottom: 24px; color: #1e293b; }
-  svg { max-width: 100%; height: auto; }
-  @media print { body { padding: 20px; } }
-</style></head><body><h2>${title}</h2>${clone.innerHTML}</body></html>`);
-    w.document.close();
-    setTimeout(() => { w.focus(); w.print(); }, 300);
+    const body = `<div class="chart-print-wrapper">${clone.innerHTML}</div>`;
+    try {
+      await openPrintDocument(title, body, undefined, {
+        pageSize: 'A4',
+        orientation: 'landscape',
+        extraCSS: `.chart-print-wrapper svg{max-width:100%;height:auto;display:block;margin:0 auto;}`,
+      });
+    } catch (err: any) {
+      if (err?.message === 'POPUP_BLOCKED') {
+        toast.error('Pop-up bloqueado. Permita pop-ups para imprimir o gráfico.');
+      } else {
+        console.error('[ChartCard] Erro ao imprimir', err);
+      }
+    }
   };
 
   return (
