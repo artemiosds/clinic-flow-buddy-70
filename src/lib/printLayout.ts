@@ -28,6 +28,14 @@ export interface DocumentConfig {
   linha1: string;
   linha2: string;
   rodapeTexto: string;
+  /** Fonte base de todos os documentos (configurável). */
+  fonte: string;
+  /** Tamanho de fonte do corpo, em px (convertido para pt no CSS). */
+  tamanhoFonte: number;
+  /** Alinhamento do título institucional no cabeçalho. */
+  alinhamento: 'left' | 'center' | 'right';
+  /** Cor do título e das bordas institucionais (hex). */
+  corTitulo: string;
 }
 
 const DEFAULT_CONFIG: DocumentConfig = {
@@ -46,7 +54,12 @@ const DEFAULT_CONFIG: DocumentConfig = {
   linha1: 'SECRETARIA MUNICIPAL DE SAÚDE DE ORIXIMINÁ',
   linha2: 'CAPS II',
   rodapeTexto: '',
+  fonte: 'Arial',
+  tamanhoFonte: 12,
+  alinhamento: 'center',
+  corTitulo: '#0c4a6e',
 };
+
 
 let _cachedConfig: DocumentConfig | null = null;
 let _cacheTimestamp = 0;
