@@ -15,6 +15,7 @@
  */
 
 import { openPrintDocument } from "@/lib/printLayout";
+import { renderCustomFieldsHtml } from "@/lib/customFieldsPrint";
 import { toast } from "sonner";
 
 interface ProntuarioLike {
@@ -38,6 +39,14 @@ interface ProntuarioLike {
   soap_objetivo?: string;
   soap_avaliacao?: string;
   soap_plano?: string;
+  /** Valores brutos de campos personalizados do prontuário. */
+  custom_data?: Record<string, any>;
+  /** Unidade — resolve campos personalizados por unidade. */
+  unidade_id?: string;
+  /** Especialidade — usada para regras condicionais. */
+  especialidade?: string;
+  /** Tipo de prontuário — usado para regras condicionais. */
+  tipo_prontuario?: string;
 }
 
 function fmtDate(iso: string | undefined): string {
