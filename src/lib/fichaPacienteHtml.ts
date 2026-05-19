@@ -123,7 +123,11 @@ export interface BuiltFicha {
   meta: Record<string, string>;
 }
 
-export function buildFichaBody(data: PacienteFichaDocumentData, mode: FichaPrintMode): BuiltFicha {
+export function buildFichaBody(
+  data: PacienteFichaDocumentData,
+  mode: FichaPrintMode,
+  opts: { extraBeforeSignature?: string } = {},
+): BuiltFicha {
   const somenteDados = mode === 'dados_pessoais';
   const p = data.paciente;
   const dc = data.dadosClinicos;
