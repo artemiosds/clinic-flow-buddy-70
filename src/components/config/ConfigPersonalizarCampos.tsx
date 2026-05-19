@@ -10,13 +10,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import {
   Plus, Pencil, Trash2, Eye, EyeOff, GripVertical, Settings2, Type,
   Hash, Calendar, CheckSquare, List, AlignLeft, ArrowUp, ArrowDown, Lock,
+  Phone, IdCard, Building2, MapPin, Mail, Link as LinkIcon, Clock, DollarSign, Paperclip,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useData } from '@/contexts/DataContext';
+import { useEspecialidades } from '@/contexts/EspecialidadesContext';
 import { useConfiguracao } from '@/hooks/useConfiguracao';
 import {
   CustomFieldDef,
   CustomFieldType,
+  CustomFieldCondition,
+  CustomFieldValidation,
+  ConditionalOperator,
   ScreenKey,
   SCREEN_LABELS,
   NATIVE_FIELDS,
@@ -41,13 +46,22 @@ import { CSS } from '@dnd-kit/utilities';
 import { cn } from '@/lib/utils';
 
 const FIELD_TYPE_LABELS: Record<CustomFieldType, { label: string; icon: React.ElementType; desc: string }> = {
-  text: { label: 'Texto', icon: Type, desc: 'Campo de texto curto' },
+  text: { label: 'Texto', icon: Type, desc: 'Texto curto' },
+  textarea: { label: 'Texto Longo', icon: AlignLeft, desc: 'Múltiplas linhas' },
   number: { label: 'Número', icon: Hash, desc: 'Valor numérico' },
   date: { label: 'Data', icon: Calendar, desc: 'Seletor de data' },
-  checkbox: { label: 'Múltipla escolha', icon: CheckSquare, desc: 'Várias opções selecionáveis' },
-  radio: { label: 'Escolha única', icon: List, desc: 'Apenas uma opção por vez' },
-  select: { label: 'Seleção (dropdown)', icon: List, desc: 'Lista suspensa de opções' },
-  textarea: { label: 'Texto Longo', icon: AlignLeft, desc: 'Campo de texto extenso' },
+  time: { label: 'Hora', icon: Clock, desc: 'Hora HH:MM' },
+  select: { label: 'Seleção', icon: List, desc: 'Dropdown' },
+  radio: { label: 'Escolha única', icon: List, desc: 'Uma opção' },
+  checkbox: { label: 'Múltipla escolha', icon: CheckSquare, desc: 'Várias opções' },
+  phone: { label: 'Telefone', icon: Phone, desc: 'Máscara BR' },
+  cpf: { label: 'CPF', icon: IdCard, desc: '999.999.999-99' },
+  cnpj: { label: 'CNPJ', icon: Building2, desc: '99.999.999/0001-99' },
+  cep: { label: 'CEP', icon: MapPin, desc: '99999-999' },
+  email: { label: 'E-mail', icon: Mail, desc: 'Validação automática' },
+  url: { label: 'URL', icon: LinkIcon, desc: 'Link externo' },
+  currency: { label: 'Moeda', icon: DollarSign, desc: 'R$ 0,00' },
+  file: { label: 'Arquivo', icon: Paperclip, desc: 'Upload' },
 };
 
 const generateId = () => `cf_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
