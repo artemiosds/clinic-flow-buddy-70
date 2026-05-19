@@ -12,6 +12,7 @@ import {
   type DocumentConfig,
 } from '@/lib/printLayout';
 import { buildFichaBody, FICHA_EXTRA_CSS } from '@/lib/fichaPacienteHtml';
+import { renderCustomFieldsHtml } from '@/lib/customFieldsPrint';
 import type {
   FichaPrintMode,
   PacienteFichaDocumentData,
