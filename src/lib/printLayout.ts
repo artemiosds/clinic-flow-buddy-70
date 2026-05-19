@@ -251,13 +251,13 @@ export function buildInstitutionalCSS(
   /* SUMMARY CARDS */
   .summary { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
   .stat { background: #f0f9ff; border: 1px solid #bae6fd; padding: 8px 14px; border-radius: 6px; text-align: center; min-width: 85px; }
-  .stat strong { display: block; font-size: 16pt; color: #0369a1; }
+  .stat strong { display: block; font-size: 16pt; color: ; }
   .stat small { font-size: 8pt; color: #64748b; }
 
   /* SECTION TITLES */
   h2 {
     font-size: 12pt;
-    color: #0369a1;
+    color: ;
     margin: 16px 0 8px;
     padding-bottom: 4px;
     border-bottom: 1.5px solid #bae6fd;
@@ -281,7 +281,7 @@ export function buildInstitutionalCSS(
 
   /* SECTIONS (prontuário) */
   .section { margin-bottom: 18px; page-break-inside: avoid; }
-  .section-title { font-weight: 700; font-size: 10pt; text-transform: uppercase; color: #0369a1; border-bottom: 1.5px solid #bae6fd; padding-bottom: 4px; margin-bottom: 8px; }
+  .section-title { font-weight: 700; font-size: 10pt; text-transform: uppercase; color: ; border-bottom: 1.5px solid #bae6fd; padding-bottom: 4px; margin-bottom: 8px; }
   .section-content { font-size: 11pt; line-height: 1.6; white-space: pre-wrap; min-height: 18px; text-align: justify; color: #1e293b; }
 
   /* INFO GRID */
@@ -313,7 +313,7 @@ export function buildInstitutionalCSS(
     border: 1px solid #94a3b8; border-radius: 4px; padding: 10px 14px;
     font-size: 8pt; line-height: 1.5; color: #475569; max-width: 380px;
   }
-  .e-signature-box .sig-title { font-weight: 700; font-size: 9pt; color: #0369a1; margin-bottom: 4px; text-align: center; }
+  .e-signature-box .sig-title { font-weight: 700; font-size: 9pt; color: ; margin-bottom: 4px; text-align: center; }
   .e-signature-box .sig-legal { font-size: 7pt; color: #94a3b8; margin-top: 6px; font-style: italic; }
 
   /* CARIMBO BLOCK */
@@ -328,7 +328,7 @@ export function buildInstitutionalCSS(
   .doc-footer {
     margin-top: 30px;
     padding-top: 8px;
-    border-top: 1.5px solid #0369a1;
+    border-top: 1.5px solid ${accent};
     font-size: 8pt;
     color: #64748b;
     display: flex;
