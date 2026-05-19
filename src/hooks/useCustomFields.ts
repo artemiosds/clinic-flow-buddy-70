@@ -3,7 +3,25 @@ import { useConfiguracao } from '@/hooks/useConfiguracao';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-export type CustomFieldType = 'text' | 'number' | 'date' | 'checkbox' | 'select' | 'textarea' | 'radio';
+export type CustomFieldType =
+  | 'text' | 'number' | 'date' | 'checkbox' | 'select' | 'textarea' | 'radio'
+  | 'phone' | 'cpf' | 'cnpj' | 'cep' | 'email' | 'url' | 'time' | 'currency' | 'file';
+
+export type ConditionalOperator = 'eq' | 'neq' | 'in' | 'notin' | 'gt' | 'lt' | 'filled' | 'empty';
+export interface CustomFieldCondition {
+  campo: string;
+  operador: ConditionalOperator;
+  valor?: any;
+}
+export interface CustomFieldValidation {
+  minLength?: number;
+  maxLength?: number;
+  min?: number;
+  max?: number;
+  pattern?: string;
+  mascara?: 'cpf' | 'cnpj' | 'telefone' | 'cep' | 'data' | 'hora' | 'currency' | 'custom';
+  mascaraCustom?: string;
+}
 
 export interface CustomFieldDef {
   id: string;
@@ -16,6 +34,16 @@ export interface CustomFieldDef {
   ordem: number;
   valorPadrao: string;
   mostrarListagem: boolean;
+  // ---- Extensões (todas opcionais — retrocompatível) ----
+  secao?: string;
+  especialidades?: string[];           // [] = todas
+  tiposProntuario?: string[];          // [] = todos
+  validacao?: CustomFieldValidation;
+  condicional?: CustomFieldCondition[]; // AND entre regras
+  placeholder?: string;
+  ajuda?: string;
+  legacyNames?: string[];              // fallback p/ leitura quando renomeado
+  destaque?: boolean;
 }
 
 export type ScreenKey =

@@ -10,13 +10,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import {
   Plus, Pencil, Trash2, Eye, EyeOff, GripVertical, Settings2, Type,
   Hash, Calendar, CheckSquare, List, AlignLeft, ArrowUp, ArrowDown, Lock,
+  Phone, IdCard, Building2, MapPin, Mail, Link as LinkIcon, Clock, DollarSign, Paperclip,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useData } from '@/contexts/DataContext';
+import { useEspecialidades } from '@/contexts/EspecialidadesContext';
 import { useConfiguracao } from '@/hooks/useConfiguracao';
 import {
   CustomFieldDef,
   CustomFieldType,
+  CustomFieldCondition,
+  CustomFieldValidation,
+  ConditionalOperator,
   ScreenKey,
   SCREEN_LABELS,
   NATIVE_FIELDS,
@@ -41,13 +46,22 @@ import { CSS } from '@dnd-kit/utilities';
 import { cn } from '@/lib/utils';
 
 const FIELD_TYPE_LABELS: Record<CustomFieldType, { label: string; icon: React.ElementType; desc: string }> = {
-  text: { label: 'Texto', icon: Type, desc: 'Campo de texto curto' },
+  text: { label: 'Texto', icon: Type, desc: 'Texto curto' },
+  textarea: { label: 'Texto Longo', icon: AlignLeft, desc: 'Múltiplas linhas' },
   number: { label: 'Número', icon: Hash, desc: 'Valor numérico' },
   date: { label: 'Data', icon: Calendar, desc: 'Seletor de data' },
-  checkbox: { label: 'Múltipla escolha', icon: CheckSquare, desc: 'Várias opções selecionáveis' },
-  radio: { label: 'Escolha única', icon: List, desc: 'Apenas uma opção por vez' },
-  select: { label: 'Seleção (dropdown)', icon: List, desc: 'Lista suspensa de opções' },
-  textarea: { label: 'Texto Longo', icon: AlignLeft, desc: 'Campo de texto extenso' },
+  time: { label: 'Hora', icon: Clock, desc: 'Hora HH:MM' },
+  select: { label: 'Seleção', icon: List, desc: 'Dropdown' },
+  radio: { label: 'Escolha única', icon: List, desc: 'Uma opção' },
+  checkbox: { label: 'Múltipla escolha', icon: CheckSquare, desc: 'Várias opções' },
+  phone: { label: 'Telefone', icon: Phone, desc: 'Máscara BR' },
+  cpf: { label: 'CPF', icon: IdCard, desc: '999.999.999-99' },
+  cnpj: { label: 'CNPJ', icon: Building2, desc: '99.999.999/0001-99' },
+  cep: { label: 'CEP', icon: MapPin, desc: '99999-999' },
+  email: { label: 'E-mail', icon: Mail, desc: 'Validação automática' },
+  url: { label: 'URL', icon: LinkIcon, desc: 'Link externo' },
+  currency: { label: 'Moeda', icon: DollarSign, desc: 'R$ 0,00' },
+  file: { label: 'Arquivo', icon: Paperclip, desc: 'Upload' },
 };
 
 const generateId = () => `cf_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -199,7 +213,14 @@ const ConfigPersonalizarCampos: React.FC = () => {
   const [fieldForm, setFieldForm] = useState({
     rotulo: '', tipo: 'text' as CustomFieldType, obrigatorio: false,
     opcoes: [] as string[], novaOpcao: '', valorPadrao: '', mostrarListagem: false,
+    secao: '', placeholder: '', ajuda: '',
+    especialidades: [] as string[], tiposProntuario: [] as string[],
+    validacao: {} as CustomFieldValidation,
+    condicional: [] as CustomFieldCondition[],
+    destaque: false,
   });
+  const { especialidades } = useEspecialidades();
+  const TIPOS_PRONTUARIO = ['avaliacao_inicial', 'retorno', 'sessao', 'urgencia', 'procedimento'];
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -287,22 +308,40 @@ const ConfigPersonalizarCampos: React.FC = () => {
   }, [unifiedRows, persistOrder]);
 
   // ---------- Custom field CRUD ----------
+  const blankForm = () => ({
+    rotulo: '', tipo: 'text' as CustomFieldType, obrigatorio: false,
+    opcoes: [] as string[], novaOpcao: '', valorPadrao: '', mostrarListagem: false,
+    secao: '', placeholder: '', ajuda: '',
+    especialidades: [] as string[], tiposProntuario: [] as string[],
+    validacao: {} as CustomFieldValidation,
+    condicional: [] as CustomFieldCondition[],
+    destaque: false,
+  });
+
   const openAddModal = () => {
     setEditingField(null);
-    setFieldForm({ rotulo: '', tipo: 'text', obrigatorio: false, opcoes: [], novaOpcao: '', valorPadrao: '', mostrarListagem: false });
+    setFieldForm(blankForm());
     setModalOpen(true);
   };
 
   const openEditModal = (field: CustomFieldDef) => {
     setEditingField(field);
     setFieldForm({
+      ...blankForm(),
       rotulo: field.rotulo,
       tipo: field.tipo,
       obrigatorio: field.obrigatorio,
       opcoes: [...field.opcoes],
-      novaOpcao: '',
       valorPadrao: field.valorPadrao,
       mostrarListagem: field.mostrarListagem,
+      secao: field.secao || '',
+      placeholder: field.placeholder || '',
+      ajuda: field.ajuda || '',
+      especialidades: field.especialidades || [],
+      tiposProntuario: field.tiposProntuario || [],
+      validacao: field.validacao || {},
+      condicional: field.condicional || [],
+      destaque: !!field.destaque,
     });
     setModalOpen(true);
   };
@@ -329,12 +368,21 @@ const ConfigPersonalizarCampos: React.FC = () => {
       nome,
       rotulo: fieldForm.rotulo.trim(),
       tipo: fieldForm.tipo,
-      opcoes: ['select', 'checkbox', 'radio'].includes(fieldForm.tipo) ? fieldForm.opcoes.filter(Boolean) : [],
+      opcoes: ['select', 'checkbox', 'radio', 'radio'].includes(fieldForm.tipo) ? fieldForm.opcoes.filter(Boolean) : [],
       obrigatorio: fieldForm.obrigatorio,
       ativo: editingField?.ativo ?? true,
       ordem: editingField?.ordem ?? (screenConfig.fields.length + 1) * 10,
       valorPadrao: fieldForm.valorPadrao,
       mostrarListagem: fieldForm.mostrarListagem,
+      secao: fieldForm.secao.trim() || undefined,
+      placeholder: fieldForm.placeholder.trim() || undefined,
+      ajuda: fieldForm.ajuda.trim() || undefined,
+      especialidades: fieldForm.especialidades.length ? fieldForm.especialidades : undefined,
+      tiposProntuario: fieldForm.tiposProntuario.length ? fieldForm.tiposProntuario : undefined,
+      validacao: Object.keys(fieldForm.validacao).length ? fieldForm.validacao : undefined,
+      condicional: fieldForm.condicional.length ? fieldForm.condicional : undefined,
+      destaque: fieldForm.destaque || undefined,
+      legacyNames: editingField?.legacyNames,
     };
 
     const newFields = editingField
@@ -619,6 +667,201 @@ const ConfigPersonalizarCampos: React.FC = () => {
                 <Switch checked={fieldForm.mostrarListagem} onCheckedChange={(v) => setFieldForm((p) => ({ ...p, mostrarListagem: v }))} />
               </div>
             </div>
+
+            {/* ---- Avançado: seção, placeholder, ajuda, destaque ---- */}
+            <details className="rounded-xl border bg-muted/20 p-3">
+              <summary className="text-sm font-medium cursor-pointer select-none">Organização e ajuda</summary>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+                <div>
+                  <Label className="text-xs">Seção (grupo)</Label>
+                  <Input value={fieldForm.secao} onChange={(e) => setFieldForm(p => ({ ...p, secao: e.target.value }))} placeholder="Ex: Anamnese, Exame Físico" />
+                </div>
+                <div>
+                  <Label className="text-xs">Placeholder</Label>
+                  <Input value={fieldForm.placeholder} onChange={(e) => setFieldForm(p => ({ ...p, placeholder: e.target.value }))} placeholder="Ex: Digite aqui..." />
+                </div>
+                <div className="sm:col-span-2">
+                  <Label className="text-xs">Texto de ajuda</Label>
+                  <Input value={fieldForm.ajuda} onChange={(e) => setFieldForm(p => ({ ...p, ajuda: e.target.value }))} placeholder="Dica curta exibida ao lado do rótulo" />
+                </div>
+                <div className="flex items-center justify-between gap-2 p-2 rounded border bg-card sm:col-span-2">
+                  <div>
+                    <p className="text-xs font-medium">Destacar visualmente</p>
+                    <p className="text-[10px] text-muted-foreground">Renderiza o campo com borda e fundo de destaque</p>
+                  </div>
+                  <Switch checked={fieldForm.destaque} onCheckedChange={(v) => setFieldForm(p => ({ ...p, destaque: v }))} />
+                </div>
+              </div>
+            </details>
+
+            {/* ---- Onde aparece: especialidade + tipos prontuário ---- */}
+            <details className="rounded-xl border bg-muted/20 p-3">
+              <summary className="text-sm font-medium cursor-pointer select-none">Onde este campo aparece</summary>
+              <div className="space-y-3 mt-3">
+                <div>
+                  <Label className="text-xs">Especialidades (vazio = todas)</Label>
+                  <div className="flex flex-wrap gap-1.5 mt-1.5">
+                    {especialidades.filter(e => e.ativa).map(e => {
+                      const sel = fieldForm.especialidades.includes(e.key);
+                      return (
+                        <button
+                          key={e.key}
+                          type="button"
+                          onClick={() => setFieldForm(p => ({
+                            ...p,
+                            especialidades: sel ? p.especialidades.filter(k => k !== e.key) : [...p.especialidades, e.key],
+                          }))}
+                          className={cn(
+                            'px-2.5 py-1 rounded-full text-xs border transition-all',
+                            sel ? 'bg-primary text-primary-foreground border-primary' : 'bg-card hover:bg-muted',
+                          )}
+                        >
+                          {e.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                {selectedScreen === 'prontuario' && (
+                  <div>
+                    <Label className="text-xs">Tipos de prontuário (vazio = todos)</Label>
+                    <div className="flex flex-wrap gap-1.5 mt-1.5">
+                      {TIPOS_PRONTUARIO.map(t => {
+                        const sel = fieldForm.tiposProntuario.includes(t);
+                        return (
+                          <button
+                            key={t}
+                            type="button"
+                            onClick={() => setFieldForm(p => ({
+                              ...p,
+                              tiposProntuario: sel ? p.tiposProntuario.filter(k => k !== t) : [...p.tiposProntuario, t],
+                            }))}
+                            className={cn(
+                              'px-2.5 py-1 rounded-full text-xs border capitalize transition-all',
+                              sel ? 'bg-primary text-primary-foreground border-primary' : 'bg-card hover:bg-muted',
+                            )}
+                          >
+                            {t.replace('_', ' ')}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </details>
+
+            {/* ---- Validação ---- */}
+            <details className="rounded-xl border bg-muted/20 p-3">
+              <summary className="text-sm font-medium cursor-pointer select-none">Validação</summary>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
+                <div>
+                  <Label className="text-xs">Mín. caracteres</Label>
+                  <Input type="number" value={fieldForm.validacao.minLength ?? ''} onChange={e => setFieldForm(p => ({ ...p, validacao: { ...p.validacao, minLength: e.target.value ? Number(e.target.value) : undefined } }))} />
+                </div>
+                <div>
+                  <Label className="text-xs">Máx. caracteres</Label>
+                  <Input type="number" value={fieldForm.validacao.maxLength ?? ''} onChange={e => setFieldForm(p => ({ ...p, validacao: { ...p.validacao, maxLength: e.target.value ? Number(e.target.value) : undefined } }))} />
+                </div>
+                <div>
+                  <Label className="text-xs">Mín. (número)</Label>
+                  <Input type="number" value={fieldForm.validacao.min ?? ''} onChange={e => setFieldForm(p => ({ ...p, validacao: { ...p.validacao, min: e.target.value ? Number(e.target.value) : undefined } }))} />
+                </div>
+                <div>
+                  <Label className="text-xs">Máx. (número)</Label>
+                  <Input type="number" value={fieldForm.validacao.max ?? ''} onChange={e => setFieldForm(p => ({ ...p, validacao: { ...p.validacao, max: e.target.value ? Number(e.target.value) : undefined } }))} />
+                </div>
+                <div className="col-span-2">
+                  <Label className="text-xs">Máscara</Label>
+                  <Select
+                    value={fieldForm.validacao.mascara || '__none__'}
+                    onValueChange={(v) => setFieldForm(p => ({ ...p, validacao: { ...p.validacao, mascara: v === '__none__' ? undefined : v as any } }))}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Nenhuma" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">Nenhuma</SelectItem>
+                      <SelectItem value="cpf">CPF</SelectItem>
+                      <SelectItem value="cnpj">CNPJ</SelectItem>
+                      <SelectItem value="telefone">Telefone</SelectItem>
+                      <SelectItem value="cep">CEP</SelectItem>
+                      <SelectItem value="data">Data</SelectItem>
+                      <SelectItem value="hora">Hora</SelectItem>
+                      <SelectItem value="currency">Moeda</SelectItem>
+                      <SelectItem value="custom">Personalizada (9=dígito)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {fieldForm.validacao.mascara === 'custom' && (
+                  <div className="col-span-2">
+                    <Label className="text-xs">Máscara custom (use 9 para dígito)</Label>
+                    <Input value={fieldForm.validacao.mascaraCustom || ''} onChange={e => setFieldForm(p => ({ ...p, validacao: { ...p.validacao, mascaraCustom: e.target.value } }))} placeholder="Ex: 999.999.999-99" />
+                  </div>
+                )}
+                <div className="col-span-2 sm:col-span-4">
+                  <Label className="text-xs">Regex (avançado)</Label>
+                  <Input value={fieldForm.validacao.pattern || ''} onChange={e => setFieldForm(p => ({ ...p, validacao: { ...p.validacao, pattern: e.target.value || undefined } }))} placeholder="^[A-Z]{2}\d+$" />
+                </div>
+              </div>
+            </details>
+
+            {/* ---- Regras condicionais ---- */}
+            <details className="rounded-xl border bg-muted/20 p-3">
+              <summary className="text-sm font-medium cursor-pointer select-none">
+                Regras condicionais ({fieldForm.condicional.length})
+              </summary>
+              <div className="space-y-2 mt-3">
+                <p className="text-[11px] text-muted-foreground">
+                  Mostrar este campo somente quando TODAS as condições abaixo forem verdadeiras.
+                </p>
+                {fieldForm.condicional.map((rule, idx) => (
+                  <div key={idx} className="flex flex-wrap items-center gap-1.5 p-2 rounded border bg-card">
+                    <Input
+                      placeholder="Nome do campo"
+                      className="h-8 flex-1 min-w-[120px]"
+                      value={rule.campo}
+                      onChange={e => setFieldForm(p => {
+                        const c = [...p.condicional]; c[idx] = { ...c[idx], campo: e.target.value }; return { ...p, condicional: c };
+                      })}
+                    />
+                    <Select
+                      value={rule.operador}
+                      onValueChange={(v) => setFieldForm(p => {
+                        const c = [...p.condicional]; c[idx] = { ...c[idx], operador: v as ConditionalOperator }; return { ...p, condicional: c };
+                      })}
+                    >
+                      <SelectTrigger className="h-8 w-[120px]"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="eq">= igual</SelectItem>
+                        <SelectItem value="neq">≠ diferente</SelectItem>
+                        <SelectItem value="in">∈ em (a,b,c)</SelectItem>
+                        <SelectItem value="notin">∉ não em</SelectItem>
+                        <SelectItem value="gt">{'>'} maior</SelectItem>
+                        <SelectItem value="lt">{'<'} menor</SelectItem>
+                        <SelectItem value="filled">preenchido</SelectItem>
+                        <SelectItem value="empty">vazio</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {!['filled', 'empty'].includes(rule.operador) && (
+                      <Input
+                        placeholder="Valor"
+                        className="h-8 flex-1 min-w-[100px]"
+                        value={rule.valor ?? ''}
+                        onChange={e => setFieldForm(p => {
+                          const c = [...p.condicional]; c[idx] = { ...c[idx], valor: e.target.value }; return { ...p, condicional: c };
+                        })}
+                      />
+                    )}
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setFieldForm(p => ({ ...p, condicional: p.condicional.filter((_, i) => i !== idx) }))}>
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                ))}
+                <Button type="button" variant="outline" size="sm" onClick={() => setFieldForm(p => ({ ...p, condicional: [...p.condicional, { campo: '', operador: 'eq', valor: '' }] }))}>
+                  <Plus className="w-3.5 h-3.5 mr-1" /> Adicionar regra
+                </Button>
+              </div>
+            </details>
+
           </div>
           <DialogFooter className="mt-2">
             <Button variant="outline" onClick={() => setModalOpen(false)}>Cancelar</Button>
