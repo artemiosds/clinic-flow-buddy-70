@@ -14,8 +14,6 @@ import { Download, FileText, Filter, Clock, Users, CalendarDays, TrendingUp, Ale
 import { supabase } from '@/integrations/supabase/client';
 import { openPrintDocument } from '@/lib/printLayout';
 import { toast } from 'sonner';
-import logoSmsFallback from '@/assets/logo-sms-oriximina.jpeg';
-import logoCapsFallback from '@/assets/logo-caps-ii.png';
 import { useUnidadeFilter } from '@/hooks/useUnidadeFilter';
 import { ChartCard } from '@/components/ChartCard';
 import { useRealtimeSubscription } from '@/hooks/useRealtimeSubscription';
