@@ -468,7 +468,7 @@ export async function openPrintDocument(
   // 3. Now fetch config (async) and rewrite the doc
   const config = await loadDocumentConfig();
   const metaHtml = meta ? docMeta(meta) : '';
-  const css = buildInstitutionalCSS(options);
+  const css = buildInstitutionalCSS(options, config);
 
   try {
     printWindow.document.open();
