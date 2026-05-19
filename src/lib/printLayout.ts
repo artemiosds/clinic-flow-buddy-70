@@ -142,10 +142,12 @@ export function buildInstitutionalCSS(
   const margin = size === 'A5' ? '12mm' : '25mm';
   const cfg = config ?? DEFAULT_CONFIG;
   const fontFamily = `'${cfg.fonte.replace(/'/g, '')}', Arial, 'Helvetica Neue', Helvetica, sans-serif`;
-  // Painel salva em px; impressão usa pt → 1pt = 1.333px (≈ px * 0.75 = pt)
+  // Painel salva em px; impressão usa pt → 1pt ≈ px * 0.75
   const bodyPt = Math.max(8, Math.round((cfg.tamanhoFonte || 12) * 0.75 * 10) / 10);
   const titlePt = Math.round((bodyPt + 1) * 10) / 10;
   const sectionPt = Math.round((bodyPt + 0.5) * 10) / 10;
+  const smallPt = Math.max(7, Math.round((bodyPt - 1.5) * 10) / 10);
+  const microPt = Math.max(6.5, Math.round((bodyPt - 2.5) * 10) / 10);
   const accent = cfg.corTitulo || '#0c4a6e';
   const headerAlign = cfg.alinhamento || 'center';
   return `
@@ -153,9 +155,10 @@ export function buildInstitutionalCSS(
   @page {
     size: ${size} ${orientation};
     margin: ${margin};
-    @bottom-center { content: "Página " counter(page) " de " counter(pages); font-size: 8pt; color: #666; }
+    @bottom-center { content: "Página " counter(page) " de " counter(pages); font-size: ${microPt}pt; color: #666; }
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { font-family: ${fontFamily}; }
   body {
     font-family: ${fontFamily};
     padding: 0;
@@ -164,26 +167,17 @@ export function buildInstitutionalCSS(
     line-height: 1.5;
   }
 
-
   /* HEADER — institutional */
   .doc-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 0;
-    margin-bottom: 12px;
+    padding: 8px 0;
+    margin-bottom: 10px;
     border-bottom: 2px solid ${accent};
   }
   .doc-header .logo-left,
-  .doc-header .logo-right {
-    flex-shrink: 0;
-  }
-  .doc-header .logo-left img,
-  .doc-header .logo-right img {
-    max-height: 64px;
-    max-width: 120px;
-    object-fit: contain;
-  }
+  .doc-header .logo-right { flex-shrink: 0; }
   .doc-header .header-center {
     flex: 1;
     text-align: ${headerAlign};
@@ -196,6 +190,7 @@ export function buildInstitutionalCSS(
     letter-spacing: 0.5px;
     color: ${accent};
     margin: 0;
+    font-family: ${fontFamily};
   }
   .doc-header .subtitle {
     font-size: ${bodyPt}pt;
@@ -205,44 +200,43 @@ export function buildInstitutionalCSS(
   .doc-header .doc-title {
     font-size: ${titlePt + 1}pt;
     font-weight: 700;
-    margin-top: 8px;
+    margin-top: 6px;
     text-transform: uppercase;
     letter-spacing: 0.8px;
     color: #1a1a1a;
     border-top: 1px solid #e2e8f0;
-    padding-top: 6px;
+    padding-top: 5px;
   }
   .doc-header .emit-date {
-    font-size: 8pt;
+    font-size: ${microPt}pt;
     color: #64748b;
     text-align: right;
     white-space: nowrap;
     position: absolute;
     right: 0;
-    bottom: 14px;
+    bottom: 10px;
   }
-
 
   /* META INFO BAR */
   .doc-meta {
-    font-size: 10pt;
+    font-size: ${smallPt}pt;
     color: #334155;
-    padding: 8px 12px;
+    padding: 6px 10px;
     background: #f8fafc;
     border: 1px solid #e2e8f0;
     border-radius: 4px;
-    margin-bottom: 14px;
+    margin-bottom: 12px;
     display: flex;
     gap: 16px;
     flex-wrap: wrap;
   }
   .doc-meta strong { color: #1a1a1a; }
 
-  /* CONTENT — justified */
+  /* CONTENT — justified; honor user font size */
   .doc-content {
     text-align: justify;
     text-justify: inter-word;
-    font-size: 11pt;
+    font-size: ${bodyPt}pt;
     line-height: 1.5;
     word-break: break-word;
     hyphens: auto;
@@ -251,14 +245,14 @@ export function buildInstitutionalCSS(
   /* SUMMARY CARDS */
   .summary { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
   .stat { background: #f0f9ff; border: 1px solid #bae6fd; padding: 8px 14px; border-radius: 6px; text-align: center; min-width: 85px; }
-  .stat strong { display: block; font-size: 16pt; color: ; }
-  .stat small { font-size: 8pt; color: #64748b; }
+  .stat strong { display: block; font-size: ${titlePt + 4}pt; color: ${accent}; }
+  .stat small { font-size: ${microPt}pt; color: #64748b; }
 
   /* SECTION TITLES */
   h2 {
-    font-size: 12pt;
-    color: ;
-    margin: 16px 0 8px;
+    font-size: ${sectionPt + 0.5}pt;
+    color: ${accent};
+    margin: 14px 0 6px;
     padding-bottom: 4px;
     border-bottom: 1.5px solid #bae6fd;
     text-transform: uppercase;
@@ -266,70 +260,64 @@ export function buildInstitutionalCSS(
   }
 
   /* TABLES */
-  table { width: 100%; border-collapse: collapse; margin-bottom: 14px; page-break-inside: auto; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 12px; page-break-inside: auto; font-size: ${smallPt}pt; }
   thead { display: table-header-group; }
   tr { page-break-inside: avoid; page-break-after: auto; }
-  th, td { border: 1px solid #d1d5db; padding: 5px 8px; text-align: left; font-size: 10pt; }
+  th, td { border: 1px solid #d1d5db; padding: 5px 8px; text-align: left; font-size: ${smallPt}pt; }
   th { background: #f1f5f9; font-weight: 600; color: #1a1a1a; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   tr:nth-child(even) { background: #fafafa; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 
   /* FIELDS */
-  .content-block { text-align: justify; text-justify: inter-word; }
-  .field { margin-bottom: 10px; }
-  .field-label { font-size: 9pt; text-transform: uppercase; color: #64748b; font-weight: 600; letter-spacing: 0.4px; }
-  .field-value { font-size: 11pt; margin-top: 2px; color: #1a1a1a; }
+  .content-block { text-align: justify; text-justify: inter-word; font-size: ${bodyPt}pt; }
+  .field { margin-bottom: 8px; }
+  .field-label { font-size: ${microPt}pt; text-transform: uppercase; color: #64748b; font-weight: 600; letter-spacing: 0.4px; }
+  .field-value { font-size: ${bodyPt}pt; margin-top: 2px; color: #1a1a1a; }
 
   /* SECTIONS (prontuário) */
-  .section { margin-bottom: 18px; page-break-inside: avoid; }
-  .section-title { font-weight: 700; font-size: 10pt; text-transform: uppercase; color: ; border-bottom: 1.5px solid #bae6fd; padding-bottom: 4px; margin-bottom: 8px; }
-  .section-content { font-size: 11pt; line-height: 1.6; white-space: pre-wrap; min-height: 18px; text-align: justify; color: #1e293b; }
+  .section { margin-bottom: 14px; page-break-inside: avoid; }
+  .section-title { font-weight: 700; font-size: ${sectionPt}pt; text-transform: uppercase; color: ${accent}; border-bottom: 1.5px solid #bae6fd; padding-bottom: 4px; margin-bottom: 6px; }
+  .section-content { font-size: ${bodyPt}pt; line-height: 1.55; white-space: pre-wrap; min-height: 16px; text-align: justify; color: #1e293b; }
 
   /* INFO GRID */
-  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; padding: 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; }
-  .info-label { font-weight: 600; font-size: 9pt; text-transform: uppercase; color: #64748b; }
-  .info-value { font-size: 11pt; color: #1a1a1a; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; }
+  .info-label { font-weight: 600; font-size: ${microPt}pt; text-transform: uppercase; color: #64748b; }
+  .info-value { font-size: ${bodyPt}pt; color: #1a1a1a; }
 
   /* QR AREA */
-  .qr-area { text-align: center; margin-top: 28px; padding: 18px; border: 1px dashed #cbd5e1; border-radius: 6px; background: #fafafa; }
-  .qr-area p { font-size: 10pt; color: #64748b; }
-  .qr-area .code { font-size: 9pt; color: #94a3b8; margin-top: 4px; font-family: monospace; }
+  .qr-area { text-align: center; margin-top: 24px; padding: 16px; border: 1px dashed #cbd5e1; border-radius: 6px; background: #fafafa; }
+  .qr-area p { font-size: ${smallPt}pt; color: #64748b; }
+  .qr-area .code { font-size: ${microPt}pt; color: #94a3b8; margin-top: 4px; font-family: monospace; }
 
   /* SIGNATURE */
-  .signature { margin-top: 50px; text-align: center; }
+  .signature { margin-top: 40px; text-align: center; }
   .signature-line { width: 280px; border-top: 1px solid #333; margin: 0 auto 6px; }
-  .signature .name { font-size: 11pt; font-weight: 600; }
-  .signature .role { font-size: 10pt; color: #64748b; }
+  .signature .name { font-size: ${bodyPt}pt; font-weight: 600; }
+  .signature .role { font-size: ${smallPt}pt; color: #64748b; }
 
-  /* DOCUMENT FOOTER: carimbo + assinatura side by side */
-  .doc-sign-footer {
-    display: flex; justify-content: space-between; align-items: flex-end;
-    margin-top: 40px; gap: 20px;
-  }
+  /* DOCUMENT FOOTER: carimbo + assinatura */
+  .doc-sign-footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 32px; gap: 20px; }
   .doc-sign-footer .sign-block { flex: 1; }
   .doc-sign-footer .carimbo-block { text-align: right; }
 
-  /* ELECTRONIC SIGNATURE BLOCK */
+  /* E-SIGNATURE */
   .e-signature-box {
-    border: 1px solid #94a3b8; border-radius: 4px; padding: 10px 14px;
-    font-size: 8pt; line-height: 1.5; color: #475569; max-width: 380px;
+    border: 1px solid #94a3b8; border-radius: 4px; padding: 8px 12px;
+    font-size: ${microPt}pt; line-height: 1.5; color: #475569; max-width: 380px;
   }
-  .e-signature-box .sig-title { font-weight: 700; font-size: 9pt; color: ; margin-bottom: 4px; text-align: center; }
-  .e-signature-box .sig-legal { font-size: 7pt; color: #94a3b8; margin-top: 6px; font-style: italic; }
+  .e-signature-box .sig-title { font-weight: 700; font-size: ${smallPt}pt; color: ${accent}; margin-bottom: 4px; text-align: center; }
+  .e-signature-box .sig-legal { font-size: ${Math.max(6, microPt - 0.5)}pt; color: #94a3b8; margin-top: 6px; font-style: italic; }
 
-  /* CARIMBO BLOCK */
-  .carimbo-digital {
-    border: 2px solid #1e293b; border-radius: 4px; padding: 8px 14px;
-    text-align: center; font-size: 10pt; display: inline-block;
-  }
-  .carimbo-digital .carimbo-nome { font-weight: 700; font-size: 11pt; }
-  .carimbo-digital .carimbo-info { font-size: 9pt; color: #475569; }
+  /* CARIMBO */
+  .carimbo-digital { border: 2px solid #1e293b; border-radius: 4px; padding: 8px 14px; text-align: center; font-size: ${smallPt}pt; display: inline-block; }
+  .carimbo-digital .carimbo-nome { font-weight: 700; font-size: ${bodyPt}pt; }
+  .carimbo-digital .carimbo-info { font-size: ${microPt}pt; color: #475569; }
 
   /* FOOTER */
   .doc-footer {
-    margin-top: 30px;
-    padding-top: 8px;
+    margin-top: 24px;
+    padding-top: 6px;
     border-top: 1.5px solid ${accent};
-    font-size: 8pt;
+    font-size: ${microPt}pt;
     color: #64748b;
     display: flex;
     justify-content: space-between;
