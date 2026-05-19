@@ -247,6 +247,7 @@ export function buildFichaBody(
       `<div class="ficha-text-block">${esc(txt(dc.queixa_principal, 'Não informado'))}</div>`,
     ));
 
+    if (opts.extraBeforeSignature) body.push(opts.extraBeforeSignature);
     body.push(`
       <div class="ficha-signature-block">
         <div class="ficha-signature-date">Oriximiná — PA, ____ / ____ / ________</div>
@@ -255,6 +256,8 @@ export function buildFichaBody(
         <div class="ficha-signature-meta">${esc(txt(data.profissional.cargo))} • ${esc(txt(data.profissional.registro))}</div>
       </div>
     `);
+  } else if (opts.extraBeforeSignature) {
+    body.push(opts.extraBeforeSignature);
   }
 
   const meta: Record<string, string> = {
