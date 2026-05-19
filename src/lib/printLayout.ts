@@ -92,6 +92,10 @@ export async function loadDocumentConfig(): Promise<DocumentConfig> {
         linha1: cab.linha1 || DEFAULT_CONFIG.linha1,
         linha2: cab.linha2 || DEFAULT_CONFIG.linha2,
         rodapeTexto: cfg.rodapeTexto || '',
+        fonte: (cab.fonte && String(cab.fonte).trim()) || DEFAULT_CONFIG.fonte,
+        tamanhoFonte: Number(cab.tamanhoFonte) > 0 ? Number(cab.tamanhoFonte) : DEFAULT_CONFIG.tamanhoFonte,
+        alinhamento: (cab.alinhamento === 'left' || cab.alinhamento === 'right') ? cab.alinhamento : 'center',
+        corTitulo: (cab.cor && String(cab.cor).trim()) || DEFAULT_CONFIG.corTitulo,
       };
     } else {
       _cachedConfig = { ...DEFAULT_CONFIG };
