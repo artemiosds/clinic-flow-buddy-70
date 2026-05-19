@@ -1,9 +1,8 @@
-import React from 'react';
-import { createRoot } from 'react-dom/client';
-import { loadDocumentConfig } from '@/lib/printLayout';
-import PacienteFichaDocument, {
-  type PacienteFichaDocumentData,
-  type FichaPrintMode,
+import { openPrintDocument } from '@/lib/printLayout';
+import { buildFichaBody, FICHA_EXTRA_CSS } from '@/lib/fichaPacienteHtml';
+import type {
+  PacienteFichaDocumentData,
+  FichaPrintMode,
 } from '@/components/pacientes/PacienteFichaDocument';
 
 export type FichaPacienteData = PacienteFichaDocumentData;
@@ -17,33 +16,13 @@ export async function printFichaPaciente(
     throw new Error('Paciente não selecionado para impressão.');
   }
 
-  const config = await loadDocumentConfig();
-  const generatedAt = new Date();
-  const host = document.createElement('div');
-  host.className = 'patient-sheet-print-host';
-  document.body.appendChild(host);
+  const { title, body, meta } = buildFichaBody(data, mode);
 
-  const root = createRoot(host);
-  root.render(
-    React.createElement(PacienteFichaDocument, {
-      data,
-      mode,
-      institutionalConfig: config,
-      generatedAt,
-    }),
-  );
-
-  console.log('[FichaPaciente] Imprimindo ficha', {
+  console.log('[FichaPaciente] Imprimindo ficha (institucional)', {
     pacienteId: data.paciente.id,
     nome: data.paciente.nome_completo,
     modo: mode,
   });
 
-  await new Promise((resolve) => setTimeout(resolve, 80));
-  window.print();
-
-  setTimeout(() => {
-    root.unmount();
-    host.remove();
-  }, 300);
+  await openPrintDocument(title, body, meta, { pageSize: 'A4', extraCSS: FICHA_EXTRA_CSS });
 }

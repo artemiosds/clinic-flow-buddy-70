@@ -1,12 +1,20 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Loader2, Printer } from 'lucide-react';
 import { toast } from 'sonner';
-import { loadDocumentConfig, type DocumentConfig } from '@/lib/printLayout';
-import PacienteFichaDocument, {
-  type FichaPrintMode,
-  type PacienteFichaDocumentData,
+import {
+  loadDocumentConfig,
+  buildInstitutionalCSS,
+  docHeader,
+  docFooter,
+  docMeta,
+  openPrintDocument,
+  type DocumentConfig,
+} from '@/lib/printLayout';
+import { buildFichaBody, FICHA_EXTRA_CSS } from '@/lib/fichaPacienteHtml';
+import type {
+  FichaPrintMode,
+  PacienteFichaDocumentData,
 } from '@/components/pacientes/PacienteFichaDocument';
 
 interface FichaImpressaoProps {
@@ -16,55 +24,66 @@ interface FichaImpressaoProps {
 
 export type { FichaPrintMode } from '@/components/pacientes/PacienteFichaDocument';
 
+/**
+ * Preview + print da Ficha de Atendimento Clínico usando o shell institucional
+ * canônico (printLayout.ts). O preview e a impressão renderizam EXATAMENTE
+ * o mesmo HTML — cabeçalho, logos, fonte e rodapé seguem a configuração
+ * global definida em "Logos e Cabeçalho Institucional", igual aos demais
+ * documentos do sistema (prontuário, receituário, exames, etc.).
+ */
 export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'completa' }) => {
   const [config, setConfig] = useState<DocumentConfig | null>(null);
-  const [printHost, setPrintHost] = useState<HTMLDivElement | null>(null);
 
   useEffect(() => {
     let active = true;
-
-    const fetchConfig = async () => {
-      const cfg = await loadDocumentConfig();
+    loadDocumentConfig().then((cfg) => {
       if (active) setConfig(cfg);
-    };
-
-    fetchConfig();
-
-    const host = document.createElement('div');
-    host.className = 'patient-sheet-print-host';
-    document.body.appendChild(host);
-    setPrintHost(host);
-
+    });
     return () => {
       active = false;
-      host.remove();
     };
   }, []);
 
-  const generatedAt = useMemo(() => new Date(), [data.paciente.id, mode]);
+  const previewHtml = useMemo(() => {
+    if (!config) return '';
+    const { title, body, meta } = buildFichaBody(data, mode);
+    const css = buildInstitutionalCSS({ pageSize: 'A4', extraCSS: FICHA_EXTRA_CSS });
+    return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>${title}</title>
+  ${css}
+  <style>html,body{background:#fff;}</style>
+</head>
+<body>
+  ${docHeader(title, config)}
+  ${docMeta(meta)}
+  <div class="doc-content">
+    ${body}
+  </div>
+  ${docFooter(config)}
+</body>
+</html>`;
+  }, [config, data, mode]);
 
-  const handlePrint = useCallback(() => {
+  const handlePrint = useCallback(async () => {
     if (!data?.paciente?.id) {
-      console.error('[FichaPaciente] Paciente não selecionado para impressão.');
       toast.error('Paciente não selecionado para impressão.');
       return;
     }
-
-    if (!config || !printHost) {
-      toast.error('A ficha ainda está sendo preparada para impressão.');
-      return;
+    try {
+      const { title, body, meta } = buildFichaBody(data, mode);
+      await openPrintDocument(title, body, meta, { pageSize: 'A4', extraCSS: FICHA_EXTRA_CSS });
+    } catch (err: any) {
+      if (err?.message === 'POPUP_BLOCKED') {
+        toast.error('Pop-up bloqueado. Permita pop-ups para imprimir a ficha.');
+      } else {
+        console.error('[FichaPaciente] Erro ao imprimir', err);
+        toast.error('Erro ao gerar impressão da ficha.');
+      }
     }
-
-    console.log('[FichaPaciente] Imprimindo ficha', {
-      pacienteId: data.paciente.id,
-      nome: data.paciente.nome_completo,
-      modo: mode,
-    });
-
-    window.requestAnimationFrame(() => {
-      window.print();
-    });
-  }, [config, data, mode, printHost]);
+  }, [data, mode]);
 
   if (!config) {
     return (
@@ -76,42 +95,26 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
   }
 
   return (
-    <>
-      <div className="flex flex-col items-center gap-4 py-4">
-        <div className="patient-sheet-preview-shell no-print">
-          <PacienteFichaDocument
-            data={data}
-            mode={mode}
-            institutionalConfig={config}
-            generatedAt={generatedAt}
-          />
-        </div>
-
-        <div className="no-print flex w-full max-w-xl flex-col gap-3">
-          <Button onClick={handlePrint} size="lg" className="w-full">
-            <Printer className="mr-2 h-4 w-4" />
-            Imprimir Ficha
-          </Button>
-          <p className="text-center text-xs text-muted-foreground">
-            Para melhor resultado no navegador, desmarque a opção de cabeçalhos e rodapés do navegador.
-          </p>
-        </div>
+    <div className="flex flex-col items-center gap-4 py-4">
+      <div className="w-full overflow-hidden rounded-lg border bg-muted/20 p-2">
+        <iframe
+          title="Pré-visualização da Ficha"
+          srcDoc={previewHtml}
+          className="w-full bg-white"
+          style={{ height: '70vh', border: 0 }}
+        />
       </div>
 
-      {printHost
-        ? createPortal(
-            <div className="patient-sheet-print-host-inner">
-              <PacienteFichaDocument
-                data={data}
-                mode={mode}
-                institutionalConfig={config}
-                generatedAt={generatedAt}
-              />
-            </div>,
-            printHost,
-          )
-        : null}
-    </>
+      <div className="flex w-full max-w-xl flex-col gap-3">
+        <Button onClick={handlePrint} size="lg" className="w-full">
+          <Printer className="mr-2 h-4 w-4" />
+          Imprimir Ficha
+        </Button>
+        <p className="text-center text-xs text-muted-foreground">
+          Para melhor resultado no navegador, desmarque a opção de cabeçalhos e rodapés do navegador.
+        </p>
+      </div>
+    </div>
   );
 };
 
