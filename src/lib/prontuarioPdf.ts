@@ -173,9 +173,14 @@ export function downloadProntuarioPdf(
 ): void {
   void (async () => {
     try {
+      const extraHtml = await renderCustomFieldsHtml('prontuario', p.custom_data || {}, {
+        unidadeId: p.unidade_id,
+        contexto: { especialidade: p.especialidade, tipoProntuario: p.tipo_prontuario },
+        titulo: 'Campos Personalizados do Prontuário',
+      }).catch(() => '');
       await openPrintDocument(
         `PRONTUÁRIO CLÍNICO — ${fmtDate(p.data_atendimento)}`,
-        buildProntuarioBody(p),
+        buildProntuarioBody(p, extraHtml),
         {
           Paciente: p.paciente_nome || "—",
           Profissional: p.profissional_nome || "—",
