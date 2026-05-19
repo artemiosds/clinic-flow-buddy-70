@@ -459,9 +459,10 @@ const ConfigImpressaoDocumentos: React.FC = () => {
               <Button variant="outline" size="sm" onClick={handlePreview} className="gap-1.5">
                 <Eye className="w-4 h-4" /> Pré-visualizar
               </Button>
-              <Button variant="default" size="sm" onClick={() => window.print()} className="gap-1.5">
+              <Button variant="default" size="sm" onClick={handlePreview} className="gap-1.5">
                 <Printer className="w-4 h-4" /> Imprimir teste
               </Button>
+
             </div>
           </div>
         </div>
