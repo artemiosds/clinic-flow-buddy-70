@@ -308,22 +308,40 @@ const ConfigPersonalizarCampos: React.FC = () => {
   }, [unifiedRows, persistOrder]);
 
   // ---------- Custom field CRUD ----------
+  const blankForm = () => ({
+    rotulo: '', tipo: 'text' as CustomFieldType, obrigatorio: false,
+    opcoes: [] as string[], novaOpcao: '', valorPadrao: '', mostrarListagem: false,
+    secao: '', placeholder: '', ajuda: '',
+    especialidades: [] as string[], tiposProntuario: [] as string[],
+    validacao: {} as CustomFieldValidation,
+    condicional: [] as CustomFieldCondition[],
+    destaque: false,
+  });
+
   const openAddModal = () => {
     setEditingField(null);
-    setFieldForm({ rotulo: '', tipo: 'text', obrigatorio: false, opcoes: [], novaOpcao: '', valorPadrao: '', mostrarListagem: false });
+    setFieldForm(blankForm());
     setModalOpen(true);
   };
 
   const openEditModal = (field: CustomFieldDef) => {
     setEditingField(field);
     setFieldForm({
+      ...blankForm(),
       rotulo: field.rotulo,
       tipo: field.tipo,
       obrigatorio: field.obrigatorio,
       opcoes: [...field.opcoes],
-      novaOpcao: '',
       valorPadrao: field.valorPadrao,
       mostrarListagem: field.mostrarListagem,
+      secao: field.secao || '',
+      placeholder: field.placeholder || '',
+      ajuda: field.ajuda || '',
+      especialidades: field.especialidades || [],
+      tiposProntuario: field.tiposProntuario || [],
+      validacao: field.validacao || {},
+      condicional: field.condicional || [],
+      destaque: !!field.destaque,
     });
     setModalOpen(true);
   };
@@ -350,12 +368,21 @@ const ConfigPersonalizarCampos: React.FC = () => {
       nome,
       rotulo: fieldForm.rotulo.trim(),
       tipo: fieldForm.tipo,
-      opcoes: ['select', 'checkbox', 'radio'].includes(fieldForm.tipo) ? fieldForm.opcoes.filter(Boolean) : [],
+      opcoes: ['select', 'checkbox', 'radio', 'radio'].includes(fieldForm.tipo) ? fieldForm.opcoes.filter(Boolean) : [],
       obrigatorio: fieldForm.obrigatorio,
       ativo: editingField?.ativo ?? true,
       ordem: editingField?.ordem ?? (screenConfig.fields.length + 1) * 10,
       valorPadrao: fieldForm.valorPadrao,
       mostrarListagem: fieldForm.mostrarListagem,
+      secao: fieldForm.secao.trim() || undefined,
+      placeholder: fieldForm.placeholder.trim() || undefined,
+      ajuda: fieldForm.ajuda.trim() || undefined,
+      especialidades: fieldForm.especialidades.length ? fieldForm.especialidades : undefined,
+      tiposProntuario: fieldForm.tiposProntuario.length ? fieldForm.tiposProntuario : undefined,
+      validacao: Object.keys(fieldForm.validacao).length ? fieldForm.validacao : undefined,
+      condicional: fieldForm.condicional.length ? fieldForm.condicional : undefined,
+      destaque: fieldForm.destaque || undefined,
+      legacyNames: editingField?.legacyNames,
     };
 
     const newFields = editingField
