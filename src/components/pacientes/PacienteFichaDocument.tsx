@@ -75,6 +75,10 @@ export interface PacienteFichaDocumentData {
     observacao: string;
     profissional: string;
   }>;
+  /** Valores brutos de campos personalizados (geralmente pacientes.custom_data). */
+  customData?: Record<string, any>;
+  /** Unidade do paciente — usada para resolver campos personalizados da unidade. */
+  unidadeId?: string;
 }
 
 interface PacienteFichaDocumentProps {

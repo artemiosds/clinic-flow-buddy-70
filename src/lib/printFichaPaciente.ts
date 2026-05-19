@@ -1,5 +1,6 @@
 import { openPrintDocument } from '@/lib/printLayout';
 import { buildFichaBody, FICHA_EXTRA_CSS } from '@/lib/fichaPacienteHtml';
+import { renderCustomFieldsHtml } from '@/lib/customFieldsPrint';
 import type {
   PacienteFichaDocumentData,
   FichaPrintMode,
@@ -16,7 +17,12 @@ export async function printFichaPaciente(
     throw new Error('Paciente não selecionado para impressão.');
   }
 
-  const { title, body, meta } = buildFichaBody(data, mode);
+  const extra = await renderCustomFieldsHtml('paciente', data.customData || {}, {
+    unidadeId: data.unidadeId,
+    titulo: 'Campos Personalizados do Paciente',
+  }).catch(() => '');
+
+  const { title, body, meta } = buildFichaBody(data, mode, { extraBeforeSignature: extra });
 
   console.log('[FichaPaciente] Imprimindo ficha (institucional)', {
     pacienteId: data.paciente.id,

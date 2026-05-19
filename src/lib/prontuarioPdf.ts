@@ -15,6 +15,7 @@
  */
 
 import { openPrintDocument } from "@/lib/printLayout";
+import { renderCustomFieldsHtml } from "@/lib/customFieldsPrint";
 import { toast } from "sonner";
 
 interface ProntuarioLike {
@@ -38,6 +39,14 @@ interface ProntuarioLike {
   soap_objetivo?: string;
   soap_avaliacao?: string;
   soap_plano?: string;
+  /** Valores brutos de campos personalizados do prontuário. */
+  custom_data?: Record<string, any>;
+  /** Unidade — resolve campos personalizados por unidade. */
+  unidade_id?: string;
+  /** Especialidade — usada para regras condicionais. */
+  especialidade?: string;
+  /** Tipo de prontuário — usado para regras condicionais. */
+  tipo_prontuario?: string;
 }
 
 function fmtDate(iso: string | undefined): string {
@@ -110,7 +119,7 @@ function section(label: string, raw: string | undefined): string {
     </div>`;
 }
 
-function buildProntuarioBody(p: ProntuarioLike): string {
+function buildProntuarioBody(p: ProntuarioLike, extraHtml = ""): string {
   const sections: Array<[string, string | undefined]> = [
     ["Queixa Principal", p.queixa_principal],
     ["S — Subjetivo", p.soap_subjetivo],
@@ -147,6 +156,7 @@ function buildProntuarioBody(p: ProntuarioLike): string {
       <div><span class="info-label">ID</span><div class="info-value">${escapeHtml((p.id || "").slice(0, 8))}</div></div>
     </div>
     ${sectionsHtml || '<div class="section"><div class="section-content">Sem conteúdo clínico registrado.</div></div>'}
+    ${extraHtml || ""}
     ${signature}
   `;
 }
@@ -163,9 +173,14 @@ export function downloadProntuarioPdf(
 ): void {
   void (async () => {
     try {
+      const extraHtml = await renderCustomFieldsHtml('prontuario', p.custom_data || {}, {
+        unidadeId: p.unidade_id,
+        contexto: { especialidade: p.especialidade, tipoProntuario: p.tipo_prontuario },
+        titulo: 'Campos Personalizados do Prontuário',
+      }).catch(() => '');
       await openPrintDocument(
         `PRONTUÁRIO CLÍNICO — ${fmtDate(p.data_atendimento)}`,
-        buildProntuarioBody(p),
+        buildProntuarioBody(p, extraHtml),
         {
           Paciente: p.paciente_nome || "—",
           Profissional: p.profissional_nome || "—",

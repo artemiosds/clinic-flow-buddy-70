@@ -733,6 +733,8 @@ const Pacientes: React.FC = () => {
       sinaisVitais,
       profissional,
       evoluciones,
+      customData: cd,
+      unidadeId: pacienteData.unidade_id || undefined,
     };
   }, [unidades, user]);
 

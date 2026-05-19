@@ -12,6 +12,7 @@ import {
   type DocumentConfig,
 } from '@/lib/printLayout';
 import { buildFichaBody, FICHA_EXTRA_CSS } from '@/lib/fichaPacienteHtml';
+import { renderCustomFieldsHtml } from '@/lib/customFieldsPrint';
 import type {
   FichaPrintMode,
   PacienteFichaDocumentData,
@@ -33,6 +34,7 @@ export type { FichaPrintMode } from '@/components/pacientes/PacienteFichaDocumen
  */
 export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'completa' }) => {
   const [config, setConfig] = useState<DocumentConfig | null>(null);
+  const [customHtml, setCustomHtml] = useState<string>('');
 
   useEffect(() => {
     let active = true;
@@ -44,9 +46,20 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
     };
   }, []);
 
+  useEffect(() => {
+    let active = true;
+    renderCustomFieldsHtml('paciente', data?.customData || {}, {
+      unidadeId: data?.unidadeId,
+      titulo: 'Campos Personalizados do Paciente',
+    })
+      .then((html) => { if (active) setCustomHtml(html); })
+      .catch(() => { if (active) setCustomHtml(''); });
+    return () => { active = false; };
+  }, [data?.customData, data?.unidadeId]);
+
   const previewHtml = useMemo(() => {
     if (!config) return '';
-    const { title, body, meta } = buildFichaBody(data, mode);
+    const { title, body, meta } = buildFichaBody(data, mode, { extraBeforeSignature: customHtml });
     const css = buildInstitutionalCSS({ pageSize: 'A4', extraCSS: FICHA_EXTRA_CSS }, config);
     return `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -65,7 +78,7 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
   ${docFooter(config)}
 </body>
 </html>`;
-  }, [config, data, mode]);
+  }, [config, data, mode, customHtml]);
 
   const handlePrint = useCallback(async () => {
     if (!data?.paciente?.id) {
@@ -73,7 +86,11 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
       return;
     }
     try {
-      const { title, body, meta } = buildFichaBody(data, mode);
+      const extra = await renderCustomFieldsHtml('paciente', data?.customData || {}, {
+        unidadeId: data?.unidadeId,
+        titulo: 'Campos Personalizados do Paciente',
+      }).catch(() => '');
+      const { title, body, meta } = buildFichaBody(data, mode, { extraBeforeSignature: extra });
       await openPrintDocument(title, body, meta, { pageSize: 'A4', extraCSS: FICHA_EXTRA_CSS });
     } catch (err: any) {
       if (err?.message === 'POPUP_BLOCKED') {
