@@ -86,7 +86,11 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
       return;
     }
     try {
-      const { title, body, meta } = buildFichaBody(data, mode);
+      const extra = await renderCustomFieldsHtml('paciente', data?.customData || {}, {
+        unidadeId: data?.unidadeId,
+        titulo: 'Campos Personalizados do Paciente',
+      }).catch(() => '');
+      const { title, body, meta } = buildFichaBody(data, mode, { extraBeforeSignature: extra });
       await openPrintDocument(title, body, meta, { pageSize: 'A4', extraCSS: FICHA_EXTRA_CSS });
     } catch (err: any) {
       if (err?.message === 'POPUP_BLOCKED') {
