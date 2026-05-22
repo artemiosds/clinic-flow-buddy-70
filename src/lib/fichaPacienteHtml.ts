@@ -72,12 +72,12 @@ const racaLabel = (v?: string): string => {
   return map[n] || txt(v, 'Não declarado');
 };
 
-interface FieldItem { label: string; value: unknown; fallback?: string; emphasis?: boolean; }
+interface FieldItem { label: string; value: unknown; fallback?: string; emphasis?: boolean; manual?: boolean; }
 
 const field = (f: FieldItem): string => `
   <div class="ficha-field">
     <span class="ficha-field-label">${esc(f.label)}</span>
-    <span class="ficha-field-value${f.emphasis ? ' ficha-field-value--emphasis' : ''}">${esc(txt(f.value, f.fallback || '—'))}</span>
+    <span class="ficha-field-value${f.emphasis ? ' ficha-field-value--emphasis' : ''}${f.manual ? ' ficha-field-value--manual' : ''}">${esc(txt(f.value, f.fallback || (f.manual ? '' : '—')))}</span>
   </div>`;
 
 const grid = (cols: number | '3-wide', fields: FieldItem[]): string =>
