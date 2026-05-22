@@ -334,11 +334,12 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
 
               {!H("nomeMae") && (
                 <div className="md:col-span-2">
-                  <Label>{L("nomeMae", "Nome da Mãe")}</Label>
+                  <Label>{L("nomeMae", "Nome da Mãe")} *</Label>
                   <Input
                     value={form.nomeMae}
                     onChange={(e) => set("nomeMae", sanitizeUpper(e.target.value))}
                     placeholder="NOME DA MAE"
+                    className={errors.nomeMae ? "border-destructive" : ""}
                   />
                   {errors.nomeMae && <p className="text-xs text-destructive mt-1">{errors.nomeMae}</p>}
                 </div>
@@ -346,8 +347,14 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
 
               {!H("dataNascimento") && (
                 <div>
-                  <Label>{L("dataNascimento", "Data de Nascimento")}</Label>
-                  <Input type="date" value={form.dataNascimento} onChange={(e) => set("dataNascimento", e.target.value)} />
+                  <Label>{L("dataNascimento", "Data de Nascimento")} *</Label>
+                  <Input 
+                    type="date" 
+                    value={form.dataNascimento} 
+                    onChange={(e) => set("dataNascimento", e.target.value)} 
+                    className={errors.dataNascimento ? "border-destructive" : ""}
+                  />
+                  {errors.dataNascimento && <p className="text-xs text-destructive mt-1">{errors.dataNascimento}</p>}
                 </div>
               )}
 
@@ -384,13 +391,14 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
 
               {!H("cns") && (
                 <div>
-                  <Label>{L("cns", "CNS")}</Label>
+                  <Label>{L("cns", "CNS")} *</Label>
                    <Input
                     value={maskCNS(form.cns)}
                     onChange={(e) => set("cns", maskCNS(e.target.value))}
                     placeholder="000 0000 0000 0000"
                     inputMode="numeric"
                     maxLength={18}
+                    className={errors.cns ? "border-destructive" : ""}
                   />
                   {errors.cns && <p className="text-xs text-destructive mt-1">{errors.cns}</p>}
                 </div>
@@ -398,7 +406,7 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
 
               {!H("naturalidade") && (
                 <div className="md:col-span-2">
-                  <Label>{L("naturalidade", "Naturalidade")}</Label>
+                  <Label>{L("naturalidade", "Naturalidade")} *</Label>
                   <MunicipioIbgeCombobox
                     value={form.naturalidade || ""}
                     onChange={(label, payload) => {
@@ -414,6 +422,7 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                     }}
                     placeholder="Selecione o município de naturalidade"
                   />
+                  {errors.naturalidade && <p className="text-xs text-destructive mt-1">{errors.naturalidade}</p>}
                   <p className="text-[11px] text-muted-foreground mt-1">
                     Município de nascimento. Não confundir com Município de Residência.
                   </p>
@@ -487,7 +496,7 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
               {!H("tipoLogradouro") && (
               <div>
                 <Label>
-                  {L("tipoLogradouro", "Tipo de Logradouro (DNE)")} <span className="text-destructive">*</span>
+                  {L("tipoLogradouro", "Logradouro (DNE)")} <span className="text-destructive">*</span>
                 </Label>
                 <LogradouroDneAutocomplete
                   value={form.tipo_logradouro || ""}
@@ -499,8 +508,10 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                       tipo_logradouro_codigo: codigo,
                     });
                   }}
+                  className={errors.tipo_logradouro ? "border-destructive" : ""}
                   required
                 />
+                {errors.tipo_logradouro && <p className="text-xs text-destructive mt-1">{errors.tipo_logradouro}</p>}
               </div>
               )}
 
@@ -517,13 +528,15 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
 
               {!H("numero") && (
               <div>
-                <Label>{L("numero", "Número")}</Label>
+                <Label>{L("numero", "Número")} *</Label>
                 <Input
                   value={form.numero || ""}
                   onChange={(e) => set("numero", e.target.value.replace(/[^\dA-Za-z\/\-]/g, "").toUpperCase())}
                   placeholder="Nº"
                   inputMode="numeric"
+                  className={errors.numero ? "border-destructive" : ""}
                 />
+                {errors.numero && <p className="text-xs text-destructive mt-1">{errors.numero}</p>}
               </div>
               )}
 
@@ -540,12 +553,14 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
 
               {!H("bairro") && (
               <div>
-                <Label>{L("bairro", "Bairro")}</Label>
+                <Label>{L("bairro", "Bairro")} *</Label>
                 <Input
                   value={form.bairro || ""}
                   onChange={(e) => set("bairro", sanitizeUpper(e.target.value))}
                   placeholder="BAIRRO"
+                  className={errors.bairro ? "border-destructive" : ""}
                 />
+                {errors.bairro && <p className="text-xs text-destructive mt-1">{errors.bairro}</p>}
               </div>
               )}
 
@@ -663,13 +678,16 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                     value={form.raca_cor || ""}
                     onValueChange={(v) => set("raca_cor", v)}
                   >
-                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectTrigger className={errors.raca_cor ? "border-destructive" : ""}>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
                     <SelectContent>
                       {RACA_COR_OPTIONS.map((o) => (
                         <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+                  {errors.raca_cor && <p className="text-xs text-destructive mt-1">{errors.raca_cor}</p>}
                 </div>
 
                 {/* Etnia: obrigatória apenas se Raça/Cor = Indígena */}
