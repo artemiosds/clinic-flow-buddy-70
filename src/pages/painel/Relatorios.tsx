@@ -2298,9 +2298,140 @@ ${dataRows}
               </Card>
             )}
           </div>
-        </TabsContent>
+         </TabsContent>
+ 
+         {/* === MUNICÍPIOS === */}
+         <TabsContent value="municipios" className="space-y-5 mt-4">
+           {(() => {
+             const allPacientes = [...pacientes, ...pacientesDB];
+             const munMap: Record<string, { nome: string; totalPacientes: number; atendimentos: number; pacientesSet: Set<string> }> = {};
+             
+             // Agregação por naturalidade/município
+             allPacientes.forEach(p => {
+               const rawMun = p.naturalidade || 'Não informado';
+               const mun = rawMun.trim() || 'Não informado';
+               if (!munMap[mun]) munMap[mun] = { nome: mun, totalPacientes: 0, atendimentos: 0, pacientesSet: new Set() };
+               munMap[mun].totalPacientes++;
+             });
+ 
+             filtered.forEach(a => {
+               const pac = allPacientes.find(p => p.id === a.pacienteId);
+               const mun = (pac?.naturalidade || 'Não informado').trim() || 'Não informado';
+               if (!munMap[mun]) munMap[mun] = { nome: mun, totalPacientes: 0, atendimentos: 0, pacientesSet: new Set() };
+               munMap[mun].atendimentos++;
+               munMap[mun].pacientesSet.add(a.pacienteId);
+             });
+ 
+             const munData = Object.values(munMap)
+               .map(m => ({ ...m, pacientesAtendidos: m.pacientesSet.size }))
+               .sort((a, b) => b.totalPacientes - a.totalPacientes);
+ 
+             return (
+               <div className="space-y-6">
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                   <Card className="shadow-card border-0">
+                     <CardContent className="p-4 text-center">
+                       <p className="text-2xl font-bold text-primary">{munData.length}</p>
+                       <p className="text-xs text-muted-foreground uppercase tracking-wider">Municípios Atendidos</p>
+                     </CardContent>
+                   </Card>
+                   <Card className="shadow-card border-0">
+                     <CardContent className="p-4 text-center">
+                       <p className="text-2xl font-bold text-success">{munData[0]?.nome || '-'}</p>
+                       <p className="text-xs text-muted-foreground uppercase tracking-wider">Município Principal</p>
+                     </CardContent>
+                   </Card>
+                   <Card className="shadow-card border-0">
+                     <CardContent className="p-4 text-center">
+                       <p className="text-2xl font-bold text-info">{munData.filter(m => m.nome !== 'Não informado').length}</p>
+                       <p className="text-xs text-muted-foreground uppercase tracking-wider">Com Naturalidade Informada</p>
+                     </CardContent>
+                   </Card>
+                 </div>
+ 
+                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                   <ChartCard title="Pacientes por Município (Ranking)">
+                     <ResponsiveContainer width="100%" height={Math.max(300, munData.length * 30)}>
+                       <BarChart data={munData.slice(0, 15)} layout="vertical" margin={{ left: 10 }}>
+                         <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                         <XAxis type="number" tick={{ fontSize: 10 }} />
+                         <YAxis dataKey="nome" type="category" width={120} tick={{ fontSize: 10 }} />
+                         <Tooltip />
+                         <Bar dataKey="totalPacientes" name="Total Pacientes" fill="#3b82f6" radius={[0, 4, 4, 0]} />
+                       </BarChart>
+                     </ResponsiveContainer>
+                   </ChartCard>
+ 
+                   <ChartCard title="Atendimentos por Município">
+                     <ResponsiveContainer width="100%" height={Math.max(300, munData.length * 30)}>
+                       <BarChart data={munData.filter(m => m.atendimentos > 0).sort((a,b) => b.atendimentos - a.atendimentos).slice(0, 15)} layout="vertical" margin={{ left: 10 }}>
+                         <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                         <XAxis type="number" tick={{ fontSize: 10 }} />
+                         <YAxis dataKey="nome" type="category" width={120} tick={{ fontSize: 10 }} />
+                         <Tooltip />
+                         <Bar dataKey="atendimentos" name="Atendimentos" fill="#10b981" radius={[0, 4, 4, 0]} />
+                       </BarChart>
+                     </ResponsiveContainer>
+                   </ChartCard>
+                 </div>
+ 
+                 <Card className="shadow-card border-0">
+                   <CardContent className="p-5">
+                     <div className="flex items-center justify-between mb-4">
+                       <h3 className="font-semibold font-display">Tabela Quantitativa por Município</h3>
+                       <Button variant="outline" size="sm" onClick={() => {
+                         const headers = ['Município', 'Total Pacientes', 'Pacientes Atendidos', 'Total Atendimentos'];
+                         const rows = munData.map(m => [m.nome, m.totalPacientes.toString(), m.pacientesAtendidos.toString(), m.atendimentos.toString()]);
+                         const csv = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(';')).join('\n');
+                         const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+                         const url = URL.createObjectURL(blob);
+                         const a = document.createElement('a');
+                         a.href = url; a.download = `relatorio_municipios_${new Date().toISOString().split('T')[0]}.csv`; a.click();
+                         URL.revokeObjectURL(url);
+                       }}>
+                         <Download className="w-4 h-4 mr-1" /> Exportar CSV
+                       </Button>
+                     </div>
+                     <div className="overflow-x-auto">
+                       <table className="w-full text-sm">
+                         <thead>
+                           <tr className="bg-muted/50 border-b">
+                             <th className="text-left py-3 px-4 font-semibold">Município (Naturalidade)</th>
+                             <th className="text-center py-3 px-4 font-semibold">Total Pacientes</th>
+                             <th className="text-center py-3 px-4 font-semibold">Pacientes Atendidos*</th>
+                             <th className="text-center py-3 px-4 font-semibold">Total Atendimentos*</th>
+                           </tr>
+                         </thead>
+                         <tbody>
+                           {munData.map((m, idx) => (
+                             <tr key={m.nome} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
+                               <td className="py-3 px-4 font-medium">{m.nome}</td>
+                               <td className="py-3 px-4 text-center">{m.totalPacientes}</td>
+                               <td className="py-3 px-4 text-center">{m.pacientesAtendidos}</td>
+                               <td className="py-3 px-4 text-center font-semibold text-primary">{m.atendimentos}</td>
+                             </tr>
+                           ))}
+                         </tbody>
+                         <tfoot>
+                           <tr className="bg-muted/50 font-bold">
+                             <td className="py-3 px-4">TOTAL GERAL</td>
+                             <td className="py-3 px-4 text-center">{munData.reduce((acc, m) => acc + m.totalPacientes, 0)}</td>
+                             <td className="py-3 px-4 text-center">{munData.reduce((acc, m) => acc + m.pacientesAtendidos, 0)}</td>
+                             <td className="py-3 px-4 text-center">{munData.reduce((acc, m) => acc + m.atendimentos, 0)}</td>
+                           </tr>
+                         </tfoot>
+                       </table>
+                       <p className="text-[10px] text-muted-foreground mt-2 italic">* No período selecionado e filtros aplicados.</p>
+                     </div>
+                   </CardContent>
+                 </Card>
+               </div>
+             );
+           })()}
+         </TabsContent>
+ 
+         {/* === PTS === */}
 
-        {/* === PTS === */}
         <TabsContent value="pts_report" className="space-y-5 mt-4">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {[
