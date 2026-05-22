@@ -2416,7 +2416,7 @@ const ProntuarioPage: React.FC = () => {
                               <>
                                 <div className="grid grid-cols-2 gap-2 text-sm">
                                   <div><span className="text-muted-foreground">Tipo:</span> <strong>{sessaoCycle.treatment_type}</strong></div>
-                                  <div><span className="text-muted-foreground">Status:</span>{' '}<Badge variant={sessaoCycle.status === 'em_andamento' ? 'default' : (sessaoCycle.status as string) === 'concluido' ? 'secondary' : 'outline'} className="text-xs">{sessaoCycle.status === 'em_andamento' ? 'Ativo' : (sessaoCycle.status as string) === 'concluido' ? 'Concluído' : sessaoCycle.status}</Badge></div>
+                                  <div><span className="text-muted-foreground">Status:</span>{' '}<Badge variant={sessaoCycle.status === 'em_andamento' ? 'default' : sessaoCycle.status === 'concluido' ? 'secondary' : 'outline'} className="text-xs">{sessaoCycle.status === 'em_andamento' ? 'Ativo' : sessaoCycle.status === 'concluido' ? 'Concluído' : sessaoCycle.status}</Badge></div>
                                   <div><span className="text-muted-foreground">Início:</span> <strong>{new Date(sessaoCycle.start_date + 'T12:00:00').toLocaleDateString('pt-BR')}</strong></div>
                                   <div><span className="text-muted-foreground">Previsão:</span> <strong>{sessaoCycle.end_date_predicted ? new Date(sessaoCycle.end_date_predicted + 'T12:00:00').toLocaleDateString('pt-BR') : '—'}</strong></div>
                                   <div><span className="text-muted-foreground">Frequência:</span> <strong>{sessaoCycle.frequency}</strong></div>
@@ -2459,7 +2459,7 @@ const ProntuarioPage: React.FC = () => {
                                  </div>
                                </div>
                              )}
-                            {(sessaoCycle?.status as string) === 'concluido' && (
+                            {sessaoCycle?.status === 'concluido' && (
                               <div className="space-y-2">
                                 <Badge variant="secondary" className="bg-green-500/10 text-green-700 border-green-500/30">Ciclo concluído</Badge>
                                 <div><Button type="button" variant="outline" size="sm" onClick={() => setCycleOpen(true)}><Activity className="w-3.5 h-3.5 mr-1" /> Iniciar novo ciclo</Button></div>
