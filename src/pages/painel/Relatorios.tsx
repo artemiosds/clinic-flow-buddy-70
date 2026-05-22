@@ -280,18 +280,26 @@ const Relatorios: React.FC = () => {
 
   // === FILTERS ===
   const filtered = useMemo(() => {
-    return agendamentos.filter(a => {
-      if (filterUnit !== 'all' && a.unidadeId !== filterUnit) return false;
-      if (filterProf !== 'all' && a.profissionalId !== filterProf) return false;
+    // Usar agendamentos do DB que já vieram filtrados por data
+    return agendamentosDB.filter(a => {
+      if (filterUnit !== 'all' && a.unidade_id !== filterUnit) return false;
+      if (filterProf !== 'all' && a.profissional_id !== filterProf) return false;
       if (filterStatus !== 'all' && a.status !== filterStatus) return false;
       if (filterTipo !== 'all' && a.tipo !== filterTipo) return false;
-      if (dateFrom && a.data < dateFrom) return false;
-      if (dateTo && a.data > dateTo) return false;
-      if (user?.unidadeId && user?.usuario !== 'admin.sms' && a.unidadeId !== user.unidadeId) return false;
-      if (user?.role === 'profissional' && user.id && a.profissionalId !== user.id) return false;
+      // Período já filtrado na query
+      if (user?.unidadeId && user?.usuario !== 'admin.sms' && a.unidade_id !== user.unidadeId) return false;
+      if (user?.role === 'profissional' && user.id && a.profissional_id !== user.id) return false;
       return true;
-    });
-  }, [agendamentos, filterUnit, filterProf, filterStatus, filterTipo, dateFrom, dateTo, user]);
+    }).map(a => ({
+      ...a,
+      unidadeId: a.unidade_id,
+      profissionalId: a.profissional_id,
+      pacienteId: a.paciente_id,
+      pacienteNome: a.paciente_nome,
+      profissionalNome: a.profissional_nome,
+    }));
+  }, [agendamentosDB, filterUnit, filterProf, filterStatus, filterTipo, user]);
+
 
   const filteredAtendimentos = useMemo(() => {
     return atendimentosDB.filter(a => {
