@@ -5,7 +5,8 @@ import { toast } from 'sonner';
 
 export type CustomFieldType =
   | 'text' | 'number' | 'date' | 'checkbox' | 'select' | 'textarea' | 'radio'
-  | 'phone' | 'cpf' | 'cnpj' | 'cep' | 'email' | 'url' | 'time' | 'currency' | 'file';
+  | 'phone' | 'cpf' | 'cnpj' | 'cep' | 'email' | 'url' | 'time' | 'currency' | 'file'
+  | 'checklist' | 'scale_numeric' | 'scale_eva' | 'scale_functional' | 'cid' | 'sigtap' | 'signature' | 'table' | 'calculated' | 'separator';
 
 export type ConditionalOperator = 'eq' | 'neq' | 'in' | 'notin' | 'gt' | 'lt' | 'filled' | 'empty';
 export interface CustomFieldCondition {
@@ -21,6 +22,11 @@ export interface CustomFieldValidation {
   pattern?: string;
   mascara?: 'cpf' | 'cnpj' | 'telefone' | 'cep' | 'data' | 'hora' | 'currency' | 'custom';
   mascaraCustom?: string;
+  allowFutureDate?: boolean;
+  allowPastDate?: boolean;
+  allowedFileTypes?: string[];
+  maxFileSizeMB?: number;
+  decimals?: number;
 }
 
 export interface CustomFieldDef {
@@ -44,6 +50,24 @@ export interface CustomFieldDef {
   ajuda?: string;
   legacyNames?: string[];              // fallback p/ leitura quando renomeado
   destaque?: boolean;
+  
+  // Novas propriedades
+  largura?: 25 | 50 | 75 | 100;
+  displayMode?: 'inline' | 'block';
+  rules?: {
+    onlyFirstConsult?: boolean;
+    onlyReturn?: boolean;
+    onlyChild?: boolean;
+    onlyElderly?: boolean;
+    profiles?: string[];
+    unidades?: string[];
+  };
+  printSettings?: {
+    visibleInProntuario?: boolean;
+    editableInProntuario?: boolean;
+    visibleInPrint?: boolean;
+    restricted?: boolean;
+  };
 }
 
 export type ScreenKey =
@@ -237,8 +261,18 @@ export const NATIVE_FIELDS: Record<ScreenKey, { nome: string; rotulo: string }[]
   ],
 };
 
+export interface SectionConfig {
+  id: string;
+  nome: string;
+  descricao?: string;
+  ordem: number;
+  ativo: boolean;
+  expandida?: boolean;
+}
+
 export interface ScreenConfig {
   fields: CustomFieldDef[];
+  sections?: SectionConfig[];
   hiddenNative: string[];
   labelOverrides: Record<string, string>;
   /** Unified ordering across native + custom field names. Optional for backward compat. */
@@ -255,6 +289,7 @@ const CONFIG_ID = 'custom_fields_config';
 
 const emptyScreenConfig = (): ScreenConfig => ({
   fields: [],
+  sections: [],
   hiddenNative: [],
   labelOverrides: {},
   orderedNames: [],
@@ -279,6 +314,7 @@ export function useCustomFields(screen?: ScreenKey, unidadeId?: string) {
 
       return {
         fields: [...globalCfg.fields, ...unitCfg.fields].sort((a, b) => a.ordem - b.ordem),
+        sections: [...(globalCfg.sections || []), ...(unitCfg.sections || [])].sort((a, b) => a.ordem - b.ordem),
         hiddenNative: [...new Set([...globalCfg.hiddenNative, ...unitCfg.hiddenNative])],
         labelOverrides: { ...globalCfg.labelOverrides, ...unitCfg.labelOverrides },
         orderedNames: unitCfg.orderedNames?.length ? unitCfg.orderedNames : globalCfg.orderedNames,

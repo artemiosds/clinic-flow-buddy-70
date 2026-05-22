@@ -6,7 +6,7 @@ import type { CustomFieldDef } from '@/hooks/useCustomFields';
 
 export type ConditionOperator = 'eq' | 'neq' | 'in' | 'notin' | 'gt' | 'lt' | 'filled' | 'empty';
 export interface ConditionalRule { campo: string; operador: ConditionOperator; valor?: any; }
-export interface ContextoCampos { especialidade?: string; tipoProntuario?: string; }
+export interface ContextoCampos { especialidade?: string; tipoProntuario?: string; idade?: number; perfil?: string; unidadeId?: string; }
 
 const norm = (v: any): string => (v ?? '').toString().trim().toLowerCase();
 
@@ -51,6 +51,15 @@ export function matchesContext(field: CustomFieldDef, ctx: ContextoCampos): bool
     if (!ctx.tipoProntuario) return false;
     const ok = field.tiposProntuario.map(norm).includes(norm(ctx.tipoProntuario));
     if (!ok) return false;
+  }
+  if (field.rules) {
+    const { rules, age = 0, perfil = '', unidadeId = '' } = { rules: field.rules, age: ctx.idade, perfil: ctx.perfil, unidadeId: ctx.unidadeId };
+    if (rules.onlyFirstConsult && ctx.tipoProntuario !== 'avaliacao_inicial') return false;
+    if (rules.onlyReturn && ctx.tipoProntuario !== 'retorno') return false;
+    if (rules.onlyChild && age >= 18) return false;
+    if (rules.onlyElderly && age < 60) return false;
+    if (rules.profiles?.length && !rules.profiles.includes(perfil)) return false;
+    if (rules.unidades?.length && !rules.unidades.includes(unidadeId)) return false;
   }
   return true;
 }
