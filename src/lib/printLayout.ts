@@ -341,15 +341,36 @@ export function buildInstitutionalCSS(
 
   /* PRINT MEDIA ENFORCEMENT */
   @media print {
-    body { padding: 0 !important; margin: 0 !important; width: 100% !important; }
-    .doc-header { border-radius: 0; }
+    body { 
+      padding: 0 !important; 
+      margin: 0 !important; 
+      width: 100% !important; 
+      color: #000 !important;
+      background: transparent !important;
+      -webkit-print-color-adjust: exact !important; 
+      print-color-adjust: exact !important;
+    }
+    .doc-header { border-bottom-width: 1px !important; margin-bottom: 6px !important; padding-bottom: 4px !important; }
+    .doc-header h1 { font-size: ${titlePt - 1.5}pt !important; }
+    .doc-header .doc-title { font-size: ${titlePt - 0.5}pt !important; margin-top: 2px !important; padding-top: 2px !important; }
+    .doc-meta { margin-bottom: 8px !important; padding: 3px 6px !important; font-size: ${smallPt - 0.5}pt !important; }
+    .section { margin-bottom: 8px !important; }
+    .section-title { font-size: ${sectionPt - 0.5}pt !important; padding-bottom: 1px !important; margin-bottom: 3px !important; }
+    .info-grid { gap: 6px !important; padding: 6px !important; margin-bottom: 8px !important; }
     .no-print { display: none !important; }
-    nav, .sidebar, button, .toaster, [data-sonner-toaster] { display: none !important; }
-    .doc-sign-footer { page-break-inside: avoid; }
-    .e-signature-box { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    nav, .sidebar, button, .toaster, [data-sonner-toaster], .no-print { display: none !important; }
+    .doc-sign-footer { page-break-inside: avoid !important; }
+    .e-signature-box { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; border-color: #cbd5e1 !important; }
+    h2 { font-size: ${sectionPt - 0.5}pt !important; margin: 8px 0 3px !important; }
+    table { margin-bottom: 8px !important; }
+    th, td { padding: 3px 5px !important; font-size: ${smallPt - 0.5}pt !important; }
   }
   @page {
-    margin: 15mm !important;
+    size: ${size} ${orientation};
+    margin: 12mm 12mm 12mm 12mm !important;
+  }
+  @page :first {
+    margin-top: 8mm !important;
   }
   ${opts.extraCSS || ''}
 </style>`;
