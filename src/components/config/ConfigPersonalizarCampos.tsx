@@ -998,29 +998,6 @@ const ConfigPersonalizarCampos: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-            <div className="px-6 py-4 border-t bg-muted/30 flex items-center justify-between shrink-0">
-              <p className="text-[10px] text-muted-foreground">O campo será salvo exclusivamente para a unidade selecionada.</p>
-              <div className="flex items-center gap-3">
-                <Button variant="ghost" onClick={() => setModalOpen(false)} disabled={isSaving}>Cancelar</Button>
-                <Button onClick={() => saveField()} className="px-8 shadow-lg shadow-primary/20" disabled={isSaving}>
-                  {isSaving ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                  )}
-                  {editingField ? 'Salvar Alterações' : 'Salvar Campo'}
-                </Button>
-                {!editingField && (
-                  <Button variant="outline" onClick={() => saveField(true)} className="px-6" disabled={isSaving}>
-                    <Save className="w-4 h-4 mr-2" /> Salvar e Adicionar Outro
-                  </Button>
-                )}
-              </div>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
       {/* Rename Modal */}
       <Dialog open={!!renameModal} onOpenChange={() => setRenameModal(null)}>
         <DialogContent className="max-w-sm">
