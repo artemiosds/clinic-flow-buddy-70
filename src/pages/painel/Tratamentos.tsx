@@ -825,6 +825,9 @@ const Tratamentos: React.FC = () => {
 
     setRegisteringSession(true);
     try {
+      // Recalcular status de falta após registro de falta
+      const needsStatusRefresh = newSession.status === "paciente_faltou";
+      
       if (newSession.status === "realizada") {
         const soapPayload = normalizeSoapPayload(soapNotes);
         const result = await treatmentService.registerCompletedSession({
