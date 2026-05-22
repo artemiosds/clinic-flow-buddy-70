@@ -3228,8 +3228,9 @@ const Tratamentos: React.FC = () => {
           </div>
           <div className="space-y-2">
             {paginatedCycles.map((cycle) => {
-              const pac = pacientesMap.get(cycle.patient_id);
-              const prof = funcionariosMap.get(cycle.professional_id);
+              if (!cycle) return null;
+              const pac = cycle.patient_id ? pacientesMap.get(cycle.patient_id) : null;
+              const prof = cycle.professional_id ? funcionariosMap.get(cycle.professional_id) : null;
               const progressPct =
                 cycle.total_sessions > 0 ? Math.round((cycle.sessions_done / cycle.total_sessions) * 100) : 0;
               const stats = sessionStatsByCycle.get(cycle.id) || { pendingAg: 0, faltas: 0 };
