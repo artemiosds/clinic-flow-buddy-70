@@ -367,7 +367,13 @@ const ConfigPersonalizarCampos: React.FC = () => {
     },
   });
   const { especialidades } = useEspecialidades();
-  const TIPOS_PRONTUARIO = ['avaliacao_inicial', 'retorno', 'sessao', 'urgencia', 'procedimento'];
+  const TIPOS_PRONTUARIO = [
+    { id: 'avaliacao_inicial', label: '1ª Consulta' },
+    { id: 'retorno', label: 'Retorno' },
+    { id: 'sessao', label: 'Sessão' },
+    { id: 'urgencia', label: 'Urgência' },
+    { id: 'procedimento', label: 'Procedimento' },
+  ];
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
