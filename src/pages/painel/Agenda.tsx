@@ -1152,17 +1152,27 @@ const Agenda: React.FC = () => {
                         </Select>
                       </div>
                       <div>
-                        <Label>Sala</Label>
+                        <Label>{isTurnoMode ? "Bloco" : "Sala"}</Label>
                         <Select value={newAg.salaId} onValueChange={(v) => setNewAg((p) => ({ ...p, salaId: v }))}>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecione" />
                           </SelectTrigger>
                           <SelectContent>
-                            {salas.map((s) => (
-                              <SelectItem key={s.id} value={s.id}>
-                                {s.nome}
-                              </SelectItem>
-                            ))}
+                            {isTurnoMode ? (
+                              newAgTurnoInfo
+                                .filter(t => !newAg.hora || (newAg.hora >= t.horaInicio && newAg.hora < t.horaFim))
+                                .map((t) => (
+                                  <SelectItem key={t.turnoId} value={t.nome}>
+                                    {t.nome} ({t.horaInicio} às {t.horaFim})
+                                  </SelectItem>
+                                ))
+                            ) : (
+                              salas.map((s) => (
+                                <SelectItem key={s.id} value={s.id}>
+                                  {s.nome}
+                                </SelectItem>
+                              ))
+                            )}
                           </SelectContent>
                         </Select>
                       </div>
