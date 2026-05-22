@@ -1902,7 +1902,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return turnoDisps.map((td) => {
         const turnoStart = td.horaInicio;
         const turnoEnd = td.horaFim;
-        const nome = turnoStart < '12:00' ? 'Manhã' : turnoStart < '18:00' ? 'Tarde' : 'Noite';
+        const defaultNome = turnoStart < '12:00' ? 'Manhã' : turnoStart < '18:00' ? 'Tarde' : 'Noite';
+        const nome = td.salaId || defaultNome;
 
         const allInTurno = dayAppointments.filter(a => a.hora >= td.horaInicio && a.hora < td.horaFim);
         const extInTurno = allInTurno.filter(a => a.origem === 'externo');
