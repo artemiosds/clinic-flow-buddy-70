@@ -959,10 +959,10 @@ const ConfigPersonalizarCampos: React.FC = () => {
               O nome do campo no banco não muda — apenas o que aparece na tela.
             </p>
           </div>
-          <DialogFooter>
+          <div className="flex justify-end gap-2 mt-4">
             <Button variant="outline" onClick={() => setRenameModal(null)}>Cancelar</Button>
             <Button onClick={saveRename}>Salvar</Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
