@@ -170,6 +170,7 @@ const sessionStatusLabels: Record<string, string> = {
 };
 
 const Tratamentos: React.FC = () => {
+  const [searchParams] = useSearchParams();
   const {
     pacientes,
     funcionarios,
