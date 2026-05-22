@@ -13,7 +13,7 @@ import { Slider } from '@/components/ui/slider';
 import { 
   Plus, Pencil, Trash2, Loader2, ChevronUp, ChevronDown, Eye, Copy, 
   GripVertical, Sparkles, X, Layout, Settings2, HelpCircle, 
-  AlertCircle, CheckCircle2, Monitor, Save
+  AlertCircle, CheckCircle2, Monitor, Save, Type, Hash, Calendar, CheckSquare, List, AlignLeft
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { TIPO_REGISTRO_LABELS } from '@/utils/labels';
