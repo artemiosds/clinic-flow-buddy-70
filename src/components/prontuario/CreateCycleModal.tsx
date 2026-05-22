@@ -178,7 +178,7 @@ export const CreateCycleModal: React.FC<CreateCycleModalProps> = ({
                     <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {funcionarios.filter(f => f.tipo === 'profissional' || f.role === 'profissional').map(f => (
+                    {funcionarios.filter(f => f.role === 'profissional').map(f => (
                       <SelectItem key={f.id} value={f.id}>{f.nome} — {f.profissao}</SelectItem>
                     ))}
                   </SelectContent>
