@@ -151,6 +151,8 @@ const sessionStatusColors: Record<string, string> = {
   agendada: "bg-info/10 text-info",
   realizada: "bg-success/10 text-success",
   paciente_faltou: "bg-destructive/10 text-destructive",
+  falta_justificada: "bg-info/10 text-info border-info/30",
+  falta_regularizada: "bg-success/10 text-success border-success/30",
   cancelada: "bg-muted text-muted-foreground",
   remarcada: "bg-warning/10 text-warning",
 };
@@ -160,6 +162,8 @@ const sessionStatusLabels: Record<string, string> = {
   agendada: "Agendada",
   realizada: "Realizada",
   paciente_faltou: "Faltou",
+  falta_justificada: "Falta Justificada",
+  falta_regularizada: "Falta Regularizada",
   cancelada: "Cancelada",
   remarcada: "Remarcada",
 };
@@ -345,7 +349,7 @@ const Tratamentos: React.FC = () => {
   const loadSessionsForCycle = useCallback(async (cycle: TreatmentCycle, silent = true) => {
     try {
       const [sData, eData] = await Promise.all([
-        treatmentService.getSessions(cycle.id),
+        supabase.from("treatment_sessions").select("*, agendamentos(falta_justificada, regularizada)").eq("cycle_id", cycle.id).order("session_number", { ascending: true }),
         supabase.from("treatment_extensions").select("*").eq("cycle_id", cycle.id).order("changed_at", { ascending: false }),
       ]);
       const sessionsData = (sData || []) as TreatmentSession[];
@@ -1079,6 +1083,24 @@ const Tratamentos: React.FC = () => {
       toast.error("Selecione data e horário.");
       return;
     }
+
+    // Verificar bloqueio do paciente antes de agendar sessão
+    const { data: pData } = await supabase
+      .from("pacientes")
+      .select("status_falta, is_tfd, possui_ordem_judicial, nome")
+      .eq("id", selectedCycle.patient_id)
+      .single();
+
+    if (pData?.status_falta === "BLOQUEADO") {
+      const isIsento = !!(pData.is_tfd || pData.possui_ordem_judicial);
+      if (isIsento) {
+        toast.info(`Paciente ${pData.nome} possui exceção administrativa de bloqueio por TFD/Ordem Judicial. Agendamento permitido.`);
+      } else {
+        toast.error(`Paciente ${pData.nome} está BLOQUEADO por faltas e não pode realizar agendamentos.`);
+        return;
+      }
+    }
+
     setAgendandoSessao(true);
     try {
       const prof = funcionarios.find((f) => f.id === selectedCycle.professional_id);
@@ -1908,6 +1930,11 @@ const Tratamentos: React.FC = () => {
               <p className="text-sm text-muted-foreground border-t pt-2">{selectedCycle.clinical_notes}</p>
             )}
 
+            <div className="flex gap-2">
+              {pacientesMap.get(selectedCycle.patient_id)?.is_tfd && <Badge variant="outline" className="text-[10px] border-warning text-warning">TFD</Badge>}
+              {pacientesMap.get(selectedCycle.patient_id)?.possui_ordem_judicial && <Badge variant="outline" className="text-[10px] border-warning text-warning">JUDICIAL</Badge>}
+            </div>
+
             {faltaStats?.alerta && (
               <div
                 className={cn(
@@ -2146,7 +2173,15 @@ const Tratamentos: React.FC = () => {
                   const isPendente = s.status === "pendente_agendamento";
                   const agKey = `${s.patient_id}|${s.professional_id}|${s.scheduled_date}`;
                   const matchedAg = isPendente ? agendamentoMap[agKey] : null;
-                  const effectiveStatus = matchedAg ? "agendada" : s.status;
+                  
+                  // Lógica de status efetivo considerando justificativas e regularizações
+                  let effectiveStatus = matchedAg ? "agendada" : s.status;
+                  const linkedAg = (s as any).agendamentos;
+                  if (s.status === "paciente_faltou" && linkedAg) {
+                    if (linkedAg.regularizada) effectiveStatus = "falta_regularizada";
+                    else if (linkedAg.falta_justificada) effectiveStatus = "falta_justificada";
+                  }
+
                   const effectiveIsPendente = effectiveStatus === "pendente_agendamento";
                   const isAgendada = effectiveStatus === "agendada";
 
@@ -3059,7 +3094,28 @@ const Tratamentos: React.FC = () => {
             {(isProfissional || canManageFull) && (
               <Button
                 size="sm"
-                onClick={() => {
+                className="gradient-primary"
+                onClick={async (e) => {
+                  if (newCycle.patient_id) {
+                    const { data: pData } = await supabase
+                      .from("pacientes")
+                      .select("status_falta, is_tfd, possui_ordem_judicial, nome")
+                      .eq("id", newCycle.patient_id)
+                      .single();
+
+                    if (pData?.status_falta === "BLOQUEADO") {
+                      const isIsento = !!(pData.is_tfd || pData.possui_ordem_judicial);
+                      if (isIsento) {
+                        toast.info(`Paciente ${pData.nome} possui exceção administrativa de bloqueio por TFD/Ordem Judicial. Tratamento permitido.`);
+                      } else {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toast.error(`Paciente ${pData.nome} está BLOQUEADO por faltas e não pode iniciar novos tratamentos.`);
+                        return;
+                      }
+                    }
+                  }
+
                   const userIsProf = profissionais.some((p) => p.id === user?.id);
                   setNewCycle({
                     patient_id: "",
@@ -3077,7 +3133,6 @@ const Tratamentos: React.FC = () => {
                   });
                   setCreateOpen(true);
                 }}
-                className="gradient-primary"
               >
                 <Plus className="w-4 h-4 mr-2" /> Novo Ciclo
               </Button>
@@ -3277,7 +3332,27 @@ const Tratamentos: React.FC = () => {
                 <BuscaPaciente
                   pacientes={pacientes}
                   value={newCycle.patient_id}
-                  onChange={(id, nome) => setNewCycle((p) => ({ ...p, patient_id: id }))}
+                  onChange={async (id, nome) => {
+                    if (id) {
+                      const { data: pData } = await supabase
+                        .from("pacientes")
+                        .select("status_falta, is_tfd, possui_ordem_judicial, nome")
+                        .eq("id", id)
+                        .single();
+
+                      if (pData?.status_falta === "BLOQUEADO") {
+                        const isIsento = !!(pData.is_tfd || pData.possui_ordem_judicial);
+                        if (isIsento) {
+                          toast.info(`Paciente ${pData.nome} possui exceção administrativa de bloqueio por TFD/Ordem Judicial. Tratamento permitido.`);
+                        } else {
+                          toast.error(`Paciente ${pData.nome} está BLOQUEADO por faltas e não pode iniciar novos tratamentos.`);
+                          setNewCycle((p) => ({ ...p, patient_id: "" }));
+                          return;
+                        }
+                      }
+                    }
+                    setNewCycle((p) => ({ ...p, patient_id: id }));
+                  }}
                 />
               </div>
               {!isProfissional && (
@@ -3285,7 +3360,25 @@ const Tratamentos: React.FC = () => {
                   <Label>Profissional *</Label>
                   <Select
                     value={newCycle.professional_id}
-                    onValueChange={(v) => {
+                    onValueChange={async (v) => {
+                      if (newCycle.patient_id) {
+                        const { data: pData } = await supabase
+                          .from("pacientes")
+                          .select("status_falta, is_tfd, possui_ordem_judicial, nome")
+                          .eq("id", newCycle.patient_id)
+                          .single();
+
+                        if (pData?.status_falta === "BLOQUEADO") {
+                          const isIsento = !!(pData.is_tfd || pData.possui_ordem_judicial);
+                          if (isIsento) {
+                            toast.info(`Paciente ${pData.nome} possui exceção administrativa de bloqueio por TFD/Ordem Judicial. Tratamento permitido.`);
+                          } else {
+                            toast.error(`Paciente ${pData.nome} está BLOQUEADO por faltas e não pode iniciar novos tratamentos.`);
+                            return;
+                          }
+                        }
+                      }
+
                       const prof = profissionais.find((p) => p.id === v);
                       setNewCycle((p) => ({
                         ...p,

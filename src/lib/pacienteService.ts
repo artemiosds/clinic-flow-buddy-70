@@ -64,6 +64,15 @@ export async function updatePacienteCadastro(
   if (dados.pais_nascimento !== undefined) updateData.pais_nascimento = dados.pais_nascimento || "";
   if (dados.tipo_logradouro_codigo !== undefined) updateData.tipo_logradouro_codigo = dados.tipo_logradouro_codigo || "";
 
+  // Campos de Exceção Administrativa
+  if (dados.is_tfd !== undefined) updateData.is_tfd = !!dados.is_tfd;
+  if (dados.possui_ordem_judicial !== undefined) updateData.possui_ordem_judicial = !!dados.possui_ordem_judicial;
+  if (dados.motivo_excecao_bloqueio !== undefined) updateData.motivo_excecao_bloqueio = dados.motivo_excecao_bloqueio || "";
+  if (dados.observacao_tfd_ordem_judicial !== undefined) updateData.observacao_tfd_ordem_judicial = dados.observacao_tfd_ordem_judicial || "";
+  if (dados.data_marcacao_excecao !== undefined) updateData.data_marcacao_excecao = dados.data_marcacao_excecao || null;
+  if (dados.marcado_por !== undefined) updateData.marcado_por = dados.marcado_por || null;
+
+
 
   // 4. Preservar custom_data e buscar dados para auditoria
   const { data: currentPatient } = await supabase
@@ -129,6 +138,11 @@ export async function updatePacienteCadastro(
     pacienteId,
     origem
   });
+
+  // Recalcular status de falta após alteração de exceção
+  if (updateData.is_tfd !== undefined || updateData.possui_ordem_judicial !== undefined) {
+    await supabase.rpc('recalcular_status_falta_paciente', { p_paciente_id: pacienteId });
+  }
 
   return data;
 }

@@ -6,6 +6,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2, ShieldOff, RefreshCw, AlertTriangle } from "lucide-react";
@@ -22,6 +26,8 @@ interface PacienteFalta {
   status_falta: string;
   unidade_id?: string | null;
   ultima_falta?: string | null;
+  is_tfd?: boolean;
+  possui_ordem_judicial?: boolean;
 }
 
 const Faltosos: React.FC = () => {
@@ -32,6 +38,11 @@ const Faltosos: React.FC = () => {
   const [filtroStatus, setFiltroStatus] = useState<string>("todos");
   const [search, setSearch] = useState("");
   const [periodoDias, setPeriodoDias] = useState<string>("0");
+  const [mostrarExcecoes, setMostrarExcecoes] = useState(false);
+  const [regularizarModal, setRegularizarModal] = useState<{ open: boolean; paciente: PacienteFalta | null }>({ open: false, paciente: null });
+  const [motivoRegularizacao, setMotivoRegularizacao] = useState("");
+  const [liberarTodas, setLiberarTodas] = useState(false);
+  const [savingRegularizacao, setSavingRegularizacao] = useState(false);
 
   const allowedRoles = ["master", "gestor", "coordenador", "recepcao"];
   const canAccess = isGlobalAdmin || (user && allowedRoles.includes(user.role));
@@ -42,7 +53,7 @@ const Faltosos: React.FC = () => {
     try {
       let query = (supabase as any)
         .from("pacientes")
-        .select("id, nome, cpf, telefone, total_faltas, faltas_consecutivas, status_falta, unidade_id")
+        .select("id, nome, cpf, telefone, total_faltas, faltas_consecutivas, status_falta, unidade_id, is_tfd, possui_ordem_judicial")
         .in("status_falta", ["FALTOSO", "BLOQUEADO"])
         .order("total_faltas", { ascending: false })
         .limit(1000);
@@ -87,29 +98,46 @@ const Faltosos: React.FC = () => {
     const limite = dias > 0 ? new Date(Date.now() - dias * 86400000).toISOString().slice(0, 10) : null;
     const q = search.trim().toLowerCase();
     return list.filter((p) => {
+      // Regra de Exceção TFD/Ordem Judicial
+      if (!mostrarExcecoes && (p.is_tfd || p.possui_ordem_judicial)) return false;
+
       if (filtroStatus !== "todos" && p.status_falta !== filtroStatus) return false;
       if (q && !p.nome.toLowerCase().includes(q) && !(p.cpf || "").includes(q)) return false;
       if (limite && p.ultima_falta && p.ultima_falta < limite) return false;
       return true;
     });
-  }, [list, filtroStatus, search, periodoDias]);
+  }, [list, filtroStatus, search, periodoDias, mostrarExcecoes]);
+
+  const handleRegularizar = async () => {
+    if (!regularizarModal.paciente || !motivoRegularizacao.trim()) {
+      toast.error("Informe o motivo da regularização.");
+      return;
+    }
+    setSavingRegularizacao(true);
+    try {
+      const { error } = await supabase.rpc('regularizar_faltas_paciente', {
+        p_paciente_id: regularizarModal.paciente.id,
+        p_motivo: motivoRegularizacao.trim(),
+        p_liberar_todas: liberarTodas
+      });
+      if (error) throw error;
+      toast.success("Falta(s) regularizada(s) com sucesso!");
+      setRegularizarModal({ open: false, paciente: null });
+      setMotivoRegularizacao("");
+      load();
+    } catch (err: any) {
+      console.error(err);
+      toast.error("Erro ao regularizar faltas.");
+    } finally {
+      setSavingRegularizacao(false);
+    }
+  };
 
   const handleRemoverBloqueio = async (p: PacienteFalta) => {
     if (!canUnblock) { toast.error("Sem permissão para desbloquear."); return; }
-    const motivo = window.prompt(`Justifique o desbloqueio de ${p.nome}:`, "");
-    if (motivo === null) return;
-    if (!motivo.trim()) { toast.error("Justificativa obrigatória."); return; }
-    try {
-      const { error } = await (supabase as any).rpc("desbloquear_paciente_faltas", {
-        p_paciente_id: p.id,
-        p_motivo: motivo.trim(),
-      });
-      if (error) throw error;
-      toast.success(`${p.nome} liberado(a). Faltas zeradas.`);
-      load();
-    } catch (err: any) {
-      toast.error(err?.message || "Erro ao desbloquear.");
-    }
+    setRegularizarModal({ open: true, paciente: p });
+    setMotivoRegularizacao("");
+    setLiberarTodas(false);
   };
 
   if (!canAccess) {
@@ -132,25 +160,38 @@ const Faltosos: React.FC = () => {
 
       <Card className="shadow-card border-0">
         <CardContent className="p-4">
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-4">
-            <Input placeholder="Buscar por nome ou CPF..." value={search} onChange={(e) => setSearch(e.target.value)} className="h-9" />
-            <Select value={filtroStatus} onValueChange={setFiltroStatus}>
-              <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos os status</SelectItem>
-                <SelectItem value="FALTOSO">Apenas FALTOSO</SelectItem>
-                <SelectItem value="BLOQUEADO">Apenas BLOQUEADO</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={periodoDias} onValueChange={setPeriodoDias}>
-              <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="0">Qualquer período</SelectItem>
-                <SelectItem value="7">Últimos 7 dias</SelectItem>
-                <SelectItem value="30">Últimos 30 dias</SelectItem>
-                <SelectItem value="90">Últimos 90 dias</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 mb-4 items-end">
+            <div className="space-y-1">
+              <Label className="text-xs">Busca</Label>
+              <Input placeholder="Nome ou CPF..." value={search} onChange={(e) => setSearch(e.target.value)} className="h-9" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Status</Label>
+              <Select value={filtroStatus} onValueChange={setFiltroStatus}>
+                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos</SelectItem>
+                  <SelectItem value="FALTOSO">FALTOSO</SelectItem>
+                  <SelectItem value="BLOQUEADO">BLOQUEADO</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Período</Label>
+              <Select value={periodoDias} onValueChange={setPeriodoDias}>
+                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">Qualquer</SelectItem>
+                  <SelectItem value="7">7 dias</SelectItem>
+                  <SelectItem value="30">30 dias</SelectItem>
+                  <SelectItem value="90">90 dias</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2 h-9 border rounded-md px-3 bg-muted/20">
+              <Switch id="show-excecoes" checked={mostrarExcecoes} onCheckedChange={setMostrarExcecoes} />
+              <Label htmlFor="show-excecoes" className="text-xs cursor-pointer">Ver exceções</Label>
+            </div>
             <Button variant="outline" onClick={load} className="h-9">
               <RefreshCw className="w-4 h-4 mr-2" /> Atualizar
             </Button>
@@ -177,7 +218,11 @@ const Faltosos: React.FC = () => {
                   {filtered.map((p) => (
                     <TableRow key={p.id}>
                       <TableCell>
-                        <div className="font-medium text-sm">{p.nome}</div>
+                        <div className="font-medium text-sm flex items-center gap-2">
+                          {p.nome}
+                          {p.is_tfd && <Badge variant="outline" className="text-[10px] py-0 h-4 border-warning text-warning">TFD</Badge>}
+                          {p.possui_ordem_judicial && <Badge variant="outline" className="text-[10px] py-0 h-4 border-warning text-warning">JUDICIAL</Badge>}
+                        </div>
                         {p.cpf && <div className="text-xs text-muted-foreground">{p.cpf}</div>}
                       </TableCell>
                       <TableCell className="text-center font-semibold">{p.total_faltas}</TableCell>
@@ -194,8 +239,8 @@ const Faltosos: React.FC = () => {
                       </TableCell>
                       <TableCell className="text-right">
                         {canUnblock ? (
-                          <Button size="sm" variant="outline" onClick={() => handleRemoverBloqueio(p)}>
-                            Remover bloqueio
+                          <Button size="sm" variant="outline" onClick={() => handleRemoverBloqueio(p)} className="text-xs h-8">
+                            Regularizar
                           </Button>
                         ) : (
                           <span className="text-xs text-muted-foreground">Sem permissão</span>
@@ -209,6 +254,48 @@ const Faltosos: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Modal de Regularização */}
+      <Dialog open={regularizarModal.open} onOpenChange={(v) => !v && setRegularizarModal({ open: false, paciente: null })}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <RefreshCw className="w-5 h-5 text-primary" />
+              Regularizar Faltas
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="bg-muted/50 p-3 rounded-md space-y-1">
+              <p className="text-sm font-medium">{regularizarModal.paciente?.nome}</p>
+              <p className="text-xs text-muted-foreground">Faltas injustificadas acumuladas: {regularizarModal.paciente?.total_faltas}</p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-sm">Motivo da Regularização *</Label>
+              <Textarea 
+                placeholder="Ex: Paciente justificou via telefone, erro de registro, etc."
+                value={motivoRegularizacao}
+                onChange={(e) => setMotivoRegularizacao(e.target.value.toUpperCase())}
+                rows={3}
+              />
+            </div>
+
+            <div className="flex items-center gap-2 p-2 border rounded-md bg-muted/20">
+              <Switch id="liberar-todas" checked={liberarTodas} onCheckedChange={setLiberarTodas} />
+              <div className="flex flex-col">
+                <Label htmlFor="liberar-todas" className="text-sm cursor-pointer">Liberar todas as faltas</Label>
+                <p className="text-[10px] text-muted-foreground">Se desmarcado, regulariza apenas a falta mais recente.</p>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRegularizarModal({ open: false, paciente: null })}>Cancelar</Button>
+            <Button onClick={handleRegularizar} disabled={savingRegularizacao}>
+              {savingRegularizacao ? "Processando..." : "Confirmar Regularização"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

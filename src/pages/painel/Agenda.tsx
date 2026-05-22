@@ -268,7 +268,10 @@ const Agenda: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   React.useEffect(() => {
-    const t = setTimeout(() => setDebouncedSearch(searchTerm.trim().toLowerCase()), 300);
+    const t = setTimeout(() => {
+      const term = searchTerm.trim().toLowerCase();
+      setDebouncedSearch(term);
+    }, 300);
     return () => clearTimeout(t);
   }, [searchTerm]);
 
@@ -328,6 +331,7 @@ const Agenda: React.FC = () => {
   const isProfissional = user?.role === "profissional";
   const canRetorno = isProfissional && user?.podeAgendarRetorno === true;
   const canAprovar = can('agenda', 'can_execute');
+  const canCreate = can('agenda', 'can_create');
   const profissionais = profissionaisVisiveis;
 
   const agendamentosPendentesOnline = React.useMemo(() => {
@@ -478,7 +482,9 @@ const Agenda: React.FC = () => {
         const nome = resolvePaciente(a.pacienteId, a.pacienteNome).toLowerCase();
         const cpf = pac?.cpf?.toLowerCase() || "";
         const cns = pac?.cns?.toLowerCase() || "";
-        if (!nome.includes(debouncedSearch) && !cpf.includes(debouncedSearch) && !cns.includes(debouncedSearch)) {
+        const tfd = pac?.is_tfd ? "tfd" : "";
+        const judicial = pac?.possui_ordem_judicial ? "judicial" : "";
+        if (!nome.includes(debouncedSearch) && !cpf.includes(debouncedSearch) && !cns.includes(debouncedSearch) && !tfd.includes(debouncedSearch) && !judicial.includes(debouncedSearch)) {
           return false;
         }
       }
@@ -784,6 +790,23 @@ const Agenda: React.FC = () => {
   };
 
   const handleAprovar = async (ag: (typeof agendamentos)[0]) => {
+    // Verificar bloqueio antes de aprovar
+    const { data: pData } = await supabase
+      .from("pacientes")
+      .select("status_falta, is_tfd, possui_ordem_judicial, nome")
+      .eq("id", ag.pacienteId)
+      .single();
+
+    if (pData?.status_falta === "BLOQUEADO") {
+      const isIsento = !!(pData.is_tfd || pData.possui_ordem_judicial);
+      if (isIsento) {
+        toast.info(`Paciente ${pData.nome} possui exceção administrativa de bloqueio por TFD/Ordem Judicial. Aprovação permitida.`);
+      } else {
+        toast.error(`Paciente ${pData.nome} está BLOQUEADO por faltas e não pode ter agendamentos aprovados.`);
+        return;
+      }
+    }
+
     try {
       await updateAgendamento(ag.id, { status: "confirmado" } as any);
       await (supabase as any).from("agendamentos").update({ aprovado_por: user?.id || "", aprovado_em: new Date().toISOString() }).eq("id", ag.id);
@@ -1017,6 +1040,23 @@ const Agenda: React.FC = () => {
       criadoEm: new Date().toISOString(), 
       criadoPor: user.id 
     };
+    // Verificar bloqueio do paciente antes de agendar retorno
+    const { data: pData } = await supabase
+      .from("pacientes")
+      .select("status_falta, is_tfd, possui_ordem_judicial, nome")
+      .eq("id", retornoAg.pacienteId)
+      .single();
+
+    if (pData?.status_falta === "BLOQUEADO") {
+      const isIsento = !!(pData.is_tfd || pData.possui_ordem_judicial);
+      if (isIsento) {
+        toast.info(`Paciente ${pData.nome} possui exceção administrativa de bloqueio por TFD/Ordem Judicial. Agendamento de retorno permitido.`);
+      } else {
+        toast.error("Paciente BLOQUEADO por excesso de faltas. Não é possível agendar retorno.");
+        return;
+      }
+    }
+
     setAgendamentoSaving(true);
     const toastId = toast.loading("Agendando retorno...");
     try { await addAgendamento(agData); toast.success("Retorno agendado com sucesso!", { id: toastId }); } catch (err) { toast.error("Erro ao agendar retorno.", { id: toastId }); } finally { setAgendamentoSaving(false); }
@@ -1106,7 +1146,32 @@ const Agenda: React.FC = () => {
                   }}
                 >
                   <DialogTrigger asChild>
-                    <Button size="sm" className="gradient-primary">
+                    <Button 
+                      size="sm" 
+                      className="gradient-primary"
+                      onClick={async (e) => {
+                        // Impedir abertura imediata se houver paciente pré-selecionado (ex: filtro)
+                        if (newAg.pacienteId) {
+                          const { data: pData } = await supabase
+                            .from("pacientes")
+                            .select("status_falta, is_tfd, possui_ordem_judicial, nome")
+                            .eq("id", newAg.pacienteId)
+                            .single();
+
+                          if (pData?.status_falta === "BLOQUEADO") {
+                            const isIsento = !!(pData.is_tfd || pData.possui_ordem_judicial);
+                            if (isIsento) {
+                              toast.info(`Paciente ${pData.nome} possui exceção administrativa de bloqueio por TFD/Ordem Judicial. Agendamento permitido.`);
+                            } else {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              toast.error(`Paciente ${pData.nome} está BLOQUEADO por faltas e não pode realizar novos agendamentos.`);
+                              return;
+                            }
+                          }
+                        }
+                      }}
+                    >
                       <Plus className="w-4 h-4 mr-2" /> Novo Agendamento
                     </Button>
                   </DialogTrigger>
@@ -1120,14 +1185,54 @@ const Agenda: React.FC = () => {
                         <BuscaPaciente
                           pacientes={pacientes}
                           value={newAg.pacienteId}
-                          onChange={(id) => handlePacienteSelecionadoNovoAg(id)}
+                          onChange={async (id) => {
+                            if (id) {
+                              const { data: pData } = await supabase
+                                .from("pacientes")
+                                .select("status_falta, is_tfd, possui_ordem_judicial, nome")
+                                .eq("id", id)
+                                .single();
+
+                              if (pData?.status_falta === "BLOQUEADO") {
+                                const isIsento = !!(pData.is_tfd || pData.possui_ordem_judicial);
+                                if (isIsento) {
+                                  toast.info(`Paciente ${pData.nome} possui exceção administrativa de bloqueio por TFD/Ordem Judicial. Agendamento permitido.`);
+                                } else {
+                                  toast.error(`Paciente ${pData.nome} está BLOQUEADO por faltas e não pode realizar novos agendamentos.`);
+                                  handlePacienteSelecionadoNovoAg("");
+                                  return;
+                                }
+                              }
+                            }
+                            handlePacienteSelecionadoNovoAg(id);
+                          }}
                         />
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <div className="flex-1 h-px bg-border" />
                           <span>ou selecione pela lista</span>
                           <div className="flex-1 h-px bg-border" />
                         </div>
-                        <Select value={newAg.pacienteId} onValueChange={(v) => handlePacienteSelecionadoNovoAg(v)}>
+                        <Select value={newAg.pacienteId} onValueChange={async (id) => {
+                            if (id) {
+                              const { data: pData } = await supabase
+                                .from("pacientes")
+                                .select("status_falta, is_tfd, possui_ordem_judicial, nome")
+                                .eq("id", id)
+                                .single();
+
+                              if (pData?.status_falta === "BLOQUEADO") {
+                                const isIsento = !!(pData.is_tfd || pData.possui_ordem_judicial);
+                                if (isIsento) {
+                                  toast.info(`Paciente ${pData.nome} possui exceção administrativa de bloqueio por TFD/Ordem Judicial. Agendamento permitido.`);
+                                } else {
+                                  toast.error(`Paciente ${pData.nome} está BLOQUEADO por faltas e não pode realizar novos agendamentos.`);
+                                  handlePacienteSelecionadoNovoAg("");
+                                  return;
+                                }
+                              }
+                            }
+                            handlePacienteSelecionadoNovoAg(id);
+                          }}>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecione um paciente..." />
                           </SelectTrigger>
@@ -1534,10 +1639,10 @@ const Agenda: React.FC = () => {
               </SelectContent>
             </Select>
 
-            <div className="relative w-full sm:w-64">
+            <div className="relative w-full sm:w-72">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar paciente, CPF, CNS..."
+                placeholder="Paciente, CPF, CNS ou TFD/JUDICIAL..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-9 h-9"
@@ -1702,7 +1807,29 @@ const Agenda: React.FC = () => {
                       : "Nenhum agendamento para esta data."}
                   </p>
                   {!isProfissional && (
-                    <Button variant="outline" onClick={() => setDialogOpen(true)}>
+                    <Button 
+                      variant="outline" 
+                      onClick={async () => {
+                        if (newAg.pacienteId) {
+                          const { data: pData } = await supabase
+                            .from("pacientes")
+                            .select("status_falta, is_tfd, possui_ordem_judicial, nome")
+                            .eq("id", newAg.pacienteId)
+                            .single();
+
+                          if (pData?.status_falta === "BLOQUEADO") {
+                            const isIsento = !!(pData.is_tfd || pData.possui_ordem_judicial);
+                            if (isIsento) {
+                              toast.info(`Paciente ${pData.nome} possui exceção administrativa de bloqueio por TFD/Ordem Judicial. Agendamento permitido.`);
+                            } else {
+                              toast.error(`Paciente ${pData.nome} está BLOQUEADO por faltas e não pode realizar novos agendamentos.`);
+                              return;
+                            }
+                          }
+                        }
+                        setDialogOpen(true);
+                      }}
+                    >
                       <Plus className="w-4 h-4 mr-2" /> Novo Agendamento
                     </Button>
                   )}
@@ -1969,6 +2096,10 @@ const Agenda: React.FC = () => {
                           <div className="min-w-0 flex-1 space-y-1">
                             <div className="flex items-center gap-2">
                               <p className="text-sm font-bold text-foreground truncate">{ag.pacienteNome}</p>
+                              <div className="flex gap-1">
+                                {pac?.is_tfd && <Badge variant="outline" className="text-[10px] h-5 border-warning text-warning">TFD</Badge>}
+                                {pac?.possui_ordem_judicial && <Badge variant="outline" className="text-[10px] h-5 border-warning text-warning">JUDICIAL</Badge>}
+                              </div>
                               <Badge variant="outline" className={cn("text-[10px] uppercase font-bold border-none px-2 h-5", statusInfo)}>
                                 {statusLabels[ag.status] || ag.status}
                               </Badge>
