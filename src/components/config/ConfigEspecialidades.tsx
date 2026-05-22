@@ -211,23 +211,46 @@ const ConfigEspecialidades: React.FC = () => {
     setEditingCampo(null);
   };
 
-  const addCampoEsp = () => {
-    if (!newField.label.trim() || !esp) return;
-    const campo: CampoEspecialidade = {
-      id: `custom_${Date.now()}`,
-      key: `custom_${Date.now()}`,
-      label: newField.label.trim(),
-      tipo: newField.tipo,
-      obrigatorio: newField.obrigatorio,
-      habilitado: true,
-      isBuiltin: false,
-      order: esp.campos.length + 1,
-      tipos_prontuario: [...DEFAULT_TIPOS],
-      opcoes: newField.tipo === 'select' ? newField.opcoes.split(',').map(o => o.trim()).filter(Boolean) : undefined,
-    };
-    updateEsp(e => ({ ...e, campos: [...e.campos, campo] }));
-    setAddFieldDialog(false);
-    setNewField({ label: '', tipo: 'textarea', obrigatorio: false, opcoes: '' });
+  const addCampoEsp = async () => {
+    if (!newField.label.trim() || !esp || isSaving) return;
+    
+    setIsSaving(true);
+    try {
+      const campo: CampoEspecialidade = {
+        id: `custom_${Date.now()}`,
+        key: `custom_${Date.now()}`,
+        label: newField.label.trim(),
+        tipo: newField.tipo,
+        obrigatorio: newField.obrigatorio,
+        habilitado: true,
+        isBuiltin: false,
+        order: esp.campos.length + 1,
+        tipos_prontuario: newField.tipos_prontuario.length > 0 ? newField.tipos_prontuario : [...DEFAULT_TIPOS],
+        ajuda: newField.ajuda.trim() || undefined,
+        valor_padrao: newField.valor_padrao.trim() || undefined,
+        opcoes: newField.tipo === 'select' ? newField.opcoes.split(',').map(o => o.trim()).filter(Boolean) : undefined,
+      };
+      
+      const updated = especialidades.map(e => e.key === selected ? { ...e, campos: [...e.campos, campo] } : e);
+      await save(updated);
+      
+      setAddFieldDialog(false);
+      setNewField({ 
+        label: '', 
+        tipo: 'textarea', 
+        obrigatorio: false, 
+        opcoes: '',
+        ajuda: '',
+        valor_padrao: '',
+        tipos_prontuario: [...DEFAULT_TIPOS]
+      });
+      toast.success('Campo adicionado com sucesso');
+    } catch (error) {
+      console.error('Erro ao adicionar campo:', error);
+      toast.error('Erro ao salvar o campo');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const deleteCampo = (campoId: string) => {
