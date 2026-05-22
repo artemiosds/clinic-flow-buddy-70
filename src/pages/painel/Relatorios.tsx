@@ -62,10 +62,14 @@ const Relatorios: React.FC = () => {
   const [filterTipo, setFilterTipo] = useState('all');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  
+  // Dados locais (do DB)
   const [atendimentosDB, setAtendimentosDB] = useState<AtendimentoDB[]>([]);
   const [filaDB, setFilaDB] = useState<FilaDB[]>([]);
   const [triagensDB, setTriagensDB] = useState<TriagemDB[]>([]);
   const [procedimentosDB, setProcedimentosDB] = useState<{ prontuario_id: string; procedimento_id: string; proc_nome?: string; prof_nome?: string; unidade_id?: string; data?: string }[]>([]);
+  const [pacientesDB, setPacientesDB] = useState<any[]>([]);
+  
   const [treatmentCycles, setTreatmentCycles] = useState<any[]>([]);
   const [treatmentSessions, setTreatmentSessions] = useState<any[]>([]);
   const [nursingEvals, setNursingEvals] = useState<any[]>([]);
@@ -101,6 +105,7 @@ const Relatorios: React.FC = () => {
     const s = new Set(agendamentos.map(a => a.tipo).filter(Boolean));
     return Array.from(s).sort();
   }, [agendamentos]);
+
 
   const loadReportData = useCallback(async () => {
     try {
