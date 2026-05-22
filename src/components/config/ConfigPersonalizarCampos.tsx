@@ -897,9 +897,14 @@ const ConfigPersonalizarCampos: React.FC = () => {
                     <Label className="text-base font-bold text-slate-800">Validação</Label>
                   </div>
                   <div className="flex items-center justify-between p-5 rounded-2xl border border-slate-100 bg-slate-50/30 group hover:bg-slate-50 transition-colors">
-                    <div className="space-y-1">
-                      <Label className="text-sm font-bold text-slate-700 cursor-pointer">Campo Obrigatório</Label>
-                      <p className="text-[11px] text-slate-500 font-medium">Exige preenchimento para salvar atendimento</p>
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center">
+                        <AlertCircle className="w-5 h-5" />
+                      </div>
+                      <div className="space-y-0.5">
+                        <Label className="text-sm font-bold text-slate-700 cursor-pointer">Campo Obrigatório</Label>
+                        <p className="text-[11px] text-slate-500 font-medium">Torna o preenchimento obrigatório para salvar</p>
+                      </div>
                     </div>
                     <Switch checked={fieldForm.obrigatorio} onCheckedChange={(v) => setFieldForm(p => ({ ...p, obrigatorio: v }))} className="data-[state=checked]:bg-primary" />
                   </div>
