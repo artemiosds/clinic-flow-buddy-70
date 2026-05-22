@@ -659,8 +659,9 @@ const Relatorios: React.FC = () => {
   const evolucaoMensal = useMemo(() => {
     const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
     const map: Record<string, number> = {};
-    filtered.filter(a => a.status === 'concluido').forEach(a => {
+    filtered.filter(a => a.status === 'concluido' || (a.status as string) === 'finalizado').forEach(a => {
       const key = a.data.substring(0, 7);
+
       map[key] = (map[key] || 0) + 1;
     });
     return Object.entries(map).sort(([a], [b]) => a.localeCompare(b)).map(([key, total]) => {
