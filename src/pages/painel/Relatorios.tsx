@@ -204,6 +204,7 @@ const Relatorios: React.FC = () => {
         { data: multiData },
         { data: ptsDataResult },
         { data: pacDataDB },
+        { data: agDataDB },
       ] = await Promise.all([
         qAt,
         qFila,
@@ -215,7 +216,9 @@ const Relatorios: React.FC = () => {
         qMulti,
         qPts,
         qPacientes,
+        supabase.from('agendamentos').select('id,paciente_id,paciente_nome,unidade_id,sala_id,setor_id,profissional_id,profissional_nome,data,hora,status,tipo,observacoes,origem,criado_em,criado_por').gte('data', dataFiltroFrom).lte('data', dataFiltroTo),
       ]);
+
 
 
       if (atData) setAtendimentosDB(atData);
