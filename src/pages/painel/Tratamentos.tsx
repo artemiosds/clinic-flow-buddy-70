@@ -3096,6 +3096,27 @@ const Tratamentos: React.FC = () => {
                   setCreateOpen(true);
                 }}
                 className="gradient-primary"
+                onClick={async (e) => {
+                  if (newCycle.patient_id) {
+                    const { data: pData } = await supabase
+                      .from("pacientes")
+                      .select("status_falta, is_tfd, possui_ordem_judicial, nome")
+                      .eq("id", newCycle.patient_id)
+                      .single();
+
+                    if (pData?.status_falta === "BLOQUEADO") {
+                      const isIsento = !!(pData.is_tfd || pData.possui_ordem_judicial);
+                      if (isIsento) {
+                        toast.info(`Paciente ${pData.nome} possui exceção administrativa de bloqueio por TFD/Ordem Judicial. Tratamento permitido.`);
+                      } else {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toast.error(`Paciente ${pData.nome} está BLOQUEADO por faltas e não pode iniciar novos tratamentos.`);
+                        return;
+                      }
+                    }
+                  }
+                }}
               >
                 <Plus className="w-4 h-4 mr-2" /> Novo Ciclo
               </Button>

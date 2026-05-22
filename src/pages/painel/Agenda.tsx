@@ -785,6 +785,23 @@ const Agenda: React.FC = () => {
   };
 
   const handleAprovar = async (ag: (typeof agendamentos)[0]) => {
+    // Verificar bloqueio antes de aprovar
+    const { data: pData } = await supabase
+      .from("pacientes")
+      .select("status_falta, is_tfd, possui_ordem_judicial, nome")
+      .eq("id", ag.pacienteId)
+      .single();
+
+    if (pData?.status_falta === "BLOQUEADO") {
+      const isIsento = !!(pData.is_tfd || pData.possui_ordem_judicial);
+      if (isIsento) {
+        toast.info(`Paciente ${pData.nome} possui exceção administrativa de bloqueio por TFD/Ordem Judicial. Aprovação permitida.`);
+      } else {
+        toast.error(`Paciente ${pData.nome} está BLOQUEADO por faltas e não pode ter agendamentos aprovados.`);
+        return;
+      }
+    }
+
     try {
       await updateAgendamento(ag.id, { status: "confirmado" } as any);
       await (supabase as any).from("agendamentos").update({ aprovado_por: user?.id || "", aprovado_em: new Date().toISOString() }).eq("id", ag.id);
@@ -1124,7 +1141,32 @@ const Agenda: React.FC = () => {
                   }}
                 >
                   <DialogTrigger asChild>
-                    <Button size="sm" className="gradient-primary">
+                    <Button 
+                      size="sm" 
+                      className="gradient-primary"
+                      onClick={async (e) => {
+                        // Impedir abertura imediata se houver paciente pré-selecionado (ex: filtro)
+                        if (newAg.pacienteId) {
+                          const { data: pData } = await supabase
+                            .from("pacientes")
+                            .select("status_falta, is_tfd, possui_ordem_judicial, nome")
+                            .eq("id", newAg.pacienteId)
+                            .single();
+
+                          if (pData?.status_falta === "BLOQUEADO") {
+                            const isIsento = !!(pData.is_tfd || pData.possui_ordem_judicial);
+                            if (isIsento) {
+                              toast.info(`Paciente ${pData.nome} possui exceção administrativa de bloqueio por TFD/Ordem Judicial. Agendamento permitido.`);
+                            } else {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              toast.error(`Paciente ${pData.nome} está BLOQUEADO por faltas e não pode realizar novos agendamentos.`);
+                              return;
+                            }
+                          }
+                        }
+                      }}
+                    >
                       <Plus className="w-4 h-4 mr-2" /> Novo Agendamento
                     </Button>
                   </DialogTrigger>
@@ -1720,7 +1762,29 @@ const Agenda: React.FC = () => {
                       : "Nenhum agendamento para esta data."}
                   </p>
                   {!isProfissional && (
-                    <Button variant="outline" onClick={() => setDialogOpen(true)}>
+                    <Button 
+                      variant="outline" 
+                      onClick={async () => {
+                        if (newAg.pacienteId) {
+                          const { data: pData } = await supabase
+                            .from("pacientes")
+                            .select("status_falta, is_tfd, possui_ordem_judicial, nome")
+                            .eq("id", newAg.pacienteId)
+                            .single();
+
+                          if (pData?.status_falta === "BLOQUEADO") {
+                            const isIsento = !!(pData.is_tfd || pData.possui_ordem_judicial);
+                            if (isIsento) {
+                              toast.info(`Paciente ${pData.nome} possui exceção administrativa de bloqueio por TFD/Ordem Judicial. Agendamento permitido.`);
+                            } else {
+                              toast.error(`Paciente ${pData.nome} está BLOQUEADO por faltas e não pode realizar novos agendamentos.`);
+                              return;
+                            }
+                          }
+                        }
+                        setDialogOpen(true);
+                      }}
+                    >
                       <Plus className="w-4 h-4 mr-2" /> Novo Agendamento
                     </Button>
                   )}
