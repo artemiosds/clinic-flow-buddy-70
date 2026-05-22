@@ -2173,7 +2173,15 @@ const Tratamentos: React.FC = () => {
                   const isPendente = s.status === "pendente_agendamento";
                   const agKey = `${s.patient_id}|${s.professional_id}|${s.scheduled_date}`;
                   const matchedAg = isPendente ? agendamentoMap[agKey] : null;
-                  const effectiveStatus = matchedAg ? "agendada" : s.status;
+                  
+                  // Lógica de status efetivo considerando justificativas e regularizações
+                  let effectiveStatus = matchedAg ? "agendada" : s.status;
+                  const linkedAg = (s as any).agendamentos;
+                  if (s.status === "paciente_faltou" && linkedAg) {
+                    if (linkedAg.regularizada) effectiveStatus = "falta_regularizada";
+                    else if (linkedAg.falta_justificada) effectiveStatus = "falta_justificada";
+                  }
+
                   const effectiveIsPendente = effectiveStatus === "pendente_agendamento";
                   const isAgendada = effectiveStatus === "agendada";
 
