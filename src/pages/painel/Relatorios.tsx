@@ -193,6 +193,7 @@ const Relatorios: React.FC = () => {
         { data: nursingData },
         { data: multiData },
         { data: ptsDataResult },
+        { data: pacDataDB },
       ] = await Promise.all([
         qAt,
         qFila,
@@ -203,7 +204,9 @@ const Relatorios: React.FC = () => {
         qNursing,
         qMulti,
         qPts,
+        qPacientes,
       ]);
+
 
       if (atData) setAtendimentosDB(atData);
       if (filaData) setFilaDB(filaData);
