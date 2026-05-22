@@ -826,279 +826,150 @@ const ConfigPersonalizarCampos: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-                {/* ═══ Tab 2 — Tipo e Opções ═══ */}
-                <TabsContent value="tipo" className="mt-6 space-y-6">
-                  <div>
-                    <div className="flex items-center gap-2 text-primary font-semibold text-sm uppercase tracking-wider mb-4">
-                      <div className="w-2 h-2 rounded-full bg-primary" />
-                      Tipo de Campo
-                    </div>
-                    <div className="grid grid-cols-3 gap-2 max-h-[320px] overflow-y-auto pr-2 custom-scrollbar">
-                      {(Object.keys(FIELD_TYPE_LABELS) as CustomFieldType[]).map((t) => {
-                        const info = FIELD_TYPE_LABELS[t];
-                        const Icon = info.icon;
-                        const selected = fieldForm.tipo === t;
-                        return (
-                          <button
-                            key={t}
-                            type="button"
-                            onClick={() => setFieldForm((p) => ({ ...p, tipo: t }))}
-                            className={cn(
-                              'flex flex-col items-center gap-2 p-3 rounded-xl border transition-all text-center group',
-                              selected ? 'border-primary bg-primary/10 ring-2 ring-primary/20 shadow-md' : 'border-border hover:border-primary/40 hover:bg-muted/50',
-                            )}
-                          >
-                            <div className={cn('w-8 h-8 rounded-full flex items-center justify-center transition-colors', selected ? 'bg-primary text-primary-foreground' : 'bg-muted')}>
-                              <Icon className="w-4 h-4" />
-                            </div>
-                            <span className={cn('text-[11px] font-bold leading-tight', selected ? 'text-primary' : 'text-foreground')}>{info.label}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {['select', 'checkbox', 'radio', 'checklist'].includes(fieldForm.tipo) && (
-                    <div className="space-y-4 p-4 rounded-xl border-2 border-dashed border-primary/20 bg-primary/5">
-                      <div className="flex items-center justify-between">
-                        <Label className="text-sm font-bold flex items-center gap-2"><List className="w-4 h-4" /> Opções Disponíveis</Label>
-                        <Badge variant="outline" className="bg-background">{fieldForm.opcoes.length} itens</Badge>
-                      </div>
-                      <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2">
-                        {fieldForm.opcoes.map((opt, i) => (
-                          <div key={i} className="flex items-center gap-2 group">
-                            <Input
-                              value={opt}
-                              onChange={(e) => {
-                                const newOpcoes = [...fieldForm.opcoes];
-                                newOpcoes[i] = e.target.value;
-                                setFieldForm((p) => ({ ...p, opcoes: newOpcoes }));
-                              }}
-                              className="h-8 flex-1 bg-background"
-                            />
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-destructive"
-                              onClick={() => setFieldForm((p) => ({ ...p, opcoes: p.opcoes.filter((_, idx) => idx !== i) }))}
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="flex items-center gap-2 pt-2">
-                        <Input
-                          value={fieldForm.novaOpcao}
-                          onChange={(e) => setFieldForm((p) => ({ ...p, novaOpcao: e.target.value }))}
-                          placeholder="Nova opção..."
-                          className="h-9 bg-background"
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              const v = fieldForm.novaOpcao.trim();
-                              if (v && !fieldForm.opcoes.includes(v)) {
-                                setFieldForm((p) => ({ ...p, opcoes: [...p.opcoes, v], novaOpcao: '' }));
-                              }
-                            }
-                          }}
-                        />
-                        <Button type="button" variant="secondary" size="sm" className="h-9" onClick={() => {
-                          const v = fieldForm.novaOpcao.trim();
-                          if (v && !fieldForm.opcoes.includes(v)) {
-                            setFieldForm((p) => ({ ...p, opcoes: [...p.opcoes, v], novaOpcao: '' }));
-                          }
-                        }}>
-                          <Plus className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </TabsContent>
-
-                {/* ═══ Tab 3 — Visibilidade ═══ */}
-                <TabsContent value="visibilidade" className="mt-6 space-y-6">
-                  <div>
-                    <div className="flex items-center gap-2 text-primary font-semibold text-sm uppercase tracking-wider mb-3">
-                      <div className="w-2 h-2 rounded-full bg-primary" />
-                      Especialidades
-                    </div>
-                    <div className="flex flex-wrap gap-1.5 p-3 rounded-xl border bg-muted/10">
-                      {especialidades.filter(e => e.ativa).map(e => {
-                        const sel = fieldForm.especialidades.includes(e.key);
-                        return (
-                          <button
-                            key={e.key}
-                            type="button"
-                            onClick={() => setFieldForm(p => ({
-                              ...p,
-                              especialidades: sel ? p.especialidades.filter(k => k !== e.key) : [...p.especialidades, e.key],
-                            }))}
-                            className={cn('px-3 py-1.5 rounded-lg text-xs font-medium border transition-all', sel ? 'bg-primary text-primary-foreground border-primary shadow-sm' : 'bg-background hover:bg-muted text-muted-foreground')}
-                          >
-                            {e.label}
-                          </button>
-                        );
-                      })}
-                      {fieldForm.especialidades.length === 0 && <Badge variant="secondary" className="text-[10px]">Todas as especialidades</Badge>}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex items-center gap-2 text-primary font-semibold text-sm uppercase tracking-wider mb-3">
-                      <div className="w-2 h-2 rounded-full bg-primary" />
-                      Tipos de Prontuário
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {TIPOS_PRONTUARIO.map(t => {
-                        const sel = fieldForm.tiposProntuario.includes(t);
-                        const labels: Record<string, string> = {
-                          avaliacao_inicial: 'Avaliação Inicial',
-                          retorno: 'Retorno',
-                          sessao: 'Sessão',
-                          urgencia: 'Urgência',
-                          procedimento: 'Procedimento',
-                        };
-                        return (
-                          <button
-                            key={t}
-                            type="button"
-                            onClick={() => setFieldForm(p => ({
-                              ...p,
-                              tiposProntuario: sel ? p.tiposProntuario.filter(x => x !== t) : [...p.tiposProntuario, t],
-                            }))}
-                            className={cn('px-3 py-1.5 rounded-lg text-xs font-medium border transition-all', sel ? 'bg-primary text-primary-foreground border-primary shadow-sm' : 'bg-background hover:bg-muted text-muted-foreground')}
-                          >
-                            {labels[t] || t}
-                          </button>
-                        );
-                      })}
-                      {fieldForm.tiposProntuario.length === 0 && <Badge variant="secondary" className="text-[10px]">Todos os tipos</Badge>}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-3 p-3 rounded-xl border bg-muted/5">
-                      <Label className="text-[10px] font-bold uppercase text-muted-foreground">Regras Inteligentes</Label>
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between text-xs">
-                          <span>Só 1ª Consulta</span>
-                          <Switch checked={fieldForm.rules.onlyFirstConsult} onCheckedChange={(v) => setFieldForm(p => ({ ...p, rules: { ...p.rules, onlyFirstConsult: v } }))} className="scale-75" />
-                        </div>
-                        <div className="flex items-center justify-between text-xs">
-                          <span>Só Retorno</span>
-                          <Switch checked={fieldForm.rules.onlyReturn} onCheckedChange={(v) => setFieldForm(p => ({ ...p, rules: { ...p.rules, onlyReturn: v } }))} className="scale-75" />
-                        </div>
-                        <div className="flex items-center justify-between text-xs">
-                          <span>Só Crianças</span>
-                          <Switch checked={fieldForm.rules.onlyChild} onCheckedChange={(v) => setFieldForm(p => ({ ...p, rules: { ...p.rules, onlyChild: v } }))} className="scale-75" />
-                        </div>
-                        <div className="flex items-center justify-between text-xs">
-                          <span>Só Idosos (60+)</span>
-                          <Switch checked={fieldForm.rules.onlyElderly} onCheckedChange={(v) => setFieldForm(p => ({ ...p, rules: { ...p.rules, onlyElderly: v } }))} className="scale-75" />
-                        </div>
-                      </div>
-                    </div>
-                    <div className="space-y-3 p-3 rounded-xl border bg-muted/5">
-                      <Label className="text-[10px] font-bold uppercase text-muted-foreground">Config. Saída</Label>
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between text-xs">
-                          <span>Ver no Prontuário</span>
-                          <Switch checked={fieldForm.printSettings.visibleInProntuario} onCheckedChange={(v) => setFieldForm(p => ({ ...p, printSettings: { ...p.printSettings, visibleInProntuario: v } }))} className="scale-75" />
-                        </div>
-                        <div className="flex items-center justify-between text-xs">
-                          <span>Editável</span>
-                          <Switch checked={fieldForm.printSettings.editableInProntuario} onCheckedChange={(v) => setFieldForm(p => ({ ...p, printSettings: { ...p.printSettings, editableInProntuario: v } }))} className="scale-75" />
-                        </div>
-                        <div className="flex items-center justify-between text-xs">
-                          <span>Ver no PDF</span>
-                          <Switch checked={fieldForm.printSettings.visibleInPrint} onCheckedChange={(v) => setFieldForm(p => ({ ...p, printSettings: { ...p.printSettings, visibleInPrint: v } }))} className="scale-75" />
-                        </div>
-                        <div className="flex items-center justify-between text-xs">
-                          <span>Restrito</span>
-                          <Switch checked={fieldForm.printSettings.restricted} onCheckedChange={(v) => setFieldForm(p => ({ ...p, printSettings: { ...p.printSettings, restricted: v } }))} className="scale-75" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </TabsContent>
-
-                {/* ═══ Tab 4 — Validação ═══ */}
-                <TabsContent value="regras" className="mt-6 space-y-6">
-                  <div className="p-4 rounded-xl border bg-muted/20 space-y-4">
-                    <div className="flex items-center gap-2 font-bold text-xs uppercase text-muted-foreground border-b pb-2">
-                      <Activity className="w-3.5 h-3.5" /> Validação de Dados
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                      <div className="space-y-1.5">
-                        <Label className="text-[10px] uppercase font-bold">Máscara</Label>
-                        <Select
-                          value={fieldForm.validacao.mascara || '__none__'}
-                          onValueChange={(v) => setFieldForm(p => ({ ...p, validacao: { ...p.validacao, mascara: v === '__none__' ? undefined : v as any } }))}
-                        >
-                          <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="__none__">Nenhuma</SelectItem>
-                            <SelectItem value="cpf">CPF</SelectItem>
-                            <SelectItem value="telefone">Telefone</SelectItem>
-                            <SelectItem value="data">Data</SelectItem>
-                            <SelectItem value="hora">Hora</SelectItem>
-                            <SelectItem value="currency">Moeda</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-[10px] uppercase font-bold">Mín. Caracteres</Label>
-                        <Input type="number" className="h-9" value={fieldForm.validacao.minLength ?? ''} onChange={e => setFieldForm(p => ({ ...p, validacao: { ...p.validacao, minLength: e.target.value ? Number(e.target.value) : undefined } }))} />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-[10px] uppercase font-bold">Máx. Caracteres</Label>
-                        <Input type="number" className="h-9" value={fieldForm.validacao.maxLength ?? ''} onChange={e => setFieldForm(p => ({ ...p, validacao: { ...p.validacao, maxLength: e.target.value ? Number(e.target.value) : undefined } }))} />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-[10px] uppercase font-bold">Valor Mín/Máx</Label>
-                        <div className="flex gap-1">
-                          <Input type="number" placeholder="Mín" className="h-9" value={fieldForm.validacao.min ?? ''} onChange={e => setFieldForm(p => ({ ...p, validacao: { ...p.validacao, min: e.target.value ? Number(e.target.value) : undefined } }))} />
-                          <Input type="number" placeholder="Máx" className="h-9" value={fieldForm.validacao.max ?? ''} onChange={e => setFieldForm(p => ({ ...p, validacao: { ...p.validacao, max: e.target.value ? Number(e.target.value) : undefined } }))} />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3 pt-4 border-t border-muted-foreground/10">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-xs font-bold uppercase text-muted-foreground flex items-center gap-2"><Sliders className="w-3.5 h-3.5" /> Exibição Condicional Avançada</Label>
-                      <Button type="button" variant="outline" size="sm" onClick={() => setFieldForm(p => ({ ...p, condicional: [...p.condicional, { campo: '', operador: 'eq', valor: '' }] }))}>
-                        <Plus className="w-3 h-3 mr-1" /> Adicionar Condição
-                      </Button>
-                    </div>
-                    <div className="space-y-2">
-                      {fieldForm.condicional.map((rule, idx) => (
-                        <div key={idx} className="flex items-center gap-2 p-2 rounded border bg-background animate-in fade-in-0 slide-in-from-top-1 duration-200">
-                          <Input placeholder="Campo" className="h-8 flex-1" value={rule.campo} onChange={e => setFieldForm(p => { const c = [...p.condicional]; c[idx] = { ...c[idx], campo: e.target.value }; return { ...p, condicional: c }; })} />
-                          <Select value={rule.operador} onValueChange={(v) => setFieldForm(p => { const c = [...p.condicional]; c[idx] = { ...c[idx], operador: v as any }; return { ...p, condicional: c }; })}>
-                            <SelectTrigger className="h-8 w-24"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="eq">=</SelectItem>
-                              <SelectItem value="neq">≠</SelectItem>
-                              <SelectItem value="filled">Preenchido</SelectItem>
+                    <TabsContent value="tipo" className="space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <Label className="text-sm font-semibold block mb-2">Tipo de campo</Label>
+                          <Select value={fieldForm.tipo} onValueChange={(v) => setFieldForm(p => ({ ...p, tipo: v as CustomFieldType }))}>
+                            <SelectTrigger className="h-12">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-[300px]">
+                              {(Object.keys(FIELD_TYPE_LABELS) as CustomFieldType[]).map((t) => (
+                                <SelectItem key={t} value={t}>{FIELD_TYPE_LABELS[t].label}</SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
-                          <Input placeholder="Valor" className="h-8 flex-1" value={rule.valor ?? ''} onChange={e => setFieldForm(p => { const c = [...p.condicional]; c[idx] = { ...c[idx], valor: e.target.value }; return { ...p, condicional: c }; })} />
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => setFieldForm(p => ({ ...p, condicional: p.condicional.filter((_, i) => i !== idx) }))}>
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
                         </div>
-                      ))}
-                      {fieldForm.condicional.length === 0 && (
-                        <p className="text-xs text-muted-foreground italic py-3 text-center border border-dashed rounded-lg">
-                          Nenhuma condição configurada. O campo será sempre exibido.
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </TabsContent>
+                        {['select', 'checkbox', 'radio', 'checklist'].includes(fieldForm.tipo) && (
+                          <div className="space-y-4">
+                            <div>
+                              <Label className="text-sm font-semibold block mb-2">Adicionar Opção</Label>
+                              <div className="flex gap-2">
+                                <Input
+                                  value={fieldForm.novaOpcao}
+                                  onChange={(e) => setFieldForm(p => ({ ...p, novaOpcao: e.target.value }))}
+                                  placeholder="Digite a opção..."
+                                  className="h-12"
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      e.preventDefault();
+                                      const v = fieldForm.novaOpcao.trim();
+                                      if (v && !fieldForm.opcoes.includes(v)) {
+                                        setFieldForm(p => ({ ...p, opcoes: [...p.opcoes, v], novaOpcao: '' }));
+                                      }
+                                    }
+                                  }}
+                                />
+                                <Button type="button" onClick={() => {
+                                  const v = fieldForm.novaOpcao.trim();
+                                  if (v && !fieldForm.opcoes.includes(v)) {
+                                    setFieldForm(p => ({ ...p, opcoes: [...p.opcoes, v], novaOpcao: '' }));
+                                  }
+                                }} className="h-12"><Plus className="w-4 h-4" /></Button>
+                              </div>
+                            </div>
+                            <div className="space-y-2 border rounded-xl p-4 bg-muted/5 max-h-[200px] overflow-y-auto">
+                              <Label className="text-[10px] font-bold uppercase text-muted-foreground block mb-2">Opções atuais</Label>
+                              {fieldForm.opcoes.map((opt, i) => (
+                                <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-background border group">
+                                  <span className="text-sm">{opt}</span>
+                                  <Trash2 className="w-4 h-4 text-destructive opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity" onClick={() => setFieldForm(p => ({ ...p, opcoes: p.opcoes.filter((_, idx) => idx !== i) }))} />
+                                </div>
+                              ))}
+                              {fieldForm.opcoes.length === 0 && <p className="text-xs text-muted-foreground italic">Nenhuma opção adicionada.</p>}
+                            </div>
+                          </div>
+                        )}
+                        {fieldForm.tipo === 'number' && (
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <Label className="text-sm font-semibold block mb-2">Mínimo</Label>
+                              <Input type="number" className="h-12" value={fieldForm.validacao.min ?? ''} onChange={e => setFieldForm(p => ({ ...p, validacao: { ...p.validacao, min: e.target.value ? Number(e.target.value) : undefined } }))} />
+                            </div>
+                            <div>
+                              <Label className="text-sm font-semibold block mb-2">Máximo</Label>
+                              <Input type="number" className="h-12" value={fieldForm.validacao.max ?? ''} onChange={e => setFieldForm(p => ({ ...p, validacao: { ...p.validacao, max: e.target.value ? Number(e.target.value) : undefined } }))} />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="visibilidade" className="space-y-8">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="space-y-4">
+                          <Label className="text-base font-bold flex items-center gap-2"><LayoutTemplate className="w-5 h-5" /> Exibição no Prontuário</Label>
+                          <div className="grid grid-cols-1 gap-3 p-4 rounded-xl border bg-muted/5">
+                            {['avaliacao_inicial', 'retorno', 'sessao', 'urgencia', 'procedimento'].map(t => (
+                              <div key={t} className="flex items-center justify-between py-1 border-b last:border-0">
+                                <span className="text-sm font-medium capitalize">{t.replace('_', ' ')}</span>
+                                <Switch
+                                  checked={fieldForm.tiposProntuario.includes(t)}
+                                  onCheckedChange={(v) => setFieldForm(p => ({
+                                    ...p,
+                                    tiposProntuario: v ? [...p.tiposProntuario, t] : p.tiposProntuario.filter(x => x !== t)
+                                  }))}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="space-y-4">
+                          <Label className="text-base font-bold flex items-center gap-2"><LayoutTemplate className="w-5 h-5" /> Layout</Label>
+                          <div className="grid grid-cols-2 gap-4 p-4 rounded-xl border bg-muted/5">
+                            <div>
+                              <Label className="text-xs font-bold uppercase text-muted-foreground mb-2 block">Largura do campo</Label>
+                              <Select value={String(fieldForm.largura)} onValueChange={(v) => setFieldForm(p => ({ ...p, largura: Number(v) as any }))}>
+                                <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="25">25% (1/4)</SelectItem>
+                                  <SelectItem value="50">50% (Meia linha)</SelectItem>
+                                  <SelectItem value="75">75% (3/4)</SelectItem>
+                                  <SelectItem value="100">100% (Linha cheia)</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label className="text-xs font-bold uppercase text-muted-foreground mb-2 block">Seção / Bloco</Label>
+                              <Input value={fieldForm.secao} onChange={e => setFieldForm(p => ({ ...p, secao: e.target.value }))} className="h-11" placeholder="Ex: Anamnese" />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="regras" className="space-y-8">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="space-y-4">
+                          <Label className="text-base font-bold flex items-center gap-2"><Lock className="w-5 h-5" /> Permissões</Label>
+                          <div className="space-y-3 p-4 rounded-xl border bg-muted/5">
+                            <div className="flex items-center justify-between">
+                              <div className="flex flex-col">
+                                <span className="text-sm font-semibold">Visível na Impressão</span>
+                                <span className="text-[10px] text-muted-foreground">Aparece ao gerar PDF do prontuário</span>
+                              </div>
+                              <Switch checked={fieldForm.printSettings.visibleInPrint} onCheckedChange={(v) => setFieldForm(p => ({ ...p, printSettings: { ...p.printSettings, visibleInPrint: v } }))} />
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <div className="flex flex-col">
+                                <span className="text-sm font-semibold">Campo Sensível / Restrito</span>
+                                <span className="text-[10px] text-muted-foreground">Acesso limitado a perfis Master</span>
+                              </div>
+                              <Switch checked={fieldForm.printSettings.restricted} onCheckedChange={(v) => setFieldForm(p => ({ ...p, printSettings: { ...p.printSettings, restricted: v } }))} />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-4">
+                          <Label className="text-base font-bold flex items-center gap-2"><Sliders className="w-5 h-5" /> Regras Condicionais</Label>
+                          <div className="p-4 rounded-xl border border-dashed border-muted-foreground/30 flex items-center justify-center h-[120px]">
+                            <p className="text-xs text-muted-foreground text-center italic">Funcionalidade de regras avançadas<br/>será integrada ao salvar.</p>
+                          </div>
+                        </div>
+                      </div>
+                    </TabsContent>
 
                 {/* ═══ Tab 4 — Permissões e regras ═══ */}
                 <TabsContent value="regras" className="mt-6 space-y-6">
