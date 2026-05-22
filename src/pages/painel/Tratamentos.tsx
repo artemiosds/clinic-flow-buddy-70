@@ -497,6 +497,22 @@ const Tratamentos: React.FC = () => {
     setCurrentPage(1);
   }, [filterProf, filterUnit, filterStatus, debouncedSearchTerm]);
 
+  // Handle direct creation from Prontuário
+  useEffect(() => {
+    const action = searchParams.get('action');
+    const pid = searchParams.get('pacienteId');
+    if (action === 'new_cycle' && pid && pacientes.length > 0) {
+      const pac = pacientes.find(p => p.id === pid);
+      if (pac) {
+        setNewCycle(prev => ({
+          ...prev,
+          patient_id: pac.id
+        }));
+        setOpenNew(true);
+      }
+    }
+  }, [searchParams, pacientes]);
+
   useEffect(() => {
     if (selectedCycle?.pts_id) {
       const pts = ptsList.find((p) => p.id === selectedCycle.pts_id);
