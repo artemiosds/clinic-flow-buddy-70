@@ -2786,6 +2786,37 @@ const ProntuarioPage: React.FC = () => {
           </div>{/* end scrollable area */}
 
             <div className="flex gap-2 flex-wrap shrink-0 border-t border-border pt-3 -mx-6 px-6 pb-1 bg-background">
+              {/* Botões de Impressão e PDF — Adicionados para permitir imprimir o rascunho atual */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="flex-1">
+                    <Printer className="w-4 h-4 mr-2" />
+                    Imprimir / PDF
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => {
+                    const procTexto = selectedProcIds.map(id => procedimentos.find(pr => pr.id === id)?.nome || "").filter(Boolean).join(", ");
+                    downloadProntuarioPdf({
+                      ...form,
+                      id: editId || 'rascunho',
+                      profissional_nome: user?.nome || '',
+                      setor: user?.setor || '',
+                      custom_data: { ...customFields, ...especialidadeFields },
+                      procedimentos_texto: procTexto || form.procedimentos_texto,
+                      prescricao: listaPrescricao.length > 0 ? JSON.stringify({ medicamentos: listaPrescricao }) : form.prescricao,
+                      solicitacao_exames: listaExames.length > 0 ? JSON.stringify({ exames: listaExames }) : form.solicitacao_exames,
+                      observacoes: Object.keys(especialidadeFields).length > 0 ? JSON.stringify({ especialidade_fields: especialidadeFields, texto: form.observacoes }) : form.observacoes,
+                      unidade_id: user?.unidadeId || '',
+                      especialidade: user?.profissao || '',
+                    });
+                  }}>
+                    <Printer className="w-4 h-4 mr-2" />
+                    Imprimir Prontuário Atual
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
               {/* Botão "Registrar Sessão" — só aparece no tipo sessão com sessão disponível */}
               {form.tipo_registro === 'sessao' && currentSessionForRegistration && sessaoCycle && (
                 <Button
