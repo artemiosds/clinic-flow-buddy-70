@@ -676,10 +676,12 @@ const Relatorios: React.FC = () => {
   const procedimentoStats = useMemo(() => {
     const filteredProcs = procedimentosDB.filter(p => {
       if (filterUnit !== 'all' && p.unidade_id !== filterUnit) return false;
+      if (filterProf !== 'all' && (p as any).prof_id !== filterProf) return false;
       if (dateFrom && p.data && p.data < dateFrom) return false;
       if (dateTo && p.data && p.data > dateTo) return false;
       return true;
     });
+
     const byProc: Record<string, number> = {};
     const byProf: Record<string, number> = {};
     const byUnit: Record<string, number> = {};
