@@ -243,9 +243,9 @@ const Relatorios: React.FC = () => {
       if (nursingData) setNursingEvals(nursingData);
       if (multiData) setMultiEvals(multiData);
       if (ptsDataResult) setPtsData(ptsDataResult);
-      if (pacDataDB) {
-        setPacientesDB(pacDataDB);
-      }
+      if (pacDataDB) setPacientesDB(pacDataDB);
+      if (agDataDB) setAgendamentosDB(agDataDB);
+
 
       setLastUpdated(new Date());
     } catch (err) {
