@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 
 export type CustomFieldType =
   | 'text' | 'number' | 'date' | 'checkbox' | 'select' | 'textarea' | 'radio'
-  | 'phone' | 'cpf' | 'cnpj' | 'cep' | 'email' | 'url' | 'time' | 'currency' | 'file'
+  | 'phone' | 'cpf' | 'cnpj' | 'cep' | 'email' | 'url' | 'time' | 'currency' | 'file' | 'image'
   | 'checklist' | 'scale_numeric' | 'scale_eva' | 'scale_functional' | 'cid' | 'sigtap' | 'signature' | 'table' | 'calculated' | 'separator';
 
 export type ConditionalOperator = 'eq' | 'neq' | 'in' | 'notin' | 'gt' | 'lt' | 'filled' | 'empty';

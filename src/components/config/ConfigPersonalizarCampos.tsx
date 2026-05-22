@@ -433,8 +433,20 @@ const ConfigPersonalizarCampos: React.FC = () => {
       legacyNames: editingField?.legacyNames,
       largura: fieldForm.largura,
       displayMode: fieldForm.displayMode,
-      rules: fieldForm.rules,
-      printSettings: fieldForm.printSettings,
+      rules: {
+        onlyFirstConsult: !!fieldForm.rules.onlyFirstConsult,
+        onlyReturn: !!fieldForm.rules.onlyReturn,
+        onlyChild: !!fieldForm.rules.onlyChild,
+        onlyElderly: !!fieldForm.rules.onlyElderly,
+        profiles: fieldForm.rules.profiles || [],
+        unidades: fieldForm.rules.unidades || [],
+      },
+      printSettings: {
+        visibleInProntuario: !!fieldForm.printSettings.visibleInProntuario,
+        editableInProntuario: !!fieldForm.printSettings.editableInProntuario,
+        visibleInPrint: !!fieldForm.printSettings.visibleInPrint,
+        restricted: !!fieldForm.printSettings.restricted,
+      },
     };
 
     const newFields = editingField
