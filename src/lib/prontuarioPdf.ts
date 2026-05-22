@@ -109,13 +109,13 @@ function safe(str: string | undefined | null): string {
   return str;
 }
 
-function section(label: string, raw: string | undefined): string {
+function section(label: string, raw: string | undefined, forceShow = false): string {
   const value = safe(raw);
-  if (!value || !value.trim()) return "";
+  if (!forceShow && (!value || !value.trim())) return "";
   return `
     <div class="section">
       <div class="section-title">${escapeHtml(label)}</div>
-      <div class="section-content">${escapeHtml(value)}</div>
+      <div class="section-content">${escapeHtml(value || "—")}</div>
     </div>`;
 }
 
