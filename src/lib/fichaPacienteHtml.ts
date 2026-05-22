@@ -236,30 +236,67 @@ export function buildFichaBody(
 
     body.push(section(
       '6. Triagem / sinais vitais',
-      grid(4, [
-        { label: 'PA', value: sv.pressao_arterial },
-        { label: 'FC', value: sv.frequencia_cardiaca },
-        { label: 'FR', value: sv.frequencia_respiratoria },
-        { label: 'Temperatura', value: sv.temperatura },
-        { label: 'SpO2', value: sv.saturacao },
-        { label: 'Peso', value: sv.peso },
-        { label: 'Altura', value: sv.altura },
-        { label: 'Glicemia', value: sv.glicemia },
+      grid(8, [
+        { label: 'PA', value: sv.pressao_arterial, manual: true },
+        { label: 'FC', value: sv.frequencia_cardiaca, manual: true },
+        { label: 'FR', value: sv.frequencia_respiratoria, manual: true },
+        { label: 'Temp', value: sv.temperatura, manual: true },
+        { label: 'SpO2', value: sv.saturacao, manual: true },
+        { label: 'Peso', value: sv.peso, manual: true },
+        { label: 'Altura', value: sv.altura, manual: true },
+        { label: 'Glicemia', value: sv.glicemia, manual: true },
       ]),
     ));
 
     body.push(section(
-      '7. Queixa principal',
-      `<div class="ficha-text-block">${esc(txt(dc.queixa_principal, 'Não informado'))}</div>`,
+      '7. Avaliação clínica',
+      grid(1, [
+        { label: 'Queixa principal', value: dc.queixa_principal, manual: true },
+      ]) +
+      `<div class="ficha-manual-lines">
+        <span class="ficha-field-label">Evolução clínica</span>
+        <div class="ficha-line"></div>
+        <div class="ficha-line"></div>
+        <div class="ficha-line"></div>
+      </div>`
+    ));
+
+    body.push(section(
+      '8. Conduta / prescrição',
+      grid(2, [
+        { label: 'Diagnóstico', value: dc.cid, manual: true },
+        { label: 'Retorno', value: '', manual: true },
+      ]) +
+      `<div class="ficha-manual-lines">
+        <span class="ficha-field-label">Medicação / Prescrição</span>
+        <div class="ficha-line"></div>
+        <div class="ficha-line"></div>
+      </div>
+      <div class="ficha-manual-lines">
+        <span class="ficha-field-label">Procedimentos</span>
+        <div class="ficha-line"></div>
+        <div class="ficha-line"></div>
+      </div>`
     ));
 
     if (opts.extraBeforeSignature) body.push(opts.extraBeforeSignature);
+
     body.push(`
       <div class="ficha-signature-block">
         <div class="ficha-signature-date">Oriximiná — PA, ____ / ____ / ________</div>
-        <div class="ficha-signature-line"></div>
-        <div class="ficha-signature-name">${esc(txt(data.profissional.nome, 'Profissional responsável'))}</div>
-        <div class="ficha-signature-meta">${esc(txt(data.profissional.cargo))} • ${esc(txt(data.profissional.registro))}</div>
+        
+        <div style="display: flex; justify-content: space-around; gap: 40px; margin-top: 20px;">
+          <div style="flex: 1;">
+            <div class="ficha-signature-line" style="margin: 0 auto; width: 300px;"></div>
+            <div class="ficha-signature-name">${esc(txt(data.profissional.nome, 'PROFISSIONAL RESPONSÁVEL'))}</div>
+          </div>
+          
+          <div style="flex: 1;">
+            <div class="ficha-signature-line" style="margin: 0 auto; width: 300px;"></div>
+            <div class="ficha-signature-name">REGISTRO PROFISSIONAL</div>
+            <div class="ficha-signature-meta">${esc(txt(data.profissional.registro))}</div>
+          </div>
+        </div>
       </div>
     `);
   } else if (opts.extraBeforeSignature) {
