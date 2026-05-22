@@ -1,5 +1,6 @@
 import { PageHeader } from '@/components/layout/PageHeader';
 import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useData } from "@/contexts/DataContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/contexts/PermissionsContext";
@@ -220,6 +221,7 @@ const Tratamentos: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
 
   const [createOpen, setCreateOpen] = useState(false);
+  const setOpenNew = setCreateOpen; // Alias for compatibility with the new effect
   const [sessionOpen, setSessionOpen] = useState(false);
   const [extensionOpen, setExtensionOpen] = useState(false);
   const [dischargeOpen, setDischargeOpen] = useState(false);
