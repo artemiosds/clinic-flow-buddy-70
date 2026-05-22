@@ -299,6 +299,29 @@ const CamposEspecialidade: React.FC<CamposEspecialidadeProps> = ({
             </SelectContent>
           </Select>
         )}
+        {campo.tipo === 'multiselect' && campo.opcoes && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+            {campo.opcoes.map(op => {
+              const currentVals = (val || '').split(',').map(s => s.trim()).filter(Boolean);
+              const isChecked = currentVals.includes(op);
+              return (
+                <div key={op} className="flex items-center gap-2">
+                  <Checkbox 
+                    id={`${campo.id}_${op}`}
+                    checked={isChecked} 
+                    onCheckedChange={(checked) => {
+                      const newVals = checked 
+                        ? [...currentVals, op]
+                        : currentVals.filter(v => v !== op);
+                      set(fieldKey, newVals.join(', '));
+                    }} 
+                  />
+                  <Label htmlFor={`${campo.id}_${op}`} className="text-xs font-normal cursor-pointer">{op}</Label>
+                </div>
+              );
+            })}
+          </div>
+        )}
         {campo.tipo === 'slider' && (
           <div>
             <Slider min={0} max={10} step={1} value={[parseInt(val || campo.valor_padrao || "0")]} onValueChange={([v]) => set(fieldKey, String(v))} className="mt-2" />
