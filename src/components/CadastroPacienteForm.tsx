@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { User, MapPin, Phone, FileHeart, Upload, Loader2, Building2, Stethoscope, Loader, CheckCircle2, FileText, Paperclip, History } from "lucide-react";
+import { User, MapPin, Phone, FileHeart, Upload, Loader2, Building2, Stethoscope, Loader, CheckCircle2, FileText, Paperclip, History, ShieldAlert, Gavel, FileWarning } from "lucide-react";
 import EncaminhamentoUBSSection from "./pacientes/EncaminhamentoUBSSection";
 import PacienteDocumentos from "./PacienteDocumentos";
 import { toast } from "sonner";
@@ -136,6 +136,15 @@ export interface PacienteFormData {
   isGestante: boolean;
   isPne: boolean;
   isAutista: boolean;
+  
+  // Exceções de bloqueio
+  is_tfd: boolean;
+  possui_ordem_judicial: boolean;
+  motivo_excecao_bloqueio: string;
+  observacao_tfd_ordem_judicial: string;
+  data_marcacao_excecao?: string;
+  marcado_por?: string;
+
   customData?: Record<string, any>;
 }
 
@@ -153,6 +162,7 @@ export const emptyPacienteForm: PacienteFormData = {
   cep: "", tipo_logradouro: "", tipo_logradouro_codigo: "", numero: "", complemento: "", bairro: "", uf: "PA",
   telefone_secundario: "",
   isGestante: false, isPne: false, isAutista: false,
+  is_tfd: false, possui_ordem_judicial: false, motivo_excecao_bloqueio: "", observacao_tfd_ordem_judicial: "",
   customData: {},
 };
 
@@ -261,7 +271,7 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
     identificacao: !!(errors.nome || errors.cpf || errors.cns || errors.nomeResponsavel || errors.cpfResponsavel || errors.nomeMae),
     endereco: !!(errors.cep || errors.municipio),
     contato: !!(errors.telefone || errors.email),
-    complementares: !!(errors.especialidadeDestino || errors.ubsOrigem || errors.cid || errors.justificativa),
+    complementares: !!(errors.especialidadeDestino || errors.ubsOrigem || errors.cid || errors.justificativa || errors.motivo_excecao_bloqueio),
   };
 
   return (

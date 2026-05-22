@@ -306,6 +306,15 @@ const Pacientes: React.FC = () => {
       isPne: !!(p.is_pne || p.isPne),
       isAutista: !!(p.is_autista || p.isAutista),
       
+      // Exceções de bloqueio
+      is_tfd: !!p.is_tfd,
+      possui_ordem_judicial: !!p.possui_ordem_judicial,
+      motivo_excecao_bloqueio: p.motivo_excecao_bloqueio || "",
+      observacao_tfd_ordem_judicial: p.observacao_tfd_ordem_judicial || "",
+      data_marcacao_excecao: p.data_marcacao_excecao || null,
+      marcado_por: p.marcado_por || null,
+
+      
       // Novos campos de coluna
       sexo: p.sexo || (p.custom_data?.sexo === "M" || p.custom_data?.sexo === "masculino" ? "M" : p.custom_data?.sexo === "F" || p.custom_data?.sexo === "feminino" ? "F" : ""),
       cep: p.cep || p.custom_data?.cep || "",
@@ -350,6 +359,14 @@ const Pacientes: React.FC = () => {
       toast.error(Object.values(newErrors)[0]);
       return;
     }
+
+    // Validação de exceção
+    if ((form.is_tfd || form.possui_ordem_judicial) && !form.motivo_excecao_bloqueio) {
+      setErrors({ ...newErrors, motivo_excecao_bloqueio: "Motivo da exceção é obrigatório" });
+      toast.error("Informe o motivo da exceção de bloqueio.");
+      return;
+    }
+
     setErrors({});
     setSaving(true);
     
@@ -391,6 +408,15 @@ const Pacientes: React.FC = () => {
       is_gestante: !!form.isGestante,
       is_pne: !!form.isPne,
       is_autista: !!form.isAutista,
+
+      // Exceções
+      is_tfd: !!form.is_tfd,
+      possui_ordem_judicial: !!form.possui_ordem_judicial,
+      motivo_excecao_bloqueio: form.motivo_excecao_bloqueio || "",
+      observacao_tfd_ordem_judicial: form.observacao_tfd_ordem_judicial || "",
+      data_marcacao_excecao: form.data_marcacao_excecao || null,
+      marcado_por: user?.id || null,
+
       
       // Novos campos
       sexo: form.sexo || "",
