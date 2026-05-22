@@ -1,6 +1,5 @@
 import { PageHeader } from '@/components/layout/PageHeader';
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { useSearchParams } from "react-router-dom";
 import { useData } from "@/contexts/DataContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/contexts/PermissionsContext";
@@ -170,7 +169,6 @@ const sessionStatusLabels: Record<string, string> = {
 };
 
 const Tratamentos: React.FC = () => {
-  const [searchParams] = useSearchParams();
   const {
     pacientes,
     funcionarios,
@@ -500,21 +498,6 @@ const Tratamentos: React.FC = () => {
     setCurrentPage(1);
   }, [filterProf, filterUnit, filterStatus, debouncedSearchTerm]);
 
-  // Handle direct creation from Prontuário
-  useEffect(() => {
-    const action = searchParams.get('action');
-    const pid = searchParams.get('pacienteId');
-    if (action === 'new_cycle' && pid && pacientes.length > 0) {
-      const pac = pacientes.find(p => p.id === pid);
-      if (pac) {
-        setNewCycle(prev => ({
-          ...prev,
-          patient_id: pac.id
-        }));
-        setOpenNew(true);
-      }
-    }
-  }, [searchParams, pacientes]);
 
   useEffect(() => {
     if (selectedCycle?.pts_id) {
