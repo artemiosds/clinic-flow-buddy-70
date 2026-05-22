@@ -1185,7 +1185,27 @@ const Agenda: React.FC = () => {
                         <BuscaPaciente
                           pacientes={pacientes}
                           value={newAg.pacienteId}
-                          onChange={(id) => handlePacienteSelecionadoNovoAg(id)}
+                          onChange={async (id) => {
+                            if (id) {
+                              const { data: pData } = await supabase
+                                .from("pacientes")
+                                .select("status_falta, is_tfd, possui_ordem_judicial, nome")
+                                .eq("id", id)
+                                .single();
+
+                              if (pData?.status_falta === "BLOQUEADO") {
+                                const isIsento = !!(pData.is_tfd || pData.possui_ordem_judicial);
+                                if (isIsento) {
+                                  toast.info(`Paciente ${pData.nome} possui exceção administrativa de bloqueio por TFD/Ordem Judicial. Agendamento permitido.`);
+                                } else {
+                                  toast.error(`Paciente ${pData.nome} está BLOQUEADO por faltas e não pode realizar novos agendamentos.`);
+                                  handlePacienteSelecionadoNovoAg("");
+                                  return;
+                                }
+                              }
+                            }
+                            handlePacienteSelecionadoNovoAg(id);
+                          }}
                         />
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <div className="flex-1 h-px bg-border" />
