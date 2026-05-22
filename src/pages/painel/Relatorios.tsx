@@ -913,7 +913,7 @@ ${dataRows}
     a.download = `relatorio_${type}_${new Date().toISOString().split('T')[0]}.xls`;
     a.click();
     URL.revokeObjectURL(url);
-  }, [filtered, porProfissional, faltasReport, pacientesReport, filaReport, unidades]);
+  }, [filtered, porProfissional, faltasReport, pacientesReport, filaReport, unidades, pacientesDB]);
 
   // === EXPORT PDF ===
   const exportPDF = useCallback(async (type: string) => {
