@@ -346,8 +346,9 @@ const Relatorios: React.FC = () => {
       const func = funcionarios.find(f => f.id === at.profissional_id);
       const key = at.profissional_id || at.profissional_nome;
       if (!map[key]) map[key] = { id: at.profissional_id, nome: at.profissional_nome, role: func?.role || 'profissional', profissao: func?.profissao || '', unidade: un?.nome || '', total: 0, concluidos: 0, faltas: 0, cancelados: 0, remarcados: 0, tempoTotal: 0, atendimentos: 0, retornos: 0, pacientesSet: new Set() };
-      if (at.duracao_minutos && at.duracao_minutos > 0 && at.status === 'finalizado') {
+      if (at.duracao_minutos && at.duracao_minutos > 0 && (at.status === 'finalizado' || at.status === 'concluido')) {
         map[key].tempoTotal += at.duracao_minutos;
+
         map[key].atendimentos++;
       }
       map[key].pacientesSet.add(at.paciente_id);
