@@ -523,7 +523,7 @@ const Relatorios: React.FC = () => {
     return Array.from(pacIds).map(pid => {
       const pac = allPacientes.find(p => p.id === pid);
       const ags = filtered.filter(a => a.pacienteId === pid);
-      const concluidos = ags.filter(a => a.status === 'concluido').length;
+      const concluidos = ags.filter(a => a.status === 'concluido' || (a.status as string) === 'finalizado').length;
       const faltas = ags.filter(a => a.status === 'falta').length;
       const retornos = ags.filter(a => a.tipo === 'Retorno').length;
       return {
