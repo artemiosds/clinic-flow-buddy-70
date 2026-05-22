@@ -246,7 +246,7 @@ const ConfigEspecialidades: React.FC = () => {
         tipos_prontuario: newField.tipos_prontuario.length > 0 ? newField.tipos_prontuario : [...DEFAULT_TIPOS],
         ajuda: newField.ajuda.trim() || undefined,
         valor_padrao: newField.valor_padrao.trim() || undefined,
-        opcoes: newField.tipo === 'select' ? newField.opcoes.split(',').map(o => o.trim()).filter(Boolean) : undefined,
+        opcoes: (newField.tipo === 'select' || newField.tipo === 'multiselect') ? newField.opcoes.split(',').map(o => o.trim()).filter(Boolean) : undefined,
       };
       
       const updated = especialidades.map(e => e.key === selected ? { ...e, campos: [...e.campos, campo] } : e);
