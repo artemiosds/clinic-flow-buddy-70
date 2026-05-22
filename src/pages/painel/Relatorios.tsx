@@ -961,6 +961,7 @@ const Relatorios: React.FC = () => {
         munMap[mun].pacientesSet.add(a.pacienteId);
       });
       const munRowsList = Object.values(munMap).sort((a, b) => b.totalPacientes - a.totalPacientes).map(m => [m.nome, m.totalPacientes.toString(), m.pacientesSet.size.toString(), m.atendimentos.toString()]);
+
       headers = ['Município (Naturalidade)', 'Total Pacientes', 'Pacientes Atendidos', 'Total Atendimentos'];
       rows = munRowsList;
     }
