@@ -482,7 +482,7 @@ const WorkspaceProntuario: React.FC = () => {
 
       const { data, error } = await supabase
         .from('prontuarios')
-        .upsert(acolhimentoData?.id ? { ...payload, id: acolhimentoData.id } : payload)
+        .upsert((acolhimentoData?.id ? { ...payload, id: acolhimentoData.id } : payload) as any)
         .select()
         .single();
 
