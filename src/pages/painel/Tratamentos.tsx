@@ -867,6 +867,11 @@ const Tratamentos: React.FC = () => {
         },
       });
 
+      // Recalcular status de falta após registro de falta
+      if (needsStatusRefresh) {
+        await supabase.rpc('recalcular_status_falta_paciente', { p_paciente_id: nextSession.patient_id });
+      }
+
       // Optimistic refresh: reload only this cycle's sessions + silent cycle stats refresh
       await Promise.all([
         loadSessionsForCycle(selectedCycle, true),
