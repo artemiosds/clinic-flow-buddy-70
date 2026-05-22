@@ -752,33 +752,33 @@ const EditCampoDialog: React.FC<EditCampoDialogProps> = ({ campo, outrosCampos, 
   return (
     <Dialog open={!!campo} onOpenChange={(o) => !o && onClose()}>
       <DialogContent 
-        className="max-w-3xl p-0 overflow-hidden border-none shadow-2xl bg-white dark:bg-slate-950 rounded-[28px]"
+        className="max-w-4xl p-0 overflow-hidden border-none shadow-2xl bg-white dark:bg-slate-950 rounded-[32px]"
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
-        <div className="flex flex-col h-[90vh] max-h-[850px]">
+        <div className="flex flex-col h-[90vh] max-h-[900px]">
           {/* Cabeçalho */}
-          <div className="px-10 py-8 border-b flex items-center justify-between sticky top-0 z-20 bg-white/95 dark:bg-slate-950/95 backdrop-blur-sm">
-            <div className="flex items-center gap-5">
-              <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center">
-                <Pencil className="w-7 h-7 text-primary" />
+          <div className="px-12 py-10 border-b flex items-center justify-between sticky top-0 z-20 bg-white dark:bg-slate-950">
+            <div className="flex items-center gap-6">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
+                <Pencil className="w-8 h-8 text-primary" />
               </div>
-              <div>
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white leading-tight">
+              <div className="space-y-1">
+                <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                   Editar Campo Personalizado
                 </h2>
-                <p className="text-[15px] text-slate-500 font-medium">
-                  Altere as configurações para este campo no prontuário.
+                <p className="text-base text-slate-500 font-medium">
+                  Altere as configurações do campo para refletir imediatamente no prontuário.
                 </p>
               </div>
             </div>
             <Button 
               variant="ghost" 
               size="icon" 
-              className="rounded-full h-10 w-10 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" 
+              className="rounded-full h-12 w-12 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" 
               onClick={onClose}
             >
-              <X className="w-6 h-6 text-slate-400" />
+              <X className="w-7 h-7 text-slate-400" />
             </Button>
           </div>
 
