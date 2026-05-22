@@ -1939,8 +1939,8 @@ const Tratamentos: React.FC = () => {
             )}
 
             <div className="flex gap-2">
-              {pacientesMap.get(selectedCycle.patient_id)?.is_tfd && <Badge variant="outline" className="text-[10px] border-warning text-warning">TFD</Badge>}
-              {pacientesMap.get(selectedCycle.patient_id)?.possui_ordem_judicial && <Badge variant="outline" className="text-[10px] border-warning text-warning">JUDICIAL</Badge>}
+              {selectedCycle.patient_id && pacientesMap.get(selectedCycle.patient_id)?.is_tfd && <Badge variant="outline" className="text-[10px] border-warning text-warning">TFD</Badge>}
+              {selectedCycle.patient_id && pacientesMap.get(selectedCycle.patient_id)?.possui_ordem_judicial && <Badge variant="outline" className="text-[10px] border-warning text-warning">JUDICIAL</Badge>}
             </div>
 
             {faltaStats?.alerta && (
