@@ -348,19 +348,22 @@ const Tratamentos: React.FC = () => {
   // Lazy load: sessions, extensions and agendamento map only for the selected cycle
   const loadSessionsForCycle = useCallback(async (cycle: TreatmentCycle, silent = true) => {
     try {
-      const [sData, eData] = await Promise.all([
+      const [sRes, eRes] = await Promise.all([
         supabase.from("treatment_sessions").select("*, agendamentos(falta_justificada, regularizada)").eq("cycle_id", cycle.id).order("session_number", { ascending: true }),
         supabase.from("treatment_extensions").select("*").eq("cycle_id", cycle.id).order("changed_at", { ascending: false }),
       ]);
-      const sessionsData = (sData || []) as TreatmentSession[];
+      
+      const sessionsData = (sRes.data || []) as TreatmentSession[];
+      const extensionsData = (eRes.data || []) as TreatmentExtension[];
+      
       // Replace only this cycle's sessions in the global state
       setSessions((prev) => {
-        const others = prev.filter((s) => s.cycle_id !== cycle.id);
+        const others = prev.filter((s) => s?.cycle_id !== cycle.id);
         return [...others, ...sessionsData];
       });
       setExtensions((prev) => {
-        const others = prev.filter((x) => x.cycle_id !== cycle.id);
-        return [...others, ...((eData.data || []) as TreatmentExtension[])];
+        const others = prev.filter((x) => x?.cycle_id !== cycle.id);
+        return [...others, ...extensionsData];
       });
       setLoadedSessionsCycleId(cycle.id);
 
@@ -474,7 +477,9 @@ const Tratamentos: React.FC = () => {
   // Pre-aggregate session counts per cycle (now sourced from server-side RPC)
   const sessionStatsByCycle = useMemo(() => {
     const stats = new Map<string, { pendingAg: number; faltas: number }>();
+    if (!cycles || !Array.isArray(cycles)) return stats;
     for (const c of cycles) {
+      if (!c?.id) continue;
       stats.set(c.id, { pendingAg: c.pending_ag || 0, faltas: c.faltas || 0 });
     }
     return stats;
@@ -512,16 +517,17 @@ const Tratamentos: React.FC = () => {
   }, [newCycle.patient_id, ptsList]);
 
   const faltaStats = useMemo(() => {
-    if (!selectedCycle) return null;
+    if (!selectedCycle || !sessions || !Array.isArray(sessions)) return null;
     const cycleSess = sessions
-      .filter((s) => s.cycle_id === selectedCycle.id)
-      .sort((a, b) => a.session_number - b.session_number);
-    const faltas = cycleSess.filter((s) => s.status === "paciente_faltou");
+      .filter((s) => s?.cycle_id === selectedCycle.id)
+      .sort((a, b) => (a?.session_number || 0) - (b?.session_number || 0));
+    const faltas = cycleSess.filter((s) => s?.status === "paciente_faltou");
     const faltasTotal = faltas.length;
 
     let maxConsecutivas = 0;
     let currentStreak = 0;
     for (const s of cycleSess) {
+      if (!s) continue;
       if (s.status === "paciente_faltou") {
         currentStreak++;
         maxConsecutivas = Math.max(maxConsecutivas, currentStreak);
@@ -539,8 +545,10 @@ const Tratamentos: React.FC = () => {
   }, [selectedCycle, sessions]);
 
   const cycleSessions = useMemo(() => {
-    if (!selectedCycle) return [];
-    return sessions.filter((s) => s.cycle_id === selectedCycle.id).sort((a, b) => a.session_number - b.session_number);
+    if (!selectedCycle || !sessions || !Array.isArray(sessions)) return [];
+    return sessions
+      .filter((s) => s?.cycle_id === selectedCycle.id)
+      .sort((a, b) => (a?.session_number || 0) - (b?.session_number || 0));
   }, [selectedCycle, sessions]);
 
   const cycleExtensions = useMemo(() => {
@@ -674,11 +682,11 @@ const Tratamentos: React.FC = () => {
     const prof = profissionais.find((p) => p.id === newCycle.professional_id);
     const pac = pacientes.find((p) => p.id === newCycle.patient_id);
 
-    const existingActive = cycles.find(
+    const existingActive = (cycles || []).find(
       (c) =>
-        c.patient_id === newCycle.patient_id &&
-        c.status === "em_andamento" &&
-        c.treatment_type === newCycle.treatment_type,
+        c?.patient_id === newCycle.patient_id &&
+        c?.status === "em_andamento" &&
+        c?.treatment_type === newCycle.treatment_type,
     );
     if (existingActive) {
       toast.error("Paciente já possui tratamento ativo deste tipo.");
@@ -1477,9 +1485,9 @@ const Tratamentos: React.FC = () => {
     if (addingIntermediate) return; // Double-click guard
     setAddingIntermediate(true);
     try {
-      const currentSessions = sessions
-        .filter((s) => s.cycle_id === selectedCycle.id)
-        .sort((a, b) => a.session_number - b.session_number);
+      const currentSessions = (sessions || [])
+        .filter((s) => s?.cycle_id === selectedCycle.id)
+        .sort((a, b) => (a?.session_number || 0) - (b?.session_number || 0));
 
       const insertPos = intermediateAfterSession; // insert after this session number
       const newTotal = selectedCycle.total_sessions + 1;
@@ -1560,7 +1568,7 @@ const Tratamentos: React.FC = () => {
       const newTotal = selectedCycle.total_sessions + extensionForm.new_sessions;
 
       // Determine weekdays from existing sessions or fallback
-      const existingSessions = sessions.filter(s => s.cycle_id === selectedCycle.id);
+      const existingSessions = (sessions || []).filter(s => s?.cycle_id === selectedCycle.id);
       const weekdaysFromExisting = [...new Set(existingSessions.map(s => {
         const d = new Date(s.scheduled_date + 'T12:00:00');
         const dow = d.getDay();
@@ -1832,19 +1840,20 @@ const Tratamentos: React.FC = () => {
   }
 
   if (selectedCycle) {
-    const pac = selectedCycle.patient_id ? pacientes.find((p) => p.id === selectedCycle.patient_id) : null;
-    const prof = selectedCycle.professional_id ? funcionarios.find((f) => f.id === selectedCycle.professional_id) : null;
-    const unidade = selectedCycle.unit_id ? unidades.find((u) => u.id === selectedCycle.unit_id) : null;
+    const pac = (selectedCycle.patient_id && Array.isArray(pacientes)) ? pacientes.find((p) => p?.id === selectedCycle.patient_id) : null;
+    const prof = (selectedCycle.professional_id && Array.isArray(funcionarios)) ? funcionarios.find((f) => f?.id === selectedCycle.professional_id) : null;
+    const unidade = (selectedCycle.unit_id && Array.isArray(unidades)) ? unidades.find((u) => u?.id === selectedCycle.unit_id) : null;
     const progressPct =
       selectedCycle.total_sessions > 0
         ? Math.round((selectedCycle.sessions_done / selectedCycle.total_sessions) * 100)
         : 0;
-    const pendingCount = cycleSessions.filter((s) => {
-      if (s.status !== "pendente_agendamento") return false;
+    const pendingCount = (cycleSessions || []).filter((s) => {
+      if (!s || s.status !== "pendente_agendamento") return false;
       const agKey = `${s.patient_id}|${s.professional_id}|${s.scheduled_date}`;
       return !agendamentoMap?.[agKey]; // only truly pending if no matching agendamento
     }).length;
-    const scheduledCount = cycleSessions.filter((s) => {
+    const scheduledCount = (cycleSessions || []).filter((s) => {
+      if (!s) return false;
       if (s.status === "agendada") return true;
       if (s.status === "pendente_agendamento") {
         const agKey = `${s.patient_id}|${s.professional_id}|${s.scheduled_date}`;
@@ -2114,7 +2123,7 @@ const Tratamentos: React.FC = () => {
                 )}
               </div>
 
-              {ptsVinculado.especialidades_envolvidas && ptsVinculado.especialidades_envolvidas.length > 0 && (
+              {ptsVinculado?.especialidades_envolvidas && Array.isArray(ptsVinculado.especialidades_envolvidas) && ptsVinculado.especialidades_envolvidas.length > 0 && (
                 <div>
                   <p className="text-xs text-muted-foreground font-semibold mb-1">Especialidades Envolvidas</p>
                   <div className="flex flex-wrap gap-1">
@@ -2177,7 +2186,8 @@ const Tratamentos: React.FC = () => {
             </div>
             <div className="max-h-[500px] overflow-y-auto border rounded-lg">
               <div className="space-y-2">
-                {cycleSessions.map((s) => {
+                {(cycleSessions || []).map((s) => {
+                  if (!s || !s.id) return null;
                   const isPendente = s.status === "pendente_agendamento";
                   const agKey = `${s.patient_id}|${s.professional_id}|${s.scheduled_date}`;
                   const matchedAg = isPendente ? agendamentoMap?.[agKey] : null;
