@@ -32,6 +32,7 @@ import TriagemDetalhada from '@/components/TriagemDetalhada';
 import DynamicProntuarioFields from '@/components/DynamicProntuarioFields';
 import SoapFieldsAdaptive from '@/components/SoapFieldsAdaptive';
 import PacienteDocumentos from '@/components/PacienteDocumentos';
+import { AcolhimentoForm } from '@/components/prontuario/AcolhimentoForm';
 import { CreatePTSModal } from '@/components/prontuario/CreatePTSModal';
 import { CreateCycleModal } from '@/components/prontuario/CreateCycleModal';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -96,6 +97,9 @@ const WorkspaceProntuario: React.FC = () => {
   const [sessaoDataLoading, setSessaoDataLoading] = useState(false);
   const [createPtsOpen, setCreatePtsOpen] = useState(false);
   const [createCycleOpen, setCreateCycleOpen] = useState(false);
+  const [acolhimentoData, setAcolhimentoData] = useState<any>(null);
+  const [loadingAcolhimento, setLoadingAcolhimento] = useState(false);
+  const [savingAcolhimento, setSavingAcolhimento] = useState(false);
 
   const [form, setForm] = useState<any>({
     tipo_registro: searchParams.get('tipo') === 'Retorno' ? 'retorno' : (searchParams.get('tipo') === 'Consulta' ? 'avaliacao_inicial' : (searchParams.get('tipo') || 'avaliacao_inicial')),
@@ -169,6 +173,29 @@ const WorkspaceProntuario: React.FC = () => {
     }
   };
 
+  const loadAcolhimento = async (patientId: string) => {
+    setLoadingAcolhimento(true);
+    try {
+      // Find the most recent mental health screening/acolhimento
+      const { data } = await supabase
+        .from('prontuarios')
+        .select('*')
+        .eq('paciente_id', patientId)
+        .eq('tipo_registro', 'acolhimento_mental')
+        .order('data_registro', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      if (data) {
+        setAcolhimentoData(data);
+      }
+    } catch (err) {
+      console.error("Error loading acolhimento:", err);
+    } finally {
+      setLoadingAcolhimento(false);
+    }
+  };
+
   const loadTriagem = async (agendamentoId: string) => {
     const { data } = await supabase.from("triage_records").select("*").eq("agendamento_id", agendamentoId).not("confirmado_em", "is", null).maybeSingle();
     if (data) setTriagem(data);
@@ -189,6 +216,7 @@ const WorkspaceProntuario: React.FC = () => {
           if (pData) setPacienteData(pData);
           loadSessaoData(targetPacienteId);
           loadEpisodios(targetPacienteId);
+          loadAcolhimento(targetPacienteId);
 
           const processProntuario = (p: any) => {
             if (p) {
@@ -431,6 +459,45 @@ const WorkspaceProntuario: React.FC = () => {
     }
   };
 
+  const handleSaveAcolhimento = async (dados: any) => {
+    if (!pacienteId && !form.paciente_id) {
+      toast.error("Selecione um paciente primeiro.");
+      return;
+    }
+    setSavingAcolhimento(true);
+    try {
+      const payload = {
+        paciente_id: pacienteId || form.paciente_id,
+        profissional_id: user?.id,
+        profissional_nome: user?.nome,
+        unidade_id: user?.unidadeId || '',
+        tipo_registro: 'acolhimento_mental',
+        data_registro: new Date().toISOString(),
+        data_atendimento: new Date().toISOString().split('T')[0],
+        hora_atendimento: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        dados_acolhimento: dados,
+        agendamento_id: agendamentoId || null,
+        status: 'finalizado'
+      };
+
+      const { data, error } = await supabase
+        .from('prontuarios')
+        .upsert(acolhimentoData?.id ? { ...payload, id: acolhimentoData.id } : payload)
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      setAcolhimentoData(data);
+      toast.success("Acolhimento salvo com sucesso!");
+    } catch (e: any) {
+      console.error("Erro ao salvar acolhimento:", e);
+      toast.error("Erro ao salvar acolhimento.");
+    } finally {
+      setSavingAcolhimento(false);
+    }
+  };
+
   if (loading) return <div className="flex items-center justify-center h-screen">Carregando...</div>;
 
   return (
@@ -481,6 +548,12 @@ const WorkspaceProntuario: React.FC = () => {
                   <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pb-2 border-b mb-4">
                     <div className="flex items-center justify-between mb-2">
                       <TabsList className="flex-1 justify-start h-12 bg-transparent gap-6 p-0 overflow-x-auto">
+                        <TabsTrigger value="acolhimento" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap">
+                          Acolhimento
+                          {acolhimentoData && (
+                            <Badge variant="secondary" className="ml-2 bg-green-100 text-green-700 hover:bg-green-100 border-green-200 py-0 px-1 text-[10px]">✓</Badge>
+                          )}
+                        </TabsTrigger>
                         <TabsTrigger value="evolution" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold">Evolução</TabsTrigger>
                         <TabsTrigger value="prescriptions" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap">Prescrições/Exames</TabsTrigger>
                         <TabsTrigger value="procedures" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap">Procedimentos/CID</TabsTrigger>
@@ -490,6 +563,25 @@ const WorkspaceProntuario: React.FC = () => {
                       </TabsList>
                     </div>
                   </div>
+
+                  <TabsContent value="acolhimento" className="mt-0 animate-in fade-in duration-300">
+                    <Card className="border-none shadow-none bg-transparent">
+                      <CardContent className="p-0">
+                        {loadingAcolhimento ? (
+                          <div className="flex items-center justify-center p-12 text-muted-foreground text-sm">Carregando acolhimento...</div>
+                        ) : (
+                          <AcolhimentoForm 
+                            pacienteId={pacienteId || form.paciente_id}
+                            profissionalId={user?.id}
+                            agendamentoId={agendamentoId || undefined}
+                            initialData={acolhimentoData}
+                            onSave={handleSaveAcolhimento}
+                            saving={savingAcolhimento}
+                          />
+                        )}
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
 
                   <TabsContent value="evolution" className="mt-0 space-y-6">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card p-4 rounded-xl border border-border/60 shadow-sm mb-6">
