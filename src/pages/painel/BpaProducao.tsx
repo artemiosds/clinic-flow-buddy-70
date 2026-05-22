@@ -130,9 +130,11 @@ const BpaProducao: React.FC = () => {
       console.log("[BPA] carregando competencia", { competencia, inicio, fim });
 
       // 1. Prontuários do período
-      let q = (supabase as any)
+      // Note: Usamos .select('*, ...') ou especificamos campos garantindo que existam.
+      // Removi o cast (supabase as any) onde possível e verifiquei o select.
+      let q = supabase
         .from('prontuarios')
-        .select('id, paciente_id, paciente_nome, profissional_id, profissional_nome, data_atendimento, unidade_id, custom_data, cid')
+        .select('id, paciente_id, paciente_nome, profissional_id, profissional_nome, data_atendimento, unidade_id, custom_data')
         .gte('data_atendimento', inicio)
         .lte('data_atendimento', fim)
         .order('data_atendimento', { ascending: false });
@@ -140,14 +142,17 @@ const BpaProducao: React.FC = () => {
       if (unidadeFiltro && unidadeFiltro !== 'all') q = q.eq('unidade_id', unidadeFiltro);
 
       const { data: prontuarios, error } = await q;
-      if (error) throw error;
+      if (error) {
+        console.error("[BPA] Erro ao buscar prontuarios:", error);
+        throw error;
+      }
       
       const statusFinalizados = ['finalizado', 'concluido', 'concluído', 'realizado', 'atendido', 'atendimento_finalizado', 'prontuario_finalizado', 'fechado'];
       
       const prots = (prontuarios || []).filter((p: any) => {
         const status = (p.custom_data?.status || '').toLowerCase();
         return !status || statusFinalizados.includes(status);
-      }) as (ProntuarioRow & { cid?: string })[];
+      }) as ProntuarioRow[];
 
       const pacIds = [...new Set(prots.map(p => p.paciente_id).filter(Boolean))];
 
@@ -235,14 +240,14 @@ const BpaProducao: React.FC = () => {
         if (!pront) return;
         const pacId = pront.paciente_id;
         const sigtapValido = (v.codigo_sigtap || '').replace(/\D/g, '').length === 10;
-        const cidValido = !!(v.cid || pront.cid);
+        const cidValido = !!(v.cid || (pront.custom_data?.cid));
 
         if (!herancaPac.has(pacId)) {
           if (sigtapValido || cidValido) {
             herancaPac.set(pacId, {
               sigtap: sigtapValido ? v.codigo_sigtap : '',
               nome: sigtapValido ? v.nome_procedimento : '',
-              cid: cidValido ? (v.cid || pront.cid) : '',
+              cid: cidValido ? (v.cid || (pront.custom_data?.cid as string)) : '',
               fonte_sigtap: sigtapValido ? 'outro_prontuario_mesmo_paciente' : '',
               fonte_cid: cidValido ? 'outro_prontuario_mesmo_paciente' : ''
             });
@@ -255,7 +260,7 @@ const BpaProducao: React.FC = () => {
             current.fonte_sigtap = 'outro_prontuario_mesmo_paciente';
           }
           if (cidValido && !current.cid) {
-            current.cid = v.cid || pront.cid;
+            current.cid = v.cid || (pront.custom_data?.cid as string);
             current.fonte_cid = 'outro_prontuario_mesmo_paciente';
           }
         }
@@ -328,8 +333,8 @@ const BpaProducao: React.FC = () => {
 
         if (procVinc) {
           // Caso 1: Procedimento diretamente no prontuário
-          let finalCid = procVinc.cid || pront.cid;
-          let fonteCid: LinhaBPA["fonte_cid"] = procVinc.cid ? "prontuario" : (pront.cid ? "atendimento" : undefined);
+          let finalCid = procVinc.cid || (pront.custom_data?.cid as string);
+          let fonteCid: LinhaBPA["fonte_cid"] = procVinc.cid ? "prontuario" : (pront.custom_data?.cid ? "atendimento" : undefined);
 
           // Se faltar CID, herança
           if (!finalCid && hPac?.cid) {
@@ -358,8 +363,8 @@ const BpaProducao: React.FC = () => {
           let finalProcNome = '';
           let fonteProc: LinhaBPA["fonte_procedimento"] = "prontuario";
 
-          let finalCid = pront.cid;
-          let fonteCid: LinhaBPA["fonte_cid"] = pront.cid ? "atendimento" : undefined;
+          let finalCid = pront.custom_data?.cid as string;
+          let fonteCid: LinhaBPA["fonte_cid"] = (pront.custom_data?.cid) ? "atendimento" : undefined;
 
           // Herança por prioridade
           if (hPac?.sigtap) {
