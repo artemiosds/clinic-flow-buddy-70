@@ -158,6 +158,7 @@ const ConfigEspecialidades: React.FC = () => {
     valor_padrao: '',
     tipos_prontuario: [...DEFAULT_TIPOS]
   });
+  const [optionInput, setOptionInput] = useState('');
   
   const [newEsp, setNewEsp] = useState({ label: '', profissoes: [] as string[] });
 
