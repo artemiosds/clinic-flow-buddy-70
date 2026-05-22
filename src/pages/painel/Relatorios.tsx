@@ -62,10 +62,14 @@ const Relatorios: React.FC = () => {
   const [filterTipo, setFilterTipo] = useState('all');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  
+  // Dados locais (do DB)
   const [atendimentosDB, setAtendimentosDB] = useState<AtendimentoDB[]>([]);
   const [filaDB, setFilaDB] = useState<FilaDB[]>([]);
   const [triagensDB, setTriagensDB] = useState<TriagemDB[]>([]);
   const [procedimentosDB, setProcedimentosDB] = useState<{ prontuario_id: string; procedimento_id: string; proc_nome?: string; prof_nome?: string; unidade_id?: string; data?: string }[]>([]);
+  const [pacientesDB, setPacientesDB] = useState<any[]>([]);
+  
   const [treatmentCycles, setTreatmentCycles] = useState<any[]>([]);
   const [treatmentSessions, setTreatmentSessions] = useState<any[]>([]);
   const [nursingEvals, setNursingEvals] = useState<any[]>([]);
@@ -102,12 +106,15 @@ const Relatorios: React.FC = () => {
     return Array.from(s).sort();
   }, [agendamentos]);
 
+
   const loadReportData = useCallback(async () => {
     try {
       // PERF: Se as datas forem alteradas, filtramos direto no banco para reduzir payload
       let qAt = supabase.from('atendimentos').select('id,agendamento_id,paciente_id,paciente_nome,profissional_id,profissional_nome,unidade_id,sala_id,setor,procedimento,data,hora_inicio,hora_fim,duracao_minutos,status');
       let qFila = supabase.from('fila_espera').select('id,paciente_id,paciente_nome,unidade_id,profissional_id,setor,prioridade,prioridade_perfil,status,posicao,hora_chegada,hora_chamada,criado_em');
       let qTriage = supabase.from('triage_records').select('id,agendamento_id,tecnico_id,criado_em,confirmado_em,iniciado_em');
+      let qPacientes = supabase.from('pacientes').select('id,nome,email,telefone,naturalidade,unidade_id');
+
       
       if (dateFrom) {
         qAt = qAt.gte('data', dateFrom);
@@ -191,6 +198,7 @@ const Relatorios: React.FC = () => {
         { data: nursingData },
         { data: multiData },
         { data: ptsDataResult },
+        { data: pacDataDB },
       ] = await Promise.all([
         qAt,
         qFila,
@@ -201,7 +209,9 @@ const Relatorios: React.FC = () => {
         qNursing,
         qMulti,
         qPts,
+        qPacientes,
       ]);
+
 
       if (atData) setAtendimentosDB(atData);
       if (filaData) setFilaDB(filaData);
@@ -221,11 +231,20 @@ const Relatorios: React.FC = () => {
       if (nursingData) setNursingEvals(nursingData);
       if (multiData) setMultiEvals(multiData);
       if (ptsDataResult) setPtsData(ptsDataResult);
-      setLastUpdated(new Date());
-    } catch (err) { console.error('Error loading report data:', err); }
-  }, [user]);
+      if (pacDataDB) {
+        setPacientesDB(pacDataDB);
+      }
 
-  useEffect(() => { loadReportData(); }, [loadReportData]);
+      setLastUpdated(new Date());
+    } catch (err) {
+      console.error('Error loading report data:', err);
+    }
+  }, [user, dateFrom, dateTo]);
+
+  useEffect(() => {
+    loadReportData();
+  }, [loadReportData]);
+
 
   // Realtime subscription for auto-refresh
   useRealtimeSubscription({
@@ -458,8 +477,9 @@ const Relatorios: React.FC = () => {
   const faltasReport = useMemo(() => {
     const faltaAgs = filtered.filter(a => a.status === 'falta');
     const porPaciente: Record<string, { nome: string; email: string; telefone: string; profissional: string; unidade: string; datas: string[]; total: number }> = {};
+    const allPacientes = [...pacientes, ...pacientesDB];
     faltaAgs.forEach(a => {
-      const pac = pacientes.find(p => p.id === a.pacienteId);
+      const pac = allPacientes.find(p => p.id === a.pacienteId);
       const un = unidades.find(u => u.id === a.unidadeId);
       const key = a.pacienteId || a.pacienteNome;
       if (!porPaciente[key]) porPaciente[key] = { nome: a.pacienteNome, email: pac?.email || '', telefone: pac?.telefone || '', profissional: a.profissionalNome, unidade: un?.nome || '', datas: [], total: 0 };
@@ -467,13 +487,15 @@ const Relatorios: React.FC = () => {
       porPaciente[key].total++;
     });
     return Object.values(porPaciente).sort((a, b) => b.total - a.total);
-  }, [filtered, pacientes, unidades]);
+  }, [filtered, pacientes, pacientesDB, unidades]);
+
 
   // === PATIENTS REPORT ===
   const pacientesReport = useMemo(() => {
     const pacIds = new Set(filtered.map(a => a.pacienteId));
+    const allPacientes = [...pacientes, ...pacientesDB];
     return Array.from(pacIds).map(pid => {
-      const pac = pacientes.find(p => p.id === pid);
+      const pac = allPacientes.find(p => p.id === pid);
       const ags = filtered.filter(a => a.pacienteId === pid);
       const concluidos = ags.filter(a => a.status === 'concluido').length;
       const faltas = ags.filter(a => a.status === 'falta').length;
@@ -490,7 +512,8 @@ const Relatorios: React.FC = () => {
         ultimaConsulta: ags.sort((a, b) => b.data.localeCompare(a.data))[0]?.data || '',
       };
     }).sort((a, b) => b.totalAgendamentos - a.totalAgendamentos);
-  }, [filtered, pacientes]);
+  }, [filtered, pacientes, pacientesDB]);
+
 
   // === FILA REPORT ===
   const filaReport = useMemo(() => {
@@ -819,7 +842,42 @@ const Relatorios: React.FC = () => {
         const un = unidades.find(u => u.id === f.unidade_id);
         return [f.posicao.toString(), f.paciente_nome, un?.nome || '', f.setor, f.prioridade, f.status, f.hora_chegada, f.hora_chamada || ''];
       });
+    } else if (type === 'municipios') {
+      const allPacientes = [...pacientes, ...pacientesDB];
+      const munMap: Record<string, { nome: string; totalPacientes: number; atendimentos: number; pacientesSet: Set<string> }> = {};
+      allPacientes.forEach(p => {
+        const mun = (p.naturalidade || 'Não informado').trim() || 'Não informado';
+        if (!munMap[mun]) munMap[mun] = { nome: mun, totalPacientes: 0, atendimentos: 0, pacientesSet: new Set() };
+        munMap[mun].totalPacientes++;
+      });
+      filtered.forEach(a => {
+        const pac = allPacientes.find(p => p.id === a.pacienteId);
+        const mun = (pac?.naturalidade || 'Não informado').trim() || 'Não informado';
+        if (!munMap[mun]) munMap[mun] = { nome: mun, totalPacientes: 0, atendimentos: 0, pacientesSet: new Set() };
+        munMap[mun].atendimentos++;
+        munMap[mun].pacientesSet.add(a.pacienteId);
+      });
+      headers = ['Município', 'Total Pacientes', 'Pacientes Atendidos', 'Total Atendimentos'];
+      rows = Object.values(munMap).sort((a, b) => b.totalPacientes - a.totalPacientes).map(m => [m.nome, m.totalPacientes.toString(), m.pacientesSet.size.toString(), m.atendimentos.toString()]);
+    } else if (type === 'municipios') {
+      const allPacientes = [...pacientes, ...pacientesDB];
+      const munMap: Record<string, { nome: string; totalPacientes: number; atendimentos: number; pacientesSet: Set<string> }> = {};
+      allPacientes.forEach(p => {
+        const mun = (p.naturalidade || 'Não informado').trim() || 'Não informado';
+        if (!munMap[mun]) munMap[mun] = { nome: mun, totalPacientes: 0, atendimentos: 0, pacientesSet: new Set() };
+        munMap[mun].totalPacientes++;
+      });
+      filtered.forEach(a => {
+        const pac = allPacientes.find(p => p.id === a.pacienteId);
+        const mun = (pac?.naturalidade || 'Não informado').trim() || 'Não informado';
+        if (!munMap[mun]) munMap[mun] = { nome: mun, totalPacientes: 0, atendimentos: 0, pacientesSet: new Set() };
+        munMap[mun].atendimentos++;
+        munMap[mun].pacientesSet.add(a.pacienteId);
+      });
+      headers = ['Município', 'Total Pacientes', 'Pacientes Atendidos', 'Total Atendimentos'];
+      rows = Object.values(munMap).sort((a, b) => b.totalPacientes - a.totalPacientes).map(m => [m.nome, m.totalPacientes.toString(), m.pacientesSet.size.toString(), m.atendimentos.toString()]);
     }
+
 
     const csv = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(';')).join('\n');
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
@@ -827,7 +885,8 @@ const Relatorios: React.FC = () => {
     const a = document.createElement('a');
     a.href = url; a.download = filename; a.click();
     URL.revokeObjectURL(url);
-  }, [filtered, porProfissional, faltasReport, pacientesReport, filaReport, unidades, filteredAtendimentos]);
+
+  }, [filtered, porProfissional, faltasReport, pacientesReport, filaReport, unidades, filteredAtendimentos, pacientesDB]);
 
   // === EXPORT EXCEL (XML Spreadsheet) ===
   const exportExcel = useCallback((type: string) => {
@@ -855,7 +914,27 @@ const Relatorios: React.FC = () => {
         const un = unidades.find(u => u.id === f.unidade_id);
         return [f.posicao.toString(), f.paciente_nome, un?.nome || '', f.setor, f.prioridade, f.status, f.hora_chegada];
       });
+    } else if (type === 'municipios') {
+      const allPacientes = [...pacientes, ...pacientesDB];
+      const munMap: Record<string, { nome: string; totalPacientes: number; atendimentos: number; pacientesSet: Set<string> }> = {};
+      allPacientes.forEach(p => {
+        const mun = (p.naturalidade || 'Não informado').trim() || 'Não informado';
+        if (!munMap[mun]) munMap[mun] = { nome: mun, totalPacientes: 0, atendimentos: 0, pacientesSet: new Set() };
+        munMap[mun].totalPacientes++;
+      });
+      filtered.forEach(a => {
+        const pac = allPacientes.find(p => p.id === a.pacienteId);
+        const mun = (pac?.naturalidade || 'Não informado').trim() || 'Não informado';
+        if (!munMap[mun]) munMap[mun] = { nome: mun, totalPacientes: 0, atendimentos: 0, pacientesSet: new Set() };
+        munMap[mun].atendimentos++;
+        munMap[mun].pacientesSet.add(a.pacienteId);
+      });
+      const munRowsList = Object.values(munMap).sort((a, b) => b.totalPacientes - a.totalPacientes).map(m => [m.nome, m.totalPacientes.toString(), m.pacientesSet.size.toString(), m.atendimentos.toString()]);
+      headers = ['Município (Naturalidade)', 'Total Pacientes', 'Pacientes Atendidos', 'Total Atendimentos'];
+      rows = munRowsList;
     }
+
+
 
     // Build XML Spreadsheet (Excel-compatible)
     const escXml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -890,7 +969,7 @@ ${dataRows}
     a.download = `relatorio_${type}_${new Date().toISOString().split('T')[0]}.xls`;
     a.click();
     URL.revokeObjectURL(url);
-  }, [filtered, porProfissional, faltasReport, pacientesReport, filaReport, unidades]);
+  }, [filtered, porProfissional, faltasReport, pacientesReport, filaReport, unidades, pacientesDB]);
 
   // === EXPORT PDF ===
   const exportPDF = useCallback(async (type: string) => {
@@ -967,9 +1046,32 @@ ${dataRows}
     if (!body || !body.trim()) {
       toast.error('Não há dados para exportar', { description: 'Ajuste os filtros e tente novamente.' });
       return;
+    } else if (type === 'municipios') {
+      const allPacientes = [...pacientes, ...pacientesDB];
+      const munMap: Record<string, { nome: string; totalPacientes: number; atendimentos: number; pacientesSet: Set<string> }> = {};
+      allPacientes.forEach(p => {
+        const mun = (p.naturalidade || 'Não informado').trim() || 'Não informado';
+        if (!munMap[mun]) munMap[mun] = { nome: mun, totalPacientes: 0, atendimentos: 0, pacientesSet: new Set() };
+        munMap[mun].totalPacientes++;
+      });
+      filtered.forEach(a => {
+        const pac = allPacientes.find(p => p.id === a.pacienteId);
+        const mun = (pac?.naturalidade || 'Não informado').trim() || 'Não informado';
+        if (!munMap[mun]) munMap[mun] = { nome: mun, totalPacientes: 0, atendimentos: 0, pacientesSet: new Set() };
+        munMap[mun].atendimentos++;
+        munMap[mun].pacientesSet.add(a.pacienteId);
+      });
+      const munRows = Object.values(munMap).sort((a, b) => b.totalPacientes - a.totalPacientes).map(m =>
+        `<tr><td>${m.nome}</td><td style="text-align:center">${m.totalPacientes}</td><td style="text-align:center">${m.pacientesSet.size}</td><td style="text-align:center">${m.atendimentos}</td></tr>`
+      ).join('');
+      body = `
+        <h2>Relatório Quantitativo por Município</h2>
+        <table><thead><tr><th>Município (Naturalidade)</th><th>Total Pacientes</th><th>Pacientes Atendidos</th><th>Total Atendimentos</th></tr></thead><tbody>${munRows}</tbody>
+        <tfoot><tr style="font-weight:700;background:#f1f5f9;"><td>TOTAL</td><td style="text-align:center">${Object.values(munMap).reduce((acc, m) => acc + m.totalPacientes, 0)}</td><td style="text-align:center">${Object.values(munMap).reduce((acc, m) => acc + m.pacientesSet.size, 0)}</td><td style="text-align:center">${Object.values(munMap).reduce((acc, m) => acc + m.atendimentos, 0)}</td></tr></tfoot></table>`;
     }
 
-    const titleMap: Record<string, string> = { geral: 'Relatório Geral', agendamentos: 'Relatório de Agendamentos', detalhado: 'Relatório Detalhado', produtividade: 'Relatório de Produtividade', faltas: 'Relatório de Faltas', pacientes: 'Relatório de Pacientes', fila: 'Relatório de Fila de Espera' };
+
+    const titleMap: Record<string, string> = { geral: 'Relatório Geral', agendamentos: 'Relatório de Agendamentos', detalhado: 'Relatório Detalhado', produtividade: 'Relatório de Produtividade', faltas: 'Relatório de Faltas', pacientes: 'Relatório de Pacientes', fila: 'Relatório de Fila de Espera', municipios: 'Relatório por Município' };
 
     setPrinting(type);
     const toastId = toast.loading('Gerando documento…');
@@ -1164,6 +1266,7 @@ ${dataRows}
           <Button variant="outline" size="sm" className="hover:bg-accent/50" onClick={() => exportExcel(activeTab === 'geral' ? 'agendamentos' : activeTab)}>
             <Download className="w-4 h-4 mr-1" />Excel
           </Button>
+
           <Button variant="outline" size="sm" className="hover:bg-accent/50" onClick={() => exportPDF(activeTab)} disabled={printing !== null}>
             <Printer className="w-4 h-4 mr-1" />{printing === activeTab ? 'Preparando…' : 'Imprimir'}
           </Button>
@@ -1261,7 +1364,9 @@ ${dataRows}
             { value: 'pts_report', label: 'PTS' },
             { value: 'tratamentos', label: 'Tratamentos' },
             { value: 'detalhado', label: 'Detalhado' },
+            { value: 'municipios', label: '🏙️ Municípios' },
             { value: 'mapa', label: '📍 Mapa Atendimento' },
+
           ].map(tab => (
             <button
               key={tab.value}
@@ -2273,9 +2378,140 @@ ${dataRows}
               </Card>
             )}
           </div>
-        </TabsContent>
+         </TabsContent>
+ 
+         {/* === MUNICÍPIOS === */}
+         <TabsContent value="municipios" className="space-y-5 mt-4">
+           {(() => {
+             const allPacientes = [...pacientes, ...pacientesDB];
+             const munMap: Record<string, { nome: string; totalPacientes: number; atendimentos: number; pacientesSet: Set<string> }> = {};
+             
+             // Agregação por naturalidade/município
+             allPacientes.forEach(p => {
+               const rawMun = p.naturalidade || 'Não informado';
+               const mun = rawMun.trim() || 'Não informado';
+               if (!munMap[mun]) munMap[mun] = { nome: mun, totalPacientes: 0, atendimentos: 0, pacientesSet: new Set() };
+               munMap[mun].totalPacientes++;
+             });
+ 
+             filtered.forEach(a => {
+               const pac = allPacientes.find(p => p.id === a.pacienteId);
+               const mun = (pac?.naturalidade || 'Não informado').trim() || 'Não informado';
+               if (!munMap[mun]) munMap[mun] = { nome: mun, totalPacientes: 0, atendimentos: 0, pacientesSet: new Set() };
+               munMap[mun].atendimentos++;
+               munMap[mun].pacientesSet.add(a.pacienteId);
+             });
+ 
+             const munData = Object.values(munMap)
+               .map(m => ({ ...m, pacientesAtendidos: m.pacientesSet.size }))
+               .sort((a, b) => b.totalPacientes - a.totalPacientes);
+ 
+             return (
+               <div className="space-y-6">
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                   <Card className="shadow-card border-0">
+                     <CardContent className="p-4 text-center">
+                       <p className="text-2xl font-bold text-primary">{munData.length}</p>
+                       <p className="text-xs text-muted-foreground uppercase tracking-wider">Municípios Atendidos</p>
+                     </CardContent>
+                   </Card>
+                   <Card className="shadow-card border-0">
+                     <CardContent className="p-4 text-center">
+                       <p className="text-2xl font-bold text-success">{munData[0]?.nome || '-'}</p>
+                       <p className="text-xs text-muted-foreground uppercase tracking-wider">Município Principal</p>
+                     </CardContent>
+                   </Card>
+                   <Card className="shadow-card border-0">
+                     <CardContent className="p-4 text-center">
+                       <p className="text-2xl font-bold text-info">{munData.filter(m => m.nome !== 'Não informado').length}</p>
+                       <p className="text-xs text-muted-foreground uppercase tracking-wider">Com Naturalidade Informada</p>
+                     </CardContent>
+                   </Card>
+                 </div>
+ 
+                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                   <ChartCard title="Pacientes por Município (Ranking)">
+                     <ResponsiveContainer width="100%" height={Math.max(300, munData.length * 30)}>
+                       <BarChart data={munData.slice(0, 15)} layout="vertical" margin={{ left: 10 }}>
+                         <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                         <XAxis type="number" tick={{ fontSize: 10 }} />
+                         <YAxis dataKey="nome" type="category" width={120} tick={{ fontSize: 10 }} />
+                         <Tooltip />
+                         <Bar dataKey="totalPacientes" name="Total Pacientes" fill="#3b82f6" radius={[0, 4, 4, 0]} />
+                       </BarChart>
+                     </ResponsiveContainer>
+                   </ChartCard>
+ 
+                   <ChartCard title="Atendimentos por Município">
+                     <ResponsiveContainer width="100%" height={Math.max(300, munData.length * 30)}>
+                       <BarChart data={munData.filter(m => m.atendimentos > 0).sort((a,b) => b.atendimentos - a.atendimentos).slice(0, 15)} layout="vertical" margin={{ left: 10 }}>
+                         <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                         <XAxis type="number" tick={{ fontSize: 10 }} />
+                         <YAxis dataKey="nome" type="category" width={120} tick={{ fontSize: 10 }} />
+                         <Tooltip />
+                         <Bar dataKey="atendimentos" name="Atendimentos" fill="#10b981" radius={[0, 4, 4, 0]} />
+                       </BarChart>
+                     </ResponsiveContainer>
+                   </ChartCard>
+                 </div>
+ 
+                 <Card className="shadow-card border-0">
+                   <CardContent className="p-5">
+                     <div className="flex items-center justify-between mb-4">
+                       <h3 className="font-semibold font-display">Tabela Quantitativa por Município</h3>
+                       <Button variant="outline" size="sm" onClick={() => {
+                         const headers = ['Município', 'Total Pacientes', 'Pacientes Atendidos', 'Total Atendimentos'];
+                         const rows = munData.map(m => [m.nome, m.totalPacientes.toString(), m.pacientesAtendidos.toString(), m.atendimentos.toString()]);
+                         const csv = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(';')).join('\n');
+                         const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+                         const url = URL.createObjectURL(blob);
+                         const a = document.createElement('a');
+                         a.href = url; a.download = `relatorio_municipios_${new Date().toISOString().split('T')[0]}.csv`; a.click();
+                         URL.revokeObjectURL(url);
+                       }}>
+                         <Download className="w-4 h-4 mr-1" /> Exportar CSV
+                       </Button>
+                     </div>
+                     <div className="overflow-x-auto">
+                       <table className="w-full text-sm">
+                         <thead>
+                           <tr className="bg-muted/50 border-b">
+                             <th className="text-left py-3 px-4 font-semibold">Município (Naturalidade)</th>
+                             <th className="text-center py-3 px-4 font-semibold">Total Pacientes</th>
+                             <th className="text-center py-3 px-4 font-semibold">Pacientes Atendidos*</th>
+                             <th className="text-center py-3 px-4 font-semibold">Total Atendimentos*</th>
+                           </tr>
+                         </thead>
+                         <tbody>
+                           {munData.map((m, idx) => (
+                             <tr key={m.nome} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
+                               <td className="py-3 px-4 font-medium">{m.nome}</td>
+                               <td className="py-3 px-4 text-center">{m.totalPacientes}</td>
+                               <td className="py-3 px-4 text-center">{m.pacientesAtendidos}</td>
+                               <td className="py-3 px-4 text-center font-semibold text-primary">{m.atendimentos}</td>
+                             </tr>
+                           ))}
+                         </tbody>
+                         <tfoot>
+                           <tr className="bg-muted/50 font-bold">
+                             <td className="py-3 px-4">TOTAL GERAL</td>
+                             <td className="py-3 px-4 text-center">{munData.reduce((acc, m) => acc + m.totalPacientes, 0)}</td>
+                             <td className="py-3 px-4 text-center">{munData.reduce((acc, m) => acc + m.pacientesAtendidos, 0)}</td>
+                             <td className="py-3 px-4 text-center">{munData.reduce((acc, m) => acc + m.atendimentos, 0)}</td>
+                           </tr>
+                         </tfoot>
+                       </table>
+                       <p className="text-[10px] text-muted-foreground mt-2 italic">* No período selecionado e filtros aplicados.</p>
+                     </div>
+                   </CardContent>
+                 </Card>
+               </div>
+             );
+           })()}
+         </TabsContent>
+ 
+         {/* === PTS === */}
 
-        {/* === PTS === */}
         <TabsContent value="pts_report" className="space-y-5 mt-4">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {[
