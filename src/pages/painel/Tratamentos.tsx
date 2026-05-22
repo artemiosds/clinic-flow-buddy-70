@@ -2385,7 +2385,7 @@ const Tratamentos: React.FC = () => {
                       })
                     : "Sem data";
                   const agKey = `${s.patient_id}|${s.professional_id}|${s.scheduled_date}`;
-                  const ag = agendamentoMap[agKey];
+                  const ag = agendamentoMap?.[agKey];
                   return (
                     <button
                       key={s.id}
