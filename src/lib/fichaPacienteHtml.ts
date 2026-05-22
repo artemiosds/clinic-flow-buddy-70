@@ -72,12 +72,12 @@ const racaLabel = (v?: string): string => {
   return map[n] || txt(v, 'Não declarado');
 };
 
-interface FieldItem { label: string; value: unknown; fallback?: string; emphasis?: boolean; }
+interface FieldItem { label: string; value: unknown; fallback?: string; emphasis?: boolean; manual?: boolean; }
 
 const field = (f: FieldItem): string => `
   <div class="ficha-field">
     <span class="ficha-field-label">${esc(f.label)}</span>
-    <span class="ficha-field-value${f.emphasis ? ' ficha-field-value--emphasis' : ''}">${esc(txt(f.value, f.fallback || '—'))}</span>
+    <span class="ficha-field-value${f.emphasis ? ' ficha-field-value--emphasis' : ''}${f.manual ? ' ficha-field-value--manual' : ''}">${esc(txt(f.value, f.fallback || (f.manual ? '' : '—')))}</span>
   </div>`;
 
 const grid = (cols: number | '3-wide', fields: FieldItem[]): string =>
@@ -104,12 +104,18 @@ export const FICHA_EXTRA_CSS = `
   .ficha-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .ficha-grid--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .ficha-grid--5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .ficha-grid--8 { grid-template-columns: repeat(8, minmax(0, 1fr)); }
   .ficha-grid--3-wide { grid-template-columns: 2fr 0.7fr 1fr; }
   .ficha-field { min-width: 0; padding: 2px 0; }
   .ficha-field-label { display: block; font-size: 7.5pt; font-weight: 700; text-transform: uppercase; color: #64748b; letter-spacing: 0.3px; }
-  .ficha-field-value { display: block; min-height: 14px; font-size: 10pt; font-weight: 500; color: #1a1a1a; overflow-wrap: anywhere; }
+  .ficha-field-value { display: block; min-height: 14px; font-size: 10pt; font-weight: 500; color: #1a1a1a; overflow-wrap: anywhere; border-bottom: 1px solid transparent; }
   .ficha-field-value--emphasis { font-weight: 700; font-size: 11pt; }
+  .ficha-field-value--manual { border-bottom: 1px solid #94a3b8; min-height: 20px; margin-top: 2px; }
   .ficha-text-block { min-height: 38px; border: 1px dashed #cbd5e1; border-radius: 4px; background: #f8fafc; padding: 8px 10px; color: #1a1a1a; white-space: pre-wrap; font-size: 10pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .ficha-manual-lines { margin-top: 8px; }
+  .ficha-line { border-bottom: 1px solid #cbd5e1; height: 24px; margin-bottom: 4px; }
+  .ficha-signature-block { margin-top: 40px; text-align: center; page-break-inside: avoid; break-inside: avoid; }
+  .ficha-signature-date { font-size: 10pt; color: #1a1a1a; margin-bottom: 35px; text-align: left; }
   .ficha-signature-block { margin-top: 28px; text-align: right; page-break-inside: avoid; break-inside: avoid; }
   .ficha-signature-date { font-size: 9pt; color: #475569; margin-bottom: 28px; }
   .ficha-signature-line { width: 280px; max-width: 100%; margin-left: auto; border-top: 1px solid #111827; }
@@ -230,30 +236,67 @@ export function buildFichaBody(
 
     body.push(section(
       '6. Triagem / sinais vitais',
-      grid(4, [
-        { label: 'PA', value: sv.pressao_arterial },
-        { label: 'FC', value: sv.frequencia_cardiaca },
-        { label: 'FR', value: sv.frequencia_respiratoria },
-        { label: 'Temperatura', value: sv.temperatura },
-        { label: 'SpO2', value: sv.saturacao },
-        { label: 'Peso', value: sv.peso },
-        { label: 'Altura', value: sv.altura },
-        { label: 'Glicemia', value: sv.glicemia },
+      grid(8, [
+        { label: 'PA', value: sv.pressao_arterial, manual: true },
+        { label: 'FC', value: sv.frequencia_cardiaca, manual: true },
+        { label: 'FR', value: sv.frequencia_respiratoria, manual: true },
+        { label: 'Temp', value: sv.temperatura, manual: true },
+        { label: 'SpO2', value: sv.saturacao, manual: true },
+        { label: 'Peso', value: sv.peso, manual: true },
+        { label: 'Altura', value: sv.altura, manual: true },
+        { label: 'Glicemia', value: sv.glicemia, manual: true },
       ]),
     ));
 
     body.push(section(
-      '7. Queixa principal',
-      `<div class="ficha-text-block">${esc(txt(dc.queixa_principal, 'Não informado'))}</div>`,
+      '7. Avaliação clínica',
+      grid(1, [
+        { label: 'Queixa principal', value: dc.queixa_principal, manual: true },
+      ]) +
+      `<div class="ficha-manual-lines">
+        <span class="ficha-field-label">Evolução clínica</span>
+        <div class="ficha-line"></div>
+        <div class="ficha-line"></div>
+        <div class="ficha-line"></div>
+      </div>`
+    ));
+
+    body.push(section(
+      '8. Conduta / prescrição',
+      grid(2, [
+        { label: 'Diagnóstico', value: dc.cid, manual: true },
+        { label: 'Retorno', value: '', manual: true },
+      ]) +
+      `<div class="ficha-manual-lines">
+        <span class="ficha-field-label">Medicação / Prescrição</span>
+        <div class="ficha-line"></div>
+        <div class="ficha-line"></div>
+      </div>
+      <div class="ficha-manual-lines">
+        <span class="ficha-field-label">Procedimentos</span>
+        <div class="ficha-line"></div>
+        <div class="ficha-line"></div>
+      </div>`
     ));
 
     if (opts.extraBeforeSignature) body.push(opts.extraBeforeSignature);
+
     body.push(`
       <div class="ficha-signature-block">
         <div class="ficha-signature-date">Oriximiná — PA, ____ / ____ / ________</div>
-        <div class="ficha-signature-line"></div>
-        <div class="ficha-signature-name">${esc(txt(data.profissional.nome, 'Profissional responsável'))}</div>
-        <div class="ficha-signature-meta">${esc(txt(data.profissional.cargo))} • ${esc(txt(data.profissional.registro))}</div>
+        
+        <div style="display: flex; justify-content: space-around; gap: 40px; margin-top: 20px;">
+          <div style="flex: 1;">
+            <div class="ficha-signature-line" style="margin: 0 auto; width: 300px;"></div>
+            <div class="ficha-signature-name">${esc(txt(data.profissional.nome, 'PROFISSIONAL RESPONSÁVEL'))}</div>
+          </div>
+          
+          <div style="flex: 1;">
+            <div class="ficha-signature-line" style="margin: 0 auto; width: 300px;"></div>
+            <div class="ficha-signature-name">REGISTRO PROFISSIONAL</div>
+            <div class="ficha-signature-meta">${esc(txt(data.profissional.registro))}</div>
+          </div>
+        </div>
       </div>
     `);
   } else if (opts.extraBeforeSignature) {
