@@ -154,17 +154,24 @@ export function buildInstitutionalCSS(
 <style>
   @page {
     size: ${size} ${orientation};
-    margin: ${margin};
-    @bottom-center { content: "Página " counter(page) " de " counter(pages); font-size: ${microPt}pt; color: #666; }
+    margin: 15mm 15mm 15mm 15mm;
   }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { font-family: ${fontFamily}; }
+  @page :first {
+    margin-top: 10mm;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body { 
+    font-family: ${fontFamily};
+    width: 100%;
+    height: 100%;
+  }
   body {
     font-family: ${fontFamily};
     padding: 0;
-    color: #1a1a1a;
+    color: #000;
     font-size: ${bodyPt}pt;
-    line-height: 1.5;
+    line-height: 1.3;
+    background: #fff;
   }
 
   /* HEADER — institutional */
