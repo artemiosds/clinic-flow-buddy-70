@@ -18,6 +18,7 @@ import { applyPhoneMask, formatPhoneForDisplay } from "@/lib/phoneUtils";
 import CustomFieldsRenderer from "@/components/CustomFieldsRenderer";
 import { useCustomFields } from "@/hooks/useCustomFields";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePermissions } from "@/contexts/PermissionsContext";
 import LogradouroDneAutocomplete from "@/components/LogradouroDneAutocomplete";
 import MunicipioIbgeCombobox from "@/components/MunicipioIbgeCombobox";
 import EspecialidadeCombobox from "@/components/EspecialidadeCombobox";
@@ -189,6 +190,7 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
   const [autoSaveStatus, setAutoSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const { user } = useAuth();
   const { resolved: customConfig, getNativeLabel, isNativeHidden } = useCustomFields("paciente", user?.unidadeId);
+  const { can } = usePermissions();
   const L = (name: string, fallback: string) => getNativeLabel(name, fallback);
   const H = (name: string) => isNativeHidden(name);
 
@@ -852,6 +854,91 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                     <Checkbox checked={form.isAutista} onCheckedChange={(v) => set("isAutista", !!v)} />
                     <span className="text-sm">{L("isAutista", "Autista (TEA)")}</span>
                   </label>
+                )}
+              </div>
+            </div>
+
+            {/* Seção de Exceções de Bloqueio Administrativo */}
+            <div className="mt-6 border-t pt-6">
+              <div className="flex items-center gap-2 mb-4">
+                <ShieldAlert className="w-5 h-5 text-warning" />
+                <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                  Condições Administrativas / Exceções de Bloqueio
+                </h3>
+              </div>
+              
+              <div className="bg-warning/5 border border-warning/20 rounded-lg p-4 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-center justify-between p-2 rounded-md bg-background border">
+                    <div className="flex items-center gap-2">
+                      <FileWarning className="w-4 h-4 text-warning" />
+                      <div className="flex flex-col">
+                        <Label htmlFor="is_tfd" className="cursor-pointer">Paciente TFD</Label>
+                        <span className="text-[10px] text-muted-foreground">Tratamento Fora de Domicílio</span>
+                      </div>
+                    </div>
+                    <Switch
+                      id="is_tfd"
+                      checked={form.is_tfd}
+                      onCheckedChange={(v) => {
+                        set("is_tfd", v);
+                        if (v && !form.data_marcacao_excecao) {
+                          set("data_marcacao_excecao", new Date().toISOString());
+                        }
+                      }}
+                      disabled={!can('pacientes', 'can_edit')}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between p-2 rounded-md bg-background border">
+                    <div className="flex items-center gap-2">
+                      <Gavel className="w-4 h-4 text-warning" />
+                      <div className="flex flex-col">
+                        <Label htmlFor="possui_ordem_judicial" className="cursor-pointer">Ordem Judicial</Label>
+                        <span className="text-[10px] text-muted-foreground">Paciente com liminar ou decisão</span>
+                      </div>
+                    </div>
+                    <Switch
+                      id="possui_ordem_judicial"
+                      checked={form.possui_ordem_judicial}
+                      onCheckedChange={(v) => {
+                        set("possui_ordem_judicial", v);
+                        if (v && !form.data_marcacao_excecao) {
+                          set("data_marcacao_excecao", new Date().toISOString());
+                        }
+                      }}
+                      disabled={!can('pacientes', 'can_edit')}
+                    />
+                  </div>
+                </div>
+
+                {(form.is_tfd || form.possui_ordem_judicial) && (
+                  <div className="grid grid-cols-1 gap-3 animate-in fade-in slide-in-from-top-2">
+                    <div>
+                      <Label>Motivo da Exceção *</Label>
+                      <Input
+                        value={form.motivo_excecao_bloqueio}
+                        onChange={(e) => set("motivo_excecao_bloqueio", (e.target.value || "").toUpperCase())}
+                        placeholder="EX: PACIENTE COM LIMINAR JUDICIAL Nº 123/2024"
+                        className={errors.motivo_excecao_bloqueio ? "border-destructive" : ""}
+                      />
+                      {errors.motivo_excecao_bloqueio && <p className="text-xs text-destructive mt-1">{errors.motivo_excecao_bloqueio}</p>}
+                    </div>
+                    <div>
+                      <Label>Observações da Exceção</Label>
+                      <Textarea
+                        value={form.observacao_tfd_ordem_judicial}
+                        onChange={(e) => set("observacao_tfd_ordem_judicial", e.target.value)}
+                        placeholder="Detalhes adicionais sobre a isenção de bloqueio..."
+                        rows={2}
+                      />
+                    </div>
+                    {form.data_marcacao_excecao && (
+                      <p className="text-[10px] text-muted-foreground italic">
+                        Exceção marcada em: {new Date(form.data_marcacao_excecao).toLocaleString('pt-BR')}
+                      </p>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
