@@ -11,6 +11,7 @@ import {
   Plus, Pencil, Trash2, Eye, EyeOff, GripVertical, Settings2, Type,
   Hash, Calendar, CheckSquare, List, AlignLeft, ArrowUp, ArrowDown, Lock,
   Phone, IdCard, Building2, MapPin, Mail, Link as LinkIcon, Clock, DollarSign, Paperclip,
+  CheckCircle, Sliders, Activity, Info, FileText, Image, PenTool, Table, Calculator, Layout,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useData } from '@/contexts/DataContext';
@@ -62,6 +63,17 @@ const FIELD_TYPE_LABELS: Record<CustomFieldType, { label: string; icon: React.El
   url: { label: 'URL', icon: LinkIcon, desc: 'Link externo' },
   currency: { label: 'Moeda', icon: DollarSign, desc: 'R$ 0,00' },
   file: { label: 'Arquivo', icon: Paperclip, desc: 'Upload' },
+  checklist: { label: 'Checklist', icon: CheckCircle, desc: 'Lista de tarefas' },
+  scale_numeric: { label: 'Escala Numérica', icon: Sliders, desc: 'Seletor 0-10' },
+  scale_eva: { label: 'Escala EVA', icon: Activity, desc: 'Escala de Dor' },
+  scale_functional: { label: 'Escala Funcional', icon: Sliders, desc: 'Avaliação Funcional' },
+  cid: { label: 'CID', icon: Info, desc: 'Busca CID-10' },
+  sigtap: { label: 'SIGTAP', icon: FileText, desc: 'Procedimentos SUS' },
+  image: { label: 'Imagem/Foto', icon: Image, desc: 'Upload de foto' },
+  signature: { label: 'Assinatura', icon: PenTool, desc: 'Desenho manual' },
+  table: { label: 'Tabela Simples', icon: Table, desc: 'Colunas e linhas' },
+  calculated: { label: 'Calculado', icon: Calculator, desc: 'Fórmula automática' },
+  separator: { label: 'Separador', icon: Layout, desc: 'Título de seção' },
 };
 
 const generateId = () => `cf_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -218,6 +230,22 @@ const ConfigPersonalizarCampos: React.FC = () => {
     validacao: {} as CustomFieldValidation,
     condicional: [] as CustomFieldCondition[],
     destaque: false,
+    largura: 100 as 25 | 50 | 75 | 100,
+    displayMode: 'block' as 'inline' | 'block',
+    rules: {
+      onlyFirstConsult: false,
+      onlyReturn: false,
+      onlyChild: false,
+      onlyElderly: false,
+      profiles: [] as string[],
+      unidades: [] as string[],
+    },
+    printSettings: {
+      visibleInProntuario: true,
+      editableInProntuario: true,
+      visibleInPrint: true,
+      restricted: false,
+    },
   });
   const { especialidades } = useEspecialidades();
   const TIPOS_PRONTUARIO = ['avaliacao_inicial', 'retorno', 'sessao', 'urgencia', 'procedimento'];
@@ -316,6 +344,22 @@ const ConfigPersonalizarCampos: React.FC = () => {
     validacao: {} as CustomFieldValidation,
     condicional: [] as CustomFieldCondition[],
     destaque: false,
+    largura: 100 as 25 | 50 | 75 | 100,
+    displayMode: 'block' as 'inline' | 'block',
+    rules: {
+      onlyFirstConsult: false,
+      onlyReturn: false,
+      onlyChild: false,
+      onlyElderly: false,
+      profiles: [] as string[],
+      unidades: [] as string[],
+    },
+    printSettings: {
+      visibleInProntuario: true,
+      editableInProntuario: true,
+      visibleInPrint: true,
+      restricted: false,
+    },
   });
 
   const openAddModal = () => {
@@ -342,6 +386,10 @@ const ConfigPersonalizarCampos: React.FC = () => {
       validacao: field.validacao || {},
       condicional: field.condicional || [],
       destaque: !!field.destaque,
+      largura: field.largura || 100,
+      displayMode: field.displayMode || 'block',
+      rules: field.rules || blankForm().rules,
+      printSettings: field.printSettings || blankForm().printSettings,
     });
     setModalOpen(true);
   };
@@ -368,7 +416,7 @@ const ConfigPersonalizarCampos: React.FC = () => {
       nome,
       rotulo: fieldForm.rotulo.trim(),
       tipo: fieldForm.tipo,
-      opcoes: ['select', 'checkbox', 'radio', 'radio'].includes(fieldForm.tipo) ? fieldForm.opcoes.filter(Boolean) : [],
+      opcoes: ['select', 'checkbox', 'radio', 'checklist'].includes(fieldForm.tipo) ? fieldForm.opcoes.filter(Boolean) : [],
       obrigatorio: fieldForm.obrigatorio,
       ativo: editingField?.ativo ?? true,
       ordem: editingField?.ordem ?? (screenConfig.fields.length + 1) * 10,
@@ -383,6 +431,10 @@ const ConfigPersonalizarCampos: React.FC = () => {
       condicional: fieldForm.condicional.length ? fieldForm.condicional : undefined,
       destaque: fieldForm.destaque || undefined,
       legacyNames: editingField?.legacyNames,
+      largura: fieldForm.largura,
+      displayMode: fieldForm.displayMode,
+      rules: fieldForm.rules,
+      printSettings: fieldForm.printSettings,
     };
 
     const newFields = editingField
