@@ -1264,9 +1264,9 @@ ${dataRows}
             <FileText className="w-4 h-4 mr-1" />{printing === activeTab ? 'Gerando…' : 'PDF'}
           </Button>
           <Button variant="outline" size="sm" className="hover:bg-accent/50" onClick={() => exportExcel(activeTab === 'geral' ? 'agendamentos' : activeTab)}>
-
             <Download className="w-4 h-4 mr-1" />Excel
           </Button>
+
           <Button variant="outline" size="sm" className="hover:bg-accent/50" onClick={() => exportPDF(activeTab)} disabled={printing !== null}>
             <Printer className="w-4 h-4 mr-1" />{printing === activeTab ? 'Preparando…' : 'Imprimir'}
           </Button>
