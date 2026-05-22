@@ -17,7 +17,9 @@ import {
   WEEKDAY_LABELS, 
   getMaxWeekdays, 
   isWeekdayFrequency, 
-  generateSessionDates 
+  generateSessionDates,
+  calculateTotalSessions,
+  buildBlockedRanges
 } from '@/lib/treatmentSessionGenerator';
 
 interface CreateCycleModalProps {
@@ -36,7 +38,7 @@ export const CreateCycleModal: React.FC<CreateCycleModalProps> = ({
   onSuccess
 }) => {
   const { user } = useAuth();
-  const { funcionarios, logAction } = useData();
+  const { funcionarios, logAction, bloqueios } = useData();
   const [saving, setSaving] = useState(false);
   const [ptsList, setPtsList] = useState<any[]>([]);
 
@@ -83,12 +85,16 @@ export const CreateCycleModal: React.FC<CreateCycleModalProps> = ({
 
     setSaving(true);
     try {
-      const sessions = generateSessionDates({
-        startDate: form.start_date,
-        frequency: form.frequency,
-        weekdays: form.weekdays,
-        durationMonths: form.duration_months
-      });
+      const totalSessions = calculateTotalSessions(form.frequency, form.duration_months, form.weekdays);
+      const blockedRanges = buildBlockedRanges(bloqueios, form.professional_id, form.unit_id);
+      
+      const sessions = generateSessionDates(
+        form.start_date,
+        form.frequency,
+        form.weekdays,
+        totalSessions,
+        blockedRanges
+      );
 
       if (sessions.length === 0) throw new Error('Não foi possível gerar as sessões.');
 
@@ -172,7 +178,7 @@ export const CreateCycleModal: React.FC<CreateCycleModalProps> = ({
                     <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {funcionarios.filter(f => f.tipo === 'profissional').map(f => (
+                    {funcionarios.filter(f => f.tipo === 'profissional' || f.role === 'profissional').map(f => (
                       <SelectItem key={f.id} value={f.id}>{f.nome} — {f.profissao}</SelectItem>
                     ))}
                   </SelectContent>
