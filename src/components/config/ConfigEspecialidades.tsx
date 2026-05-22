@@ -10,9 +10,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
-import { Plus, Pencil, Trash2, Loader2, ChevronUp, ChevronDown, Eye, Copy, GripVertical, Sparkles } from 'lucide-react';
+import { 
+  Plus, Pencil, Trash2, Loader2, ChevronUp, ChevronDown, Eye, Copy, 
+  GripVertical, Sparkles, X, Layout, Settings2, HelpCircle, 
+  AlertCircle, CheckCircle2, Monitor, Save
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { TIPO_REGISTRO_LABELS } from '@/utils/labels';
+import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors,
   type DragEndEvent,
@@ -130,7 +138,18 @@ const ConfigEspecialidades: React.FC = () => {
   const [copyDialog, setCopyDialog] = useState<{ campo: CampoEspecialidade; targets: string[] } | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewTipo, setPreviewTipo] = useState<TipoProntuario>('avaliacao');
-  const [newField, setNewField] = useState({ label: '', tipo: 'textarea', obrigatorio: false, opcoes: '' });
+  const [isSaving, setIsSaving] = useState(false);
+  
+  const [newField, setNewField] = useState({ 
+    label: '', 
+    tipo: 'textarea', 
+    obrigatorio: false, 
+    opcoes: '',
+    ajuda: '',
+    valor_padrao: '',
+    tipos_prontuario: [...DEFAULT_TIPOS]
+  });
+  
   const [newEsp, setNewEsp] = useState({ label: '', profissoes: [] as string[] });
 
   const sensors = useSensors(
@@ -187,28 +206,59 @@ const ConfigEspecialidades: React.FC = () => {
     reorderCampos(arrayMove(ids, oldIdx, newIdx));
   };
 
-  const saveEditedCampo = (updated: CampoEspecialidade) => {
-    updateEsp(e => ({ ...e, campos: e.campos.map(c => c.id === updated.id ? updated : c) }));
-    setEditingCampo(null);
+  const saveEditedCampo = async (updated: CampoEspecialidade) => {
+    setIsSaving(true);
+    try {
+      updateEsp(e => ({ ...e, campos: e.campos.map(c => c.id === updated.id ? updated : c) }));
+      setEditingCampo(null);
+      toast.success('Campo atualizado');
+    } catch (error) {
+      toast.error('Erro ao atualizar campo');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const addCampoEsp = () => {
-    if (!newField.label.trim() || !esp) return;
-    const campo: CampoEspecialidade = {
-      id: `custom_${Date.now()}`,
-      key: `custom_${Date.now()}`,
-      label: newField.label.trim(),
-      tipo: newField.tipo,
-      obrigatorio: newField.obrigatorio,
-      habilitado: true,
-      isBuiltin: false,
-      order: esp.campos.length + 1,
-      tipos_prontuario: [...DEFAULT_TIPOS],
-      opcoes: newField.tipo === 'select' ? newField.opcoes.split(',').map(o => o.trim()).filter(Boolean) : undefined,
-    };
-    updateEsp(e => ({ ...e, campos: [...e.campos, campo] }));
-    setAddFieldDialog(false);
-    setNewField({ label: '', tipo: 'textarea', obrigatorio: false, opcoes: '' });
+  const addCampoEsp = async () => {
+    if (!newField.label.trim() || !esp || isSaving) return;
+    
+    setIsSaving(true);
+    try {
+      const campo: CampoEspecialidade = {
+        id: `custom_${Date.now()}`,
+        key: `custom_${Date.now()}`,
+        label: newField.label.trim(),
+        tipo: newField.tipo,
+        obrigatorio: newField.obrigatorio,
+        habilitado: true,
+        isBuiltin: false,
+        order: esp.campos.length + 1,
+        tipos_prontuario: newField.tipos_prontuario.length > 0 ? newField.tipos_prontuario : [...DEFAULT_TIPOS],
+        ajuda: newField.ajuda.trim() || undefined,
+        valor_padrao: newField.valor_padrao.trim() || undefined,
+        opcoes: newField.tipo === 'select' ? newField.opcoes.split(',').map(o => o.trim()).filter(Boolean) : undefined,
+      };
+      
+      const updated = especialidades.map(e => e.key === selected ? { ...e, campos: [...e.campos, campo] } : e);
+      await save(updated);
+      
+      setAddFieldDialog(false);
+      setNewField({ 
+        label: '', 
+        tipo: 'textarea', 
+        obrigatorio: false, 
+        opcoes: '',
+        ajuda: '',
+        valor_padrao: '',
+        tipos_prontuario: [...DEFAULT_TIPOS]
+      });
+      toast.success('Campo adicionado com sucesso');
+    } catch (error) {
+      console.error('Erro ao adicionar campo:', error);
+      toast.error('Erro ao salvar o campo');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const deleteCampo = (campoId: string) => {
@@ -328,35 +378,334 @@ const ConfigEspecialidades: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Add field dialog */}
-      <Dialog open={addFieldDialog} onOpenChange={setAddFieldDialog}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Adicionar Campo para {esp?.label}</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <div><Label>Nome do campo</Label><Input value={newField.label} onChange={e => setNewField(p => ({ ...p, label: e.target.value }))} /></div>
-            <div><Label>Tipo</Label>
-              <Select value={newField.tipo} onValueChange={v => setNewField(p => ({ ...p, tipo: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="textarea">Texto longo</SelectItem>
-                  <SelectItem value="text">Texto</SelectItem>
-                  <SelectItem value="number">Número</SelectItem>
-                  <SelectItem value="slider">Slider (0-10)</SelectItem>
-                  <SelectItem value="select">Seleção</SelectItem>
-                  <SelectItem value="date">Data</SelectItem>
-                  <SelectItem value="checkbox">Checkbox</SelectItem>
-                </SelectContent>
-              </Select>
+      {/* Novo Modal Adicionar Campo (UX Avançada) */}
+      <Dialog open={addFieldDialog} onOpenChange={(open) => {
+        if (!isSaving) setAddFieldDialog(open);
+      }}>
+        <DialogContent className="max-w-4xl p-0 overflow-hidden border-none shadow-2xl bg-background rounded-xl">
+          <div className="flex h-[85vh] max-h-[700px] overflow-hidden">
+            {/* Sidebar de Configuração */}
+            <div className="w-1/2 flex flex-col border-r bg-muted/5">
+              <div className="p-6 border-b bg-background/50 backdrop-blur-sm flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold font-display tracking-tight flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-primary animate-pulse" />
+                    Novo Campo
+                  </h2>
+                  <p className="text-xs text-muted-foreground mt-0.5">Configuração avançada para {esp?.label}</p>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="rounded-full h-8 w-8 hover:bg-muted" 
+                  onClick={() => !isSaving && setAddFieldDialog(false)}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+
+              <ScrollArea className="flex-1 p-6">
+                <Tabs defaultValue="geral" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2 mb-6 bg-muted/50 p-1">
+                    <TabsTrigger value="geral" className="text-xs flex items-center gap-2 py-2">
+                      <Layout className="w-3.5 h-3.5" /> Geral
+                    </TabsTrigger>
+                    <TabsTrigger value="avancado" className="text-xs flex items-center gap-2 py-2">
+                      <Settings2 className="w-3.5 h-3.5" /> Avançado
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="geral" className="space-y-5 mt-0 animate-in fade-in slide-in-from-left-2 duration-300">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                        Nome do Campo
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <HelpCircle className="w-3 h-3 cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="text-xs">O nome que aparecerá no prontuário</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </Label>
+                      <Input 
+                        placeholder="Ex: Histórico da Doença Atual" 
+                        className="bg-background border-border/60 focus:ring-primary/20 transition-all h-10"
+                        value={newField.label} 
+                        onChange={e => setNewField(p => ({ ...p, label: e.target.value }))} 
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Tipo de Entrada</Label>
+                        <Select value={newField.tipo} onValueChange={v => setNewField(p => ({ ...p, tipo: v }))}>
+                          <SelectTrigger className="bg-background border-border/60 h-10">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="textarea">Texto longo</SelectItem>
+                            <SelectItem value="text">Texto curto</SelectItem>
+                            <SelectItem value="number">Número</SelectItem>
+                            <SelectItem value="slider">Escala (0-10)</SelectItem>
+                            <SelectItem value="select">Seleção fixa</SelectItem>
+                            <SelectItem value="date">Data</SelectItem>
+                            <SelectItem value="checkbox">Caixa de seleção</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="flex flex-col justify-end space-y-3 pb-2">
+                        <div className="flex items-center justify-between rounded-lg border border-border/40 bg-muted/20 px-3 py-2 transition-colors hover:bg-muted/30">
+                          <Label className="text-xs font-medium cursor-pointer" htmlFor="obrigatorio">Obrigatório</Label>
+                          <Switch 
+                            id="obrigatorio"
+                            checked={newField.obrigatorio} 
+                            onCheckedChange={v => setNewField(p => ({ ...p, obrigatorio: v }))} 
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {newField.tipo === 'select' && (
+                      <div className="space-y-2 animate-in fade-in zoom-in-95 duration-200">
+                        <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Opções de Seleção</Label>
+                        <Textarea 
+                          placeholder="Opção 1, Opção 2, Opção 3..." 
+                          className="min-h-[80px] bg-background border-border/60 text-sm"
+                          value={newField.opcoes} 
+                          onChange={e => setNewField(p => ({ ...p, opcoes: e.target.value }))} 
+                        />
+                        <p className="text-[10px] text-muted-foreground">Separe cada opção por vírgula.</p>
+                      </div>
+                    )}
+
+                    <div className="space-y-2 pt-2">
+                      <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Onde este campo aparece?</Label>
+                      <div className="grid grid-cols-2 gap-2 mt-1">
+                        {TIPOS_PRONTUARIO.map(t => (
+                          <div 
+                            key={t.key} 
+                            className={`flex items-center gap-2 p-2.5 rounded-lg border transition-all cursor-pointer ${
+                              newField.tipos_prontuario.includes(t.key) 
+                                ? 'bg-primary/5 border-primary/30' 
+                                : 'bg-background border-border/40 hover:border-border/80'
+                            }`}
+                            onClick={() => {
+                              const cur = newField.tipos_prontuario;
+                              setNewField(p => ({
+                                ...p,
+                                tipos_prontuario: cur.includes(t.key) 
+                                  ? cur.filter(x => x !== t.key) 
+                                  : [...cur, t.key]
+                              }));
+                            }}
+                          >
+                            <Checkbox 
+                              checked={newField.tipos_prontuario.includes(t.key)} 
+                              onCheckedChange={() => {}} // Handle on parent div for better UX
+                            />
+                            <span className="text-xs font-medium">{t.short}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="avancado" className="space-y-5 mt-0 animate-in fade-in slide-in-from-right-2 duration-300">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Texto de Ajuda / Placeholder</Label>
+                      <Input 
+                        placeholder="Ex: Descreva detalhadamente..." 
+                        className="bg-background border-border/60 h-10"
+                        value={newField.ajuda} 
+                        onChange={e => setNewField(p => ({ ...p, ajuda: e.target.value }))} 
+                      />
+                      <p className="text-[10px] text-muted-foreground">Dicas para o profissional ao preencher este campo.</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Valor Padrão</Label>
+                      <Input 
+                        placeholder="Valor inicial do campo" 
+                        className="bg-background border-border/60 h-10"
+                        value={newField.valor_padrao} 
+                        onChange={e => setNewField(p => ({ ...p, valor_padrao: e.target.value }))} 
+                      />
+                    </div>
+
+                    <div className="p-4 rounded-xl border border-dashed border-primary/20 bg-primary/5 space-y-2">
+                      <div className="flex items-center gap-2 text-primary">
+                        <AlertCircle className="w-4 h-4" />
+                        <span className="text-xs font-bold uppercase tracking-widest">Informação Importante</span>
+                      </div>
+                      <p className="text-[11px] leading-relaxed text-muted-foreground">
+                        Campos personalizados são vinculados à especialidade <strong>{esp?.label}</strong>. 
+                        Qualquer alteração feita aqui refletirá instantaneamente para todos os profissionais desta especialidade.
+                      </p>
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </ScrollArea>
+
+              <div className="p-6 border-t bg-background/50 backdrop-blur-sm flex items-center justify-between gap-4">
+                <Button 
+                  variant="ghost" 
+                  className="flex-1 font-medium h-11"
+                  onClick={() => !isSaving && setAddFieldDialog(false)}
+                  disabled={isSaving}
+                >
+                  Descartar
+                </Button>
+                <Button 
+                  className="flex-[2] h-11 shadow-lg shadow-primary/20 font-bold transition-all hover:scale-[1.02] active:scale-95"
+                  onClick={addCampoEsp}
+                  disabled={!newField.label.trim() || isSaving}
+                >
+                  {isSaving ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Save className="w-4 h-4 mr-2" />
+                  )}
+                  {isSaving ? 'Salvando...' : 'Salvar Campo'}
+                </Button>
+              </div>
             </div>
-            {newField.tipo === 'select' && (
-              <div><Label>Opções (vírgula)</Label><Input value={newField.opcoes} onChange={e => setNewField(p => ({ ...p, opcoes: e.target.value }))} /></div>
-            )}
-            <div className="flex items-center gap-2"><Switch checked={newField.obrigatorio} onCheckedChange={v => setNewField(p => ({ ...p, obrigatorio: v }))} /><Label>Obrigatório</Label></div>
+
+            {/* Preview Panel - Visual Feedback em Tempo Real */}
+            <div className="w-1/2 bg-muted/30 flex flex-col relative overflow-hidden">
+              {/* Background decorative elements */}
+              <div className="absolute top-[-10%] right-[-10%] w-64 h-64 bg-primary/5 rounded-full blur-3xl -z-0"></div>
+              <div className="absolute bottom-[-10%] left-[-10%] w-48 h-48 bg-primary/10 rounded-full blur-3xl -z-0"></div>
+
+              <div className="p-6 border-b bg-background/30 flex items-center gap-2 z-10">
+                <div className="p-1.5 bg-primary/10 rounded-lg">
+                  <Monitor className="w-4 h-4 text-primary" />
+                </div>
+                <h3 className="text-sm font-bold tracking-tight">Preview do Prontuário</h3>
+                <div className="ml-auto flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Live</span>
+                </div>
+              </div>
+
+              <div className="flex-1 flex flex-col items-center justify-center p-8 z-10">
+                <div className="w-full max-w-sm bg-background rounded-2xl shadow-xl border border-border/60 overflow-hidden transform transition-all duration-500 hover:shadow-2xl">
+                  {/* Mock UI do Prontuário */}
+                  <div className="p-3 border-b bg-muted/10 flex items-center gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full bg-destructive/40"></div>
+                    <div className="w-2.5 h-2.5 rounded-full bg-amber-400/40"></div>
+                    <div className="w-2.5 h-2.5 rounded-full bg-green-500/40"></div>
+                    <div className="ml-auto w-16 h-1.5 bg-muted-foreground/20 rounded-full"></div>
+                  </div>
+
+                  <div className="p-6 space-y-6">
+                    <div className="space-y-3">
+                      <div className="h-4 w-32 bg-muted-foreground/10 rounded animate-pulse"></div>
+                      <div className="h-10 w-full border border-dashed border-border/60 rounded-lg flex items-center px-3">
+                        <span className="text-[10px] text-muted-foreground/40 italic">Campo existente...</span>
+                      </div>
+                    </div>
+
+                    <Separator className="opacity-40" />
+
+                    {/* New Field Preview */}
+                    <div className={`space-y-3 p-4 rounded-xl border-2 border-dashed transition-all duration-300 ${newField.label ? 'border-primary/40 bg-primary/5 scale-[1.02]' : 'border-border/40 bg-transparent'}`}>
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs font-bold text-foreground/80 flex items-center gap-1.5">
+                          {newField.label || 'Nome do seu campo'}
+                          {newField.obrigatorio && <span className="text-destructive font-bold">*</span>}
+                        </Label>
+                        <Badge variant="secondary" className="text-[8px] h-3.5 px-1 uppercase tracking-tighter bg-primary/10 text-primary border-none">
+                          {newField.tipo}
+                        </Badge>
+                      </div>
+
+                      <div className="transition-all duration-300">
+                        {newField.tipo === 'textarea' && (
+                          <div className="h-20 w-full bg-background border border-border/60 rounded-lg p-2 text-[11px] text-muted-foreground/60 italic overflow-hidden">
+                            {newField.ajuda || 'Visualização do campo de texto longo...'}
+                          </div>
+                        )}
+                        {newField.tipo === 'text' && (
+                          <div className="h-10 w-full bg-background border border-border/60 rounded-lg flex items-center px-3 text-[11px] text-muted-foreground/60 italic">
+                            {newField.ajuda || 'Texto curto...'}
+                          </div>
+                        )}
+                        {newField.tipo === 'number' && (
+                          <div className="h-10 w-24 bg-background border border-border/60 rounded-lg flex items-center px-3 text-[11px] text-muted-foreground/60">
+                            0.00
+                          </div>
+                        )}
+                        {newField.tipo === 'date' && (
+                          <div className="h-10 w-full bg-background border border-border/60 rounded-lg flex items-center px-3 text-[11px] text-muted-foreground/60">
+                            -- / -- / ----
+                          </div>
+                        )}
+                        {newField.tipo === 'slider' && (
+                          <div className="py-4 space-y-2">
+                            <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                              <div className="h-full w-1/2 bg-primary"></div>
+                            </div>
+                            <div className="flex justify-between text-[8px] font-bold text-muted-foreground px-1">
+                              <span>0</span>
+                              <span>5</span>
+                              <span>10</span>
+                            </div>
+                          </div>
+                        )}
+                        {newField.tipo === 'checkbox' && (
+                          <div className="flex items-center gap-2 pt-1">
+                            <div className="w-4 h-4 rounded border border-border/60"></div>
+                            <span className="text-[11px] text-muted-foreground">Opção habilitada</span>
+                          </div>
+                        )}
+                        {newField.tipo === 'select' && (
+                          <div className="h-10 w-full bg-background border border-border/60 rounded-lg flex items-center justify-between px-3 text-[11px] text-muted-foreground/60">
+                            <span>{newField.opcoes.split(',')[0]?.trim() || 'Selecione uma opção...'}</span>
+                            <ChevronDown className="w-3 h-3" />
+                          </div>
+                        )}
+                      </div>
+                      
+                      {newField.ajuda && (
+                        <p className="text-[9px] text-muted-foreground/70 italic flex items-center gap-1">
+                          <AlertCircle className="w-2.5 h-2.5" />
+                          {newField.ajuda}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-muted/5 border-t flex justify-end gap-2">
+                    <div className="w-12 h-6 bg-muted rounded animate-pulse"></div>
+                    <div className="w-16 h-6 bg-primary/20 rounded animate-pulse"></div>
+                  </div>
+                </div>
+
+                <div className="mt-8 text-center space-y-2">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em]">Fluxo de Aprovação</p>
+                  <div className="flex items-center gap-4">
+                    <div className="flex flex-col items-center gap-1">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+                        <Settings2 className="w-4 h-4" />
+                      </div>
+                      <span className="text-[8px] font-medium text-muted-foreground">Configurar</span>
+                    </div>
+                    <div className="w-8 h-[1px] bg-border/60"></div>
+                    <div className="flex flex-col items-center gap-1">
+                      <div className="w-8 h-8 rounded-full bg-background border border-border/60 flex items-center justify-center text-muted-foreground/40">
+                        <CheckCircle2 className="w-4 h-4" />
+                      </div>
+                      <span className="text-[8px] font-medium text-muted-foreground/40">Publicar</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setAddFieldDialog(false)}>Cancelar</Button>
-            <Button onClick={addCampoEsp} disabled={!newField.label.trim()}>Adicionar</Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 
