@@ -32,6 +32,8 @@ import TriagemDetalhada from '@/components/TriagemDetalhada';
 import DynamicProntuarioFields from '@/components/DynamicProntuarioFields';
 import SoapFieldsAdaptive from '@/components/SoapFieldsAdaptive';
 import PacienteDocumentos from '@/components/PacienteDocumentos';
+import { CreatePTSModal } from '@/components/prontuario/CreatePTSModal';
+import { CreateCycleModal } from '@/components/prontuario/CreateCycleModal';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BuscaPaciente } from '@/components/BuscaPaciente';
 import QuickEditPatientModal from '@/components/pacientes/QuickEditPatientModal';
@@ -92,6 +94,8 @@ const WorkspaceProntuario: React.FC = () => {
   const [sessaoCycle, setSessaoCycle] = useState<any>(null);
   const [sessaoPts, setSessaoPts] = useState<any>(null);
   const [sessaoDataLoading, setSessaoDataLoading] = useState(false);
+  const [createPtsOpen, setCreatePtsOpen] = useState(false);
+  const [createCycleOpen, setCreateCycleOpen] = useState(false);
 
   const [form, setForm] = useState<any>({
     tipo_registro: searchParams.get('tipo') === 'Retorno' ? 'retorno' : (searchParams.get('tipo') === 'Consulta' ? 'avaliacao_inicial' : (searchParams.get('tipo') || 'avaliacao_inicial')),
@@ -684,7 +688,7 @@ const WorkspaceProntuario: React.FC = () => {
                           variant="outline" 
                           size="sm" 
                           className="h-8 text-xs" 
-                          onClick={() => navigate(`/painel/tratamentos?pacienteId=${pacienteId || form.paciente_id}&action=new_cycle`)}
+                          onClick={() => setCreateCycleOpen(true)}
                         >
                           Iniciar Ciclo
                         </Button>
@@ -710,7 +714,7 @@ const WorkspaceProntuario: React.FC = () => {
                           variant="outline" 
                           size="sm" 
                           className="h-8 text-xs" 
-                          onClick={() => navigate(`/painel/pts?pacienteId=${pacienteId || form.paciente_id}&action=new_pts`)}
+                          onClick={() => setCreatePtsOpen(true)}
                         >
                           Criar Projeto Terapêutico (PTS)
                         </Button>
@@ -779,6 +783,22 @@ const WorkspaceProntuario: React.FC = () => {
           setRefreshTrigger(r => r + 1); 
           setEditPatientOpen(false); 
         }}
+      />
+
+      <CreatePTSModal 
+        open={createPtsOpen}
+        onOpenChange={setCreatePtsOpen}
+        pacienteId={pacienteId || form.paciente_id}
+        pacienteNome={pacienteData?.nome || pacienteNome || 'Paciente'}
+        onSuccess={() => loadSessaoData(pacienteId || form.paciente_id)}
+      />
+
+      <CreateCycleModal
+        open={createCycleOpen}
+        onOpenChange={setCreateCycleOpen}
+        pacienteId={pacienteId || form.paciente_id}
+        pacienteNome={pacienteData?.nome || pacienteNome || 'Paciente'}
+        onSuccess={() => loadSessaoData(pacienteId || form.paciente_id)}
       />
     </div>
   );
