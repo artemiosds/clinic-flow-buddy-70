@@ -493,8 +493,9 @@ const Relatorios: React.FC = () => {
   // === PATIENTS REPORT ===
   const pacientesReport = useMemo(() => {
     const pacIds = new Set(filtered.map(a => a.pacienteId));
+    const allPacientes = [...pacientes, ...pacientesDB];
     return Array.from(pacIds).map(pid => {
-      const pac = pacientes.find(p => p.id === pid);
+      const pac = allPacientes.find(p => p.id === pid);
       const ags = filtered.filter(a => a.pacienteId === pid);
       const concluidos = ags.filter(a => a.status === 'concluido').length;
       const faltas = ags.filter(a => a.status === 'falta').length;
@@ -511,7 +512,8 @@ const Relatorios: React.FC = () => {
         ultimaConsulta: ags.sort((a, b) => b.data.localeCompare(a.data))[0]?.data || '',
       };
     }).sort((a, b) => b.totalAgendamentos - a.totalAgendamentos);
-  }, [filtered, pacientes]);
+  }, [filtered, pacientes, pacientesDB]);
+
 
   // === FILA REPORT ===
   const filaReport = useMemo(() => {
