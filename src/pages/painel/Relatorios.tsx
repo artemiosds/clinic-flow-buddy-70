@@ -477,8 +477,9 @@ const Relatorios: React.FC = () => {
   const faltasReport = useMemo(() => {
     const faltaAgs = filtered.filter(a => a.status === 'falta');
     const porPaciente: Record<string, { nome: string; email: string; telefone: string; profissional: string; unidade: string; datas: string[]; total: number }> = {};
+    const allPacientes = [...pacientes, ...pacientesDB];
     faltaAgs.forEach(a => {
-      const pac = pacientes.find(p => p.id === a.pacienteId);
+      const pac = allPacientes.find(p => p.id === a.pacienteId);
       const un = unidades.find(u => u.id === a.unidadeId);
       const key = a.pacienteId || a.pacienteNome;
       if (!porPaciente[key]) porPaciente[key] = { nome: a.pacienteNome, email: pac?.email || '', telefone: pac?.telefone || '', profissional: a.profissionalNome, unidade: un?.nome || '', datas: [], total: 0 };
@@ -486,7 +487,8 @@ const Relatorios: React.FC = () => {
       porPaciente[key].total++;
     });
     return Object.values(porPaciente).sort((a, b) => b.total - a.total);
-  }, [filtered, pacientes, unidades]);
+  }, [filtered, pacientes, pacientesDB, unidades]);
+
 
   // === PATIENTS REPORT ===
   const pacientesReport = useMemo(() => {
