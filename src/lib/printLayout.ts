@@ -365,7 +365,7 @@ export const institutionalCSS = buildInstitutionalCSS();
  * a logo is missing so there are no awkward gaps.
  */
 export function docHeader(title: string, config: DocumentConfig, extraRight?: string): string {
-  const clamp = (n: number, min = 28, max = 140) => Math.max(min, Math.min(max, n || 64));
+  const clamp = (n: number, min = 28, max = 100) => Math.max(min, Math.min(max, n || 64));
 
   const showLeft = config.logoEsquerdaAtiva !== false;
   const showCenter = config.logoCentroAtiva !== false && !!(config.logoCentro && config.logoCentro.trim());
