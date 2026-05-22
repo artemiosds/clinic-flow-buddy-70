@@ -761,137 +761,260 @@ const EditCampoDialog: React.FC<EditCampoDialogProps> = ({ campo, outrosCampos, 
 
   return (
     <Dialog open={!!campo} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Editar campo</DialogTitle>
-          <DialogDescription>Altere as propriedades deste campo. Mudanças refletem em tempo real no prontuário.</DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-3">
-          <div>
-            <Label>Label exibido no prontuário</Label>
-            <Input value={draft.label} onChange={e => setDraft({ ...draft, label: e.target.value })} />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label>Tipo</Label>
-              <Select value={draft.tipo} onValueChange={(v) => setDraft({ ...draft, tipo: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="textarea">Texto longo</SelectItem>
-                  <SelectItem value="text">Texto</SelectItem>
-                  <SelectItem value="number">Número</SelectItem>
-                  <SelectItem value="slider">Slider (0-10)</SelectItem>
-                  <SelectItem value="select">Seleção</SelectItem>
-                  <SelectItem value="date">Data</SelectItem>
-                  <SelectItem value="checkbox">Checkbox</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-end gap-2">
-              <Switch checked={draft.obrigatorio} onCheckedChange={(v) => setDraft({ ...draft, obrigatorio: v })} />
-              <Label>Obrigatório</Label>
-            </div>
-          </div>
-
-          {draft.tipo === 'select' && (
-            <div>
-              <Label>Opções (vírgula)</Label>
-              <Input
-                value={(draft.opcoes || []).join(', ')}
-                onChange={e => setDraft({ ...draft, opcoes: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
-              />
-            </div>
-          )}
-
-          <div>
-            <Label>Valor padrão (opcional)</Label>
-            <Input value={draft.valor_padrao || ''} onChange={e => setDraft({ ...draft, valor_padrao: e.target.value })} />
-          </div>
-
-          <div>
-            <Label>Texto de ajuda (aparece abaixo do campo)</Label>
-            <Textarea
-              rows={2}
-              value={draft.ajuda || ''}
-              onChange={e => setDraft({ ...draft, ajuda: e.target.value })}
-              placeholder="Ex: Use a escala MRC de 0 a 5."
-            />
-          </div>
-
-          <div>
-            <Label className="mb-1 block">Aparece em quais tipos de prontuário</Label>
-            <div className="grid grid-cols-2 gap-2">
-              {TIPOS_PRONTUARIO.map(t => (
-                <label key={t.key} className="flex items-center gap-2 p-2 rounded border bg-muted/30 cursor-pointer">
-                  <Checkbox
-                    checked={(draft.tipos_prontuario || []).includes(t.key)}
-                    onCheckedChange={() => toggleTipo(t.key)}
-                  />
-                  <span className="text-sm">{t.label}</span>
-                </label>
-              ))}
-            </div>
-            <p className="text-[10px] text-muted-foreground mt-1">
-              Por padrão: 1ª Consulta e Retorno.
-            </p>
-          </div>
-
-          {/* Campo condicional */}
-          <div className="rounded-lg border p-3 bg-muted/20 space-y-2">
-            <div className="flex items-center justify-between">
-              <Label className="text-sm">Visibilidade condicional (opcional)</Label>
-              <Switch
-                checked={!!draft.condicao}
-                onCheckedChange={(v) => setCondicao(v ? { campo: outrosCampos[0]?.key || '', operador: 'preenchido' } : undefined)}
-              />
-            </div>
-            {draft.condicao && (
-              <div className="space-y-2">
-                <p className="text-[11px] text-muted-foreground">Mostrar este campo apenas se:</p>
-                <div className="grid grid-cols-3 gap-2">
-                  <Select
-                    value={draft.condicao.campo}
-                    onValueChange={(v) => setCondicao({ ...draft.condicao!, campo: v })}
-                  >
-                    <SelectTrigger><SelectValue placeholder="Campo" /></SelectTrigger>
-                    <SelectContent>
-                      {outrosCampos.map(c => (
-                        <SelectItem key={c.key} value={c.key}>{c.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Select
-                    value={draft.condicao.operador}
-                    onValueChange={(v: any) => setCondicao({ ...draft.condicao!, operador: v })}
-                  >
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="preenchido">estiver preenchido</SelectItem>
-                      <SelectItem value="igual">for igual a</SelectItem>
-                      <SelectItem value="diferente">for diferente de</SelectItem>
-                      <SelectItem value="maior">for maior que</SelectItem>
-                      <SelectItem value="menor">for menor que</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {draft.condicao.operador !== 'preenchido' && (
-                    <Input
-                      placeholder="Valor"
-                      value={draft.condicao.valor || ''}
-                      onChange={e => setCondicao({ ...draft.condicao!, valor: e.target.value })}
-                    />
-                  )}
+      <DialogContent className="max-w-3xl p-0 overflow-hidden border-none shadow-2xl bg-[#F8FAFC] dark:bg-slate-950 rounded-2xl">
+        <div className="flex flex-col h-[90vh] max-h-[850px]">
+          {/* Cabeçalho Premium */}
+          <div className="bg-white dark:bg-slate-900 px-8 py-6 border-b flex items-center justify-between sticky top-0 z-20">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-primary/10 rounded-xl">
+                  <Pencil className="w-5 h-5 text-primary" />
                 </div>
+                <h2 className="text-2xl font-bold font-display tracking-tight text-slate-900 dark:text-white">
+                  Editar Campo Existente
+                </h2>
               </div>
-            )}
+              <p className="text-sm text-slate-500 font-medium ml-11">
+                Personalize as propriedades e regras deste campo
+              </p>
+            </div>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" 
+              onClick={onClose}
+            >
+              <X className="w-5 h-5 text-slate-400" />
+            </Button>
+          </div>
+
+          <ScrollArea className="flex-1 px-8 py-8">
+            <div className="max-w-2xl mx-auto space-y-10 pb-10">
+              
+              {/* Bloco 1: Identificação */}
+              <section className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-1 h-4 bg-primary rounded-full"></div>
+                  <Label className="text-xs font-bold uppercase tracking-widest text-slate-400">Identificação do Campo</Label>
+                </div>
+                <div className="space-y-3">
+                  <Label className="text-lg font-semibold text-slate-700 dark:text-slate-200">Nome do Campo</Label>
+                  <Input 
+                    placeholder="Ex: Histórico da Doença Atual..." 
+                    className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:ring-primary/20 transition-all h-14 text-lg font-medium shadow-sm rounded-xl px-5"
+                    value={draft.label} 
+                    onChange={e => setDraft({ ...draft, label: e.target.value })} 
+                  />
+                </div>
+              </section>
+
+              {/* Bloco 2: Tipo de Campo (Cards Visuais) */}
+              <section className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-1 h-4 bg-primary rounded-full"></div>
+                  <Label className="text-xs font-bold uppercase tracking-widest text-slate-400">Tipo de Entrada</Label>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-2">
+                  {FIELD_TYPES.map((type) => {
+                    const Icon = type.icon;
+                    const isSelected = draft.tipo === type.id;
+                    return (
+                      <div 
+                        key={type.id}
+                        onClick={() => setDraft({ ...draft, tipo: type.id })}
+                        className={`group cursor-pointer p-4 rounded-xl border-2 transition-all duration-200 flex flex-col gap-3 ${
+                          isSelected 
+                            ? 'bg-primary/5 border-primary shadow-md ring-4 ring-primary/5' 
+                            : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:border-primary/40 hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                        }`}
+                      >
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
+                          isSelected ? 'bg-primary text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 group-hover:text-primary'
+                        }`}>
+                          <Icon className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className={`text-sm font-bold ${isSelected ? 'text-primary' : 'text-slate-700 dark:text-slate-200'}`}>
+                            {type.label}
+                          </p>
+                          <p className="text-[10px] text-slate-400 mt-0.5 leading-tight">
+                            {type.description}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+
+              {/* Bloco 3: Opções (Condicional) */}
+              {draft.tipo === 'select' && (
+                <section className="space-y-4 animate-in zoom-in-95 duration-300">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-1 h-4 bg-primary rounded-full"></div>
+                    <Label className="text-xs font-bold uppercase tracking-widest text-slate-400">Opções da Lista</Label>
+                  </div>
+                  <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+                    <Label className="text-sm font-semibold text-slate-700 dark:text-slate-200">Liste as opções (separadas por vírgula):</Label>
+                    <Textarea 
+                      placeholder="Opção 1, Opção 2, Opção 3..." 
+                      className="min-h-[100px] bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 rounded-xl focus:ring-primary/20 text-sm"
+                      value={(draft.opcoes || []).join(', ')}
+                      onChange={e => setDraft({ ...draft, opcoes: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
+                    />
+                  </div>
+                </section>
+              )}
+
+              {/* Bloco 4: Regras e Condições */}
+              <section className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-1 h-4 bg-primary rounded-full"></div>
+                  <Label className="text-xs font-bold uppercase tracking-widest text-slate-400">Regras e Comportamento</Label>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+                    <div className="space-y-1">
+                      <Label className="text-base font-bold text-slate-700 dark:text-slate-200 cursor-pointer" htmlFor="edit-obrigatorio">
+                        Campo Obrigatório
+                      </Label>
+                      <p className="text-xs text-slate-400">Impede o salvamento do prontuário se estiver vazio.</p>
+                    </div>
+                    <Switch 
+                      id="edit-obrigatorio"
+                      className="data-[state=checked]:bg-primary"
+                      checked={draft.obrigatorio} 
+                      onCheckedChange={(v) => setDraft({ ...draft, obrigatorio: v })} 
+                    />
+                  </div>
+
+                  {/* Visibilidade Condicional */}
+                  <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-1">
+                        <Label className="text-base font-bold text-slate-700 dark:text-slate-200">Exibição Condicional</Label>
+                        <p className="text-xs text-slate-400">Mostrar este campo apenas em certas condições.</p>
+                      </div>
+                      <Switch
+                        checked={!!draft.condicao}
+                        onCheckedChange={(v) => setCondicao(v ? { campo: outrosCampos[0]?.key || '', operador: 'preenchido' } : undefined)}
+                      />
+                    </div>
+
+                    {draft.condicao && (
+                      <div className="pt-4 border-t space-y-4 animate-in fade-in duration-300">
+                        <p className="text-xs font-bold text-primary uppercase tracking-wider">Regra de Visibilidade:</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <Select
+                            value={draft.condicao.campo}
+                            onValueChange={(v) => setCondicao({ ...draft.condicao!, campo: v })}
+                          >
+                            <SelectTrigger className="rounded-xl h-12"><SelectValue placeholder="Campo" /></SelectTrigger>
+                            <SelectContent>
+                              {outrosCampos.map(c => (
+                                <SelectItem key={c.key} value={c.key}>{c.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Select
+                            value={draft.condicao.operador}
+                            onValueChange={(v: any) => setCondicao({ ...draft.condicao!, operador: v })}
+                          >
+                            <SelectTrigger className="rounded-xl h-12"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="preenchido">estiver preenchido</SelectItem>
+                              <SelectItem value="igual">for igual a</SelectItem>
+                              <SelectItem value="diferente">for diferente de</SelectItem>
+                              <SelectItem value="maior">for maior que</SelectItem>
+                              <SelectItem value="menor">for menor que</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          {draft.condicao.operador !== 'preenchido' && (
+                            <Input
+                              placeholder="Valor"
+                              className="rounded-xl h-12"
+                              value={draft.condicao.valor || ''}
+                              onChange={e => setCondicao({ ...draft.condicao!, valor: e.target.value })}
+                            />
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </section>
+
+              {/* Bloco 5: Onde Aparece */}
+              <section className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-1 h-4 bg-primary rounded-full"></div>
+                  <Label className="text-xs font-bold uppercase tracking-widest text-slate-400">Contextos de Atendimento</Label>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 pt-1">
+                  {TIPOS_PRONTUARIO.map(t => {
+                    const isSelected = (draft.tipos_prontuario || []).includes(t.key);
+                    return (
+                      <div 
+                        key={t.key} 
+                        className={`flex items-center justify-between p-4 rounded-xl border-2 transition-all cursor-pointer select-none ${
+                          isSelected 
+                            ? 'bg-white dark:bg-slate-900 border-primary shadow-sm ring-2 ring-primary/5' 
+                            : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:border-slate-200'
+                        }`}
+                        onClick={() => toggleTipo(t.key)}
+                      >
+                        <span className={`text-sm font-bold ${isSelected ? 'text-primary' : 'text-slate-600 dark:text-slate-400'}`}>
+                          {t.short}
+                        </span>
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                          isSelected ? 'bg-primary border-primary' : 'border-slate-200 dark:border-slate-800'
+                        }`}>
+                          {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+
+              {/* Bloco 6: Ajuda */}
+              <section className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-400">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-1 h-4 bg-primary rounded-full"></div>
+                  <Label className="text-xs font-bold uppercase tracking-widest text-slate-400">Texto de Ajuda</Label>
+                </div>
+                <Textarea
+                  rows={2}
+                  className="rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
+                  value={draft.ajuda || ''}
+                  onChange={e => setDraft({ ...draft, ajuda: e.target.value })}
+                  placeholder="Ex: Use a escala MRC de 0 a 5."
+                />
+              </section>
+
+            </div>
+          </ScrollArea>
+
+          {/* Rodapé Premium Fixo */}
+          <div className="bg-white dark:bg-slate-900 px-8 py-6 border-t flex items-center justify-end gap-4 shadow-[0_-4px_20px_rgba(0,0,0,0.03)] z-20">
+            <Button 
+              variant="ghost" 
+              className="font-bold text-slate-500 hover:text-slate-700 h-12 px-8 rounded-xl"
+              onClick={onClose}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              className="bg-primary hover:bg-primary/90 text-white font-bold h-12 px-10 shadow-lg shadow-primary/20 rounded-xl transition-all hover:scale-[1.02] active:scale-95 min-w-[180px]"
+              onClick={() => onSave(draft)}
+              disabled={!draft.label.trim()}
+            >
+              <Save className="w-5 h-5 mr-2" />
+              <span>Salvar Alterações</span>
+            </Button>
           </div>
         </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={() => onSave(draft)} disabled={!draft.label.trim()}>Salvar</Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
