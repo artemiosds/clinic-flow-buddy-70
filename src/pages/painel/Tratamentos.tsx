@@ -348,19 +348,22 @@ const Tratamentos: React.FC = () => {
   // Lazy load: sessions, extensions and agendamento map only for the selected cycle
   const loadSessionsForCycle = useCallback(async (cycle: TreatmentCycle, silent = true) => {
     try {
-      const [sData, eData] = await Promise.all([
+      const [sRes, eRes] = await Promise.all([
         supabase.from("treatment_sessions").select("*, agendamentos(falta_justificada, regularizada)").eq("cycle_id", cycle.id).order("session_number", { ascending: true }),
         supabase.from("treatment_extensions").select("*").eq("cycle_id", cycle.id).order("changed_at", { ascending: false }),
       ]);
-      const sessionsData = (sData || []) as TreatmentSession[];
+      
+      const sessionsData = (sRes.data || []) as TreatmentSession[];
+      const extensionsData = (eRes.data || []) as TreatmentExtension[];
+      
       // Replace only this cycle's sessions in the global state
       setSessions((prev) => {
-        const others = prev.filter((s) => s.cycle_id !== cycle.id);
+        const others = prev.filter((s) => s?.cycle_id !== cycle.id);
         return [...others, ...sessionsData];
       });
       setExtensions((prev) => {
-        const others = prev.filter((x) => x.cycle_id !== cycle.id);
-        return [...others, ...((eData.data || []) as TreatmentExtension[])];
+        const others = prev.filter((x) => x?.cycle_id !== cycle.id);
+        return [...others, ...extensionsData];
       });
       setLoadedSessionsCycleId(cycle.id);
 
