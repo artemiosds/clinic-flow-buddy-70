@@ -1965,6 +1965,9 @@ const ProntuarioPage: React.FC = () => {
       toast.success("PTS criado com sucesso!");
       setPtsOpen(false);
       setPtsForm({ diagnostico_funcional: '', objetivos_terapeuticos: '', metas_curto_prazo: '', metas_medio_prazo: '', metas_longo_prazo: '', especialidades: [] });
+      
+      // Update local state immediately for UI consistency
+      await loadSessaoData(form.paciente_id);
     } catch (err: any) {
       toast.error("Erro ao criar PTS: " + (err?.message || ""));
     }
@@ -2031,6 +2034,11 @@ const ProntuarioPage: React.FC = () => {
         detalhes: { paciente: form.paciente_nome, tipo: cycleForm.treatment_type, sessoes: totalSessions },
       });
       toast.success(`Ciclo criado com ${totalSessions} sessões! Aguardam agendamento pela recepção.`);
+      setCycleOpen(false);
+      setCycleForm({ treatment_type: '', total_sessions: 0, frequency: '1x_semana', start_date: new Date().toISOString().split("T")[0], clinical_notes: '', weekdays: [], duration_months: 3 });
+      
+      // Update local state immediately
+      await loadSessaoData(form.paciente_id);
       setCycleOpen(false);
       setCycleForm({ treatment_type: '', total_sessions: 0, frequency: '1x_semana', start_date: new Date().toISOString().split("T")[0], clinical_notes: '', weekdays: [], duration_months: 3 });
     } catch (err: any) {
@@ -2425,7 +2433,7 @@ const ProntuarioPage: React.FC = () => {
                         <>
                           <div className="rounded-lg border bg-card p-4 space-y-3">
                             <h4 className="text-sm font-semibold text-foreground flex items-center gap-2"><Activity className="w-4 h-4 text-primary" /> Ciclo de Tratamento Ativo</h4>
-                            {sessaoCycle ? (
+                            {sessaoCycle && (sessaoCycle.status === 'em_andamento' || sessaoCycle.status === 'ativo') ? (
                               <>
                                 <div className="grid grid-cols-2 gap-2 text-sm">
                                   <div><span className="text-muted-foreground">Tipo:</span> <strong>{sessaoCycle.treatment_type}</strong></div>
@@ -2464,12 +2472,14 @@ const ProntuarioPage: React.FC = () => {
                                   </div>
                                 )}
                               </>
-                            ) : (
-                              <div className="space-y-2">
-                                <Badge variant="outline" className="bg-warning/10 text-warning border-warning/30">Nenhum ciclo ativo</Badge>
-                                <div><Button type="button" variant="outline" size="sm" onClick={() => setCycleOpen(true)}><Activity className="w-3.5 h-3.5 mr-1" /> Criar ciclo de tratamento</Button></div>
-                              </div>
-                            )}
+                             ) : (
+                               <div className="space-y-2">
+                                 <div className="flex items-center justify-between">
+                                   <Badge variant="outline" className="bg-warning/10 text-warning border-warning/30">Nenhum ciclo ativo</Badge>
+                                   <Button type="button" variant="outline" size="sm" onClick={() => setCycleOpen(true)} className="h-7 text-xs"><Activity className="w-3 h-3 mr-1" /> Iniciar Tratamento</Button>
+                                 </div>
+                               </div>
+                             )}
                             {sessaoCycle?.status === 'concluido' && (
                               <div className="space-y-2">
                                 <Badge variant="secondary" className="bg-green-500/10 text-green-700 border-green-500/30">Ciclo concluído</Badge>
@@ -2501,8 +2511,10 @@ const ProntuarioPage: React.FC = () => {
                               </>);
                             })() : (
                               <div className="space-y-2">
-                                <Badge variant="outline">PTS não cadastrado</Badge>
-                                <div><Button type="button" variant="outline" size="sm" onClick={() => setPtsOpen(true)}><ClipboardList className="w-3.5 h-3.5 mr-1" /> Criar PTS</Button></div>
+                                <div className="flex items-center justify-between">
+                                  <Badge variant="outline">PTS não cadastrado</Badge>
+                                  <Button type="button" variant="outline" size="sm" onClick={() => setPtsOpen(true)} className="h-7 text-xs"><ClipboardList className="w-3 h-3 mr-1" /> Criar PTS</Button>
+                                </div>
                               </div>
                             )}
                           </div>
