@@ -342,11 +342,23 @@ const Pacientes: React.FC = () => {
     
     const newErrors: Record<string, string> = {};
     if (!form.nome.trim()) newErrors.nome = "Nome é obrigatório";
+    if (!form.nomeMae?.trim()) newErrors.nomeMae = "Nome da Mãe é obrigatório";
+    if (!form.dataNascimento) newErrors.dataNascimento = "Data de Nascimento é obrigatória";
+    if (!form.cns?.trim()) newErrors.cns = "CNS é obrigatório";
+    if (!form.naturalidade?.trim()) newErrors.naturalidade = "Naturalidade é obrigatória";
+    
+    if (!form.cep?.trim()) newErrors.cep = "CEP é obrigatório";
+    if (!form.tipo_logradouro?.trim()) newErrors.tipo_logradouro = "Logradouro é obrigatório";
+    if (!form.numero?.trim()) newErrors.numero = "Número é obrigatório";
+    if (!form.bairro?.trim()) newErrors.bairro = "Bairro é obrigatório";
+    if (!form.municipio || form.municipio === "") newErrors.municipio = "Município é obrigatório";
+    if (!form.uf || form.uf === "") newErrors.uf = "UF é obrigatória";
+    if (!form.raca_cor || form.raca_cor === "") newErrors.raca_cor = "Raça/Cor é obrigatória";
 
     // Validate and normalize phone
     const rawPhone = form.telefone?.trim();
     if (!rawPhone) {
-      newErrors.telefone = "Informe o telefone com DDD ex: (93) 99999-0000";
+      newErrors.telefone = "Informe o telefone principal";
     } else {
       const normalized = normalizePhone(rawPhone);
       if (!normalized) {
@@ -356,7 +368,8 @@ const Pacientes: React.FC = () => {
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      toast.error(Object.values(newErrors)[0]);
+      const firstError = Object.values(newErrors)[0];
+      toast.error(firstError);
       return;
     }
 
