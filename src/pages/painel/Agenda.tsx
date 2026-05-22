@@ -212,6 +212,7 @@ const Agenda: React.FC = () => {
   const [filterUnit, setFilterUnit] = useState("all");
   const [filterProf, setFilterProf] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [filterTipo, setFilterTipo] = useState("Todos");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [retornoDialogOpen, setRetornoDialogOpen] = useState(false);
   const [retornoAg, setRetornoAg] = useState<{ pacienteId: string; pacienteNome: string } | null>(null);
@@ -467,6 +468,7 @@ const Agenda: React.FC = () => {
       if (a.data !== selectedDate) return false;
       if (filterUnit !== "all" && a.unidadeId !== filterUnit) return false;
       if (filterProf !== "all" && a.profissionalId !== filterProf) return false;
+      if (filterTipo !== "Todos" && a.tipo !== filterTipo) return false;
       if (isProfissional && user) {
         if (a.profissionalId !== user.id) return false;
       }
@@ -1400,6 +1402,22 @@ const Agenda: React.FC = () => {
                     {label}
                   </SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={filterTipo} onValueChange={setFilterTipo}>
+              <SelectTrigger className="w-full sm:w-52">
+                <Stethoscope className="w-4 h-4 mr-2 text-muted-foreground" />
+                <SelectValue placeholder="Tipo de atendimento" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Todos">Todos os tipos</SelectItem>
+                <SelectItem value="Consulta">Primeira Consulta</SelectItem>
+                <SelectItem value="Retorno">Retorno</SelectItem>
+                <SelectItem value="Exame">Exame</SelectItem>
+                <SelectItem value="Procedimento">Procedimento</SelectItem>
+                <SelectItem value="Sessão de Tratamento">Sessão de Tratamento</SelectItem>
+                <SelectItem value="Urgência">Urgência</SelectItem>
               </SelectContent>
             </Select>
 

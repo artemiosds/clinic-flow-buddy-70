@@ -90,48 +90,100 @@ export const SlotInfoBadge = React.forwardRef<HTMLElement, SlotInfoBadgeProps>((
           </div>
         )}
         
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-2">
           {turnoData.map((t) => {
-            const pct = t.vagasTotal > 0 ? (t.vagasOcupadas / t.vagasTotal) * 100 : 0;
+            const agendados = t.vagasOcupadas;
+            const capacidade = t.vagasTotal;
+            const disponiveis = t.vagasLivres;
+            
+            const excedido = agendados > capacidade;
+            const lotado = agendados === capacidade;
+            const quaseCheio = !lotado && !excedido && (agendados / capacidade) >= 0.8;
+            
+            let situacao = "Disponível";
+            let situacaoColor = "text-success";
+            let situacaoBg = "bg-success/5 border-success/20";
+            let msgAuxiliar = "";
+
+            if (excedido) {
+              situacao = "Excedido";
+              situacaoColor = "text-destructive";
+              situacaoBg = "bg-destructive/10 border-destructive/20";
+              msgAuxiliar = `Há ${agendados - capacidade} agendamento${(agendados - capacidade) !== 1 ? 's' : ''} acima da capacidade prevista.`;
+            } else if (lotado) {
+              situacao = "Lotado";
+              situacaoColor = "text-primary";
+              situacaoBg = "bg-primary/10 border-primary/20";
+            } else if (quaseCheio) {
+              situacao = "Quase cheio";
+              situacaoColor = "text-warning";
+              situacaoBg = "bg-warning/10 border-warning/20";
+            }
+
+            const defaultNomes = ['Manhã', 'Tarde', 'Noite'];
+            const isDefaultNome = defaultNomes.includes(t.nome);
+            const tituloPrincipal = t.nome;
+            const subtitulo = `${isDefaultNome ? '' : (t.horaInicio < '12:00' ? 'Manhã' : t.horaInicio < '18:00' ? 'Tarde' : 'Noite') + ' • '}${t.horaInicio} às ${t.horaFim}`;
+
             return (
               <div
                 key={t.turnoId}
                 className={cn(
-                  'flex flex-col gap-1 p-2 rounded-lg border',
-                  t.lotado
-                    ? 'bg-destructive/5 border-destructive/20 text-destructive'
-                    : pct > 80
-                      ? 'bg-warning/5 border-warning/20 text-warning'
-                      : 'bg-success/5 border-success/20 text-success',
+                  'flex flex-col gap-1.5 p-3 rounded-xl border transition-all duration-300',
+                  situacaoBg
                 )}
               >
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="text-sm">{t.nome === 'Manhã' ? '🌅' : t.nome === 'Tarde' ? '🌆' : '🌙'}</span>
-                  <span className="font-bold uppercase tracking-tight">{t.nome}</span>
-                  <span className="text-muted-foreground ml-auto">{t.horaInicio}–{t.horaFim}</span>
+                <div className="flex flex-col gap-0.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">
+                      {t.horaInicio < '12:00' ? '🌅' : t.horaInicio < '18:00' ? '🌆' : '🌙'}
+                    </span>
+                    <span className="font-bold text-sm uppercase tracking-tight">{tituloPrincipal}</span>
+                  </div>
+                  <span className="text-[11px] text-muted-foreground font-medium pl-6">
+                    {subtitulo}
+                  </span>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-2 mt-1">
+                <div className="grid grid-cols-3 gap-2 mt-1 pl-6">
                   <div className="flex flex-col">
-                    <span className="text-[10px] text-muted-foreground uppercase font-semibold">Internas (Recepção)</span>
-                    <span className="text-[11px] font-medium">
-                      {t.vagasInternasOcupadas} de {t.vagasInternas} usadas
+                    <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Capacidade</span>
+                    <span className="text-xs font-semibold">{capacidade} vagas</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Agendados</span>
+                    <span className="text-xs font-semibold">{agendados} pacientes</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Disponíveis</span>
+                    <span className={cn("text-xs font-semibold", excedido ? "text-destructive" : "text-foreground")}>
+                      {excedido ? "0" : disponiveis} vagas
                     </span>
                   </div>
-                  {t.vagasExternasReservadas > 0 && (
-                    <div className="flex flex-col border-l pl-2">
-                      <span className="text-[10px] text-primary/70 uppercase font-semibold">Externas (Cotas)</span>
-                      <span className="text-[11px] font-medium">
-                        {t.vagasExternasOcupadas} de {t.vagasExternasReservadas} usadas
-                      </span>
-                    </div>
+                </div>
+
+                <div className="flex flex-col gap-1 mt-1 pl-6 pt-2 border-t border-current/10">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold uppercase tracking-widest opacity-70">Situação:</span>
+                    <span className={cn("text-xs font-bold uppercase", situacaoColor)}>{situacao}</span>
+                  </div>
+                  {msgAuxiliar && (
+                    <p className="text-[10px] font-medium leading-tight opacity-80 italic">
+                      {msgAuxiliar}
+                    </p>
                   )}
                 </div>
 
-                <div className="flex items-center justify-between mt-1 pt-1 border-t border-current/10">
-                   <span className="text-[10px] font-bold uppercase">Total Livres:</span>
-                   <span className="text-xs font-bold">{t.vagasLivres}</span>
-                </div>
+                {t.vagasExternasReservadas > 0 && (
+                  <div className="mt-2 pl-6 space-y-1">
+                    <div className="flex items-center gap-2">
+                      <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+                      <span className="text-[10px] text-muted-foreground font-medium">
+                        Cotas: {t.vagasExternasOcupadas} de {t.vagasExternasReservadas} externas usadas
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}
