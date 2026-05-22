@@ -125,6 +125,8 @@ export interface Paciente {
   isGestante?: boolean;
   isPne?: boolean;
   isAutista?: boolean;
+  is_tfd?: boolean;
+  possui_ordem_judicial?: boolean;
 }
 
 export interface Agendamento {
