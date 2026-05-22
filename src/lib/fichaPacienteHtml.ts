@@ -104,12 +104,18 @@ export const FICHA_EXTRA_CSS = `
   .ficha-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .ficha-grid--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .ficha-grid--5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .ficha-grid--8 { grid-template-columns: repeat(8, minmax(0, 1fr)); }
   .ficha-grid--3-wide { grid-template-columns: 2fr 0.7fr 1fr; }
   .ficha-field { min-width: 0; padding: 2px 0; }
   .ficha-field-label { display: block; font-size: 7.5pt; font-weight: 700; text-transform: uppercase; color: #64748b; letter-spacing: 0.3px; }
-  .ficha-field-value { display: block; min-height: 14px; font-size: 10pt; font-weight: 500; color: #1a1a1a; overflow-wrap: anywhere; }
+  .ficha-field-value { display: block; min-height: 14px; font-size: 10pt; font-weight: 500; color: #1a1a1a; overflow-wrap: anywhere; border-bottom: 1px solid transparent; }
   .ficha-field-value--emphasis { font-weight: 700; font-size: 11pt; }
+  .ficha-field-value--manual { border-bottom: 1px solid #94a3b8; min-height: 20px; margin-top: 2px; }
   .ficha-text-block { min-height: 38px; border: 1px dashed #cbd5e1; border-radius: 4px; background: #f8fafc; padding: 8px 10px; color: #1a1a1a; white-space: pre-wrap; font-size: 10pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .ficha-manual-lines { margin-top: 8px; }
+  .ficha-line { border-bottom: 1px solid #cbd5e1; height: 24px; margin-bottom: 4px; }
+  .ficha-signature-block { margin-top: 40px; text-align: center; page-break-inside: avoid; break-inside: avoid; }
+  .ficha-signature-date { font-size: 10pt; color: #1a1a1a; margin-bottom: 35px; text-align: left; }
   .ficha-signature-block { margin-top: 28px; text-align: right; page-break-inside: avoid; break-inside: avoid; }
   .ficha-signature-date { font-size: 9pt; color: #475569; margin-bottom: 28px; }
   .ficha-signature-line { width: 280px; max-width: 100%; margin-left: auto; border-top: 1px solid #111827; }
