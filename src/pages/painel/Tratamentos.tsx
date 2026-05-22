@@ -2186,7 +2186,8 @@ const Tratamentos: React.FC = () => {
             </div>
             <div className="max-h-[500px] overflow-y-auto border rounded-lg">
               <div className="space-y-2">
-                {cycleSessions.map((s) => {
+                {(cycleSessions || []).map((s) => {
+                  if (!s) return null;
                   const isPendente = s.status === "pendente_agendamento";
                   const agKey = `${s.patient_id}|${s.professional_id}|${s.scheduled_date}`;
                   const matchedAg = isPendente ? agendamentoMap?.[agKey] : null;
