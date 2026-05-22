@@ -742,475 +742,85 @@ const ConfigPersonalizarCampos: React.FC = () => {
         </CardContent>
       </Card>
 
-      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] p-0 overflow-hidden border-none shadow-2xl">
-          <div className="flex flex-col h-[90vh] bg-background">
-            <div className="px-6 py-4 border-b bg-muted/30 flex items-center justify-between shrink-0">
-              <DialogHeader className="space-y-0.5">
-                <DialogTitle className="text-xl font-display font-bold">
-                  {editingField ? 'Editar Campo Profissional' : 'Novo Campo Personalizado'}
+      <Dialog open={modalOpen} onOpenChange={(open) => !isSaving && setModalOpen(open)}>
+        <DialogContent className="max-w-6xl max-h-[95vh] p-0 overflow-hidden border-none shadow-2xl rounded-2xl">
+          <div className="flex flex-col h-[95vh] bg-background">
+            {/* Header */}
+            <div className="px-8 py-6 border-b bg-muted/20 flex items-center justify-between shrink-0">
+              <div className="flex flex-col gap-1">
+                <DialogTitle className="text-2xl font-bold font-display">
+                  {editingField ? `Editar campo: ${editingField.rotulo}` : 'Adicionar Campo para Especialidade'}
                 </DialogTitle>
-                <p className="text-xs text-muted-foreground">Configure os dados, regras e visibilidade do campo clínico.</p>
-              </DialogHeader>
-              <Button variant="ghost" size="icon" onClick={() => setModalOpen(false)} className="rounded-full">
-                <Plus className="w-5 h-5 rotate-45" />
+                <p className="text-sm text-muted-foreground">Configure como este campo será usado no prontuário clínico.</p>
+              </div>
+              <Button variant="ghost" size="icon" onClick={() => !isSaving && setModalOpen(false)} className="rounded-full">
+                <Plus className="w-6 h-6 rotate-45 text-muted-foreground hover:text-foreground" />
               </Button>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-8">
-              <Tabs defaultValue="dados">
-                <TabsList className="grid w-full grid-cols-5">
-                  <TabsTrigger value="dados">Dados Básicos</TabsTrigger>
-                  <TabsTrigger value="tipo">Tipo e Opções</TabsTrigger>
-                  <TabsTrigger value="visibilidade">Visibilidade</TabsTrigger>
-                  <TabsTrigger value="regras">Validação</TabsTrigger>
-                  <TabsTrigger value="layout">Layout e Print</TabsTrigger>
-                </TabsList>
+            {/* Content Body */}
+            <div className="flex-1 overflow-y-auto">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 h-full">
+                {/* Main Tabs Column */}
+                <div className="lg:col-span-8 p-8 border-r">
+                  <Tabs defaultValue="dados" className="h-full">
+                    <TabsList className="grid w-full grid-cols-4 h-12 bg-muted/50 p-1 mb-8">
+                      <TabsTrigger value="dados" className="text-sm font-semibold">Dados básicos</TabsTrigger>
+                      <TabsTrigger value="tipo" className="text-sm font-semibold">Tipo e opções</TabsTrigger>
+                      <TabsTrigger value="visibilidade" className="text-sm font-semibold">Exibição</TabsTrigger>
+                      <TabsTrigger value="regras" className="text-sm font-semibold">Permissões e regras</TabsTrigger>
+                    </TabsList>
 
-                {/* ═══ Tab 1 — Dados Básicos ═══ */}
-                <TabsContent value="dados" className="mt-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div className="md:col-span-2 space-y-5">
-                      <div className="flex items-center gap-2 text-primary font-semibold text-sm uppercase tracking-wider">
-                        <div className="w-2 h-2 rounded-full bg-primary" />
-                        Identificação
-                      </div>
-
-                      <div>
-                        <Label className="text-sm font-semibold mb-1.5 block">Nome do Campo (Rótulo) *</Label>
-                        <Input
-                          value={fieldForm.rotulo}
-                          onChange={(e) => setFieldForm((p) => ({ ...p, rotulo: e.target.value }))}
-                          placeholder="Ex: Escala de Dor, Motivo da Consulta"
-                          className="h-10"
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
+                    <TabsContent value="dados" className="space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                          <Label className="text-sm font-semibold mb-1.5 block">Placeholder</Label>
-                          <Input
-                            value={fieldForm.placeholder}
-                            onChange={(e) => setFieldForm((p) => ({ ...p, placeholder: e.target.value }))}
-                            placeholder="Texto de exemplo no campo..."
-                            className="h-9"
-                          />
+                          <Label className="text-sm font-semibold block mb-2">Nome do campo</Label>
+                          <Input value={fieldForm.rotulo} onChange={(e) => setFieldForm(p => ({ ...p, rotulo: e.target.value }))} className="h-12 text-base" placeholder="Ex: Queixa principal" />
                         </div>
                         <div>
-                          <Label className="text-sm font-semibold mb-1.5 block">Texto de Ajuda</Label>
-                          <Input
-                            value={fieldForm.ajuda}
-                            onChange={(e) => setFieldForm((p) => ({ ...p, ajuda: e.target.value }))}
-                            placeholder="Dica para o profissional..."
-                            className="h-9"
-                          />
+                          <Label className="text-sm font-semibold block mb-2">Chave interna (automática)</Label>
+                          <Input value={fieldForm.rotulo.toLowerCase().replace(/[^a-z0-9]+/g, '_')} disabled className="h-12 bg-muted/30" />
                         </div>
                       </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="flex items-center gap-3 h-10 px-3 rounded-lg border bg-muted/10">
-                          <Switch checked={fieldForm.obrigatorio} onCheckedChange={(v) => setFieldForm((p) => ({ ...p, obrigatorio: v }))} />
-                          <span className="text-sm text-muted-foreground">{fieldForm.obrigatorio ? 'Obrigatório' : 'Opcional'}</span>
-                        </div>
-                        <div className="flex items-center gap-3 h-10 px-3 rounded-lg border bg-muted/10">
-                          <Switch checked={fieldForm.destaque} onCheckedChange={(v) => setFieldForm(p => ({ ...p, destaque: v }))} />
-                          <span className="text-sm text-muted-foreground">{fieldForm.destaque ? 'Com destaque' : 'Sem destaque'}</span>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                          <Label className="text-sm font-semibold mb-1.5 block">Valor Padrão</Label>
-                          <Input
-                            value={fieldForm.valorPadrao}
-                            onChange={(e) => setFieldForm((p) => ({ ...p, valorPadrao: e.target.value }))}
-                            placeholder="Valor preenchido automaticamente"
-                            className="h-9"
-                          />
+                          <Label className="text-sm font-semibold block mb-2">Placeholder</Label>
+                          <Input value={fieldForm.placeholder} onChange={(e) => setFieldForm(p => ({ ...p, placeholder: e.target.value }))} className="h-12" />
                         </div>
-                        <div className="flex items-center gap-3 h-10 px-3 rounded-lg border bg-muted/10 mt-6">
-                          <Switch checked={fieldForm.mostrarListagem} onCheckedChange={(v) => setFieldForm(p => ({ ...p, mostrarListagem: v }))} />
-                          <span className="text-sm text-muted-foreground">Mostrar em listagem</span>
+                        <div>
+                          <Label className="text-sm font-semibold block mb-2">Texto de ajuda</Label>
+                          <Input value={fieldForm.ajuda} onChange={(e) => setFieldForm(p => ({ ...p, ajuda: e.target.value }))} className="h-12" />
                         </div>
                       </div>
-                    </div>
-
-                    <div className="md:col-span-1">
-                      <FieldPreview form={fieldForm} />
-                    </div>
-                  </div>
-                </TabsContent>
-
-                {/* ═══ Tab 2 — Tipo e Opções ═══ */}
-                <TabsContent value="tipo" className="mt-6 space-y-6">
-                  <div>
-                    <div className="flex items-center gap-2 text-primary font-semibold text-sm uppercase tracking-wider mb-4">
-                      <div className="w-2 h-2 rounded-full bg-primary" />
-                      Tipo de Campo
-                    </div>
-                    <div className="grid grid-cols-3 gap-2 max-h-[320px] overflow-y-auto pr-2 custom-scrollbar">
-                      {(Object.keys(FIELD_TYPE_LABELS) as CustomFieldType[]).map((t) => {
-                        const info = FIELD_TYPE_LABELS[t];
-                        const Icon = info.icon;
-                        const selected = fieldForm.tipo === t;
-                        return (
-                          <button
-                            key={t}
-                            type="button"
-                            onClick={() => setFieldForm((p) => ({ ...p, tipo: t }))}
-                            className={cn(
-                              'flex flex-col items-center gap-2 p-3 rounded-xl border transition-all text-center group',
-                              selected ? 'border-primary bg-primary/10 ring-2 ring-primary/20 shadow-md' : 'border-border hover:border-primary/40 hover:bg-muted/50',
-                            )}
-                          >
-                            <div className={cn('w-8 h-8 rounded-full flex items-center justify-center transition-colors', selected ? 'bg-primary text-primary-foreground' : 'bg-muted')}>
-                              <Icon className="w-4 h-4" />
-                            </div>
-                            <span className={cn('text-[11px] font-bold leading-tight', selected ? 'text-primary' : 'text-foreground')}>{info.label}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {['select', 'checkbox', 'radio', 'checklist'].includes(fieldForm.tipo) && (
-                    <div className="space-y-4 p-4 rounded-xl border-2 border-dashed border-primary/20 bg-primary/5">
-                      <div className="flex items-center justify-between">
-                        <Label className="text-sm font-bold flex items-center gap-2"><List className="w-4 h-4" /> Opções Disponíveis</Label>
-                        <Badge variant="outline" className="bg-background">{fieldForm.opcoes.length} itens</Badge>
-                      </div>
-                      <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2">
-                        {fieldForm.opcoes.map((opt, i) => (
-                          <div key={i} className="flex items-center gap-2 group">
-                            <Input
-                              value={opt}
-                              onChange={(e) => {
-                                const newOpcoes = [...fieldForm.opcoes];
-                                newOpcoes[i] = e.target.value;
-                                setFieldForm((p) => ({ ...p, opcoes: newOpcoes }));
-                              }}
-                              className="h-8 flex-1 bg-background"
-                            />
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-destructive"
-                              onClick={() => setFieldForm((p) => ({ ...p, opcoes: p.opcoes.filter((_, idx) => idx !== i) }))}
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="flex items-center gap-2 pt-2">
-                        <Input
-                          value={fieldForm.novaOpcao}
-                          onChange={(e) => setFieldForm((p) => ({ ...p, novaOpcao: e.target.value }))}
-                          placeholder="Nova opção..."
-                          className="h-9 bg-background"
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              const v = fieldForm.novaOpcao.trim();
-                              if (v && !fieldForm.opcoes.includes(v)) {
-                                setFieldForm((p) => ({ ...p, opcoes: [...p.opcoes, v], novaOpcao: '' }));
-                              }
-                            }
-                          }}
-                        />
-                        <Button type="button" variant="secondary" size="sm" className="h-9" onClick={() => {
-                          const v = fieldForm.novaOpcao.trim();
-                          if (v && !fieldForm.opcoes.includes(v)) {
-                            setFieldForm((p) => ({ ...p, opcoes: [...p.opcoes, v], novaOpcao: '' }));
-                          }
-                        }}>
-                          <Plus className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </TabsContent>
-
-                {/* ═══ Tab 3 — Visibilidade ═══ */}
-                <TabsContent value="visibilidade" className="mt-6 space-y-6">
-                  <div>
-                    <div className="flex items-center gap-2 text-primary font-semibold text-sm uppercase tracking-wider mb-3">
-                      <div className="w-2 h-2 rounded-full bg-primary" />
-                      Especialidades
-                    </div>
-                    <div className="flex flex-wrap gap-1.5 p-3 rounded-xl border bg-muted/10">
-                      {especialidades.filter(e => e.ativa).map(e => {
-                        const sel = fieldForm.especialidades.includes(e.key);
-                        return (
-                          <button
-                            key={e.key}
-                            type="button"
-                            onClick={() => setFieldForm(p => ({
-                              ...p,
-                              especialidades: sel ? p.especialidades.filter(k => k !== e.key) : [...p.especialidades, e.key],
-                            }))}
-                            className={cn('px-3 py-1.5 rounded-lg text-xs font-medium border transition-all', sel ? 'bg-primary text-primary-foreground border-primary shadow-sm' : 'bg-background hover:bg-muted text-muted-foreground')}
-                          >
-                            {e.label}
-                          </button>
-                        );
-                      })}
-                      {fieldForm.especialidades.length === 0 && <Badge variant="secondary" className="text-[10px]">Todas as especialidades</Badge>}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex items-center gap-2 text-primary font-semibold text-sm uppercase tracking-wider mb-3">
-                      <div className="w-2 h-2 rounded-full bg-primary" />
-                      Tipos de Prontuário
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {TIPOS_PRONTUARIO.map(t => {
-                        const sel = fieldForm.tiposProntuario.includes(t);
-                        const labels: Record<string, string> = {
-                          avaliacao_inicial: 'Avaliação Inicial',
-                          retorno: 'Retorno',
-                          sessao: 'Sessão',
-                          urgencia: 'Urgência',
-                          procedimento: 'Procedimento',
-                        };
-                        return (
-                          <button
-                            key={t}
-                            type="button"
-                            onClick={() => setFieldForm(p => ({
-                              ...p,
-                              tiposProntuario: sel ? p.tiposProntuario.filter(x => x !== t) : [...p.tiposProntuario, t],
-                            }))}
-                            className={cn('px-3 py-1.5 rounded-lg text-xs font-medium border transition-all', sel ? 'bg-primary text-primary-foreground border-primary shadow-sm' : 'bg-background hover:bg-muted text-muted-foreground')}
-                          >
-                            {labels[t] || t}
-                          </button>
-                        );
-                      })}
-                      {fieldForm.tiposProntuario.length === 0 && <Badge variant="secondary" className="text-[10px]">Todos os tipos</Badge>}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-3 p-3 rounded-xl border bg-muted/5">
-                      <Label className="text-[10px] font-bold uppercase text-muted-foreground">Regras Inteligentes</Label>
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between text-xs">
-                          <span>Só 1ª Consulta</span>
-                          <Switch checked={fieldForm.rules.onlyFirstConsult} onCheckedChange={(v) => setFieldForm(p => ({ ...p, rules: { ...p.rules, onlyFirstConsult: v } }))} className="scale-75" />
+                      <div className="flex items-center gap-6 p-4 rounded-xl border bg-muted/10">
+                        <div className="flex items-center gap-3">
+                          <Switch checked={fieldForm.obrigatorio} onCheckedChange={(v) => setFieldForm(p => ({ ...p, obrigatorio: v }))} />
+                          <span className="text-sm font-medium">Obrigatório</span>
                         </div>
-                        <div className="flex items-center justify-between text-xs">
-                          <span>Só Retorno</span>
-                          <Switch checked={fieldForm.rules.onlyReturn} onCheckedChange={(v) => setFieldForm(p => ({ ...p, rules: { ...p.rules, onlyReturn: v } }))} className="scale-75" />
-                        </div>
-                        <div className="flex items-center justify-between text-xs">
-                          <span>Só Crianças</span>
-                          <Switch checked={fieldForm.rules.onlyChild} onCheckedChange={(v) => setFieldForm(p => ({ ...p, rules: { ...p.rules, onlyChild: v } }))} className="scale-75" />
-                        </div>
-                        <div className="flex items-center justify-between text-xs">
-                          <span>Só Idosos (60+)</span>
-                          <Switch checked={fieldForm.rules.onlyElderly} onCheckedChange={(v) => setFieldForm(p => ({ ...p, rules: { ...p.rules, onlyElderly: v } }))} className="scale-75" />
+                        <div className="flex items-center gap-3">
+                          <Switch checked={fieldForm.printSettings.visibleInProntuario} onCheckedChange={(v) => setFieldForm(p => ({ ...p, printSettings: { ...p.printSettings, visibleInProntuario: v } }))} />
+                          <span className="text-sm font-medium">Ativo no Prontuário</span>
                         </div>
                       </div>
-                    </div>
-                    <div className="space-y-3 p-3 rounded-xl border bg-muted/5">
-                      <Label className="text-[10px] font-bold uppercase text-muted-foreground">Config. Saída</Label>
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between text-xs">
-                          <span>Ver no Prontuário</span>
-                          <Switch checked={fieldForm.printSettings.visibleInProntuario} onCheckedChange={(v) => setFieldForm(p => ({ ...p, printSettings: { ...p.printSettings, visibleInProntuario: v } }))} className="scale-75" />
-                        </div>
-                        <div className="flex items-center justify-between text-xs">
-                          <span>Editável</span>
-                          <Switch checked={fieldForm.printSettings.editableInProntuario} onCheckedChange={(v) => setFieldForm(p => ({ ...p, printSettings: { ...p.printSettings, editableInProntuario: v } }))} className="scale-75" />
-                        </div>
-                        <div className="flex items-center justify-between text-xs">
-                          <span>Ver no PDF</span>
-                          <Switch checked={fieldForm.printSettings.visibleInPrint} onCheckedChange={(v) => setFieldForm(p => ({ ...p, printSettings: { ...p.printSettings, visibleInPrint: v } }))} className="scale-75" />
-                        </div>
-                        <div className="flex items-center justify-between text-xs">
-                          <span>Restrito</span>
-                          <Switch checked={fieldForm.printSettings.restricted} onCheckedChange={(v) => setFieldForm(p => ({ ...p, printSettings: { ...p.printSettings, restricted: v } }))} className="scale-75" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </TabsContent>
+                    </TabsContent>
+                  </Tabs>
+                </div>
 
-                {/* ═══ Tab 4 — Validação ═══ */}
-                <TabsContent value="regras" className="mt-6 space-y-6">
-                  <div className="p-4 rounded-xl border bg-muted/20 space-y-4">
-                    <div className="flex items-center gap-2 font-bold text-xs uppercase text-muted-foreground border-b pb-2">
-                      <Activity className="w-3.5 h-3.5" /> Validação de Dados
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                      <div className="space-y-1.5">
-                        <Label className="text-[10px] uppercase font-bold">Máscara</Label>
-                        <Select
-                          value={fieldForm.validacao.mascara || '__none__'}
-                          onValueChange={(v) => setFieldForm(p => ({ ...p, validacao: { ...p.validacao, mascara: v === '__none__' ? undefined : v as any } }))}
-                        >
-                          <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="__none__">Nenhuma</SelectItem>
-                            <SelectItem value="cpf">CPF</SelectItem>
-                            <SelectItem value="telefone">Telefone</SelectItem>
-                            <SelectItem value="data">Data</SelectItem>
-                            <SelectItem value="hora">Hora</SelectItem>
-                            <SelectItem value="currency">Moeda</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-[10px] uppercase font-bold">Mín. Caracteres</Label>
-                        <Input type="number" className="h-9" value={fieldForm.validacao.minLength ?? ''} onChange={e => setFieldForm(p => ({ ...p, validacao: { ...p.validacao, minLength: e.target.value ? Number(e.target.value) : undefined } }))} />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-[10px] uppercase font-bold">Máx. Caracteres</Label>
-                        <Input type="number" className="h-9" value={fieldForm.validacao.maxLength ?? ''} onChange={e => setFieldForm(p => ({ ...p, validacao: { ...p.validacao, maxLength: e.target.value ? Number(e.target.value) : undefined } }))} />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-[10px] uppercase font-bold">Valor Mín/Máx</Label>
-                        <div className="flex gap-1">
-                          <Input type="number" placeholder="Mín" className="h-9" value={fieldForm.validacao.min ?? ''} onChange={e => setFieldForm(p => ({ ...p, validacao: { ...p.validacao, min: e.target.value ? Number(e.target.value) : undefined } }))} />
-                          <Input type="number" placeholder="Máx" className="h-9" value={fieldForm.validacao.max ?? ''} onChange={e => setFieldForm(p => ({ ...p, validacao: { ...p.validacao, max: e.target.value ? Number(e.target.value) : undefined } }))} />
-                        </div>
-                      </div>
-                    </div>
+                <div className="lg:col-span-4 bg-muted/10 p-8">
+                  <div className="sticky top-0 space-y-6">
+                    <h3 className="font-semibold text-lg">Resumo do campo</h3>
+                    <FieldPreview form={fieldForm} />
                   </div>
-
-                  <div className="space-y-3 pt-4 border-t border-muted-foreground/10">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-xs font-bold uppercase text-muted-foreground flex items-center gap-2"><Sliders className="w-3.5 h-3.5" /> Exibição Condicional Avançada</Label>
-                      <Button type="button" variant="outline" size="sm" onClick={() => setFieldForm(p => ({ ...p, condicional: [...p.condicional, { campo: '', operador: 'eq', valor: '' }] }))}>
-                        <Plus className="w-3 h-3 mr-1" /> Adicionar Condição
-                      </Button>
-                    </div>
-                    <div className="space-y-2">
-                      {fieldForm.condicional.map((rule, idx) => (
-                        <div key={idx} className="flex items-center gap-2 p-2 rounded border bg-background animate-in fade-in-0 slide-in-from-top-1 duration-200">
-                          <Input placeholder="Campo" className="h-8 flex-1" value={rule.campo} onChange={e => setFieldForm(p => { const c = [...p.condicional]; c[idx] = { ...c[idx], campo: e.target.value }; return { ...p, condicional: c }; })} />
-                          <Select value={rule.operador} onValueChange={(v) => setFieldForm(p => { const c = [...p.condicional]; c[idx] = { ...c[idx], operador: v as any }; return { ...p, condicional: c }; })}>
-                            <SelectTrigger className="h-8 w-24"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="eq">=</SelectItem>
-                              <SelectItem value="neq">≠</SelectItem>
-                              <SelectItem value="filled">Preenchido</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <Input placeholder="Valor" className="h-8 flex-1" value={rule.valor ?? ''} onChange={e => setFieldForm(p => { const c = [...p.condicional]; c[idx] = { ...c[idx], valor: e.target.value }; return { ...p, condicional: c }; })} />
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => setFieldForm(p => ({ ...p, condicional: p.condicional.filter((_, i) => i !== idx) }))}>
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
-                        </div>
-                      ))}
-                      {fieldForm.condicional.length === 0 && (
-                        <p className="text-xs text-muted-foreground italic py-3 text-center border border-dashed rounded-lg">
-                          Nenhuma condição configurada. O campo será sempre exibido.
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </TabsContent>
-
-                {/* ═══ Tab 5 — Layout e Print ═══ */}
-                <TabsContent value="layout" className="mt-6 space-y-6">
-                  <div>
-                    <div className="flex items-center gap-2 text-primary font-semibold text-sm uppercase tracking-wider mb-4">
-                      <div className="w-2 h-2 rounded-full bg-primary" />
-                      Largura no Formulário
-                    </div>
-                    <div className="grid grid-cols-4 gap-2">
-                      {([25, 50, 75, 100] as const).map((w) => (
-                        <button
-                          key={w}
-                          type="button"
-                          onClick={() => setFieldForm(p => ({ ...p, largura: w }))}
-                          className={cn(
-                            'flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all text-xs',
-                            fieldForm.largura === w
-                              ? 'border-primary bg-primary/10 text-primary font-semibold'
-                              : 'border-border hover:border-primary/50 text-muted-foreground',
-                          )}
-                        >
-                          <div className="w-full h-2 bg-muted rounded-sm overflow-hidden">
-                            <div
-                              className={cn("h-full rounded-sm transition-all", fieldForm.largura === w ? "bg-primary" : "bg-muted-foreground/30")}
-                              style={{ width: `${w}%` }}
-                            />
-                          </div>
-                          {w}%
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4 p-4 rounded-xl border bg-muted/5">
-                    <div>
-                      <Label className="text-xs font-bold mb-2 block uppercase">Seção / Bloco</Label>
-                      <Input value={fieldForm.secao} onChange={(e) => setFieldForm(p => ({ ...p, secao: e.target.value }))} placeholder="Ex: Anamnese, Avaliação" className="h-9" />
-                    </div>
-                    <div>
-                      <Label className="text-xs font-bold mb-2 block uppercase">Modo de Exibição</Label>
-                      <Select value={fieldForm.displayMode} onValueChange={(v) => setFieldForm(p => ({ ...p, displayMode: v as any }))}>
-                        <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="block">Bloco (linha inteira)</SelectItem>
-                          <SelectItem value="inline">Inline (ao lado)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex items-center gap-2 text-primary font-semibold text-sm uppercase tracking-wider mb-4">
-                      <div className="w-2 h-2 rounded-full bg-primary" />
-                      Permissões de Exibição e Impressão
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      {[
-                        { key: 'visibleInProntuario', label: 'Visível no prontuário', desc: 'Profissional pode ver o campo' },
-                        { key: 'editableInProntuario', label: 'Editável no prontuário', desc: 'Profissional pode editar' },
-                        { key: 'visibleInPrint', label: 'Visível na impressão', desc: 'Aparece ao imprimir PDF' },
-                        { key: 'restricted', label: 'Campo restrito', desc: 'Somente perfis Master/Gestão' },
-                      ].map((item) => (
-                        <div key={item.key} className="flex items-start justify-between gap-2 p-3 rounded-lg border bg-muted/5">
-                          <div>
-                            <p className="text-sm font-medium">{item.label}</p>
-                            <p className="text-[10px] text-muted-foreground">{item.desc}</p>
-                          </div>
-                          <Switch
-                            checked={(fieldForm.printSettings as any)[item.key]}
-                            onCheckedChange={(v) => setFieldForm(p => ({ ...p, printSettings: { ...p.printSettings, [item.key]: v } }))}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </TabsContent>
-              </Tabs>
+                </div>
+              </div>
             </div>
 
-            <div className="px-6 py-4 border-t bg-muted/30 flex items-center justify-between shrink-0">
-              <p className="text-[10px] text-muted-foreground">O campo será salvo exclusivamente para a unidade selecionada.</p>
-              <div className="flex items-center gap-3">
-                <Button variant="ghost" onClick={() => setModalOpen(false)} disabled={isSaving}>Cancelar</Button>
-                <Button onClick={() => saveField()} className="px-8 shadow-lg shadow-primary/20" disabled={isSaving}>
-                  {isSaving ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                  )}
-                  {editingField ? 'Salvar Alterações' : 'Salvar Campo'}
-                </Button>
-                {!editingField && (
-                  <Button variant="outline" onClick={() => saveField(true)} className="px-6" disabled={isSaving}>
-                    <Save className="w-4 h-4 mr-2" /> Salvar e Adicionar Outro
-                  </Button>
-                )}
-              </div>
+            <div className="px-8 py-5 border-t bg-muted/20 flex items-center justify-end gap-3 shrink-0">
+              <Button variant="ghost" onClick={() => !isSaving && setModalOpen(false)}>Cancelar</Button>
+              <Button onClick={() => saveField()} className="h-11 px-8 shadow-lg" disabled={isSaving}>
+                {isSaving ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                Salvar campo
+              </Button>
             </div>
           </div>
         </DialogContent>
