@@ -776,6 +776,25 @@ const Agenda: React.FC = () => {
         if (!confirmou) return;
       }
     } catch {}
+
+    // Regra de bloqueio por profissional
+    try {
+      const { data: absenceInfo } = await supabase
+        .from('paciente_faltas_profissional')
+        .select('status_falta')
+        .eq('paciente_id', pac.id)
+        .eq('profissional_id', prof.id)
+        .maybeSingle();
+
+      const isExempt = pac.is_tfd || pac.possui_ordem_judicial;
+
+      if (absenceInfo?.status_falta === 'BLOQUEADO' && !isExempt) {
+        toast.error("Paciente bloqueado por faltas injustificadas para este profissional.");
+        return;
+      }
+    } catch (err) {
+      console.error("Erro ao verificar bloqueio por profissional:", err);
+    }
     const unidade = unidades.find((u) => u.id === prof.unidadeId);
     const agId = `ag${Date.now()}`;
     const agData = { id: agId, pacienteId: pac.id, pacienteNome: pac.nome, unidadeId: prof.unidadeId, salaId: newAg.salaId, setorId: "", profissionalId: prof.id, profissionalNome: prof.nome, data: selectedDate, hora: newAg.hora, status: "confirmado" as const, tipo: newAg.tipo, observacoes: newAg.obs, origem: "recepcao" as const, criadoEm: new Date().toISOString(), criadoPor: "current" };
@@ -797,14 +816,19 @@ const Agenda: React.FC = () => {
       .eq("id", ag.pacienteId)
       .single();
 
-    if (pData?.status_falta === "BLOQUEADO") {
-      const isIsento = !!(pData.is_tfd || pData.possui_ordem_judicial);
-      if (isIsento) {
-        toast.info(`Paciente ${pData.nome} possui exceção administrativa de bloqueio por TFD/Ordem Judicial. Aprovação permitida.`);
-      } else {
-        toast.error(`Paciente ${pData.nome} está BLOQUEADO por faltas e não pode ter agendamentos aprovados.`);
-        return;
-      }
+    // Verificar bloqueio específico por profissional antes de aprovar
+    const { data: absenceInfo } = await supabase
+      .from('paciente_faltas_profissional')
+      .select('status_falta')
+      .eq('paciente_id', ag.pacienteId)
+      .eq('profissional_id', ag.profissionalId)
+      .maybeSingle();
+
+    const isExempt = !!(pData?.is_tfd || pData?.possui_ordem_judicial);
+
+    if (absenceInfo?.status_falta === "BLOQUEADO" && !isExempt) {
+      toast.error(`Paciente ${pData?.nome} está BLOQUEADO por faltas injustificadas para este profissional.`);
+      return;
     }
 
     try {
