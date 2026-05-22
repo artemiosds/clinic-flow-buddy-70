@@ -151,8 +151,11 @@ const Relatorios: React.FC = () => {
             .from('treatment_sessions')
             .select('id,cycle_id,patient_id,professional_id,status,scheduled_date,session_number,absence_type');
 
-          if (dateFrom) query = query.gte('scheduled_date', dateFrom);
-          if (dateTo) query = query.lte('scheduled_date', dateTo);
+          const dataFiltroFromSess = dateFrom || '2000-01-01';
+          const dataFiltroToSess = dateTo || '2100-12-31';
+          if (dateFrom) query = query.gte('scheduled_date', dataFiltroFromSess);
+          if (dateTo) query = query.lte('scheduled_date', dataFiltroToSess);
+
 
           query = query.range(from, from + pageSize - 1);
 
