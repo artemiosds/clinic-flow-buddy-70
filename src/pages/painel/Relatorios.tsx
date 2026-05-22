@@ -120,12 +120,8 @@ const Relatorios: React.FC = () => {
       let qPacientes = supabase.from('pacientes').select('id,nome,email,telefone,naturalidade,unidade_id,custom_data,cid');
 
       
-      if (dateFrom) {
-        qAt = qAt.gte('data', dateFrom);
-      }
-      if (dateTo) {
-        qAt = qAt.lte('data', dateTo);
-      }
+      // Filtros já aplicados acima via gte/lte
+
 
       // Universal unit isolation (admin.sms sees all)
       if (user?.unidadeId && user?.usuario !== 'admin.sms') {
