@@ -798,12 +798,12 @@ const ConfigPersonalizarCampos: React.FC = () => {
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   {[
-                    { id: 'text', label: 'Texto curto', desc: 'Respostas rápidas', icon: Type },
-                    { id: 'textarea', label: 'Texto longo', desc: 'Descrições e notas', icon: AlignLeft },
+                    { id: 'text', label: 'Texto Curto', desc: 'Respostas rápidas', icon: Type },
+                    { id: 'textarea', label: 'Texto Longo', desc: 'Descrições e notas', icon: TextQuote },
                     { id: 'number', label: 'Número', desc: 'Valores e medidas', icon: Hash },
-                    { id: 'select', label: 'Seleção', icon: List, desc: 'Lista de opções' },
-                    { id: 'checkbox', label: 'Múltipla escolha', icon: CheckSquare, desc: 'Várias opções' },
-                    { id: 'date', label: 'Data', icon: Calendar, desc: 'Seletor de data' },
+                    { id: 'select', label: 'Seleção', desc: 'Lista de opções', icon: Box },
+                    { id: 'checkbox', label: 'Múltipla Escolha', desc: 'Várias opções', icon: ClipboardCheck },
+                    { id: 'date', label: 'Data', desc: 'Seletor de data', icon: Calendar },
                   ].map((t) => {
                     const isSelected = fieldForm.tipo === t.id;
                     const Icon = t.icon;
