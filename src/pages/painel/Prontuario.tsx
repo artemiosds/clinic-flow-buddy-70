@@ -2437,7 +2437,7 @@ const ProntuarioPage: React.FC = () => {
                               <>
                                 <div className="grid grid-cols-2 gap-2 text-sm">
                                   <div><span className="text-muted-foreground">Tipo:</span> <strong>{sessaoCycle.treatment_type}</strong></div>
-                                  <div><span className="text-muted-foreground">Status:</span>{' '}<Badge variant={sessaoCycle.status === 'em_andamento' ? 'default' : sessaoCycle.status === 'concluido' ? 'secondary' : 'outline'} className="text-xs">{sessaoCycle.status === 'em_andamento' ? 'Ativo' : sessaoCycle.status === 'concluido' ? 'Concluído' : sessaoCycle.status}</Badge></div>
+                                  <div><span className="text-muted-foreground">Status:</span>{' '}<Badge variant={sessaoCycle.status === 'em_andamento' ? 'default' : (sessaoCycle.status as string) === 'concluido' ? 'secondary' : 'outline'} className="text-xs">{sessaoCycle.status === 'em_andamento' ? 'Ativo' : (sessaoCycle.status as string) === 'concluido' ? 'Concluído' : sessaoCycle.status}</Badge></div>
                                   <div><span className="text-muted-foreground">Início:</span> <strong>{new Date(sessaoCycle.start_date + 'T12:00:00').toLocaleDateString('pt-BR')}</strong></div>
                                   <div><span className="text-muted-foreground">Previsão:</span> <strong>{sessaoCycle.end_date_predicted ? new Date(sessaoCycle.end_date_predicted + 'T12:00:00').toLocaleDateString('pt-BR') : '—'}</strong></div>
                                   <div><span className="text-muted-foreground">Frequência:</span> <strong>{sessaoCycle.frequency}</strong></div>
