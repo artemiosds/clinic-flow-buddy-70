@@ -859,7 +859,25 @@ const Relatorios: React.FC = () => {
       });
       headers = ['Município', 'Total Pacientes', 'Pacientes Atendidos', 'Total Atendimentos'];
       rows = Object.values(munMap).sort((a, b) => b.totalPacientes - a.totalPacientes).map(m => [m.nome, m.totalPacientes.toString(), m.pacientesSet.size.toString(), m.atendimentos.toString()]);
+    } else if (type === 'municipios') {
+      const allPacientes = [...pacientes, ...pacientesDB];
+      const munMap: Record<string, { nome: string; totalPacientes: number; atendimentos: number; pacientesSet: Set<string> }> = {};
+      allPacientes.forEach(p => {
+        const mun = (p.naturalidade || 'Não informado').trim() || 'Não informado';
+        if (!munMap[mun]) munMap[mun] = { nome: mun, totalPacientes: 0, atendimentos: 0, pacientesSet: new Set() };
+        munMap[mun].totalPacientes++;
+      });
+      filtered.forEach(a => {
+        const pac = allPacientes.find(p => p.id === a.pacienteId);
+        const mun = (pac?.naturalidade || 'Não informado').trim() || 'Não informado';
+        if (!munMap[mun]) munMap[mun] = { nome: mun, totalPacientes: 0, atendimentos: 0, pacientesSet: new Set() };
+        munMap[mun].atendimentos++;
+        munMap[mun].pacientesSet.add(a.pacienteId);
+      });
+      headers = ['Município', 'Total Pacientes', 'Pacientes Atendidos', 'Total Atendimentos'];
+      rows = Object.values(munMap).sort((a, b) => b.totalPacientes - a.totalPacientes).map(m => [m.nome, m.totalPacientes.toString(), m.pacientesSet.size.toString(), m.atendimentos.toString()]);
     }
+
 
     const csv = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(';')).join('\n');
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
