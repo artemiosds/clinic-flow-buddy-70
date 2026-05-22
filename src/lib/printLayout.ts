@@ -317,34 +317,37 @@ export function buildInstitutionalCSS(
     background: #fff;
   }
   .e-signature-box .sig-title { font-weight: 700; font-size: ${smallPt}pt; color: ${accent}; margin-bottom: 2px; text-align: center; }
-  .e-signature-box .sig-legal { font-size: ${Math.max(6, microPt - 0.5)}pt; color: #94a3b8; margin-top: 6px; font-style: italic; }
+  .e-signature-box .sig-legal { font-size: ${Math.max(6, microPt - 1)}pt; color: #94a3b8; margin-top: 4px; font-style: italic; }
 
   /* CARIMBO */
-  .carimbo-digital { border: 2px solid #1e293b; border-radius: 4px; padding: 8px 14px; text-align: center; font-size: ${smallPt}pt; display: inline-block; }
-  .carimbo-digital .carimbo-nome { font-weight: 700; font-size: ${bodyPt}pt; }
+  .carimbo-digital { border: 1.5px solid #000; border-radius: 4px; padding: 6px 12px; text-align: center; font-size: ${smallPt}pt; display: inline-block; background: #fff; }
+  .carimbo-digital .carimbo-nome { font-weight: 700; font-size: ${bodyPt}pt; color: #000; }
   .carimbo-digital .carimbo-info { font-size: ${microPt}pt; color: #475569; }
 
   /* FOOTER */
   .doc-footer {
-    margin-top: 24px;
-    padding-top: 6px;
-    border-top: 1.5px solid ${accent};
+    margin-top: 20px;
+    padding-top: 4px;
+    border-top: 1px solid ${accent};
     font-size: ${microPt}pt;
     color: #64748b;
     display: flex;
     justify-content: space-between;
     align-items: center;
   }
-  .doc-footer .institution { font-weight: 600; color: #334155; }
+  .doc-footer .institution { font-weight: 700; color: #334155; }
 
-  /* PRINT MEDIA */
+  /* PRINT MEDIA ENFORCEMENT */
   @media print {
-    body { padding: 0; }
+    body { padding: 0 !important; margin: 0 !important; width: 100% !important; }
     .doc-header { border-radius: 0; }
     .no-print { display: none !important; }
     nav, .sidebar, button, .toaster, [data-sonner-toaster] { display: none !important; }
     .doc-sign-footer { page-break-inside: avoid; }
     .e-signature-box { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+  @page {
+    margin: 15mm !important;
   }
   ${opts.extraCSS || ''}
 </style>`;
