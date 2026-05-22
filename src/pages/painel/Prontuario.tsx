@@ -4,6 +4,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import FichaPacienteCabecalho from "@/components/FichaPacienteCabecalho";
 import { useProntuarioStructure } from "@/hooks/useProntuarioStructure";
 import { useProntuarioTiposConfig } from "@/hooks/useProntuarioTiposConfig";
+import { usePatientTreatment } from "@/hooks/usePatientTreatment";
 import DynamicProntuarioFields from "@/components/DynamicProntuarioFields";
 import { useProntuarioConfig } from "@/hooks/useProntuarioConfig";
 import { useAuth } from "@/contexts/AuthContext";
@@ -324,12 +325,8 @@ const ProntuarioPage: React.FC = () => {
 
   // Sessão: cycle + PTS state
   interface CycleSession { id: string; cycle_id: string; patient_id: string; professional_id: string; session_number: number; total_sessions: number; scheduled_date: string; status: string; clinical_notes: string; procedure_done?: string; absence_type?: string | null; appointment_id: string | null; }
-  interface ActiveCycle { id: string; treatment_type: string; professional_id: string; start_date: string; end_date_predicted: string | null; frequency: string; status: string; total_sessions: number; sessions_done: number; created_at: string; }
-  interface ActivePTS { id: string; diagnostico_funcional: string; objetivos_terapeuticos: string; metas_curto_prazo: string; metas_medio_prazo: string; metas_longo_prazo: string; especialidades_envolvidas: string[]; created_at: string; professional_id: string; status: string; }
-  const [sessaoCycle, setSessaoCycle] = useState<ActiveCycle | null>(null);
+  const { activeCycle: sessaoCycle, activePts: sessaoPts, loading: sessaoDataLoading, reload: loadSessaoDataHook } = usePatientTreatment(form.paciente_id);
   const [sessaoCycleSessions, setSessaoCycleSessions] = useState<CycleSession[]>([]);
-  const [sessaoPts, setSessaoPts] = useState<ActivePTS | null>(null);
-  const [sessaoDataLoading, setSessaoDataLoading] = useState(false);
   const [sessaoHighlightSOAP, setSessaoHighlightSOAP] = useState(false);
   const [soapErrors, setSoapErrors] = useState(false);
   const [soapEnabled, setSoapEnabled] = useState(true);
@@ -337,42 +334,24 @@ const ProntuarioPage: React.FC = () => {
   const [confirmingSessionId, setConfirmingSessionId] = useState<string | null>(null);
   const soapRef = useRef<HTMLDivElement>(null);
 
-  const loadSessaoData = async (patientId: string, _professionalId?: string) => {
-    setSessaoDataLoading(true);
-    try {
-      // Search for ANY active cycle for this patient (not filtered by professional)
-      // so cycles created by other professionals are also detected
-      let cycleQuery = (supabase as any).from('treatment_cycles').select('*')
-        .eq('patient_id', patientId)
-        .in('status', ['em_andamento', 'ativo'])
-        .order('created_at', { ascending: false })
-        .limit(1);
+  const loadSessaoData = useCallback(async (patientId: string) => {
+    if (patientId === form.paciente_id) {
+      await loadSessaoDataHook();
+    }
+  }, [form.paciente_id, loadSessaoDataHook]);
 
-      const [cycleRes, ptsRes] = await Promise.all([
-        cycleQuery.maybeSingle(),
-        supabase.from('pts').select('*')
-          .eq('patient_id', patientId)
-          .eq('status', 'ativo')
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle(),
-      ]);
-      const cycle = cycleRes.data;
-      setSessaoCycle(cycle || null);
-      if (cycle) {
+  useEffect(() => {
+    if (sessaoCycle) {
+      (async () => {
         const { data: sessions } = await (supabase as any).from('treatment_sessions').select('*')
-          .eq('cycle_id', cycle.id)
+          .eq('cycle_id', sessaoCycle.id)
           .order('session_number', { ascending: true });
         setSessaoCycleSessions(sessions || []);
-      } else {
-        setSessaoCycleSessions([]);
-      }
-      setSessaoPts(ptsRes.data as ActivePTS | null);
-    } catch (err) {
-      console.error('[loadSessaoData]', err);
+      })();
+    } else {
+      setSessaoCycleSessions([]);
     }
-    setSessaoDataLoading(false);
-  };
+  }, [sessaoCycle]);
 
   const registrationReferenceDate =
     form.data_atendimento || searchParams.get('data') || new Date().toISOString().split('T')[0];
@@ -1965,6 +1944,9 @@ const ProntuarioPage: React.FC = () => {
       toast.success("PTS criado com sucesso!");
       setPtsOpen(false);
       setPtsForm({ diagnostico_funcional: '', objetivos_terapeuticos: '', metas_curto_prazo: '', metas_medio_prazo: '', metas_longo_prazo: '', especialidades: [] });
+      
+      // Update local state immediately for UI consistency
+      await loadSessaoData(form.paciente_id);
     } catch (err: any) {
       toast.error("Erro ao criar PTS: " + (err?.message || ""));
     }
@@ -2031,6 +2013,11 @@ const ProntuarioPage: React.FC = () => {
         detalhes: { paciente: form.paciente_nome, tipo: cycleForm.treatment_type, sessoes: totalSessions },
       });
       toast.success(`Ciclo criado com ${totalSessions} sessões! Aguardam agendamento pela recepção.`);
+      setCycleOpen(false);
+      setCycleForm({ treatment_type: '', total_sessions: 0, frequency: '1x_semana', start_date: new Date().toISOString().split("T")[0], clinical_notes: '', weekdays: [], duration_months: 3 });
+      
+      // Update local state immediately
+      await loadSessaoData(form.paciente_id);
       setCycleOpen(false);
       setCycleForm({ treatment_type: '', total_sessions: 0, frequency: '1x_semana', start_date: new Date().toISOString().split("T")[0], clinical_notes: '', weekdays: [], duration_months: 3 });
     } catch (err: any) {
@@ -2425,11 +2412,11 @@ const ProntuarioPage: React.FC = () => {
                         <>
                           <div className="rounded-lg border bg-card p-4 space-y-3">
                             <h4 className="text-sm font-semibold text-foreground flex items-center gap-2"><Activity className="w-4 h-4 text-primary" /> Ciclo de Tratamento Ativo</h4>
-                            {sessaoCycle ? (
+                            {sessaoCycle && (sessaoCycle.status === 'em_andamento' || sessaoCycle.status === 'ativo') ? (
                               <>
                                 <div className="grid grid-cols-2 gap-2 text-sm">
                                   <div><span className="text-muted-foreground">Tipo:</span> <strong>{sessaoCycle.treatment_type}</strong></div>
-                                  <div><span className="text-muted-foreground">Status:</span>{' '}<Badge variant={sessaoCycle.status === 'em_andamento' ? 'default' : sessaoCycle.status === 'concluido' ? 'secondary' : 'outline'} className="text-xs">{sessaoCycle.status === 'em_andamento' ? 'Ativo' : sessaoCycle.status === 'concluido' ? 'Concluído' : sessaoCycle.status}</Badge></div>
+                                  <div><span className="text-muted-foreground">Status:</span>{' '}<Badge variant={sessaoCycle.status === 'em_andamento' || sessaoCycle.status === 'ativo' ? 'default' : sessaoCycle.status === 'concluido' ? 'secondary' : 'outline'} className="text-xs">{sessaoCycle.status === 'em_andamento' || sessaoCycle.status === 'ativo' ? 'Ativo' : sessaoCycle.status === 'concluido' ? 'Concluído' : sessaoCycle.status}</Badge></div>
                                   <div><span className="text-muted-foreground">Início:</span> <strong>{new Date(sessaoCycle.start_date + 'T12:00:00').toLocaleDateString('pt-BR')}</strong></div>
                                   <div><span className="text-muted-foreground">Previsão:</span> <strong>{sessaoCycle.end_date_predicted ? new Date(sessaoCycle.end_date_predicted + 'T12:00:00').toLocaleDateString('pt-BR') : '—'}</strong></div>
                                   <div><span className="text-muted-foreground">Frequência:</span> <strong>{sessaoCycle.frequency}</strong></div>
@@ -2464,12 +2451,14 @@ const ProntuarioPage: React.FC = () => {
                                   </div>
                                 )}
                               </>
-                            ) : (
-                              <div className="space-y-2">
-                                <Badge variant="outline" className="bg-warning/10 text-warning border-warning/30">Nenhum ciclo ativo</Badge>
-                                <div><Button type="button" variant="outline" size="sm" onClick={() => setCycleOpen(true)}><Activity className="w-3.5 h-3.5 mr-1" /> Criar ciclo de tratamento</Button></div>
-                              </div>
-                            )}
+                             ) : (
+                               <div className="space-y-2">
+                                 <div className="flex items-center justify-between">
+                                   <Badge variant="outline" className="bg-warning/10 text-warning border-warning/30">Nenhum ciclo ativo</Badge>
+                                   <Button type="button" variant="outline" size="sm" onClick={() => setCycleOpen(true)} className="h-7 text-xs"><Activity className="w-3 h-3 mr-1" /> Iniciar Tratamento</Button>
+                                 </div>
+                               </div>
+                             )}
                             {sessaoCycle?.status === 'concluido' && (
                               <div className="space-y-2">
                                 <Badge variant="secondary" className="bg-green-500/10 text-green-700 border-green-500/30">Ciclo concluído</Badge>
@@ -2501,8 +2490,10 @@ const ProntuarioPage: React.FC = () => {
                               </>);
                             })() : (
                               <div className="space-y-2">
-                                <Badge variant="outline">PTS não cadastrado</Badge>
-                                <div><Button type="button" variant="outline" size="sm" onClick={() => setPtsOpen(true)}><ClipboardList className="w-3.5 h-3.5 mr-1" /> Criar PTS</Button></div>
+                                <div className="flex items-center justify-between">
+                                  <Badge variant="outline">PTS não cadastrado</Badge>
+                                  <Button type="button" variant="outline" size="sm" onClick={() => setPtsOpen(true)} className="h-7 text-xs"><ClipboardList className="w-3 h-3 mr-1" /> Criar PTS</Button>
+                                </div>
                               </div>
                             )}
                           </div>

@@ -664,22 +664,23 @@ const WorkspaceProntuario: React.FC = () => {
                   </TabsContent>
 
                   <TabsContent value="treatments" className="mt-0 space-y-6">
-                    {sessaoCycle ? (
+                    {sessaoCycle && (sessaoCycle.status === 'em_andamento' || sessaoCycle.status === 'ativo') ? (
                       <Card className="border-primary/20 bg-primary/5">
                         <CardContent className="p-4">
                           <div className="flex items-center gap-3">
                             <Activity className="w-5 h-5 text-primary" />
-                            <div>
-                              <p className="font-bold text-sm">Tratamento em Andamento: {sessaoCycle.treatment_type}</p>
-                              <p className="text-xs text-muted-foreground">Início: {new Date(sessaoCycle.start_date).toLocaleDateString()} | Sessões: {sessaoCycle.sessions_done}/{sessaoCycle.total_sessions}</p>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-bold text-sm truncate">Tratamento Ativo: {sessaoCycle.treatment_type}</p>
+                              <p className="text-xs text-muted-foreground">Início: {new Date(sessaoCycle.start_date + 'T12:00:00').toLocaleDateString('pt-BR')} | Sessões: {sessaoCycle.sessions_done}/{sessaoCycle.total_sessions}</p>
                             </div>
+                            <Badge className="bg-primary text-primary-foreground">Ativo</Badge>
                           </div>
                         </CardContent>
                       </Card>
                     ) : (
-                      <div className="p-8 text-center border-2 border-dashed rounded-xl">
-                        <p className="text-muted-foreground mb-4">Nenhum ciclo de tratamento ativo para este paciente.</p>
-                        <Button variant="outline" size="sm">Iniciar Novo Ciclo</Button>
+                      <div className="p-6 text-center border border-dashed rounded-xl bg-muted/20">
+                        <p className="text-xs text-muted-foreground mb-3">Nenhum ciclo de tratamento ativo.</p>
+                        <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => navigate('/painel/tratamentos')}>Iniciar Ciclo</Button>
                       </div>
                     )}
                     
@@ -696,9 +697,9 @@ const WorkspaceProntuario: React.FC = () => {
                         </CardContent>
                       </Card>
                     ) : (
-                      <div className="p-8 text-center border-2 border-dashed rounded-xl">
-                        <p className="text-muted-foreground mb-4">Nenhum PTS ativo para este paciente.</p>
-                        <Button variant="outline" size="sm">Criar PTS</Button>
+                      <div className="p-6 text-center border border-dashed rounded-xl bg-muted/20">
+                        <p className="text-xs text-muted-foreground mb-3">Nenhum PTS ativo para este paciente.</p>
+                        <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => navigate('/painel/tratamentos')}>Gerenciar PTS</Button>
                       </div>
                     )}
                   </TabsContent>
