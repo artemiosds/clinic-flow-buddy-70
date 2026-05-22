@@ -1842,13 +1842,13 @@ const Tratamentos: React.FC = () => {
     const pendingCount = cycleSessions.filter((s) => {
       if (s.status !== "pendente_agendamento") return false;
       const agKey = `${s.patient_id}|${s.professional_id}|${s.scheduled_date}`;
-      return !agendamentoMap[agKey]; // only truly pending if no matching agendamento
+      return !agendamentoMap?.[agKey]; // only truly pending if no matching agendamento
     }).length;
     const scheduledCount = cycleSessions.filter((s) => {
       if (s.status === "agendada") return true;
       if (s.status === "pendente_agendamento") {
         const agKey = `${s.patient_id}|${s.professional_id}|${s.scheduled_date}`;
-        return !!agendamentoMap[agKey];
+        return !!agendamentoMap?.[agKey];
       }
       return false;
     }).length;
@@ -2180,7 +2180,7 @@ const Tratamentos: React.FC = () => {
                 {cycleSessions.map((s) => {
                   const isPendente = s.status === "pendente_agendamento";
                   const agKey = `${s.patient_id}|${s.professional_id}|${s.scheduled_date}`;
-                  const matchedAg = isPendente ? agendamentoMap[agKey] : null;
+                  const matchedAg = isPendente ? agendamentoMap?.[agKey] : null;
                   
                   // Lógica de status efetivo considerando justificativas e regularizações
                   let effectiveStatus = matchedAg ? "agendada" : s.status;
