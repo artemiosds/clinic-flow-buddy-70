@@ -223,6 +223,8 @@ const Relatorios: React.FC = () => {
           procedimento_id: r.procedimento_id,
           proc_nome: r.procedimentos?.nome || '',
           prof_nome: r.prontuarios?.profissional_nome || '',
+          prof_id: r.prontuarios?.profissional_id || '',
+
           unidade_id: r.prontuarios?.unidade_id || '',
           data: r.prontuarios?.data_atendimento || '',
         })));
