@@ -1122,8 +1122,9 @@ ${dataRows}
     try {
       let query = supabase
         .from('agendamentos')
-        .select('paciente_id, paciente_nome, profissional_id, profissional_nome, data, hora, tipo, setor_id, procedimento_sigtap, nome_procedimento')
-        .eq('status', 'concluido')
+        .select('paciente_id, paciente_nome, profissional_id, profissional_nome, data, hora, tipo, setor_id, procedimento_sigtap, nome_procedimento, status')
+        .in('status', ['concluido', 'finalizado'])
+
         .gte('data', mapaDateFrom)
         .lte('data', mapaDateTo)
         .order('data', { ascending: true })
