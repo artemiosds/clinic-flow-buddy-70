@@ -1552,6 +1552,7 @@ const Agenda: React.FC = () => {
                   setFilterUnit("all");
                   setFilterProf("all");
                   setFilterStatus("all");
+                  setFilterTipo("Todos");
                   setSearchTerm("");
                 }}
                 className="h-9 px-2 text-muted-foreground hover:text-foreground"
