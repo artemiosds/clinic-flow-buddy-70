@@ -70,6 +70,7 @@ const Relatorios: React.FC = () => {
   const [procedimentosDB, setProcedimentosDB] = useState<{ prontuario_id: string; procedimento_id: string; proc_nome?: string; prof_nome?: string; prof_id?: string; unidade_id?: string; data?: string }[]>([]);
   const [pacientesDB, setPacientesDB] = useState<any[]>([]);
   const [agendamentosDB, setAgendamentosDB] = useState<any[]>([]);
+  const [prontuariosDB, setProntuariosDB] = useState<any[]>([]);
   
   const [treatmentCycles, setTreatmentCycles] = useState<any[]>([]);
   const [treatmentSessions, setTreatmentSessions] = useState<any[]>([]);
@@ -208,6 +209,7 @@ const Relatorios: React.FC = () => {
         { data: ptsDataResult },
         { data: pacDataDB },
         { data: agDataDB },
+        { data: prontDataDB },
       ] = await Promise.all([
         qAt,
         qFila,
@@ -220,6 +222,7 @@ const Relatorios: React.FC = () => {
         qPts,
         qPacientes,
         supabase.from('agendamentos').select('id,paciente_id,paciente_nome,unidade_id,sala_id,setor_id,profissional_id,profissional_nome,data,hora,status,tipo,observacoes,origem,criado_em,criado_por').gte('data', dataFiltroFrom).lte('data', dataFiltroTo),
+        supabase.from('prontuarios').select('id,paciente_id,paciente_nome,profissional_id,profissional_nome,unidade_id,data_atendimento,hora_atendimento,agendamento_id,tipo_registro,procedimentos_texto,criado_em').gte('data_atendimento', dataFiltroFrom).lte('data_atendimento', dataFiltroTo),
       ]);
 
 
@@ -246,6 +249,7 @@ const Relatorios: React.FC = () => {
       if (ptsDataResult) setPtsData(ptsDataResult);
       if (pacDataDB) setPacientesDB(pacDataDB);
       if (agDataDB) setAgendamentosDB(agDataDB);
+      if (prontDataDB) setProntuariosDB(prontDataDB);
 
 
       setLastUpdated(new Date());
@@ -281,13 +285,12 @@ const Relatorios: React.FC = () => {
 
   // === FILTERS ===
   const filtered = useMemo(() => {
-    // Usar agendamentos do DB que já vieram filtrados por data
-    return agendamentosDB.filter(a => {
+    // 1. Agendamentos filtrados
+    const agendamentosFiltrados = agendamentosDB.filter(a => {
       if (filterUnit !== 'all' && a.unidade_id !== filterUnit) return false;
       if (filterProf !== 'all' && a.profissional_id !== filterProf) return false;
       if (filterStatus !== 'all' && a.status !== filterStatus) return false;
       if (filterTipo !== 'all' && a.tipo !== filterTipo) return false;
-      // Período já filtrado na query
       if (user?.unidadeId && user?.usuario !== 'admin.sms' && a.unidade_id !== user.unidadeId) return false;
       if (user?.role === 'profissional' && user.id && a.profissional_id !== user.id) return false;
       return true;
@@ -298,8 +301,45 @@ const Relatorios: React.FC = () => {
       pacienteId: a.paciente_id,
       pacienteNome: a.paciente_nome,
       profissionalNome: a.profissional_nome,
+      isProntuarioDireto: false
     }));
-  }, [agendamentosDB, filterUnit, filterProf, filterStatus, filterTipo, user]);
+
+    // 2. Prontuários diretos (sem agendamento)
+    const prontuariosDiretos = prontuariosDB.filter(p => {
+      // Somente se não tiver agendamento_id associado para não duplicar
+      if (p.agendamento_id) return false;
+      
+      if (filterUnit !== 'all' && p.unidade_id !== filterUnit) return false;
+      if (filterProf !== 'all' && p.profissional_id !== filterProf) return false;
+      // Prontuário direto é sempre "concluido" no contexto de relatório de produção
+      if (filterStatus !== 'all' && filterStatus !== 'concluido' && filterStatus !== 'finalizado') return false;
+      if (filterTipo !== 'all' && p.tipo_registro !== filterTipo) return false;
+      
+      if (user?.unidadeId && user?.usuario !== 'admin.sms' && p.unidade_id !== user.unidadeId) return false;
+      if (user?.role === 'profissional' && user.id && p.profissional_id !== user.id) return false;
+      return true;
+    }).map(p => ({
+      id: p.id,
+      paciente_id: p.paciente_id,
+      paciente_nome: p.paciente_nome,
+      unidade_id: p.unidade_id,
+      profissional_id: p.profissional_id,
+      profissional_nome: p.profissional_nome,
+      data: p.data_atendimento,
+      hora: p.hora_atendimento || '00:00',
+      status: 'concluido',
+      tipo: p.tipo_registro || 'Atendimento Direto',
+      origem: 'direto',
+      unidadeId: p.unidade_id,
+      profissionalId: p.profissional_id,
+      pacienteId: p.paciente_id,
+      pacienteNome: p.paciente_nome,
+      profissionalNome: p.profissional_nome,
+      isProntuarioDireto: true
+    }));
+
+    return [...agendamentosFiltrados, ...prontuariosDiretos];
+  }, [agendamentosDB, prontuariosDB, filterUnit, filterProf, filterStatus, filterTipo, user]);
 
 
   const filteredAtendimentos = useMemo(() => {
@@ -1142,26 +1182,53 @@ ${dataRows}
     if (!mapaDateFrom || !mapaDateTo) return;
     setMapaLoading(true);
     try {
-      let query = supabase
+      // Buscar agendamentos concluídos
+      const qAgend = supabase
         .from('agendamentos')
-        .select('paciente_id, paciente_nome, profissional_id, profissional_nome, data, hora, tipo, setor_id, procedimento_sigtap, nome_procedimento, status')
+        .select('paciente_id, paciente_nome, profissional_id, profissional_nome, data, hora, tipo, setor_id, procedimento_sigtap, nome_procedimento, status, unidade_id')
         .in('status', ['concluido', 'finalizado', 'confirmado', 'confirmado_chegada'])
         .gte('data', mapaDateFrom)
-        .lte('data', mapaDateTo)
-        .order('data', { ascending: true })
-        .limit(2000);
+        .lte('data', mapaDateTo);
 
+      // Buscar prontuários diretos (sem agendamento)
+      const qPront = supabase
+        .from('prontuarios')
+        .select('paciente_id, paciente_nome, profissional_id, profissional_nome, data_atendimento, hora_atendimento, tipo_registro, procedimentos_texto, unidade_id, agendamento_id')
+        .is('agendamento_id', null)
+        .gte('data_atendimento', mapaDateFrom)
+        .lte('data_atendimento', mapaDateTo);
 
       if (mapaProf !== 'all') {
-        query = query.eq('profissional_id', mapaProf);
+        qAgend.eq('profissional_id', mapaProf);
+        qPront.eq('profissional_id', mapaProf);
       }
       if (user?.unidadeId && user?.usuario !== 'admin.sms') {
-        query = query.eq('unidade_id', user.unidadeId);
+        qAgend.eq('unidade_id', user.unidadeId);
+        qPront.eq('unidade_id', user.unidadeId);
       }
 
-      const { data: agend } = await query;
+      const [{ data: agend }, { data: pronts }] = await Promise.all([
+        qAgend.order('data', { ascending: true }).limit(1500),
+        qPront.order('data_atendimento', { ascending: true }).limit(1000)
+      ]);
 
-      if (!agend || agend.length === 0) {
+      // Mapear prontuários diretos para o formato de agendamento para o Mapa de Atendimento
+      const agendFromPronts = (pronts || []).map(p => ({
+        paciente_id: p.paciente_id,
+        paciente_nome: p.paciente_nome,
+        profissional_id: p.profissional_id,
+        profissional_nome: p.profissional_nome,
+        data: p.data_atendimento,
+        hora: p.hora_atendimento || '00:00',
+        tipo: p.tipo_registro || 'Atendimento Direto',
+        nome_procedimento: p.procedimentos_texto || 'Procedimento Clínico',
+        status: 'concluido',
+        origem: 'direto'
+      }));
+
+      const allAgend = [...(agend || []), ...agendFromPronts];
+
+      if (allAgend.length === 0) {
         setMapaData([]);
         setMapaGenerated(true);
         setMapaLoading(false);
