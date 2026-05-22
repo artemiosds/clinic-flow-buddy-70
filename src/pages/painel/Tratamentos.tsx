@@ -3348,7 +3348,25 @@ const Tratamentos: React.FC = () => {
                   <Label>Profissional *</Label>
                   <Select
                     value={newCycle.professional_id}
-                    onValueChange={(v) => {
+                    onValueChange={async (v) => {
+                      if (newCycle.patient_id) {
+                        const { data: pData } = await supabase
+                          .from("pacientes")
+                          .select("status_falta, is_tfd, possui_ordem_judicial, nome")
+                          .eq("id", newCycle.patient_id)
+                          .single();
+
+                        if (pData?.status_falta === "BLOQUEADO") {
+                          const isIsento = !!(pData.is_tfd || pData.possui_ordem_judicial);
+                          if (isIsento) {
+                            toast.info(`Paciente ${pData.nome} possui exceção administrativa de bloqueio por TFD/Ordem Judicial. Tratamento permitido.`);
+                          } else {
+                            toast.error(`Paciente ${pData.nome} está BLOQUEADO por faltas e não pode iniciar novos tratamentos.`);
+                            return;
+                          }
+                        }
+                      }
+
                       const prof = profissionais.find((p) => p.id === v);
                       setNewCycle((p) => ({
                         ...p,
