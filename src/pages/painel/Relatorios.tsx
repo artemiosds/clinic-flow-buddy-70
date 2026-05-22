@@ -1284,7 +1284,9 @@ ${dataRows}
             { value: 'pts_report', label: 'PTS' },
             { value: 'tratamentos', label: 'Tratamentos' },
             { value: 'detalhado', label: 'Detalhado' },
+            { value: 'municipios', label: '🏙️ Municípios' },
             { value: 'mapa', label: '📍 Mapa Atendimento' },
+
           ].map(tab => (
             <button
               key={tab.value}
