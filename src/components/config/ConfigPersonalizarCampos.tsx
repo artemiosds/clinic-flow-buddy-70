@@ -879,7 +879,7 @@ const ConfigPersonalizarCampos: React.FC = () => {
                 <div className="space-y-3 pt-4 border-t border-muted-foreground/10">
                   <div className="flex items-center justify-between">
                     <Label className="text-xs font-bold uppercase text-muted-foreground flex items-center gap-2"><Sliders className="w-3.5 h-3.5" /> Exibição Condicional Avançada</Label>
-                    <Button type="button" variant="outline" size="xs" onClick={() => setFieldForm(p => ({ ...p, condicional: [...p.condicional, { campo: '', operador: 'eq', valor: '' }] }))}>
+                    <Button type="button" variant="outline" size="sm" onClick={() => setFieldForm(p => ({ ...p, condicional: [...p.condicional, { campo: '', operador: 'eq', valor: '' }] }))}>
                       <Plus className="w-3 h-3 mr-1" /> Adicionar Condição
                     </Button>
                   </div>
