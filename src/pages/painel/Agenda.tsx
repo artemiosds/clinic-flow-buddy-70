@@ -328,6 +328,7 @@ const Agenda: React.FC = () => {
   const isProfissional = user?.role === "profissional";
   const canRetorno = isProfissional && user?.podeAgendarRetorno === true;
   const canAprovar = can('agenda', 'can_execute');
+  const canCreate = can('agenda', 'can_create');
   const profissionais = profissionaisVisiveis;
 
   const agendamentosPendentesOnline = React.useMemo(() => {
@@ -1017,6 +1018,23 @@ const Agenda: React.FC = () => {
       criadoEm: new Date().toISOString(), 
       criadoPor: user.id 
     };
+    // Verificar bloqueio do paciente antes de agendar retorno
+    const { data: pData } = await supabase
+      .from("pacientes")
+      .select("status_falta, is_tfd, possui_ordem_judicial, nome")
+      .eq("id", retornoAg.pacienteId)
+      .single();
+
+    if (pData?.status_falta === "BLOQUEADO") {
+      const isIsento = !!(pData.is_tfd || pData.possui_ordem_judicial);
+      if (isIsento) {
+        toast.info(`Paciente ${pData.nome} possui exceção administrativa de bloqueio por TFD/Ordem Judicial. Agendamento de retorno permitido.`);
+      } else {
+        toast.error("Paciente BLOQUEADO por excesso de faltas. Não é possível agendar retorno.");
+        return;
+      }
+    }
+
     setAgendamentoSaving(true);
     const toastId = toast.loading("Agendando retorno...");
     try { await addAgendamento(agData); toast.success("Retorno agendado com sucesso!", { id: toastId }); } catch (err) { toast.error("Erro ao agendar retorno.", { id: toastId }); } finally { setAgendamentoSaving(false); }

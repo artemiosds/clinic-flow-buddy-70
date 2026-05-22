@@ -1079,6 +1079,24 @@ const Tratamentos: React.FC = () => {
       toast.error("Selecione data e horário.");
       return;
     }
+
+    // Verificar bloqueio do paciente antes de agendar sessão
+    const { data: pData } = await supabase
+      .from("pacientes")
+      .select("status_falta, is_tfd, possui_ordem_judicial, nome")
+      .eq("id", selectedCycle.patient_id)
+      .single();
+
+    if (pData?.status_falta === "BLOQUEADO") {
+      const isIsento = !!(pData.is_tfd || pData.possui_ordem_judicial);
+      if (isIsento) {
+        toast.info(`Paciente ${pData.nome} possui exceção administrativa de bloqueio por TFD/Ordem Judicial. Agendamento permitido.`);
+      } else {
+        toast.error(`Paciente ${pData.nome} está BLOQUEADO por faltas e não pode realizar agendamentos.`);
+        return;
+      }
+    }
+
     setAgendandoSessao(true);
     try {
       const prof = funcionarios.find((f) => f.id === selectedCycle.professional_id);

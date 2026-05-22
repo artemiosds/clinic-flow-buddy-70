@@ -136,6 +136,8 @@ export const RegistrarFaltaModal: React.FC<RegistrarFaltaModalProps> = ({
 
       resetForm();
 
+      // Recarregar a página ou atualizar o estado global para refletir o novo status
+      window.dispatchEvent(new CustomEvent("refresh-patient-status", { detail: { pacienteId: agendamento.pacienteId } }));
     } catch (err: any) {
       console.error("Erro ao registrar falta:", err);
       toast.error(err?.message || "Erro ao registrar falta.");

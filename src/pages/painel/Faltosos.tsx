@@ -98,29 +98,46 @@ const Faltosos: React.FC = () => {
     const limite = dias > 0 ? new Date(Date.now() - dias * 86400000).toISOString().slice(0, 10) : null;
     const q = search.trim().toLowerCase();
     return list.filter((p) => {
+      // Regra de Exceção TFD/Ordem Judicial
+      if (!mostrarExcecoes && (p.is_tfd || p.possui_ordem_judicial)) return false;
+
       if (filtroStatus !== "todos" && p.status_falta !== filtroStatus) return false;
       if (q && !p.nome.toLowerCase().includes(q) && !(p.cpf || "").includes(q)) return false;
       if (limite && p.ultima_falta && p.ultima_falta < limite) return false;
       return true;
     });
-  }, [list, filtroStatus, search, periodoDias]);
+  }, [list, filtroStatus, search, periodoDias, mostrarExcecoes]);
+
+  const handleRegularizar = async () => {
+    if (!regularizarModal.paciente || !motivoRegularizacao.trim()) {
+      toast.error("Informe o motivo da regularização.");
+      return;
+    }
+    setSavingRegularizacao(true);
+    try {
+      const { error } = await supabase.rpc('regularizar_faltas_paciente', {
+        p_paciente_id: regularizarModal.paciente.id,
+        p_motivo: motivoRegularizacao.trim(),
+        p_liberar_todas: liberarTodas
+      });
+      if (error) throw error;
+      toast.success("Falta(s) regularizada(s) com sucesso!");
+      setRegularizarModal({ open: false, paciente: null });
+      setMotivoRegularizacao("");
+      load();
+    } catch (err: any) {
+      console.error(err);
+      toast.error("Erro ao regularizar faltas.");
+    } finally {
+      setSavingRegularizacao(false);
+    }
+  };
 
   const handleRemoverBloqueio = async (p: PacienteFalta) => {
     if (!canUnblock) { toast.error("Sem permissão para desbloquear."); return; }
-    const motivo = window.prompt(`Justifique o desbloqueio de ${p.nome}:`, "");
-    if (motivo === null) return;
-    if (!motivo.trim()) { toast.error("Justificativa obrigatória."); return; }
-    try {
-      const { error } = await (supabase as any).rpc("desbloquear_paciente_faltas", {
-        p_paciente_id: p.id,
-        p_motivo: motivo.trim(),
-      });
-      if (error) throw error;
-      toast.success(`${p.nome} liberado(a). Faltas zeradas.`);
-      load();
-    } catch (err: any) {
-      toast.error(err?.message || "Erro ao desbloquear.");
-    }
+    setRegularizarModal({ open: true, paciente: p });
+    setMotivoRegularizacao("");
+    setLiberarTodas(false);
   };
 
   if (!canAccess) {
