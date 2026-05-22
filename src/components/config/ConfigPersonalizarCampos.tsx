@@ -961,26 +961,8 @@ const ConfigPersonalizarCampos: React.FC = () => {
                             </div>
                           </div>
                         </div>
-
-                        <div className="space-y-4">
-                          <Label className="text-base font-bold flex items-center gap-2"><Sliders className="w-5 h-5" /> Regras Condicionais</Label>
-                          <div className="p-4 rounded-xl border border-dashed border-muted-foreground/30 flex items-center justify-center h-[120px]">
-                            <p className="text-xs text-muted-foreground text-center italic">Funcionalidade de regras avançadas<br/>será integrada ao salvar.</p>
-                          </div>
-                        </div>
                       </div>
                     </TabsContent>
-
-                {/* ═══ Tab 4 — Permissões e regras ═══ */}
-                <TabsContent value="regras" className="mt-6 space-y-6">
-                  <div className="p-4 rounded-xl border bg-muted/20 space-y-4">
-                    <div className="flex items-center gap-2 font-bold text-xs uppercase text-muted-foreground border-b pb-2">
-                      <Activity className="w-3.5 h-3.5" /> Validação e Condicionais
-                    </div>
-                    {/* Simplified validation/conditional representation for space */}
-                    <p className="text-xs text-muted-foreground">Regras de exibição e validações avançadas.</p>
-                  </div>
-                </TabsContent>
               </Tabs>
             </div>
 
