@@ -476,43 +476,45 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
           <TabsContent value="endereco" className="space-y-4 mt-2">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {!H("cep") && (
-              <div>
-                <Label>{L("cep", "CEP")}</Label>
-                <div className="relative">
-                  <Input
-                    value={form.cep || ""}
-                    onChange={(e) => set("cep", maskCEP(e.target.value))}
-                    onBlur={handleCepBlur}
-                    placeholder="00000-000"
-                    inputMode="numeric"
-                  />
-                  {cepLoading && (
-                    <Loader2 className="w-4 h-4 animate-spin absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                  )}
+                <div>
+                  <Label>{L("cep", "CEP")} *</Label>
+                  <div className="relative">
+                    <Input
+                      value={form.cep || ""}
+                      onChange={(e) => set("cep", maskCEP(e.target.value))}
+                      onBlur={handleCepBlur}
+                      placeholder="00000-000"
+                      inputMode="numeric"
+                      className={errors.cep ? "border-destructive" : ""}
+                    />
+                    {cepLoading && (
+                      <Loader2 className="w-4 h-4 animate-spin absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    )}
+                  </div>
+                  {errors.cep && <p className="text-xs text-destructive mt-1">{errors.cep}</p>}
                 </div>
-              </div>
               )}
 
               {!H("tipoLogradouro") && (
-              <div>
-                <Label>
-                  {L("tipoLogradouro", "Logradouro (DNE)")} <span className="text-destructive">*</span>
-                </Label>
-                <LogradouroDneAutocomplete
-                  value={form.tipo_logradouro || ""}
-                  codigo={form.tipo_logradouro_codigo || ""}
-                  onChange={(descricao, codigo) => {
-                    onChange({
-                      ...form,
-                      tipo_logradouro: descricao,
-                      tipo_logradouro_codigo: codigo,
-                    });
-                  }}
-                  className={errors.tipo_logradouro ? "border-destructive" : ""}
-                  required
-                />
-                {errors.tipo_logradouro && <p className="text-xs text-destructive mt-1">{errors.tipo_logradouro}</p>}
-              </div>
+                <div>
+                  <Label>
+                    {L("tipoLogradouro", "Logradouro (DNE)")} <span className="text-destructive">*</span>
+                  </Label>
+                  <LogradouroDneAutocomplete
+                    value={form.tipo_logradouro || ""}
+                    codigo={form.tipo_logradouro_codigo || ""}
+                    onChange={(descricao, codigo) => {
+                      onChange({
+                        ...form,
+                        tipo_logradouro: descricao,
+                        tipo_logradouro_codigo: codigo,
+                      });
+                    }}
+                    className={errors.tipo_logradouro ? "border-destructive" : ""}
+                    required
+                  />
+                  {errors.tipo_logradouro && <p className="text-xs text-destructive mt-1">{errors.tipo_logradouro}</p>}
+                </div>
               )}
 
               {!H("logradouro") && (
