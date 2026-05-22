@@ -151,6 +151,26 @@ const SortableItem: React.FC<SortableItemProps> = ({
                 {FIELD_TYPE_LABELS[row.field.tipo]?.label}
               </span>
             )}
+            {row.kind === 'custom' && (
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter border-l pl-1.5 ml-0.5">
+                  {FIELD_TYPE_LABELS[row.field.tipo]?.label}
+                </span>
+                {row.field.secao && (
+                  <Badge variant="outline" className="text-[9px] h-3.5 px-1 bg-muted/20 font-normal">
+                    Seção: {row.field.secao}
+                  </Badge>
+                )}
+                {row.field.largura && row.field.largura < 100 && (
+                  <Badge variant="outline" className="text-[9px] h-3.5 px-1 bg-primary/5 text-primary border-primary/20">
+                    {row.field.largura}%
+                  </Badge>
+                )}
+                {row.field.printSettings?.restricted && (
+                  <Lock className="w-2.5 h-2.5 text-destructive/70" />
+                )}
+              </div>
+            )}
             {isRenamed && row.kind === 'native' && (
               <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">Renomeado</Badge>
             )}
@@ -158,7 +178,7 @@ const SortableItem: React.FC<SortableItemProps> = ({
               <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">Oculto</Badge>
             )}
             {row.kind === 'custom' && row.field.obrigatorio && (
-              <Badge variant="destructive" className="text-[10px] px-1.5 py-0 h-4">Obrigatório</Badge>
+              <Badge variant="destructive" className="text-[10px] px-1.5 py-0 h-4 shadow-sm shadow-destructive/20">Obrigatório</Badge>
             )}
           </div>
         </div>
