@@ -3239,7 +3239,7 @@ const Tratamentos: React.FC = () => {
 
               return (
                 <Card
-                  key={cycle.id}
+                  key={cycle.id || Math.random().toString()}
                   className={cn(
                     "shadow-card border-0 cursor-pointer hover:ring-1 hover:ring-primary/30 transition-all",
                     cycleFaltasCount >= 3 && "border-l-4 border-l-warning",
