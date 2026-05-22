@@ -1840,9 +1840,9 @@ const Tratamentos: React.FC = () => {
   }
 
   if (selectedCycle) {
-    const pac = selectedCycle.patient_id ? pacientes.find((p) => p.id === selectedCycle.patient_id) : null;
-    const prof = selectedCycle.professional_id ? funcionarios.find((f) => f.id === selectedCycle.professional_id) : null;
-    const unidade = selectedCycle.unit_id ? unidades.find((u) => u.id === selectedCycle.unit_id) : null;
+    const pac = (selectedCycle.patient_id && Array.isArray(pacientes)) ? pacientes.find((p) => p?.id === selectedCycle.patient_id) : null;
+    const prof = (selectedCycle.professional_id && Array.isArray(funcionarios)) ? funcionarios.find((f) => f?.id === selectedCycle.professional_id) : null;
+    const unidade = (selectedCycle.unit_id && Array.isArray(unidades)) ? unidades.find((u) => u?.id === selectedCycle.unit_id) : null;
     const progressPct =
       selectedCycle.total_sessions > 0
         ? Math.round((selectedCycle.sessions_done / selectedCycle.total_sessions) * 100)
@@ -2123,7 +2123,7 @@ const Tratamentos: React.FC = () => {
                 )}
               </div>
 
-              {ptsVinculado.especialidades_envolvidas && ptsVinculado.especialidades_envolvidas.length > 0 && (
+              {ptsVinculado?.especialidades_envolvidas && Array.isArray(ptsVinculado.especialidades_envolvidas) && ptsVinculado.especialidades_envolvidas.length > 0 && (
                 <div>
                   <p className="text-xs text-muted-foreground font-semibold mb-1">Especialidades Envolvidas</p>
                   <div className="flex flex-wrap gap-1">
@@ -2187,7 +2187,7 @@ const Tratamentos: React.FC = () => {
             <div className="max-h-[500px] overflow-y-auto border rounded-lg">
               <div className="space-y-2">
                 {(cycleSessions || []).map((s) => {
-                  if (!s) return null;
+                  if (!s || !s.id) return null;
                   const isPendente = s.status === "pendente_agendamento";
                   const agKey = `${s.patient_id}|${s.professional_id}|${s.scheduled_date}`;
                   const matchedAg = isPendente ? agendamentoMap?.[agKey] : null;
