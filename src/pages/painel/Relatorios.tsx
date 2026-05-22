@@ -929,14 +929,11 @@ const Relatorios: React.FC = () => {
         munMap[mun].atendimentos++;
         munMap[mun].pacientesSet.add(a.pacienteId);
       });
-      const munRows = Object.values(munMap).sort((a, b) => b.totalPacientes - a.totalPacientes).map(m =>
-        `<tr><td>${m.nome}</td><td style="text-align:center">${m.totalPacientes}</td><td style="text-align:center">${m.pacientesSet.size}</td><td style="text-align:center">${m.atendimentos}</td></tr>`
-      ).join('');
-      body = `
-        <h2>Relatório Quantitativo por Município</h2>
-        <table><thead><tr><th>Município (Naturalidade)</th><th>Total Pacientes</th><th>Pacientes Atendidos</th><th>Total Atendimentos</th></tr></thead><tbody>${munRows}</tbody>
-        <tfoot><tr style="font-weight:700;background:#f1f5f9;"><td>TOTAL</td><td style="text-align:center">${Object.values(munMap).reduce((acc, m) => acc + m.totalPacientes, 0)}</td><td style="text-align:center">${Object.values(munMap).reduce((acc, m) => acc + m.pacientesSet.size, 0)}</td><td style="text-align:center">${Object.values(munMap).reduce((acc, m) => acc + m.atendimentos, 0)}</td></tr></tfoot></table>`;
+      const munRowsList = Object.values(munMap).sort((a, b) => b.totalPacientes - a.totalPacientes).map(m => [m.nome, m.totalPacientes.toString(), m.pacientesSet.size.toString(), m.atendimentos.toString()]);
+      headers = ['Município (Naturalidade)', 'Total Pacientes', 'Pacientes Atendidos', 'Total Atendimentos'];
+      rows = munRowsList;
     }
+
 
 
     // Build XML Spreadsheet (Excel-compatible)
