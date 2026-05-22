@@ -206,9 +206,17 @@ const ConfigEspecialidades: React.FC = () => {
     reorderCampos(arrayMove(ids, oldIdx, newIdx));
   };
 
-  const saveEditedCampo = (updated: CampoEspecialidade) => {
-    updateEsp(e => ({ ...e, campos: e.campos.map(c => c.id === updated.id ? updated : c) }));
-    setEditingCampo(null);
+  const saveEditedCampo = async (updated: CampoEspecialidade) => {
+    setIsSaving(true);
+    try {
+      updateEsp(e => ({ ...e, campos: e.campos.map(c => c.id === updated.id ? updated : c) }));
+      setEditingCampo(null);
+      toast.success('Campo atualizado');
+    } catch (error) {
+      toast.error('Erro ao atualizar campo');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const addCampoEsp = async () => {
