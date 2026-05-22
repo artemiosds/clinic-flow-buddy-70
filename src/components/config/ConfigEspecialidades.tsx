@@ -591,17 +591,17 @@ const ConfigEspecialidades: React.FC = () => {
             </ScrollArea>
 
             {/* Rodapé */}
-            <div className="px-10 py-8 border-t bg-white/95 dark:bg-slate-950/95 backdrop-blur-sm flex items-center justify-between gap-5 mt-auto">
+            <div className="px-12 py-10 border-t bg-slate-50/50 dark:bg-slate-900/50 backdrop-blur-md flex items-center justify-between gap-6">
               <Button 
                 variant="ghost" 
-                className="font-bold text-slate-500 h-14 px-8 rounded-2xl transition-all hover:bg-slate-50 text-base"
+                className="font-bold text-slate-500 h-16 px-10 rounded-2xl transition-all hover:bg-slate-200 dark:hover:bg-slate-800 text-lg"
                 onClick={() => !isSaving && setAddFieldDialog(false)}
                 disabled={isSaving}
               >
                 Cancelar
               </Button>
               <Button 
-                className="bg-primary hover:bg-primary/90 text-white font-bold h-14 px-12 shadow-xl shadow-primary/25 rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98] min-w-[220px] text-base"
+                className="bg-primary hover:bg-primary/90 text-white font-extrabold h-16 px-14 shadow-2xl shadow-primary/30 rounded-2xl transition-all hover:scale-[1.02] active:scale-95 min-w-[280px] text-lg"
                 onClick={addCampoEsp}
                 disabled={!newField.label.trim() || isSaving}
               >
