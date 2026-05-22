@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { useData } from '@/contexts/DataContext';
@@ -73,6 +74,7 @@ interface SelectedCid {
 
 const PTS: React.FC = () => {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
   const { can } = usePermissions();
   const { pacientes, funcionarios, logAction } = useData();
   const [ptsList, setPtsList] = useState<PTSRecord[]>([]);
@@ -173,6 +175,23 @@ const PTS: React.FC = () => {
   }, [isMaster, user]);
 
   useEffect(() => { loadPts(); }, [loadPts]);
+
+  // Handle direct creation from Prontuário
+  useEffect(() => {
+    const action = searchParams.get('action');
+    const pid = searchParams.get('pacienteId');
+    if (action === 'new_pts' && pid && pacientes.length > 0) {
+      const pac = pacientes.find(p => p.id === pid);
+      if (pac) {
+        setForm(prev => ({
+          ...prev,
+          patient_id: pac.id,
+          patient_name: pac.nome
+        }));
+        setDialogOpen(true);
+      }
+    }
+  }, [searchParams, pacientes]);
 
   // Load valid CIDs when procedure is selected
   useEffect(() => {

@@ -680,7 +680,14 @@ const WorkspaceProntuario: React.FC = () => {
                     ) : (
                       <div className="p-6 text-center border border-dashed rounded-xl bg-muted/20">
                         <p className="text-xs text-muted-foreground mb-3">Nenhum ciclo de tratamento ativo.</p>
-                        <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => navigate('/painel/tratamentos')}>Iniciar Ciclo</Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="h-8 text-xs" 
+                          onClick={() => navigate(`/painel/tratamentos?pacienteId=${pacienteId || form.paciente_id}&action=new_cycle`)}
+                        >
+                          Iniciar Ciclo
+                        </Button>
                       </div>
                     )}
                     
@@ -699,7 +706,14 @@ const WorkspaceProntuario: React.FC = () => {
                     ) : (
                       <div className="p-6 text-center border border-dashed rounded-xl bg-muted/20">
                         <p className="text-xs text-muted-foreground mb-3">Nenhum PTS ativo para este paciente.</p>
-                        <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => navigate('/painel/tratamentos')}>Gerenciar PTS</Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="h-8 text-xs" 
+                          onClick={() => navigate(`/painel/pts?pacienteId=${pacienteId || form.paciente_id}&action=new_pts`)}
+                        >
+                          Criar Projeto Terapêutico (PTS)
+                        </Button>
                       </div>
                     )}
                   </TabsContent>
