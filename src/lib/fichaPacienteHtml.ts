@@ -234,7 +234,7 @@ export function buildFichaBody(
 
     body.push(section(
       '6. Triagem / sinais vitais',
-      grid(8, [
+      grid(4, [
         { label: 'PA', value: sv.pressao_arterial, manual: true },
         { label: 'FC', value: sv.frequencia_cardiaca, manual: true },
         { label: 'FR', value: sv.frequencia_respiratoria, manual: true },
