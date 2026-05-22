@@ -3077,24 +3077,6 @@ const Tratamentos: React.FC = () => {
             {(isProfissional || canManageFull) && (
               <Button
                 size="sm"
-                onClick={() => {
-                  const userIsProf = profissionais.some((p) => p.id === user?.id);
-                  setNewCycle({
-                    patient_id: "",
-                    professional_id: userIsProf ? user?.id || "" : "",
-                    unit_id: user?.unidadeId || "",
-                    specialty: user?.profissao || "",
-                    treatment_type: "",
-                    total_sessions: 0,
-                    frequency: "1x_semana",
-                    start_date: new Date().toISOString().split("T")[0],
-                    clinical_notes: "",
-                    pts_id: "",
-                    weekdays: [],
-                    duration_months: 3,
-                  });
-                  setCreateOpen(true);
-                }}
                 className="gradient-primary"
                 onClick={async (e) => {
                   if (newCycle.patient_id) {
@@ -3116,8 +3098,27 @@ const Tratamentos: React.FC = () => {
                       }
                     }
                   }
+
+                  const userIsProf = profissionais.some((p) => p.id === user?.id);
+                  setNewCycle({
+                    patient_id: "",
+                    professional_id: userIsProf ? user?.id || "" : "",
+                    unit_id: user?.unidadeId || "",
+                    specialty: user?.profissao || "",
+                    treatment_type: "",
+                    total_sessions: 0,
+                    frequency: "1x_semana",
+                    start_date: new Date().toISOString().split("T")[0],
+                    clinical_notes: "",
+                    pts_id: "",
+                    weekdays: [],
+                    duration_months: 3,
+                  });
+                  setCreateOpen(true);
                 }}
               >
+                <Plus className="w-4 h-4 mr-2" /> Novo Ciclo
+              </Button>
                 <Plus className="w-4 h-4 mr-2" /> Novo Ciclo
               </Button>
             )}
