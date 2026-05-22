@@ -179,40 +179,42 @@ export function buildInstitutionalCSS(
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 0;
-    margin-bottom: 10px;
-    border-bottom: 2px solid ${accent};
+    padding: 0 0 6px 0;
+    margin-bottom: 8px;
+    border-bottom: 1.5px solid ${accent};
+    position: relative;
   }
   .doc-header .logo-left,
   .doc-header .logo-right { flex-shrink: 0; }
   .doc-header .header-center {
     flex: 1;
     text-align: ${headerAlign};
-    padding: 0 12px;
+    padding: 0 8px;
   }
   .doc-header h1 {
-    font-size: ${titlePt}pt;
+    font-size: ${titlePt - 1}pt;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
     color: ${accent};
     margin: 0;
-    font-family: ${fontFamily};
+    line-height: 1.1;
   }
   .doc-header .subtitle {
-    font-size: ${bodyPt}pt;
-    color: #334155;
-    margin-top: 2px;
+    font-size: ${bodyPt - 1}pt;
+    color: #475569;
+    margin-top: 1px;
+    font-weight: 600;
   }
   .doc-header .doc-title {
-    font-size: ${titlePt + 1}pt;
+    font-size: ${titlePt}pt;
     font-weight: 700;
-    margin-top: 6px;
+    margin-top: 4px;
     text-transform: uppercase;
-    letter-spacing: 0.8px;
-    color: #1a1a1a;
+    letter-spacing: 0.5px;
+    color: #000;
     border-top: 1px solid #e2e8f0;
-    padding-top: 5px;
+    padding-top: 3px;
   }
   .doc-header .emit-date {
     font-size: ${microPt}pt;
@@ -221,7 +223,7 @@ export function buildInstitutionalCSS(
     white-space: nowrap;
     position: absolute;
     right: 0;
-    bottom: 10px;
+    bottom: 2px;
   }
 
   /* META INFO BAR */
