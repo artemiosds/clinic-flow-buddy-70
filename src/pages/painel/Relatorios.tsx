@@ -67,8 +67,9 @@ const Relatorios: React.FC = () => {
   const [atendimentosDB, setAtendimentosDB] = useState<AtendimentoDB[]>([]);
   const [filaDB, setFilaDB] = useState<FilaDB[]>([]);
   const [triagensDB, setTriagensDB] = useState<TriagemDB[]>([]);
-  const [procedimentosDB, setProcedimentosDB] = useState<{ prontuario_id: string; procedimento_id: string; proc_nome?: string; prof_nome?: string; unidade_id?: string; data?: string }[]>([]);
+  const [procedimentosDB, setProcedimentosDB] = useState<{ prontuario_id: string; procedimento_id: string; proc_nome?: string; prof_nome?: string; prof_id?: string; unidade_id?: string; data?: string }[]>([]);
   const [pacientesDB, setPacientesDB] = useState<any[]>([]);
+  const [agendamentosDB, setAgendamentosDB] = useState<any[]>([]);
   
   const [treatmentCycles, setTreatmentCycles] = useState<any[]>([]);
   const [treatmentSessions, setTreatmentSessions] = useState<any[]>([]);
@@ -77,6 +78,7 @@ const Relatorios: React.FC = () => {
   const [ptsData, setPtsData] = useState<any[]>([]);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [lastUpdatedLabel, setLastUpdatedLabel] = useState('agora');
+
 
   // Mapa de Atendimento state
   const [mapaDateFrom, setMapaDateFrom] = useState('');
