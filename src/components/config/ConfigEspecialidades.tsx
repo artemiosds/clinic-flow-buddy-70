@@ -50,10 +50,9 @@ const FIELD_TYPES = [
   { id: 'text', label: 'Texto Curto', icon: Type, description: 'Nomes, observações breves' },
   { id: 'textarea', label: 'Texto Longo', icon: AlignLeft, description: 'Anamnese, evolução, descrições' },
   { id: 'number', label: 'Número', icon: Hash, description: 'Medidas, idade, doses' },
-  { id: 'date', label: 'Data', icon: Calendar, description: 'Eventos, nascimento, prazos' },
   { id: 'select', label: 'Seleção', icon: List, description: 'Lista de opções pré-definidas' },
-  { id: 'checkbox', label: 'Checkbox', icon: CheckSquare, description: 'Sim/Não ou seleção única' },
-  { id: 'slider', label: 'Escala (0-10)', icon: Settings2, description: 'Intensidade, nível de dor' },
+  { id: 'multiselect', label: 'Múltipla Escolha', icon: CheckSquare, description: 'Múltiplas opções simultâneas' },
+  { id: 'date', label: 'Data', icon: Calendar, description: 'Eventos, nascimento, prazos' },
 ];
 
 const PROFISSOES = ['fisioterapia', 'psicologia', 'fonoaudiologia', 'nutricao', 'terapia_ocupacional', 'medicina', 'odontologia', 'avaliacao_enfermagem', 'servico_social', 'assistente_social', 'cirurgia_geral', 'cirurgiao', 'infectologia', 'infectologista'];
