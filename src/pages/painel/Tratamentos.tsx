@@ -682,11 +682,11 @@ const Tratamentos: React.FC = () => {
     const prof = profissionais.find((p) => p.id === newCycle.professional_id);
     const pac = pacientes.find((p) => p.id === newCycle.patient_id);
 
-    const existingActive = cycles.find(
+    const existingActive = (cycles || []).find(
       (c) =>
-        c.patient_id === newCycle.patient_id &&
-        c.status === "em_andamento" &&
-        c.treatment_type === newCycle.treatment_type,
+        c?.patient_id === newCycle.patient_id &&
+        c?.status === "em_andamento" &&
+        c?.treatment_type === newCycle.treatment_type,
     );
     if (existingActive) {
       toast.error("Paciente já possui tratamento ativo deste tipo.");
@@ -1485,9 +1485,9 @@ const Tratamentos: React.FC = () => {
     if (addingIntermediate) return; // Double-click guard
     setAddingIntermediate(true);
     try {
-      const currentSessions = sessions
-        .filter((s) => s.cycle_id === selectedCycle.id)
-        .sort((a, b) => a.session_number - b.session_number);
+      const currentSessions = (sessions || [])
+        .filter((s) => s?.cycle_id === selectedCycle.id)
+        .sort((a, b) => (a?.session_number || 0) - (b?.session_number || 0));
 
       const insertPos = intermediateAfterSession; // insert after this session number
       const newTotal = selectedCycle.total_sessions + 1;
@@ -1568,7 +1568,7 @@ const Tratamentos: React.FC = () => {
       const newTotal = selectedCycle.total_sessions + extensionForm.new_sessions;
 
       // Determine weekdays from existing sessions or fallback
-      const existingSessions = sessions.filter(s => s.cycle_id === selectedCycle.id);
+      const existingSessions = (sessions || []).filter(s => s?.cycle_id === selectedCycle.id);
       const weekdaysFromExisting = [...new Set(existingSessions.map(s => {
         const d = new Date(s.scheduled_date + 'T12:00:00');
         const dow = d.getDay();
