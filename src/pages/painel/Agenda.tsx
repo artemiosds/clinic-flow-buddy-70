@@ -482,7 +482,9 @@ const Agenda: React.FC = () => {
         const nome = resolvePaciente(a.pacienteId, a.pacienteNome).toLowerCase();
         const cpf = pac?.cpf?.toLowerCase() || "";
         const cns = pac?.cns?.toLowerCase() || "";
-        if (!nome.includes(debouncedSearch) && !cpf.includes(debouncedSearch) && !cns.includes(debouncedSearch)) {
+        const tfd = pac?.is_tfd ? "tfd" : "";
+        const judicial = pac?.possui_ordem_judicial ? "judicial" : "";
+        if (!nome.includes(debouncedSearch) && !cpf.includes(debouncedSearch) && !cns.includes(debouncedSearch) && !tfd.includes(debouncedSearch) && !judicial.includes(debouncedSearch)) {
           return false;
         }
       }
