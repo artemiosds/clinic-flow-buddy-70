@@ -2480,7 +2480,7 @@ const ProntuarioPage: React.FC = () => {
                                  </div>
                                </div>
                              )}
-                            {sessaoCycle?.status === 'concluido' && (
+                            {(sessaoCycle?.status as string) === 'concluido' && (
                               <div className="space-y-2">
                                 <Badge variant="secondary" className="bg-green-500/10 text-green-700 border-green-500/30">Ciclo concluído</Badge>
                                 <div><Button type="button" variant="outline" size="sm" onClick={() => setCycleOpen(true)}><Activity className="w-3.5 h-3.5 mr-1" /> Iniciar novo ciclo</Button></div>
