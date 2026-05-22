@@ -110,6 +110,9 @@ const Relatorios: React.FC = () => {
   const loadReportData = useCallback(async () => {
     try {
       // PERF: Se as datas forem alteradas, filtramos direto no banco para reduzir payload
+      const dataFiltroFrom = dateFrom || '2000-01-01';
+      const dataFiltroTo = dateTo || '2100-12-31';
+
       let qAt = supabase.from('atendimentos').select('id,agendamento_id,paciente_id,paciente_nome,profissional_id,profissional_nome,unidade_id,sala_id,setor,procedimento,data,hora_inicio,hora_fim,duracao_minutos,status');
       let qFila = supabase.from('fila_espera').select('id,paciente_id,paciente_nome,unidade_id,profissional_id,setor,prioridade,prioridade_perfil,status,posicao,hora_chegada,hora_chamada,criado_em');
       let qTriage = supabase.from('triage_records').select('id,agendamento_id,tecnico_id,criado_em,confirmado_em,iniciado_em');
