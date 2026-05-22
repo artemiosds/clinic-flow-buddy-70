@@ -567,8 +567,9 @@ const Relatorios: React.FC = () => {
     filtered.forEach(a => {
       if (!map[a.data]) map[a.data] = { data: a.data, agendamentos: 0, concluidos: 0, faltas: 0 };
       map[a.data].agendamentos++;
-      if (a.status === 'concluido') map[a.data].concluidos++;
+      if (a.status === 'concluido' || (a.status as string) === 'finalizado') map[a.data].concluidos++;
       if (a.status === 'falta') map[a.data].faltas++;
+
     });
     return Object.values(map).sort((a, b) => a.data.localeCompare(b.data)).slice(-30);
   }, [filtered]);
