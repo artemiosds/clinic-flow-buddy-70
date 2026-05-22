@@ -61,7 +61,7 @@ export async function renderCustomFieldsHtml(
   if (!values || Object.keys(values).length === 0) return '';
   const cfg = await loadConfig();
   const screenCfg = resolveScreen(cfg, screen, opts.unidadeId);
-  const visible = filterVisibleFields(screenCfg.fields, values, opts.contexto || {});
+  const visible = filterVisibleFields(screenCfg.fields, values, opts.contexto || {}, { isPrint: true });
   if (visible.length === 0) return '';
 
   const groups = groupBySection(visible);
