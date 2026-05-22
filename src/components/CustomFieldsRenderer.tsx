@@ -72,7 +72,12 @@ const CustomFieldsRenderer: React.FC<CustomFieldsRendererProps> = ({
     );
 
     const wrap = (inner: React.ReactNode, wide = false) => (
-      <div key={field.id} className={cn(wide && 'md:col-span-2', field.destaque && 'p-3 rounded-lg border bg-primary/5')}>
+      <div key={field.id} className={cn(
+        wide && 'md:col-span-2', 
+        field.destaque && 'p-3 rounded-lg border bg-primary/5',
+        field.largura === 50 && 'md:col-span-1',
+        field.largura === 25 && 'md:col-span-1' // limited by current 2-col grid
+      )}>
         {labelEl}
         {inner}
         {error && <p className="text-xs text-destructive mt-1">{error}</p>}
@@ -87,13 +92,14 @@ const CustomFieldsRenderer: React.FC<CustomFieldsRendererProps> = ({
             disabled={disabled} rows={3}
             maxLength={field.validacao?.maxLength}
             placeholder={field.placeholder}
-          />, true);
+          />, field.largura === 100 || !field.largura);
 
-      case 'checkbox': {
+      case 'checkbox':
+      case 'checklist': {
         if (field.opcoes && field.opcoes.length > 0) {
           const selected: string[] = Array.isArray(val) ? val : (typeof val === 'string' && val ? val.split('||') : []);
           return wrap(
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
               {field.opcoes.map(opt => (
                 <div key={opt} className="flex items-center gap-2">
                   <Checkbox
@@ -108,16 +114,42 @@ const CustomFieldsRenderer: React.FC<CustomFieldsRendererProps> = ({
                   <Label htmlFor={`cf-${field.id}-${opt}`} className="text-sm cursor-pointer font-normal">{opt}</Label>
                 </div>
               ))}
-            </div>, true);
+            </div>, field.largura === 100 || !field.largura);
         }
-        return (
-          <div key={field.id} className="flex items-center gap-2">
+        return wrap(
+          <div className="flex items-center gap-2 h-10">
             <Checkbox id={`cf-${field.id}`} checked={!!val} onCheckedChange={v => onChange(field.nome, v)} disabled={disabled} />
             <Label htmlFor={`cf-${field.id}`} className="text-sm cursor-pointer">{field.rotulo}</Label>
-            {error && <p className="text-xs text-destructive ml-2">{error}</p>}
           </div>
         );
       }
+
+      case 'separator':
+        return (
+          <div key={field.id} className="col-span-full border-b pb-1 mb-2 mt-4">
+            <h5 className="text-xs font-bold uppercase text-primary/70">{field.rotulo}</h5>
+            {field.ajuda && <p className="text-[10px] text-muted-foreground">{field.ajuda}</p>}
+          </div>
+        );
+
+      case 'scale_numeric':
+      case 'scale_eva':
+        return wrap(
+          <div className="flex flex-col gap-2">
+            <div className="flex justify-between items-center px-1">
+              <span className="text-[10px] text-muted-foreground">{field.tipo === 'scale_eva' ? 'Sem dor' : 'Mínimo'}</span>
+              <span className="text-sm font-bold text-primary">{val || 0}</span>
+              <span className="text-[10px] text-muted-foreground">{field.tipo === 'scale_eva' ? 'Pior dor' : 'Máximo'}</span>
+            </div>
+            <input 
+              type="range" min="0" max="10" step="1"
+              value={val || 0}
+              onChange={e => handleChange(field, e.target.value)}
+              disabled={disabled}
+              className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+            />
+          </div>
+        );
 
       case 'radio':
         return wrap(
@@ -128,12 +160,12 @@ const CustomFieldsRenderer: React.FC<CustomFieldsRendererProps> = ({
                 <Label htmlFor={`cf-${field.id}-${opt}`} className="text-sm cursor-pointer font-normal">{opt}</Label>
               </div>
             ))}
-          </RadioGroup>, true);
+          </RadioGroup>, field.largura === 100 || !field.largura);
 
       case 'select':
         return wrap(
           <Select value={val || ''} onValueChange={v => onChange(field.nome, v)} disabled={disabled}>
-            <SelectTrigger><SelectValue placeholder={field.placeholder || 'Selecione...'} /></SelectTrigger>
+            <SelectTrigger className="h-9"><SelectValue placeholder={field.placeholder || 'Selecione...'} /></SelectTrigger>
             <SelectContent>
               {(field.opcoes || []).map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
             </SelectContent>
@@ -151,8 +183,17 @@ const CustomFieldsRenderer: React.FC<CustomFieldsRendererProps> = ({
             maxLength={field.validacao?.maxLength}
             min={field.validacao?.min}
             max={field.validacao?.max}
+            className="h-9"
           />);
     }
+  };
+
+  const wrapWithWidth = (field: CustomFieldDef, content: React.ReactNode) => {
+    const w = field.largura || 100;
+    const colSpan = w === 25 ? 'md:col-span-1' : w === 50 ? 'md:col-span-1' : w === 75 ? 'md:col-span-1.5' : 'md:col-span-2';
+    // Para simplificar no grid de 2 colunas:
+    const gridSpan = w <= 50 ? 'col-span-1' : 'col-span-full';
+    return <div key={field.id} className={gridSpan}>{content}</div>;
   };
 
   return (
