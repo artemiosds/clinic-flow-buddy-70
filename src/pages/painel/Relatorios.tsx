@@ -300,7 +300,7 @@ const Relatorios: React.FC = () => {
     const total = filtered.length;
     const confirmados = filtered.filter(a => a.status === 'confirmado' || a.status === 'confirmado_chegada').length;
     const pendentes = filtered.filter(a => a.status === 'pendente').length;
-    const concluidos = filtered.filter(a => a.status === 'concluido').length;
+    const concluidos = filtered.filter(a => a.status === 'concluido' || a.status === 'finalizado').length;
     const emAtendimento = filtered.filter(a => a.status === 'em_atendimento').length;
     const faltas = filtered.filter(a => a.status === 'falta').length;
     const cancelados = filtered.filter(a => a.status === 'cancelado').length;
@@ -308,6 +308,7 @@ const Relatorios: React.FC = () => {
     const online = filtered.filter(a => a.origem === 'online').length;
     const recepcao = filtered.filter(a => a.origem === 'recepcao').length;
     const retornos = filtered.filter(a => a.tipo === 'Retorno').length;
+
     const primeiraConsulta = filtered.filter(a => a.tipo === 'Consulta' || a.tipo === 'Primeira Consulta').length;
     const taxaComparecimento = total > 0 ? Math.round(((concluidos + emAtendimento) / (total - pendentes - cancelados || 1)) * 100) : 0;
     const taxaFalta = total > 0 ? Math.round((faltas / (total || 1)) * 100) : 0;
