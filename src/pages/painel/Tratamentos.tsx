@@ -350,14 +350,13 @@ const Tratamentos: React.FC = () => {
   const loadSessionsForCycle = useCallback(async (cycle: TreatmentCycle, silent = true) => {
     try {
       const [sRes, eRes] = await Promise.all([
-        supabase.from("treatment_sessions").select("*, agendamentos(falta_justificada, regularizada)").eq("cycle_id", cycle.id).order("session_number", { ascending: true }),
+        supabase.from("treatment_sessions").select("*").eq("cycle_id", cycle.id).order("session_number", { ascending: true }),
         supabase.from("treatment_extensions").select("*").eq("cycle_id", cycle.id).order("changed_at", { ascending: false }),
       ]);
       
       const sessionsData = (sRes.data || []) as TreatmentSession[];
       const extensionsData = (eRes.data || []) as TreatmentExtension[];
       
-      // Replace only this cycle's sessions in the global state
       setSessions((prev) => {
         const others = prev.filter((s) => s?.cycle_id !== cycle.id);
         return [...others, ...sessionsData];
@@ -368,24 +367,41 @@ const Tratamentos: React.FC = () => {
       });
       setLoadedSessionsCycleId(cycle.id);
 
-      // Cross-reference agendamentos for this cycle's sessions only
+      // Cross-reference agendamentos for this cycle's sessions
       if (sessionsData.length > 0) {
         const patientIds = [...new Set(sessionsData.map((s) => s.patient_id))];
         let agQuery = supabase
           .from("agendamentos")
-          .select("id, data, hora, status, paciente_id, profissional_id")
+          .select("id, data, hora, status, paciente_id, profissional_id, falta_justificada, regularizada")
           .in("paciente_id", patientIds)
-          .not("status", "in", '("cancelado","falta","remarcado")');
+          .not("status", "in", '("cancelado")'); // Include "falta" so we can see if it was justified
+        
         if (user?.unidadeId && user?.usuario !== 'admin.sms') {
           agQuery = agQuery.eq("unidade_id", user.unidadeId);
         }
+        
         const { data: agData } = await agQuery;
         if (agData) {
           setAgendamentoMap((prev) => {
             const next = { ...prev };
             for (const ag of agData) {
-              const key = `${ag.paciente_id}|${ag.profissional_id}|${ag.data}`;
-              next[key] = { id: ag.id, hora: ag.hora, status: ag.status };
+              // Triple key for matching pending sessions
+              const tripleKey = `${ag.paciente_id}|${ag.profissional_id}|${ag.data}`;
+              next[tripleKey] = { 
+                id: ag.id, 
+                hora: ag.hora, 
+                status: ag.status,
+                falta_justificada: ag.falta_justificada,
+                regularizada: ag.regularizada
+              };
+              // Direct ID key for matching sessions with appointment_id
+              next[ag.id] = {
+                id: ag.id,
+                hora: ag.hora,
+                status: ag.status,
+                falta_justificada: ag.falta_justificada,
+                regularizada: ag.regularizada
+              };
             }
             return next;
           });
@@ -2191,15 +2207,16 @@ const Tratamentos: React.FC = () => {
                 {(cycleSessions || []).map((s) => {
                   if (!s || !s.id) return null;
                   const isPendente = s.status === "pendente_agendamento";
-                  const agKey = `${s.patient_id}|${s.professional_id}|${s.scheduled_date}`;
-                  const matchedAg = isPendente ? agendamentoMap?.[agKey] : null;
+                  const tripleKey = `${s.patient_id}|${s.professional_id}|${s.scheduled_date}`;
+                  // Try matching by appointment_id first, then by triple key
+                  const matchedAg = (s.appointment_id ? agendamentoMap?.[s.appointment_id] : null) || agendamentoMap?.[tripleKey];
                   
                   // Lógica de status efetivo considerando justificativas e regularizações
-                  let effectiveStatus = matchedAg ? "agendada" : s.status;
-                  const linkedAg = (s as any).agendamentos;
-                  if (s.status === "paciente_faltou" && linkedAg) {
-                    if (linkedAg.regularizada) effectiveStatus = "falta_regularizada";
-                    else if (linkedAg.falta_justificada) effectiveStatus = "falta_justificada";
+                  let effectiveStatus = (s.status === "pendente_agendamento" && matchedAg) ? "agendada" : s.status;
+                  
+                  if (s.status === "paciente_faltou" && matchedAg) {
+                    if (matchedAg.regularizada) effectiveStatus = "falta_regularizada";
+                    else if (matchedAg.falta_justificada) effectiveStatus = "falta_justificada";
                   }
 
                   const effectiveIsPendente = effectiveStatus === "pendente_agendamento";
