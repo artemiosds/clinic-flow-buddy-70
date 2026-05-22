@@ -47,12 +47,12 @@ const TIPOS_PRONTUARIO: { key: TipoProntuario; label: string; short: string }[] 
 ];
 
 const FIELD_TYPES = [
-  { id: 'text', label: 'Texto Curto', icon: Type, description: 'Respostas rápidas, nomes ou observações curtas' },
-  { id: 'textarea', label: 'Texto Longo', icon: AlignLeft, description: 'Descrições detalhadas, anamnese ou evolução' },
+  { id: 'text', label: 'Texto Curto', icon: Type, description: 'Nomes, observações breves ou respostas rápidas' },
+  { id: 'textarea', label: 'Texto Longo', icon: AlignLeft, description: 'Anamnese, evolução, descrições detalhadas' },
   { id: 'number', label: 'Número', icon: Hash, description: 'Medidas, doses, idade ou valores numéricos' },
-  { id: 'select', label: 'Seleção', icon: List, description: 'Escolha uma única opção de uma lista prévia' },
-  { id: 'multiselect', label: 'Múltipla Escolha', icon: CheckSquare, description: 'Selecione várias opções simultaneamente' },
-  { id: 'date', label: 'Data', icon: Calendar, description: 'Seleção de datas no calendário' },
+  { id: 'select', label: 'Seleção', icon: List, description: 'Escolha única de uma lista pré-definida' },
+  { id: 'multiselect', label: 'Múltipla Escolha', icon: CheckSquare, description: 'Múltiplas opções selecionáveis simultaneamente' },
+  { id: 'date', label: 'Data', icon: Calendar, description: 'Eventos, nascimento, prazos ou agendamentos' },
 ];
 
 const PROFISSOES = ['fisioterapia', 'psicologia', 'fonoaudiologia', 'nutricao', 'terapia_ocupacional', 'medicina', 'odontologia', 'avaliacao_enfermagem', 'servico_social', 'assistente_social', 'cirurgia_geral', 'cirurgiao', 'infectologia', 'infectologista'];
