@@ -13,7 +13,8 @@ import {
   Hash, Calendar, CheckSquare, List, AlignLeft, ArrowUp, ArrowDown, Lock,
   Phone, IdCard, Building2, MapPin, Mail, Link as LinkIcon, Clock, DollarSign, Paperclip,
   CheckCircle, Sliders, Activity, Info, FileText, Image, PenTool, Table, Calculator, Layout,
-  Save, Undo2, ChevronRight, LayoutTemplate, Database, AlertCircle, Check, Loader2,
+  Save, Undo2, ChevronRight, LayoutTemplate, Database, AlertCircle, Check, Loader2, MousePointerClick,
+  Monitor, Smartphone, User, UserCheck, Layers, TextQuote, Box, ClipboardCheck, History,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useData } from '@/contexts/DataContext';
