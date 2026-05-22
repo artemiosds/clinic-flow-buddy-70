@@ -47,12 +47,12 @@ const TIPOS_PRONTUARIO: { key: TipoProntuario; label: string; short: string }[] 
 ];
 
 const FIELD_TYPES = [
-  { id: 'text', label: 'Texto Curto', icon: Type, description: 'Nomes, observações breves' },
-  { id: 'textarea', label: 'Texto Longo', icon: AlignLeft, description: 'Anamnese, evolução, descrições' },
-  { id: 'number', label: 'Número', icon: Hash, description: 'Medidas, idade, doses' },
-  { id: 'select', label: 'Seleção', icon: List, description: 'Lista de opções pré-definidas' },
-  { id: 'multiselect', label: 'Múltipla Escolha', icon: CheckSquare, description: 'Múltiplas opções simultâneas' },
-  { id: 'date', label: 'Data', icon: Calendar, description: 'Eventos, nascimento, prazos' },
+  { id: 'text', label: 'Texto Curto', icon: Type, description: 'Respostas rápidas, nomes ou observações curtas' },
+  { id: 'textarea', label: 'Texto Longo', icon: AlignLeft, description: 'Descrições detalhadas, anamnese ou evolução' },
+  { id: 'number', label: 'Número', icon: Hash, description: 'Medidas, doses, idade ou valores numéricos' },
+  { id: 'select', label: 'Seleção', icon: List, description: 'Escolha uma única opção de uma lista prévia' },
+  { id: 'multiselect', label: 'Múltipla Escolha', icon: CheckSquare, description: 'Selecione várias opções simultaneamente' },
+  { id: 'date', label: 'Data', icon: Calendar, description: 'Seleção de datas no calendário' },
 ];
 
 const PROFISSOES = ['fisioterapia', 'psicologia', 'fonoaudiologia', 'nutricao', 'terapia_ocupacional', 'medicina', 'odontologia', 'avaliacao_enfermagem', 'servico_social', 'assistente_social', 'cirurgia_geral', 'cirurgiao', 'infectologia', 'infectologista'];
@@ -388,55 +388,59 @@ const ConfigEspecialidades: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Novo Modal Adicionar Campo (UX Avançada) */}
+      {/* Modal Adicionar Campo - Referência Visual */}
       <Dialog open={addFieldDialog} onOpenChange={(open) => {
         if (!isSaving) setAddFieldDialog(open);
       }}>
-        <DialogContent className="max-w-2xl p-0 overflow-hidden border-none shadow-2xl bg-white dark:bg-slate-950 rounded-[24px]">
+        <DialogContent 
+          className="max-w-3xl p-0 overflow-hidden border-none shadow-2xl bg-white dark:bg-slate-950 rounded-[28px]"
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+        >
           <div className="flex flex-col h-[90vh] max-h-[850px]">
             {/* Cabeçalho */}
-            <div className="px-8 py-6 border-b flex items-center justify-between sticky top-0 z-20 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                  <PlusCircle className="w-6 h-6 text-primary" />
+            <div className="px-10 py-8 border-b flex items-center justify-between sticky top-0 z-20 bg-white/95 dark:bg-slate-950/95 backdrop-blur-sm">
+              <div className="flex items-center gap-5">
+                <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center">
+                  <PlusCircle className="w-7 h-7 text-primary" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white leading-tight">
                     Novo Campo Personalizado
                   </h2>
-                  <p className="text-sm text-slate-500 font-medium">
-                    Configure como este campo aparecerá no prontuário
+                  <p className="text-[15px] text-slate-500 font-medium">
+                    O campo configurado aparecerá automaticamente no prontuário.
                   </p>
                 </div>
               </div>
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" 
+                className="rounded-full h-10 w-10 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" 
                 onClick={() => !isSaving && setAddFieldDialog(false)}
               >
-                <X className="w-5 h-5 text-slate-400" />
+                <X className="w-6 h-6 text-slate-400" />
               </Button>
             </div>
 
-            <ScrollArea className="flex-1 px-8 py-8">
-              <div className="space-y-10 pb-10">
+            <ScrollArea className="flex-1 px-10 py-10">
+              <div className="space-y-12 pb-6">
                 
                 {/* 1. Nome do Campo */}
-                <div className="space-y-3">
-                  <Label className="text-[11px] font-black uppercase tracking-[0.15em] text-slate-400">Nome do campo</Label>
+                <div className="space-y-4">
+                  <Label className="text-[12px] font-black uppercase tracking-[0.2em] text-slate-400">Nome do campo</Label>
                   <Input 
-                    placeholder="Digite o título do campo (ex: Histórico da Doença)" 
-                    className="bg-slate-50 dark:bg-slate-900 border-none focus:ring-2 focus:ring-primary/20 transition-all h-14 text-base font-medium rounded-xl px-5"
+                    placeholder="Ex: Histórico da Queixa Principal" 
+                    className="bg-slate-50 dark:bg-slate-900 border-2 border-transparent focus:border-primary/20 focus:bg-white dark:focus:bg-slate-950 transition-all h-16 text-lg font-semibold rounded-2xl px-6"
                     value={newField.label} 
                     onChange={e => setNewField(p => ({ ...p, label: e.target.value }))} 
                   />
                 </div>
 
                 {/* 2. Tipo do Campo */}
-                <div className="space-y-4">
-                  <Label className="text-[11px] font-black uppercase tracking-[0.15em] text-slate-400">Tipo do campo</Label>
-                  <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-5">
+                  <Label className="text-[12px] font-black uppercase tracking-[0.2em] text-slate-400">Tipo do campo</Label>
+                  <div className="grid grid-cols-2 gap-4">
                     {FIELD_TYPES.map((type) => {
                       const Icon = type.icon;
                       const isSelected = newField.tipo === type.id;
@@ -444,26 +448,26 @@ const ConfigEspecialidades: React.FC = () => {
                         <div 
                           key={type.id}
                           onClick={() => setNewField(p => ({ ...p, tipo: type.id }))}
-                          className={`cursor-pointer p-4 rounded-xl border-2 transition-all duration-200 flex items-start gap-4 ${
+                          className={`group cursor-pointer p-5 rounded-[20px] border-2 transition-all duration-300 flex items-start gap-4 ${
                             isSelected 
-                              ? 'bg-primary/5 border-primary shadow-[0_0_0_1px_rgba(var(--primary),0.1)]' 
-                              : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:border-slate-200'
+                              ? 'bg-primary/5 border-primary shadow-[0_8px_20px_-10px_rgba(var(--primary),0.3)]' 
+                              : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700'
                           }`}
                         >
-                          <div className={`mt-1 p-2 rounded-lg ${isSelected ? 'bg-primary text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>
-                            <Icon className="w-4 h-4" />
+                          <div className={`mt-0.5 p-3 rounded-xl transition-colors ${isSelected ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-slate-50 dark:bg-slate-800 text-slate-400 group-hover:bg-slate-100'}`}>
+                            <Icon className="w-5 h-5" />
                           </div>
                           <div className="flex-1">
-                            <p className={`text-sm font-bold ${isSelected ? 'text-primary' : 'text-slate-700 dark:text-slate-200'}`}>
+                            <p className={`text-base font-bold transition-colors ${isSelected ? 'text-primary' : 'text-slate-700 dark:text-slate-200'}`}>
                               {type.label}
                             </p>
-                            <p className="text-[10px] text-slate-400 mt-0.5 leading-tight">
+                            <p className="text-xs text-slate-400 mt-1 leading-relaxed">
                               {type.description}
                             </p>
                           </div>
                           {isSelected && (
-                            <div className="w-4 h-4 rounded-full bg-primary flex items-center justify-center">
-                              <CheckCircle2 className="w-2.5 h-2.5 text-white" />
+                            <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center animate-in zoom-in-50 duration-300">
+                              <CheckCircle2 className="w-3 h-3 text-white" />
                             </div>
                           )}
                         </div>
@@ -474,12 +478,12 @@ const ConfigEspecialidades: React.FC = () => {
 
                 {/* 3. Opções (Condicional) */}
                 {(newField.tipo === 'select' || newField.tipo === 'multiselect') && (
-                  <div className="space-y-4 animate-in slide-in-from-top-2 duration-300">
-                    <Label className="text-[11px] font-black uppercase tracking-[0.15em] text-slate-400">Opções de resposta</Label>
-                    <div className="flex gap-2">
+                  <div className="space-y-5 animate-in slide-in-from-top-4 duration-500">
+                    <Label className="text-[12px] font-black uppercase tracking-[0.2em] text-slate-400">Opções de resposta</Label>
+                    <div className="flex gap-3">
                       <Input 
-                        placeholder="Adicionar opção..." 
-                        className="bg-slate-50 dark:bg-slate-900 border-none h-12 rounded-xl"
+                        placeholder="Digite uma opção e aperte Enter ou +" 
+                        className="bg-slate-50 dark:bg-slate-900 border-none h-14 rounded-2xl text-base px-6 focus:ring-2 focus:ring-primary/10 transition-all"
                         value={optionInput}
                         onChange={e => setOptionInput(e.target.value)}
                         onKeyDown={e => {
@@ -498,7 +502,7 @@ const ConfigEspecialidades: React.FC = () => {
                       <Button 
                         type="button" 
                         size="icon" 
-                        className="h-12 w-12 rounded-xl shrink-0"
+                        className="h-14 w-14 rounded-2xl shrink-0 shadow-lg shadow-primary/10 transition-transform active:scale-95"
                         onClick={() => {
                           if (optionInput.trim()) {
                             const current = newField.opcoes ? newField.opcoes.split(',').map(o => o.trim()).filter(Boolean) : [];
@@ -509,49 +513,52 @@ const ConfigEspecialidades: React.FC = () => {
                           }
                         }}
                       >
-                        <Plus className="w-5 h-5" />
+                        <Plus className="w-6 h-6" />
                       </Button>
                     </div>
                     
-                    <div className="flex flex-wrap gap-2 pt-1">
+                    <div className="flex flex-wrap gap-2.5 pt-2">
                       {newField.opcoes && newField.opcoes.split(',').map(o => o.trim()).filter(Boolean).map(op => (
-                        <div key={op} className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 group">
+                        <div key={op} className="bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-3 group animate-in zoom-in-95 duration-200">
                           {op}
                           <button 
-                            className="text-slate-400 hover:text-destructive transition-colors"
+                            className="text-slate-300 hover:text-destructive transition-colors"
                             onClick={() => {
                               const current = newField.opcoes.split(',').map(o => o.trim()).filter(Boolean);
                               setNewField(p => ({ ...p, opcoes: current.filter(c => c !== op).join(', ') }));
                             }}
                           >
-                            <X className="w-3 h-3" />
+                            <X className="w-4 h-4" />
                           </button>
                         </div>
                       ))}
                       {(!newField.opcoes || !newField.opcoes.trim()) && (
-                        <p className="text-[11px] text-slate-400 italic">Nenhuma opção adicionada ainda.</p>
+                        <div className="w-full p-8 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-2xl flex flex-col items-center justify-center text-slate-400">
+                          <List className="w-8 h-8 mb-2 opacity-20" />
+                          <p className="text-sm font-medium">Nenhuma opção adicionada ainda.</p>
+                        </div>
                       )}
                     </div>
                   </div>
                 )}
 
                 {/* 4. Campo Obrigatório */}
-                <div className="flex items-center justify-between p-6 rounded-2xl border-2 border-slate-50 dark:border-slate-900 bg-slate-50/30 dark:bg-slate-900/30">
-                  <div className="space-y-1">
-                    <p className="text-base font-bold text-slate-800 dark:text-slate-100">Campo Obrigatório</p>
-                    <p className="text-xs text-slate-500">O profissional deve preencher este campo para salvar</p>
+                <div className="flex items-center justify-between p-8 rounded-[24px] border-2 border-slate-50 dark:border-slate-900 bg-slate-50/50 dark:bg-slate-900/50 transition-all hover:bg-slate-50 dark:hover:bg-slate-900">
+                  <div className="space-y-1.5">
+                    <p className="text-[17px] font-bold text-slate-800 dark:text-slate-100">Campo Obrigatório</p>
+                    <p className="text-[14px] text-slate-500 font-medium">O profissional deve preencher este campo para salvar o prontuário.</p>
                   </div>
                   <Switch 
                     checked={newField.obrigatorio} 
                     onCheckedChange={v => setNewField(p => ({ ...p, obrigatorio: v }))} 
-                    className="data-[state=checked]:bg-primary"
+                    className="data-[state=checked]:bg-primary h-7 w-12"
                   />
                 </div>
 
                 {/* 5. Onde aparece */}
-                <div className="space-y-4">
-                  <Label className="text-[11px] font-black uppercase tracking-[0.15em] text-slate-400">Aparece nos tipos</Label>
-                  <div className="flex flex-wrap gap-2">
+                <div className="space-y-5">
+                  <Label className="text-[12px] font-black uppercase tracking-[0.2em] text-slate-400">Aparece nos tipos</Label>
+                  <div className="flex flex-wrap gap-3">
                     {TIPOS_PRONTUARIO.map(t => {
                       const isSelected = newField.tipos_prontuario.includes(t.key);
                       return (
@@ -566,10 +573,10 @@ const ConfigEspecialidades: React.FC = () => {
                                 : [...cur, t.key]
                             }));
                           }}
-                          className={`cursor-pointer px-5 py-3 rounded-full border-2 transition-all font-bold text-xs select-none ${
+                          className={`cursor-pointer px-7 py-4 rounded-[20px] border-2 transition-all font-bold text-sm select-none shadow-sm ${
                             isSelected 
-                              ? 'bg-primary border-primary text-white shadow-md' 
-                              : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-500 hover:border-slate-200'
+                              ? 'bg-primary border-primary text-white shadow-primary/20 scale-[1.02]' 
+                              : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-500 hover:border-slate-200 dark:hover:border-slate-700 hover:scale-[1.02]'
                           }`}
                         >
                           {t.short}
@@ -583,22 +590,25 @@ const ConfigEspecialidades: React.FC = () => {
             </ScrollArea>
 
             {/* Rodapé */}
-            <div className="px-8 py-6 border-t bg-white dark:bg-slate-950 flex items-center justify-between gap-4">
+            <div className="px-10 py-8 border-t bg-white/95 dark:bg-slate-950/95 backdrop-blur-sm flex items-center justify-between gap-5 mt-auto">
               <Button 
                 variant="ghost" 
-                className="font-bold text-slate-500 h-12 px-6 rounded-xl transition-all"
+                className="font-bold text-slate-500 h-14 px-8 rounded-2xl transition-all hover:bg-slate-50 text-base"
                 onClick={() => !isSaving && setAddFieldDialog(false)}
                 disabled={isSaving}
               >
                 Cancelar
               </Button>
               <Button 
-                className="bg-primary hover:bg-primary/90 text-white font-bold h-12 px-10 shadow-lg shadow-primary/20 rounded-xl transition-all hover:scale-[1.02] active:scale-95 min-w-[180px]"
+                className="bg-primary hover:bg-primary/90 text-white font-bold h-14 px-12 shadow-xl shadow-primary/25 rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98] min-w-[220px] text-base"
                 onClick={addCampoEsp}
                 disabled={!newField.label.trim() || isSaving}
               >
                 {isSaving ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <>
+                    <Loader2 className="w-6 h-6 animate-spin mr-3" />
+                    Salvando...
+                  </>
                 ) : (
                   'Adicionar Campo'
                 )}
@@ -740,51 +750,55 @@ const EditCampoDialog: React.FC<EditCampoDialogProps> = ({ campo, outrosCampos, 
 
   return (
     <Dialog open={!!campo} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-2xl p-0 overflow-hidden border-none shadow-2xl bg-white dark:bg-slate-950 rounded-[24px]">
+      <DialogContent 
+        className="max-w-3xl p-0 overflow-hidden border-none shadow-2xl bg-white dark:bg-slate-950 rounded-[28px]"
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+      >
         <div className="flex flex-col h-[90vh] max-h-[850px]">
           {/* Cabeçalho */}
-          <div className="px-8 py-6 border-b flex items-center justify-between bg-white/80 dark:bg-slate-950/80 backdrop-blur-md sticky top-0 z-20">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                <Pencil className="w-6 h-6 text-primary" />
+          <div className="px-10 py-8 border-b flex items-center justify-between sticky top-0 z-20 bg-white/95 dark:bg-slate-950/95 backdrop-blur-sm">
+            <div className="flex items-center gap-5">
+              <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center">
+                <Pencil className="w-7 h-7 text-primary" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white leading-tight">
                   Editar Campo Personalizado
                 </h2>
-                <p className="text-sm text-slate-500 font-medium">
-                  Altere as configurações do campo no prontuário
+                <p className="text-[15px] text-slate-500 font-medium">
+                  Altere as configurações para este campo no prontuário.
                 </p>
               </div>
             </div>
             <Button 
               variant="ghost" 
               size="icon" 
-              className="rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" 
+              className="rounded-full h-10 w-10 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" 
               onClick={onClose}
             >
-              <X className="w-5 h-5 text-slate-400" />
+              <X className="w-6 h-6 text-slate-400" />
             </Button>
           </div>
 
-          <ScrollArea className="flex-1 px-8 py-8">
-            <div className="space-y-10 pb-10">
+          <ScrollArea className="flex-1 px-10 py-10">
+            <div className="space-y-12 pb-6">
               
               {/* 1. Nome do Campo */}
-              <div className="space-y-3">
-                <Label className="text-[11px] font-black uppercase tracking-[0.15em] text-slate-400">Nome do campo</Label>
+              <div className="space-y-4">
+                <Label className="text-[12px] font-black uppercase tracking-[0.2em] text-slate-400">Nome do campo</Label>
                 <Input 
-                  placeholder="Título do campo" 
-                  className="bg-slate-50 dark:bg-slate-900 border-none focus:ring-2 focus:ring-primary/20 transition-all h-14 text-base font-medium rounded-xl px-5"
+                  placeholder="Ex: Histórico da Queixa Principal" 
+                  className="bg-slate-50 dark:bg-slate-900 border-2 border-transparent focus:border-primary/20 focus:bg-white dark:focus:bg-slate-950 transition-all h-16 text-lg font-semibold rounded-2xl px-6"
                   value={draft.label} 
                   onChange={e => setDraft({ ...draft, label: e.target.value })} 
                 />
               </div>
 
               {/* 2. Tipo do Campo */}
-              <div className="space-y-4">
-                <Label className="text-[11px] font-black uppercase tracking-[0.15em] text-slate-400">Tipo do campo</Label>
-                <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-5">
+                <Label className="text-[12px] font-black uppercase tracking-[0.2em] text-slate-400">Tipo do campo</Label>
+                <div className="grid grid-cols-2 gap-4">
                   {FIELD_TYPES.map((type) => {
                     const Icon = type.icon;
                     const isSelected = draft.tipo === type.id;
@@ -792,20 +806,20 @@ const EditCampoDialog: React.FC<EditCampoDialogProps> = ({ campo, outrosCampos, 
                       <div 
                         key={type.id}
                         onClick={() => setDraft({ ...draft, tipo: type.id })}
-                        className={`cursor-pointer p-4 rounded-xl border-2 transition-all duration-200 flex items-start gap-4 ${
+                        className={`group cursor-pointer p-5 rounded-[20px] border-2 transition-all duration-300 flex items-start gap-4 ${
                           isSelected 
-                            ? 'bg-primary/5 border-primary shadow-[0_0_0_1px_rgba(var(--primary),0.1)]' 
-                            : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:border-slate-200'
+                            ? 'bg-primary/5 border-primary shadow-[0_8px_20px_-10px_rgba(var(--primary),0.3)]' 
+                            : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700'
                         }`}
                       >
-                        <div className={`mt-1 p-2 rounded-lg ${isSelected ? 'bg-primary text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>
-                          <Icon className="w-4 h-4" />
+                        <div className={`mt-0.5 p-3 rounded-xl transition-colors ${isSelected ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-slate-50 dark:bg-slate-800 text-slate-400 group-hover:bg-slate-100'}`}>
+                          <Icon className="w-5 h-5" />
                         </div>
                         <div className="flex-1">
-                          <p className={`text-sm font-bold ${isSelected ? 'text-primary' : 'text-slate-700 dark:text-slate-200'}`}>
+                          <p className={`text-base font-bold transition-colors ${isSelected ? 'text-primary' : 'text-slate-700 dark:text-slate-200'}`}>
                             {type.label}
                           </p>
-                          <p className="text-[10px] text-slate-400 mt-0.5 leading-tight">
+                          <p className="text-xs text-slate-400 mt-1 leading-relaxed">
                             {type.description}
                           </p>
                         </div>
@@ -817,12 +831,12 @@ const EditCampoDialog: React.FC<EditCampoDialogProps> = ({ campo, outrosCampos, 
 
               {/* 3. Opções (Condicional) */}
               {(draft.tipo === 'select' || draft.tipo === 'multiselect') && (
-                <div className="space-y-4 animate-in slide-in-from-top-2 duration-300">
-                  <Label className="text-[11px] font-black uppercase tracking-[0.15em] text-slate-400">Opções de resposta</Label>
-                  <div className="flex gap-2">
+                <div className="space-y-5 animate-in slide-in-from-top-4 duration-500">
+                  <Label className="text-[12px] font-black uppercase tracking-[0.2em] text-slate-400">Opções de resposta</Label>
+                  <div className="flex gap-3">
                     <Input 
-                      placeholder="Adicionar opção..." 
-                      className="bg-slate-50 dark:bg-slate-900 border-none h-12 rounded-xl"
+                      placeholder="Digite uma opção e aperte Enter ou +" 
+                      className="bg-slate-50 dark:bg-slate-900 border-none h-14 rounded-2xl text-base px-6 focus:ring-2 focus:ring-primary/10 transition-all"
                       value={optionInput}
                       onChange={e => setOptionInput(e.target.value)}
                       onKeyDown={e => {
@@ -841,7 +855,7 @@ const EditCampoDialog: React.FC<EditCampoDialogProps> = ({ campo, outrosCampos, 
                     <Button 
                       type="button" 
                       size="icon" 
-                      className="h-12 w-12 rounded-xl shrink-0"
+                      className="h-14 w-14 rounded-2xl shrink-0 shadow-lg shadow-primary/10 transition-transform active:scale-95"
                       onClick={() => {
                         if (optionInput.trim()) {
                           const current = draft.opcoes || [];
@@ -852,21 +866,21 @@ const EditCampoDialog: React.FC<EditCampoDialogProps> = ({ campo, outrosCampos, 
                         }
                       }}
                     >
-                      <Plus className="w-5 h-5" />
+                      <Plus className="w-6 h-6" />
                     </Button>
                   </div>
                   
-                  <div className="flex flex-wrap gap-2 pt-1">
+                  <div className="flex flex-wrap gap-2.5 pt-2">
                     {(draft.opcoes || []).map(op => (
-                      <div key={op} className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 group">
+                      <div key={op} className="bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-3 group animate-in zoom-in-95 duration-200">
                         {op}
                         <button 
-                          className="text-slate-400 hover:text-destructive transition-colors"
+                          className="text-slate-300 hover:text-destructive transition-colors"
                           onClick={() => {
                             setDraft({ ...draft, opcoes: draft.opcoes?.filter(c => c !== op) });
                           }}
                         >
-                          <X className="w-3 h-3" />
+                          <X className="w-4 h-4" />
                         </button>
                       </div>
                     ))}
@@ -875,32 +889,32 @@ const EditCampoDialog: React.FC<EditCampoDialogProps> = ({ campo, outrosCampos, 
               )}
 
               {/* 4. Campo Obrigatório */}
-              <div className="flex items-center justify-between p-6 rounded-2xl border-2 border-slate-50 dark:border-slate-900 bg-slate-50/30 dark:bg-slate-900/30">
-                <div className="space-y-1">
-                  <p className="text-base font-bold text-slate-800 dark:text-slate-100">Campo Obrigatório</p>
-                  <p className="text-xs text-slate-500">O profissional deve preencher este campo para salvar</p>
+              <div className="flex items-center justify-between p-8 rounded-[24px] border-2 border-slate-50 dark:border-slate-900 bg-slate-50/50 dark:bg-slate-900/50 transition-all hover:bg-slate-50 dark:hover:bg-slate-900">
+                <div className="space-y-1.5">
+                  <p className="text-[17px] font-bold text-slate-800 dark:text-slate-100">Campo Obrigatório</p>
+                  <p className="text-[14px] text-slate-500 font-medium">O profissional deve preencher este campo para salvar o prontuário.</p>
                 </div>
                 <Switch 
                   checked={draft.obrigatorio} 
                   onCheckedChange={(v) => setDraft({ ...draft, obrigatorio: v })} 
-                  className="data-[state=checked]:bg-primary"
+                  className="data-[state=checked]:bg-primary h-7 w-12"
                 />
               </div>
 
               {/* 5. Onde aparece */}
-              <div className="space-y-4">
-                <Label className="text-[11px] font-black uppercase tracking-[0.15em] text-slate-400">Aparece nos tipos</Label>
-                <div className="flex flex-wrap gap-2">
+              <div className="space-y-5">
+                <Label className="text-[12px] font-black uppercase tracking-[0.2em] text-slate-400">Aparece nos tipos</Label>
+                <div className="flex flex-wrap gap-3">
                   {TIPOS_PRONTUARIO.map(t => {
                     const isSelected = (draft.tipos_prontuario || []).includes(t.key);
                     return (
                       <div 
                         key={t.key} 
                         onClick={() => toggleTipo(t.key)}
-                        className={`cursor-pointer px-5 py-3 rounded-full border-2 transition-all font-bold text-xs select-none ${
+                        className={`cursor-pointer px-7 py-4 rounded-[20px] border-2 transition-all font-bold text-sm select-none shadow-sm ${
                           isSelected 
-                            ? 'bg-primary border-primary text-white shadow-md' 
-                            : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-500 hover:border-slate-200'
+                            ? 'bg-primary border-primary text-white shadow-primary/20 scale-[1.02]' 
+                            : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-500 hover:border-slate-200 dark:hover:border-slate-700 hover:scale-[1.02]'
                         }`}
                       >
                         {t.short}
@@ -914,20 +928,20 @@ const EditCampoDialog: React.FC<EditCampoDialogProps> = ({ campo, outrosCampos, 
           </ScrollArea>
 
           {/* Rodapé */}
-          <div className="px-8 py-6 border-t bg-white dark:bg-slate-950 flex items-center justify-between gap-4">
+          <div className="px-10 py-8 border-t bg-white/95 dark:bg-slate-950/95 backdrop-blur-sm flex items-center justify-between gap-5 mt-auto">
             <Button 
               variant="ghost" 
-              className="font-bold text-slate-500 h-12 px-6 rounded-xl transition-all"
+              className="font-bold text-slate-500 h-14 px-8 rounded-2xl transition-all hover:bg-slate-50 text-base"
               onClick={onClose}
             >
               Cancelar
             </Button>
             <Button 
-              className="bg-primary hover:bg-primary/90 text-white font-bold h-12 px-10 shadow-lg shadow-primary/20 rounded-xl transition-all hover:scale-[1.02] active:scale-95 min-w-[180px]"
+              className="bg-primary hover:bg-primary/90 text-white font-bold h-14 px-12 shadow-xl shadow-primary/25 rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98] min-w-[220px] text-base"
               onClick={() => onSave(draft)}
               disabled={!draft.label.trim()}
             >
-              <Save className="w-5 h-5 mr-2" />
+              <Save className="w-5 h-5 mr-3" />
               <span>Salvar Alterações</span>
             </Button>
           </div>
