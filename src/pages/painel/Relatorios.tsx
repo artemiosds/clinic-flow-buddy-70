@@ -104,9 +104,10 @@ const Relatorios: React.FC = () => {
   }, [atendimentosDB, agendamentos]);
 
   const tiposUnicos = useMemo(() => {
-    const s = new Set(agendamentos.map(a => a.tipo).filter(Boolean));
+    const s = new Set(agendamentosDB.map(a => a.tipo).filter(Boolean));
     return Array.from(s).sort();
-  }, [agendamentos]);
+  }, [agendamentosDB]);
+
 
 
   const loadReportData = useCallback(async () => {
