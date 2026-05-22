@@ -1405,6 +1405,22 @@ const Agenda: React.FC = () => {
               </SelectContent>
             </Select>
 
+            <Select value={filterTipo} onValueChange={setFilterTipo}>
+              <SelectTrigger className="w-full sm:w-52">
+                <Stethoscope className="w-4 h-4 mr-2 text-muted-foreground" />
+                <SelectValue placeholder="Tipo de atendimento" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Todos">Todos os tipos</SelectItem>
+                <SelectItem value="Consulta">Primeira Consulta</SelectItem>
+                <SelectItem value="Retorno">Retorno</SelectItem>
+                <SelectItem value="Exame">Exame</SelectItem>
+                <SelectItem value="Procedimento">Procedimento</SelectItem>
+                <SelectItem value="Sessão de Tratamento">Sessão de Tratamento</SelectItem>
+                <SelectItem value="Urgência">Urgência</SelectItem>
+              </SelectContent>
+            </Select>
+
             <div className="relative w-full sm:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
