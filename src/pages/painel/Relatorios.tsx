@@ -333,11 +333,12 @@ const Relatorios: React.FC = () => {
       const m = map[key];
       m.total++;
       m.pacientesSet.add(a.pacienteId);
-      if (a.status === 'concluido') m.concluidos++;
+      if (a.status === 'concluido' || (a.status as string) === 'finalizado') m.concluidos++;
       if (a.status === 'falta') m.faltas++;
       if (a.status === 'cancelado') m.cancelados++;
       if (a.status === 'remarcado') m.remarcados++;
       if (a.tipo === 'Retorno') m.retornos++;
+
       if (!m.unidade && un?.nome) m.unidade = un.nome;
     });
     filteredAtendimentos.forEach(at => {
