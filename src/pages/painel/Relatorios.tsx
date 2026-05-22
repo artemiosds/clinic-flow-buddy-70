@@ -427,8 +427,9 @@ const Relatorios: React.FC = () => {
         if (profissionalPertenceCategoria(profissao, cat)) {
           if (!counts[cat.key]) counts[cat.key] = { total: 0, concluidos: 0 };
           counts[cat.key].total++;
-          if (a.status === 'concluido') counts[cat.key].concluidos++;
+          if (a.status === 'concluido' || (a.status as string) === 'finalizado') counts[cat.key].concluidos++;
           break;
+
         }
       }
     });
