@@ -212,6 +212,7 @@ const Agenda: React.FC = () => {
   const [filterUnit, setFilterUnit] = useState("all");
   const [filterProf, setFilterProf] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [filterTipo, setFilterTipo] = useState("Todos");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [retornoDialogOpen, setRetornoDialogOpen] = useState(false);
   const [retornoAg, setRetornoAg] = useState<{ pacienteId: string; pacienteNome: string } | null>(null);
