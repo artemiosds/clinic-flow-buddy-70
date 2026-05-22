@@ -914,7 +914,30 @@ const Relatorios: React.FC = () => {
         const un = unidades.find(u => u.id === f.unidade_id);
         return [f.posicao.toString(), f.paciente_nome, un?.nome || '', f.setor, f.prioridade, f.status, f.hora_chegada];
       });
+    } else if (type === 'municipios') {
+      const allPacientes = [...pacientes, ...pacientesDB];
+      const munMap: Record<string, { nome: string; totalPacientes: number; atendimentos: number; pacientesSet: Set<string> }> = {};
+      allPacientes.forEach(p => {
+        const mun = (p.naturalidade || 'Não informado').trim() || 'Não informado';
+        if (!munMap[mun]) munMap[mun] = { nome: mun, totalPacientes: 0, atendimentos: 0, pacientesSet: new Set() };
+        munMap[mun].totalPacientes++;
+      });
+      filtered.forEach(a => {
+        const pac = allPacientes.find(p => p.id === a.pacienteId);
+        const mun = (pac?.naturalidade || 'Não informado').trim() || 'Não informado';
+        if (!munMap[mun]) munMap[mun] = { nome: mun, totalPacientes: 0, atendimentos: 0, pacientesSet: new Set() };
+        munMap[mun].atendimentos++;
+        munMap[mun].pacientesSet.add(a.pacienteId);
+      });
+      const munRows = Object.values(munMap).sort((a, b) => b.totalPacientes - a.totalPacientes).map(m =>
+        `<tr><td>${m.nome}</td><td style="text-align:center">${m.totalPacientes}</td><td style="text-align:center">${m.pacientesSet.size}</td><td style="text-align:center">${m.atendimentos}</td></tr>`
+      ).join('');
+      body = `
+        <h2>Relatório Quantitativo por Município</h2>
+        <table><thead><tr><th>Município (Naturalidade)</th><th>Total Pacientes</th><th>Pacientes Atendidos</th><th>Total Atendimentos</th></tr></thead><tbody>${munRows}</tbody>
+        <tfoot><tr style="font-weight:700;background:#f1f5f9;"><td>TOTAL</td><td style="text-align:center">${Object.values(munMap).reduce((acc, m) => acc + m.totalPacientes, 0)}</td><td style="text-align:center">${Object.values(munMap).reduce((acc, m) => acc + m.pacientesSet.size, 0)}</td><td style="text-align:center">${Object.values(munMap).reduce((acc, m) => acc + m.atendimentos, 0)}</td></tr></tfoot></table>`;
     }
+
 
     // Build XML Spreadsheet (Excel-compatible)
     const escXml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
