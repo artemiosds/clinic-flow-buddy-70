@@ -388,8 +388,20 @@ const ConfigPersonalizarCampos: React.FC = () => {
       destaque: !!field.destaque,
       largura: field.largura || 100,
       displayMode: field.displayMode || 'block',
-      rules: field.rules || blankForm().rules,
-      printSettings: field.printSettings || blankForm().printSettings,
+      rules: field.rules ? {
+        onlyFirstConsult: !!field.rules.onlyFirstConsult,
+        onlyReturn: !!field.rules.onlyReturn,
+        onlyChild: !!field.rules.onlyChild,
+        onlyElderly: !!field.rules.onlyElderly,
+        profiles: field.rules.profiles || [],
+        unidades: field.rules.unidades || [],
+      } : blankForm().rules,
+      printSettings: field.printSettings ? {
+        visibleInProntuario: !!field.printSettings.visibleInProntuario,
+        editableInProntuario: !!field.printSettings.editableInProntuario,
+        visibleInPrint: !!field.printSettings.visibleInPrint,
+        restricted: !!field.printSettings.restricted,
+      } : blankForm().printSettings,
     });
     setModalOpen(true);
   };
