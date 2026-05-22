@@ -477,7 +477,9 @@ const Tratamentos: React.FC = () => {
   // Pre-aggregate session counts per cycle (now sourced from server-side RPC)
   const sessionStatsByCycle = useMemo(() => {
     const stats = new Map<string, { pendingAg: number; faltas: number }>();
+    if (!cycles || !Array.isArray(cycles)) return stats;
     for (const c of cycles) {
+      if (!c?.id) continue;
       stats.set(c.id, { pendingAg: c.pending_ag || 0, faltas: c.faltas || 0 });
     }
     return stats;
@@ -515,16 +517,17 @@ const Tratamentos: React.FC = () => {
   }, [newCycle.patient_id, ptsList]);
 
   const faltaStats = useMemo(() => {
-    if (!selectedCycle) return null;
+    if (!selectedCycle || !sessions || !Array.isArray(sessions)) return null;
     const cycleSess = sessions
-      .filter((s) => s.cycle_id === selectedCycle.id)
-      .sort((a, b) => a.session_number - b.session_number);
-    const faltas = cycleSess.filter((s) => s.status === "paciente_faltou");
+      .filter((s) => s?.cycle_id === selectedCycle.id)
+      .sort((a, b) => (a?.session_number || 0) - (b?.session_number || 0));
+    const faltas = cycleSess.filter((s) => s?.status === "paciente_faltou");
     const faltasTotal = faltas.length;
 
     let maxConsecutivas = 0;
     let currentStreak = 0;
     for (const s of cycleSess) {
+      if (!s) continue;
       if (s.status === "paciente_faltou") {
         currentStreak++;
         maxConsecutivas = Math.max(maxConsecutivas, currentStreak);
@@ -542,8 +545,10 @@ const Tratamentos: React.FC = () => {
   }, [selectedCycle, sessions]);
 
   const cycleSessions = useMemo(() => {
-    if (!selectedCycle) return [];
-    return sessions.filter((s) => s.cycle_id === selectedCycle.id).sort((a, b) => a.session_number - b.session_number);
+    if (!selectedCycle || !sessions || !Array.isArray(sessions)) return [];
+    return sessions
+      .filter((s) => s?.cycle_id === selectedCycle.id)
+      .sort((a, b) => (a?.session_number || 0) - (b?.session_number || 0));
   }, [selectedCycle, sessions]);
 
   const cycleExtensions = useMemo(() => {
@@ -1842,12 +1847,13 @@ const Tratamentos: React.FC = () => {
       selectedCycle.total_sessions > 0
         ? Math.round((selectedCycle.sessions_done / selectedCycle.total_sessions) * 100)
         : 0;
-    const pendingCount = cycleSessions.filter((s) => {
-      if (s.status !== "pendente_agendamento") return false;
+    const pendingCount = (cycleSessions || []).filter((s) => {
+      if (!s || s.status !== "pendente_agendamento") return false;
       const agKey = `${s.patient_id}|${s.professional_id}|${s.scheduled_date}`;
       return !agendamentoMap?.[agKey]; // only truly pending if no matching agendamento
     }).length;
-    const scheduledCount = cycleSessions.filter((s) => {
+    const scheduledCount = (cycleSessions || []).filter((s) => {
+      if (!s) return false;
       if (s.status === "agendada") return true;
       if (s.status === "pendente_agendamento") {
         const agKey = `${s.patient_id}|${s.professional_id}|${s.scheduled_date}`;
