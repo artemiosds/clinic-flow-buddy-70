@@ -68,7 +68,7 @@ export async function renderCustomFieldsHtml(
   const sections: string[] = [];
   for (const g of groups) {
     const inner = `
-      <div class="ficha-grid ficha-grid--2">
+      <div class="ficha-grid ficha-grid--2" style="margin-top: 2px; gap: 2px 10px;">
         ${g.fields.map(f => `
           <div class="ficha-field">
             <span class="ficha-field-label">${esc(f.rotulo)}</span>
