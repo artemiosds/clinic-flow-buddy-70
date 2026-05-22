@@ -325,12 +325,8 @@ const ProntuarioPage: React.FC = () => {
 
   // Sessão: cycle + PTS state
   interface CycleSession { id: string; cycle_id: string; patient_id: string; professional_id: string; session_number: number; total_sessions: number; scheduled_date: string; status: string; clinical_notes: string; procedure_done?: string; absence_type?: string | null; appointment_id: string | null; }
-  interface ActiveCycle { id: string; treatment_type: string; professional_id: string; start_date: string; end_date_predicted: string | null; frequency: string; status: string; total_sessions: number; sessions_done: number; created_at: string; }
-  interface ActivePTS { id: string; diagnostico_funcional: string; objetivos_terapeuticos: string; metas_curto_prazo: string; metas_medio_prazo: string; metas_longo_prazo: string; especialidades_envolvidas: string[]; created_at: string; professional_id: string; status: string; }
-  const [sessaoCycle, setSessaoCycle] = useState<ActiveCycle | null>(null);
+  const { activeCycle: sessaoCycle, activePts: sessaoPts, loading: sessaoDataLoading, reload: loadSessaoDataHook } = usePatientTreatment(form.paciente_id);
   const [sessaoCycleSessions, setSessaoCycleSessions] = useState<CycleSession[]>([]);
-  const [sessaoPts, setSessaoPts] = useState<ActivePTS | null>(null);
-  const [sessaoDataLoading, setSessaoDataLoading] = useState(false);
   const [sessaoHighlightSOAP, setSessaoHighlightSOAP] = useState(false);
   const [soapErrors, setSoapErrors] = useState(false);
   const [soapEnabled, setSoapEnabled] = useState(true);
@@ -338,42 +334,24 @@ const ProntuarioPage: React.FC = () => {
   const [confirmingSessionId, setConfirmingSessionId] = useState<string | null>(null);
   const soapRef = useRef<HTMLDivElement>(null);
 
-  const loadSessaoData = async (patientId: string, _professionalId?: string) => {
-    setSessaoDataLoading(true);
-    try {
-      // Search for ANY active cycle for this patient (not filtered by professional)
-      // so cycles created by other professionals are also detected
-      let cycleQuery = (supabase as any).from('treatment_cycles').select('*')
-        .eq('patient_id', patientId)
-        .in('status', ['em_andamento', 'ativo'])
-        .order('created_at', { ascending: false })
-        .limit(1);
+  const loadSessaoData = useCallback(async (patientId: string) => {
+    if (patientId === form.paciente_id) {
+      await loadSessaoDataHook();
+    }
+  }, [form.paciente_id, loadSessaoDataHook]);
 
-      const [cycleRes, ptsRes] = await Promise.all([
-        cycleQuery.maybeSingle(),
-        supabase.from('pts').select('*')
-          .eq('patient_id', patientId)
-          .eq('status', 'ativo')
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle(),
-      ]);
-      const cycle = cycleRes.data;
-      setSessaoCycle(cycle || null);
-      if (cycle) {
+  useEffect(() => {
+    if (sessaoCycle) {
+      (async () => {
         const { data: sessions } = await (supabase as any).from('treatment_sessions').select('*')
-          .eq('cycle_id', cycle.id)
+          .eq('cycle_id', sessaoCycle.id)
           .order('session_number', { ascending: true });
         setSessaoCycleSessions(sessions || []);
-      } else {
-        setSessaoCycleSessions([]);
-      }
-      setSessaoPts(ptsRes.data as ActivePTS | null);
-    } catch (err) {
-      console.error('[loadSessaoData]', err);
+      })();
+    } else {
+      setSessaoCycleSessions([]);
     }
-    setSessaoDataLoading(false);
-  };
+  }, [sessaoCycle]);
 
   const registrationReferenceDate =
     form.data_atendimento || searchParams.get('data') || new Date().toISOString().split('T')[0];
