@@ -1832,9 +1832,9 @@ const Tratamentos: React.FC = () => {
   }
 
   if (selectedCycle) {
-    const pac = pacientes.find((p) => p.id === selectedCycle.patient_id);
-    const prof = funcionarios.find((f) => f.id === selectedCycle.professional_id);
-    const unidade = unidades.find((u) => u.id === selectedCycle.unit_id);
+    const pac = selectedCycle.patient_id ? pacientes.find((p) => p.id === selectedCycle.patient_id) : null;
+    const prof = selectedCycle.professional_id ? funcionarios.find((f) => f.id === selectedCycle.professional_id) : null;
+    const unidade = selectedCycle.unit_id ? unidades.find((u) => u.id === selectedCycle.unit_id) : null;
     const progressPct =
       selectedCycle.total_sessions > 0
         ? Math.round((selectedCycle.sessions_done / selectedCycle.total_sessions) * 100)
@@ -1939,8 +1939,8 @@ const Tratamentos: React.FC = () => {
             )}
 
             <div className="flex gap-2">
-              {pacientesMap.get(selectedCycle.patient_id)?.is_tfd && <Badge variant="outline" className="text-[10px] border-warning text-warning">TFD</Badge>}
-              {pacientesMap.get(selectedCycle.patient_id)?.possui_ordem_judicial && <Badge variant="outline" className="text-[10px] border-warning text-warning">JUDICIAL</Badge>}
+              {selectedCycle.patient_id && pacientesMap.get(selectedCycle.patient_id)?.is_tfd && <Badge variant="outline" className="text-[10px] border-warning text-warning">TFD</Badge>}
+              {selectedCycle.patient_id && pacientesMap.get(selectedCycle.patient_id)?.possui_ordem_judicial && <Badge variant="outline" className="text-[10px] border-warning text-warning">JUDICIAL</Badge>}
             </div>
 
             {faltaStats?.alerta && (
@@ -3228,8 +3228,9 @@ const Tratamentos: React.FC = () => {
           </div>
           <div className="space-y-2">
             {paginatedCycles.map((cycle) => {
-              const pac = pacientesMap.get(cycle.patient_id);
-              const prof = funcionariosMap.get(cycle.professional_id);
+              if (!cycle) return null;
+              const pac = cycle.patient_id ? pacientesMap.get(cycle.patient_id) : null;
+              const prof = cycle.professional_id ? funcionariosMap.get(cycle.professional_id) : null;
               const progressPct =
                 cycle.total_sessions > 0 ? Math.round((cycle.sessions_done / cycle.total_sessions) * 100) : 0;
               const stats = sessionStatsByCycle.get(cycle.id) || { pendingAg: 0, faltas: 0 };
@@ -3238,7 +3239,7 @@ const Tratamentos: React.FC = () => {
 
               return (
                 <Card
-                  key={cycle.id}
+                  key={cycle.id || Math.random().toString()}
                   className={cn(
                     "shadow-card border-0 cursor-pointer hover:ring-1 hover:ring-primary/30 transition-all",
                     cycleFaltasCount >= 3 && "border-l-4 border-l-warning",
