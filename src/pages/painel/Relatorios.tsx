@@ -842,6 +842,23 @@ const Relatorios: React.FC = () => {
         const un = unidades.find(u => u.id === f.unidade_id);
         return [f.posicao.toString(), f.paciente_nome, un?.nome || '', f.setor, f.prioridade, f.status, f.hora_chegada, f.hora_chamada || ''];
       });
+    } else if (type === 'municipios') {
+      const allPacientes = [...pacientes, ...pacientesDB];
+      const munMap: Record<string, { nome: string; totalPacientes: number; atendimentos: number; pacientesSet: Set<string> }> = {};
+      allPacientes.forEach(p => {
+        const mun = (p.naturalidade || 'Não informado').trim() || 'Não informado';
+        if (!munMap[mun]) munMap[mun] = { nome: mun, totalPacientes: 0, atendimentos: 0, pacientesSet: new Set() };
+        munMap[mun].totalPacientes++;
+      });
+      filtered.forEach(a => {
+        const pac = allPacientes.find(p => p.id === a.pacienteId);
+        const mun = (pac?.naturalidade || 'Não informado').trim() || 'Não informado';
+        if (!munMap[mun]) munMap[mun] = { nome: mun, totalPacientes: 0, atendimentos: 0, pacientesSet: new Set() };
+        munMap[mun].atendimentos++;
+        munMap[mun].pacientesSet.add(a.pacienteId);
+      });
+      headers = ['Município', 'Total Pacientes', 'Pacientes Atendidos', 'Total Atendimentos'];
+      rows = Object.values(munMap).sort((a, b) => b.totalPacientes - a.totalPacientes).map(m => [m.nome, m.totalPacientes.toString(), m.pacientesSet.size.toString(), m.atendimentos.toString()]);
     }
 
     const csv = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(';')).join('\n');
@@ -850,6 +867,7 @@ const Relatorios: React.FC = () => {
     const a = document.createElement('a');
     a.href = url; a.download = filename; a.click();
     URL.revokeObjectURL(url);
+
   }, [filtered, porProfissional, faltasReport, pacientesReport, filaReport, unidades, filteredAtendimentos, pacientesDB]);
 
   // === EXPORT EXCEL (XML Spreadsheet) ===
