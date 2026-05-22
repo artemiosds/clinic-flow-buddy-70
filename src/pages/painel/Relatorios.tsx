@@ -505,9 +505,10 @@ const Relatorios: React.FC = () => {
     const porPaciente: Record<string, { nome: string; email: string; telefone: string; profissional: string; unidade: string; datas: string[]; total: number }> = {};
     const allPacientes = [...pacientes, ...pacientesDB];
     faltaAgs.forEach(a => {
-      const pac = allPacientes.find(p => p.id === a.pacienteId);
-      const un = unidades.find(u => u.id === a.unidadeId);
-      const key = a.pacienteId || a.pacienteNome;
+      const pac = allPacientes.find(p => p.id === a.paciente_id || p.id === a.pacienteId);
+      const un = unidades.find(u => u.id === a.unidade_id || u.id === a.unidadeId);
+      const key = a.paciente_id || a.pacienteId || a.pacienteNome;
+
       if (!porPaciente[key]) porPaciente[key] = { nome: a.pacienteNome, email: pac?.email || '', telefone: pac?.telefone || '', profissional: a.profissionalNome, unidade: un?.nome || '', datas: [], total: 0 };
       porPaciente[key].datas.push(a.data);
       porPaciente[key].total++;
