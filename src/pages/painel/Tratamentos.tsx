@@ -151,6 +151,8 @@ const sessionStatusColors: Record<string, string> = {
   agendada: "bg-info/10 text-info",
   realizada: "bg-success/10 text-success",
   paciente_faltou: "bg-destructive/10 text-destructive",
+  falta_justificada: "bg-info/10 text-info border-info/30",
+  falta_regularizada: "bg-success/10 text-success border-success/30",
   cancelada: "bg-muted text-muted-foreground",
   remarcada: "bg-warning/10 text-warning",
 };
@@ -160,6 +162,8 @@ const sessionStatusLabels: Record<string, string> = {
   agendada: "Agendada",
   realizada: "Realizada",
   paciente_faltou: "Faltou",
+  falta_justificada: "Falta Justificada",
+  falta_regularizada: "Falta Regularizada",
   cancelada: "Cancelada",
   remarcada: "Remarcada",
 };
@@ -345,7 +349,7 @@ const Tratamentos: React.FC = () => {
   const loadSessionsForCycle = useCallback(async (cycle: TreatmentCycle, silent = true) => {
     try {
       const [sData, eData] = await Promise.all([
-        treatmentService.getSessions(cycle.id),
+        supabase.from("treatment_sessions").select("*, agendamentos(falta_justificada, regularizada)").eq("cycle_id", cycle.id).order("session_number", { ascending: true }),
         supabase.from("treatment_extensions").select("*").eq("cycle_id", cycle.id).order("changed_at", { ascending: false }),
       ]);
       const sessionsData = (sData || []) as TreatmentSession[];
