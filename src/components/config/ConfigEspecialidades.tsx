@@ -746,30 +746,30 @@ const EditCampoDialog: React.FC<EditCampoDialogProps> = ({ campo, outrosCampos, 
 
   return (
     <Dialog open={!!campo} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-2xl p-0 overflow-hidden border-none shadow-2xl bg-white dark:bg-slate-950 rounded-[24px]">
+      <DialogContent className="max-w-3xl p-0 overflow-hidden border-none shadow-2xl bg-white dark:bg-slate-950 rounded-[28px]">
         <div className="flex flex-col h-[90vh] max-h-[850px]">
           {/* Cabeçalho */}
-          <div className="px-8 py-6 border-b flex items-center justify-between bg-white/80 dark:bg-slate-950/80 backdrop-blur-md sticky top-0 z-20">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                <Pencil className="w-6 h-6 text-primary" />
+          <div className="px-10 py-8 border-b flex items-center justify-between sticky top-0 z-20 bg-white/95 dark:bg-slate-950/95 backdrop-blur-sm">
+            <div className="flex items-center gap-5">
+              <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center">
+                <Pencil className="w-7 h-7 text-primary" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white leading-tight">
                   Editar Campo Personalizado
                 </h2>
-                <p className="text-sm text-slate-500 font-medium">
-                  Altere as configurações do campo no prontuário
+                <p className="text-[15px] text-slate-500 font-medium">
+                  Altere as configurações para este campo no prontuário.
                 </p>
               </div>
             </div>
             <Button 
               variant="ghost" 
               size="icon" 
-              className="rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" 
+              className="rounded-full h-10 w-10 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" 
               onClick={onClose}
             >
-              <X className="w-5 h-5 text-slate-400" />
+              <X className="w-6 h-6 text-slate-400" />
             </Button>
           </div>
 
