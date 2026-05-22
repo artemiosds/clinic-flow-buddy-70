@@ -131,7 +131,11 @@ export const RegistrarFaltaModal: React.FC<RegistrarFaltaModalProps> = ({
         anexoUrl,
       });
 
+      // Recalcular status do paciente imediatamente após registrar falta
+      await supabase.rpc('recalcular_status_falta_paciente', { p_paciente_id: agendamento.pacienteId });
+
       resetForm();
+
     } catch (err: any) {
       console.error("Erro ao registrar falta:", err);
       toast.error(err?.message || "Erro ao registrar falta.");
