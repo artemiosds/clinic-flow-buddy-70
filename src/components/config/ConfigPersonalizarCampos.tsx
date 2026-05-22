@@ -13,7 +13,8 @@ import {
   Hash, Calendar, CheckSquare, List, AlignLeft, ArrowUp, ArrowDown, Lock,
   Phone, IdCard, Building2, MapPin, Mail, Link as LinkIcon, Clock, DollarSign, Paperclip,
   CheckCircle, Sliders, Activity, Info, FileText, Image, PenTool, Table, Calculator, Layout,
-  Save, Undo2, ChevronRight, LayoutTemplate, Database, AlertCircle, Check, Loader2,
+  Save, Undo2, ChevronRight, LayoutTemplate, Database, AlertCircle, Check, Loader2, MousePointerClick,
+  Monitor, Smartphone, User, UserCheck, Layers, TextQuote, Box, ClipboardCheck, History,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useData } from '@/contexts/DataContext';
@@ -797,12 +798,12 @@ const ConfigPersonalizarCampos: React.FC = () => {
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   {[
-                    { id: 'text', label: 'Texto curto', desc: 'Respostas rápidas', icon: Type },
-                    { id: 'textarea', label: 'Texto longo', desc: 'Descrições e notas', icon: AlignLeft },
+                    { id: 'text', label: 'Texto Curto', desc: 'Respostas rápidas', icon: Type },
+                    { id: 'textarea', label: 'Texto Longo', desc: 'Descrições e notas', icon: TextQuote },
                     { id: 'number', label: 'Número', desc: 'Valores e medidas', icon: Hash },
-                    { id: 'select', label: 'Seleção', icon: List, desc: 'Lista de opções' },
-                    { id: 'checkbox', label: 'Múltipla escolha', icon: CheckSquare, desc: 'Várias opções' },
-                    { id: 'date', label: 'Data', icon: Calendar, desc: 'Seletor de data' },
+                    { id: 'select', label: 'Seleção', desc: 'Lista de opções', icon: Box },
+                    { id: 'checkbox', label: 'Múltipla Escolha', desc: 'Várias opções', icon: ClipboardCheck },
+                    { id: 'date', label: 'Data', desc: 'Seletor de data', icon: Calendar },
                   ].map((t) => {
                     const isSelected = fieldForm.tipo === t.id;
                     const Icon = t.icon;
@@ -896,9 +897,14 @@ const ConfigPersonalizarCampos: React.FC = () => {
                     <Label className="text-base font-bold text-slate-800">Validação</Label>
                   </div>
                   <div className="flex items-center justify-between p-5 rounded-2xl border border-slate-100 bg-slate-50/30 group hover:bg-slate-50 transition-colors">
-                    <div className="space-y-1">
-                      <Label className="text-sm font-bold text-slate-700 cursor-pointer">Campo Obrigatório</Label>
-                      <p className="text-[11px] text-slate-500 font-medium">Exige preenchimento para salvar atendimento</p>
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center">
+                        <AlertCircle className="w-5 h-5" />
+                      </div>
+                      <div className="space-y-0.5">
+                        <Label className="text-sm font-bold text-slate-700 cursor-pointer">Campo Obrigatório</Label>
+                        <p className="text-[11px] text-slate-500 font-medium">Torna o preenchimento obrigatório para salvar</p>
+                      </div>
                     </div>
                     <Switch checked={fieldForm.obrigatorio} onCheckedChange={(v) => setFieldForm(p => ({ ...p, obrigatorio: v }))} className="data-[state=checked]:bg-primary" />
                   </div>
@@ -910,35 +916,44 @@ const ConfigPersonalizarCampos: React.FC = () => {
                     <div className="w-1 h-5 bg-primary rounded-full" />
                     <Label className="text-base font-bold text-slate-800">Contexto de Uso</Label>
                   </div>
-                  <div className="flex flex-wrap gap-2 p-4 rounded-2xl border border-slate-100 bg-slate-50/30">
-                    {[
-                      { id: 'avaliacao_inicial', label: '1ª Consulta' },
-                      { id: 'retorno', label: 'Retorno' },
-                      { id: 'sessao', label: 'Sessão' },
-                      { id: 'urgencia', label: 'Urgência' },
-                      { id: 'procedimento', label: 'Procedimento' },
-                    ].map(t => {
-                      const isSelected = fieldForm.tiposProntuario.includes(t.id);
-                      return (
-                        <button
-                          key={t.id}
-                          type="button"
-                          onClick={() => setFieldForm(p => ({
-                            ...p,
-                            tiposProntuario: isSelected ? p.tiposProntuario.filter(x => x !== t.id) : [...p.tiposProntuario, t.id]
-                          }))}
-                          className={cn(
-                            "px-4 py-2 rounded-xl text-xs font-bold transition-all border",
-                            isSelected 
-                              ? "bg-primary text-white border-primary shadow-sm" 
-                              : "bg-white text-slate-500 border-slate-200 hover:border-slate-300"
-                          )}
-                        >
-                          {t.label}
-                        </button>
-                      );
-                    })}
-                    {fieldForm.tiposProntuario.length === 0 && <p className="text-[10px] text-slate-400 font-medium italic mt-1 w-full pl-1">Aparecerá em todos os atendimentos</p>}
+                  <div className="flex flex-col gap-2 p-5 rounded-2xl border border-slate-100 bg-slate-50/30">
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { id: 'avaliacao_inicial', label: '1ª Consulta', icon: UserCheck },
+                        { id: 'retorno', label: 'Retorno', icon: History },
+                        { id: 'sessao', label: 'Sessão', icon: Layers },
+                        { id: 'urgencia', label: 'Urgência', icon: AlertCircle },
+                        { id: 'procedimento', label: 'Procedimento', icon: ClipboardCheck },
+                      ].map(t => {
+                        const isSelected = fieldForm.tiposProntuario.includes(t.id);
+                        const Icon = t.icon;
+                        return (
+                          <button
+                            key={t.id}
+                            type="button"
+                            onClick={() => setFieldForm(p => ({
+                              ...p,
+                              tiposProntuario: isSelected ? p.tiposProntuario.filter(x => x !== t.id) : [...p.tiposProntuario, t.id]
+                            }))}
+                            className={cn(
+                              "px-3 py-2 rounded-xl text-[11px] font-bold transition-all border flex items-center gap-2",
+                              isSelected 
+                                ? "bg-primary text-white border-primary shadow-sm" 
+                                : "bg-white text-slate-500 border-slate-200 hover:border-slate-300"
+                            )}
+                          >
+                            <Icon className="w-3.5 h-3.5" />
+                            {t.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {fieldForm.tiposProntuario.length === 0 && (
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <Info className="w-3 h-3 text-slate-400" />
+                        <p className="text-[10px] text-slate-400 font-medium italic">Aparecerá em todos os atendimentos</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
