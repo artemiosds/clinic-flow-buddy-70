@@ -309,7 +309,7 @@ const Relatorios: React.FC = () => {
     const recepcao = filtered.filter(a => a.origem === 'recepcao').length;
     const retornos = filtered.filter(a => a.tipo === 'Retorno').length;
 
-    const primeiraConsulta = filtered.filter(a => a.tipo === 'Consulta' || a.tipo === 'Primeira Consulta').length;
+    const primeiraConsulta = filtered.filter(a => a.tipo === 'Consulta' || a.tipo === 'Primeira Consulta' || a.tipo === 'Avaliação').length;
     const taxaComparecimento = total > 0 ? Math.round(((concluidos + emAtendimento) / (total - pendentes - cancelados || 1)) * 100) : 0;
     const taxaFalta = total > 0 ? Math.round((faltas / (total || 1)) * 100) : 0;
     return { total, confirmados, pendentes, concluidos, emAtendimento, faltas, cancelados, remarcados, online, recepcao, retornos, primeiraConsulta, taxaComparecimento, taxaFalta };
