@@ -230,42 +230,44 @@ export function buildInstitutionalCSS(
   .doc-meta {
     font-size: ${smallPt}pt;
     color: #334155;
-    padding: 6px 10px;
+    padding: 4px 8px;
     background: #f8fafc;
     border: 1px solid #e2e8f0;
     border-radius: 4px;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
     display: flex;
-    gap: 16px;
+    gap: 12px;
     flex-wrap: wrap;
+    line-height: 1.2;
   }
-  .doc-meta strong { color: #1a1a1a; }
+  .doc-meta strong { color: #000; }
 
   /* CONTENT — justified; honor user font size */
   .doc-content {
     text-align: justify;
     text-justify: inter-word;
     font-size: ${bodyPt}pt;
-    line-height: 1.5;
+    line-height: 1.4;
     word-break: break-word;
     hyphens: auto;
   }
 
   /* SUMMARY CARDS */
-  .summary { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
-  .stat { background: #f0f9ff; border: 1px solid #bae6fd; padding: 8px 14px; border-radius: 6px; text-align: center; min-width: 85px; }
-  .stat strong { display: block; font-size: ${titlePt + 4}pt; color: ${accent}; }
+  .summary { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+  .stat { background: #f0f9ff; border: 1px solid #bae6fd; padding: 6px 12px; border-radius: 4px; text-align: center; min-width: 80px; }
+  .stat strong { display: block; font-size: ${titlePt + 2}pt; color: ${accent}; }
   .stat small { font-size: ${microPt}pt; color: #64748b; }
 
   /* SECTION TITLES */
   h2 {
-    font-size: ${sectionPt + 0.5}pt;
+    font-size: ${sectionPt}pt;
     color: ${accent};
-    margin: 14px 0 6px;
-    padding-bottom: 4px;
-    border-bottom: 1.5px solid #bae6fd;
+    margin: 10px 0 4px;
+    padding-bottom: 2px;
+    border-bottom: 1px solid #bae6fd;
     text-transform: uppercase;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.2px;
+    font-weight: 700;
   }
 
   /* TABLES */
