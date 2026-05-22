@@ -300,7 +300,7 @@ const Relatorios: React.FC = () => {
     const total = filtered.length;
     const confirmados = filtered.filter(a => a.status === 'confirmado' || a.status === 'confirmado_chegada').length;
     const pendentes = filtered.filter(a => a.status === 'pendente').length;
-    const concluidos = filtered.filter(a => a.status === 'concluido' || a.status === 'finalizado').length;
+    const concluidos = filtered.filter(a => a.status === 'concluido' || (a.status as string) === 'finalizado').length;
     const emAtendimento = filtered.filter(a => a.status === 'em_atendimento').length;
     const faltas = filtered.filter(a => a.status === 'falta').length;
     const cancelados = filtered.filter(a => a.status === 'cancelado').length;
