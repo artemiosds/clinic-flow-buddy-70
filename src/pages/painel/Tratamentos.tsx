@@ -1832,9 +1832,9 @@ const Tratamentos: React.FC = () => {
   }
 
   if (selectedCycle) {
-    const pac = pacientes.find((p) => p.id === selectedCycle.patient_id);
-    const prof = funcionarios.find((f) => f.id === selectedCycle.professional_id);
-    const unidade = unidades.find((u) => u.id === selectedCycle.unit_id);
+    const pac = selectedCycle.patient_id ? pacientes.find((p) => p.id === selectedCycle.patient_id) : null;
+    const prof = selectedCycle.professional_id ? funcionarios.find((f) => f.id === selectedCycle.professional_id) : null;
+    const unidade = selectedCycle.unit_id ? unidades.find((u) => u.id === selectedCycle.unit_id) : null;
     const progressPct =
       selectedCycle.total_sessions > 0
         ? Math.round((selectedCycle.sessions_done / selectedCycle.total_sessions) * 100)
