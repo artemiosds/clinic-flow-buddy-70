@@ -999,7 +999,24 @@ const Agenda: React.FC = () => {
     const agId = `ag${Date.now()}`;
     const pac = pacientes.find((p) => p.id === retornoAg.pacienteId);
     const unidade = unidades.find((u) => u.id === user.unidadeId);
-    const agData = { id: agId, pacienteId: retornoAg.pacienteId, pacienteNome: retornoAg.pacienteNome, unidadeId: user.unidadeId, salaId: user.salaId || "", setorId: "", profissionalId: user.id, profissionalNome: user.nome, data: retornoForm.data, hora: retornoForm.hora, status: "confirmado" as const, tipo: "Retorno", observacoes: "Retorno agendado pelo profissional", origem: "profissional" as const, criadoEm: new Date().toISOString(), criadoPor: user.id };
+    const agData = { 
+      id: agId, 
+      pacienteId: retornoAg.pacienteId, 
+      pacienteNome: retornoAg.pacienteNome, 
+      unidadeId: user.unidadeId, 
+      salaId: isTurnoMode ? newAg.salaId : (user.salaId || ""), 
+      setorId: "", 
+      profissionalId: user.id, 
+      profissionalNome: user.nome, 
+      data: retornoForm.data, 
+      hora: retornoForm.hora, 
+      status: "confirmado" as const, 
+      tipo: "Retorno", 
+      observacoes: "Retorno agendado pelo profissional", 
+      origem: "profissional" as const, 
+      criadoEm: new Date().toISOString(), 
+      criadoPor: user.id 
+    };
     setAgendamentoSaving(true);
     const toastId = toast.loading("Agendando retorno...");
     try { await addAgendamento(agData); toast.success("Retorno agendado com sucesso!", { id: toastId }); } catch (err) { toast.error("Erro ao agendar retorno.", { id: toastId }); } finally { setAgendamentoSaving(false); }
