@@ -268,7 +268,10 @@ const Agenda: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   React.useEffect(() => {
-    const t = setTimeout(() => setDebouncedSearch(searchTerm.trim().toLowerCase()), 300);
+    const t = setTimeout(() => {
+      const term = searchTerm.trim().toLowerCase();
+      setDebouncedSearch(term);
+    }, 300);
     return () => clearTimeout(t);
   }, [searchTerm]);
 
@@ -1594,10 +1597,10 @@ const Agenda: React.FC = () => {
               </SelectContent>
             </Select>
 
-            <div className="relative w-full sm:w-64">
+            <div className="relative w-full sm:w-72">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar paciente, CPF, CNS..."
+                placeholder="Paciente, CPF, CNS ou TFD/JUDICIAL..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-9 h-9"
@@ -2051,6 +2054,10 @@ const Agenda: React.FC = () => {
                           <div className="min-w-0 flex-1 space-y-1">
                             <div className="flex items-center gap-2">
                               <p className="text-sm font-bold text-foreground truncate">{ag.pacienteNome}</p>
+                              <div className="flex gap-1">
+                                {pac?.is_tfd && <Badge variant="outline" className="text-[10px] h-5 border-warning text-warning">TFD</Badge>}
+                                {pac?.possui_ordem_judicial && <Badge variant="outline" className="text-[10px] h-5 border-warning text-warning">JUDICIAL</Badge>}
+                              </div>
                               <Badge variant="outline" className={cn("text-[10px] uppercase font-bold border-none px-2 h-5", statusInfo)}>
                                 {statusLabels[ag.status] || ag.status}
                               </Badge>
