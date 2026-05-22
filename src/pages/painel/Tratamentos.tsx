@@ -1926,6 +1926,11 @@ const Tratamentos: React.FC = () => {
               <p className="text-sm text-muted-foreground border-t pt-2">{selectedCycle.clinical_notes}</p>
             )}
 
+            <div className="flex gap-2">
+              {pacientesMap.get(selectedCycle.patient_id)?.is_tfd && <Badge variant="outline" className="text-[10px] border-warning text-warning">TFD</Badge>}
+              {pacientesMap.get(selectedCycle.patient_id)?.possui_ordem_judicial && <Badge variant="outline" className="text-[10px] border-warning text-warning">JUDICIAL</Badge>}
+            </div>
+
             {faltaStats?.alerta && (
               <div
                 className={cn(
@@ -3315,7 +3320,27 @@ const Tratamentos: React.FC = () => {
                 <BuscaPaciente
                   pacientes={pacientes}
                   value={newCycle.patient_id}
-                  onChange={(id, nome) => setNewCycle((p) => ({ ...p, patient_id: id }))}
+                  onChange={async (id, nome) => {
+                    if (id) {
+                      const { data: pData } = await supabase
+                        .from("pacientes")
+                        .select("status_falta, is_tfd, possui_ordem_judicial, nome")
+                        .eq("id", id)
+                        .single();
+
+                      if (pData?.status_falta === "BLOQUEADO") {
+                        const isIsento = !!(pData.is_tfd || pData.possui_ordem_judicial);
+                        if (isIsento) {
+                          toast.info(`Paciente ${pData.nome} possui exceção administrativa de bloqueio por TFD/Ordem Judicial. Tratamento permitido.`);
+                        } else {
+                          toast.error(`Paciente ${pData.nome} está BLOQUEADO por faltas e não pode iniciar novos tratamentos.`);
+                          setNewCycle((p) => ({ ...p, patient_id: "" }));
+                          return;
+                        }
+                      }
+                    }
+                    setNewCycle((p) => ({ ...p, patient_id: id }));
+                  }}
                 />
               </div>
               {!isProfissional && (
