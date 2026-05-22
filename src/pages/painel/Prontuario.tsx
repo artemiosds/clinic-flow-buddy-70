@@ -4,6 +4,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import FichaPacienteCabecalho from "@/components/FichaPacienteCabecalho";
 import { useProntuarioStructure } from "@/hooks/useProntuarioStructure";
 import { useProntuarioTiposConfig } from "@/hooks/useProntuarioTiposConfig";
+import { usePatientTreatment } from "@/hooks/usePatientTreatment";
 import DynamicProntuarioFields from "@/components/DynamicProntuarioFields";
 import { useProntuarioConfig } from "@/hooks/useProntuarioConfig";
 import { useAuth } from "@/contexts/AuthContext";
