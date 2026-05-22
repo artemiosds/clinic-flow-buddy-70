@@ -350,27 +350,31 @@ export function buildInstitutionalCSS(
       -webkit-print-color-adjust: exact !important; 
       print-color-adjust: exact !important;
     }
-    .doc-header { border-bottom-width: 1px !important; margin-bottom: 6px !important; padding-bottom: 4px !important; }
-    .doc-header h1 { font-size: ${titlePt - 1.5}pt !important; }
+    .doc-header { border-bottom-width: 1px !important; margin-bottom: 6px !important; padding-bottom: 4px !important; border-bottom: 1.5px solid ${accent} !important; }
+    .doc-header h1 { font-size: ${titlePt - 1.5}pt !important; line-height: 1.1 !important; }
     .doc-header .doc-title { font-size: ${titlePt - 0.5}pt !important; margin-top: 2px !important; padding-top: 2px !important; }
-    .doc-meta { margin-bottom: 8px !important; padding: 3px 6px !important; font-size: ${smallPt - 0.5}pt !important; }
-    .section { margin-bottom: 8px !important; }
+    .doc-header .subtitle { font-size: ${bodyPt - 1.5}pt !important; margin-top: 0 !important; }
+    .doc-header img { max-height: 50px !important; width: auto !important; }
+    .doc-meta { margin-bottom: 8px !important; padding: 3px 6px !important; font-size: ${smallPt - 1}pt !important; line-height: 1.1 !important; gap: 8px !important; }
+    .section { margin-bottom: 8px !important; page-break-inside: avoid !important; }
     .section-title { font-size: ${sectionPt - 0.5}pt !important; padding-bottom: 1px !important; margin-bottom: 3px !important; }
-    .info-grid { gap: 6px !important; padding: 6px !important; margin-bottom: 8px !important; }
+    .info-grid { gap: 6px !important; padding: 6px !important; margin-bottom: 8px !important; grid-template-columns: repeat(2, 1fr) !important; border-width: 0.5px !important; }
     .no-print { display: none !important; }
     nav, .sidebar, button, .toaster, [data-sonner-toaster], .no-print { display: none !important; }
-    .doc-sign-footer { page-break-inside: avoid !important; }
-    .e-signature-box { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; border-color: #cbd5e1 !important; }
-    h2 { font-size: ${sectionPt - 0.5}pt !important; margin: 8px 0 3px !important; }
-    table { margin-bottom: 8px !important; }
-    th, td { padding: 3px 5px !important; font-size: ${smallPt - 0.5}pt !important; }
+    .doc-sign-footer { page-break-inside: avoid !important; margin-top: 15px !important; }
+    .signature { margin-top: 20px !important; page-break-inside: avoid !important; }
+    .e-signature-box { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; border-color: #cbd5e1 !important; padding: 5px !important; }
+    h2 { font-size: ${sectionPt - 0.5}pt !important; margin: 8px 0 3px !important; padding-bottom: 1px !important; }
+    table { margin-bottom: 8px !important; border-width: 0.5px !important; }
+    th, td { padding: 3px 5px !important; font-size: ${smallPt - 1}pt !important; line-height: 1.1 !important; border-width: 0.5px !important; }
+    .doc-footer { margin-top: 15px !important; padding-top: 2px !important; font-size: ${microPt - 0.5}pt !important; }
   }
   @page {
     size: ${size} ${orientation};
-    margin: 12mm 12mm 12mm 12mm !important;
+    margin: 10mm 15mm 10mm 15mm !important;
   }
   @page :first {
-    margin-top: 8mm !important;
+    margin-top: 6mm !important;
   }
   ${opts.extraCSS || ''}
 </style>`;
