@@ -319,7 +319,7 @@ const FieldPreview: React.FC<{ form: any }> = ({ form }) => {
 // -------- Main component --------
 const ConfigPersonalizarCampos: React.FC = () => {
   const { unidades } = useData();
-  const [selectedScreen, setSelectedScreen] = useState<ScreenKey>('paciente');
+  const [selectedScreen, setSelectedScreen] = useState<ScreenKey>('prontuario');
   const [selectedUnit, setSelectedUnit] = useState<string>('__global__');
 
   const { atualizarConfiguracao, configuracoes, loading: hookLoading } = useConfiguracao();
