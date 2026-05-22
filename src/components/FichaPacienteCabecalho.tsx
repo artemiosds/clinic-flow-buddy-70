@@ -91,6 +91,7 @@ const FichaPacienteCabecalho: React.FC<FichaPacienteCabecalhoProps> = ({
   triagem, funcionarios, onPacienteUpdated,
 }) => {
   const [paciente, setPaciente] = useState<any>(null);
+  const [absenceInfo, setAbsenceInfo] = useState<any>(null);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [expanded, setExpanded] = useState(true);
@@ -121,7 +122,19 @@ const FichaPacienteCabecalho: React.FC<FichaPacienteCabecalhoProps> = ({
     let cancelled = false;
     const load = async () => {
       const { data } = await supabase.from("pacientes").select("*").eq("id", pacienteId).single();
-      if (data && !cancelled) setPaciente(data);
+      if (data && !cancelled) {
+        setPaciente(data);
+        
+        // Carrega informação de falta para o profissional atual
+        const { data: absence } = await supabase
+          .from('paciente_faltas_profissional')
+          .select('*')
+          .eq('paciente_id', pacienteId)
+          .eq('profissional_id', profissionalId)
+          .maybeSingle();
+        
+        if (!cancelled) setAbsenceInfo(absence);
+      }
     };
     load();
 
@@ -336,6 +349,14 @@ const FichaPacienteCabecalho: React.FC<FichaPacienteCabecalhoProps> = ({
               <div className="flex-1 min-w-0">
                 <p className="text-base font-semibold text-foreground leading-tight truncate">
                   {paciente.nome}
+                  {paciente.is_tfd && <Badge variant="outline" className="ml-2 text-[10px] border-warning text-warning">TFD</Badge>}
+                  {paciente.possui_ordem_judicial && <Badge variant="outline" className="ml-2 text-[10px] border-warning text-warning">JUDICIAL</Badge>}
+                  {absenceInfo?.status_falta === 'BLOQUEADO' && !(paciente.is_tfd || paciente.possui_ordem_judicial) && (
+                    <Badge variant="destructive" className="ml-2 text-[10px]">🚫 BLOQUEADO P/ ESTE PROFISSIONAL</Badge>
+                  )}
+                  {absenceInfo?.status_falta === 'FALTOSO' && (
+                    <Badge variant="outline" className="ml-2 text-[10px] border-warning text-warning font-bold">⚠️ FALTOSO ({absenceInfo.total_faltas} faltas)</Badge>
+                  )}
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {paciente.data_nascimento
