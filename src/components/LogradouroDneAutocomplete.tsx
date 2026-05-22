@@ -18,6 +18,7 @@ interface Props {
   onChange: (descricao: string, codigo: string) => void;
   required?: boolean;
   placeholder?: string;
+  className?: string;
 }
 
 // Lista padronizada DNE (apenas tipos mais utilizados, alinhada com BPA/e-SUS)
@@ -141,6 +142,7 @@ export default function LogradouroDneAutocomplete({
   onChange,
   required,
   placeholder = "Selecionar tipo de logradouro...",
+  className,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -187,6 +189,7 @@ export default function LogradouroDneAutocomplete({
           className={cn(
             "w-full justify-between font-normal",
             !resolved && !value && "text-muted-foreground",
+            className
           )}
         >
           <span className="flex items-center gap-2 truncate">
