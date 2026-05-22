@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,7 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
   Plus, Pencil, Trash2, Eye, EyeOff, GripVertical, Settings2, Type,
   Hash, Calendar, CheckSquare, List, AlignLeft, ArrowUp, ArrowDown, Lock,
@@ -958,10 +959,10 @@ const ConfigPersonalizarCampos: React.FC = () => {
               O nome do campo no banco não muda — apenas o que aparece na tela.
             </p>
           </div>
-          <DialogFooter>
+          <div className="flex justify-end gap-2 mt-4">
             <Button variant="outline" onClick={() => setRenameModal(null)}>Cancelar</Button>
             <Button onClick={saveRename}>Salvar</Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
