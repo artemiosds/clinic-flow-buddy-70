@@ -109,17 +109,17 @@ function safe(str: string | undefined | null): string {
   return str;
 }
 
-function section(label: string, raw: string | undefined): string {
+function section(label: string, raw: string | undefined, forceShow = false): string {
   const value = safe(raw);
-  if (!value || !value.trim()) return "";
+  if (!forceShow && (!value || !value.trim())) return "";
   return `
     <div class="section">
       <div class="section-title">${escapeHtml(label)}</div>
-      <div class="section-content">${escapeHtml(value)}</div>
+      <div class="section-content">${escapeHtml(value || "—")}</div>
     </div>`;
 }
 
-function buildProntuarioBody(p: ProntuarioLike, extraHtml = ""): string {
+async function buildProntuarioBody(p: ProntuarioLike, extraHtml = ""): Promise<string> {
   const sections: Array<[string, string | undefined]> = [
     ["Queixa Principal", p.queixa_principal],
     ["S — Subjetivo", p.soap_subjetivo],
@@ -137,7 +137,53 @@ function buildProntuarioBody(p: ProntuarioLike, extraHtml = ""): string {
     ["Observações", p.observacoes],
   ];
 
-  const sectionsHtml = sections.map(([label, value]) => section(label, value)).join("");
+  // Identificar se as observações contém campos de especialidade JSON
+  let obsHtml = "";
+  const obsValue = p.observacoes?.trim() || "";
+  if (obsValue.startsWith("{")) {
+    try {
+      const parsed = JSON.parse(obsValue);
+      if (parsed.especialidade_fields) {
+        const fields = parsed.especialidade_fields;
+        const fieldEntries = Object.entries(fields)
+          .filter(([_, v]) => v !== undefined && v !== null && String(v).trim() !== "")
+          .map(([k, v]) => {
+            const label = k.replace(/^esp_/, "").replace(/_/g, " ").toUpperCase();
+            let displayValue = String(v);
+            if (displayValue === "true") displayValue = "Sim";
+            if (displayValue === "false") displayValue = "Não";
+            return `
+              <div class="field" style="margin-bottom: 4px;">
+                <span class="field-label" style="font-size: 7pt; color: #475569; font-weight: 700;">${escapeHtml(label)}</span>
+                <div class="field-value" style="font-size: 10pt; color: #000;">${escapeHtml(displayValue)}</div>
+              </div>`;
+          })
+          .join("");
+        
+        if (fieldEntries) {
+          obsHtml = `
+            <div class="section">
+              <div class="section-title">Avaliação Especializada</div>
+              <div class="section-content" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                ${fieldEntries}
+              </div>
+            </div>`;
+        }
+        
+        // Se houver texto adicional além dos campos, mostrar separadamente
+        if (parsed.texto?.trim()) {
+          sections.push(["Observações Adicionais", parsed.texto]);
+        }
+      }
+    } catch (e) {
+      // Not JSON or parse error, keep original behavior
+    }
+  }
+
+  const sectionsHtml = sections
+    .filter(([label, _]) => label !== "Observações" || !obsHtml) // Pular Observações se já processamos como JSON
+    .map(([label, value]) => section(label, value))
+    .join("");
 
   const signature = `
     <div class="signature">
@@ -155,7 +201,8 @@ function buildProntuarioBody(p: ProntuarioLike, extraHtml = ""): string {
       <div><span class="info-label">Setor</span><div class="info-value">${escapeHtml(p.setor || "—")}</div></div>
       <div><span class="info-label">ID</span><div class="info-value">${escapeHtml((p.id || "").slice(0, 8))}</div></div>
     </div>
-    ${sectionsHtml || '<div class="section"><div class="section-content">Sem conteúdo clínico registrado.</div></div>'}
+    ${sectionsHtml}
+    ${obsHtml}
     ${extraHtml || ""}
     ${signature}
   `;
@@ -178,9 +225,12 @@ export function downloadProntuarioPdf(
         contexto: { especialidade: p.especialidade, tipoProntuario: p.tipo_prontuario },
         titulo: 'Campos Personalizados do Prontuário',
       }).catch(() => '');
+      
+      const body = await buildProntuarioBody(p, extraHtml);
+      
       await openPrintDocument(
         `PRONTUÁRIO CLÍNICO — ${fmtDate(p.data_atendimento)}`,
-        buildProntuarioBody(p, extraHtml),
+        body,
         {
           Paciente: p.paciente_nome || "—",
           Profissional: p.profissional_nome || "—",
