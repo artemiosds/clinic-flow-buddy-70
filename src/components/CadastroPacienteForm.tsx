@@ -270,10 +270,10 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
 
   // Validação visual por aba (badge se erro)
   const tabHasError = {
-    identificacao: !!(errors.nome || errors.cpf || errors.cns || errors.nomeResponsavel || errors.cpfResponsavel || errors.nomeMae),
-    endereco: !!(errors.cep || errors.municipio),
+    identificacao: !!(errors.nome || errors.cpf || errors.cns || errors.nomeResponsavel || errors.cpfResponsavel || errors.nomeMae || errors.dataNascimento || errors.naturalidade),
+    endereco: !!(errors.cep || errors.municipio || errors.tipo_logradouro || errors.numero || errors.bairro || errors.uf),
     contato: !!(errors.telefone || errors.email),
-    complementares: !!(errors.especialidadeDestino || errors.ubsOrigem || errors.cid || errors.justificativa || errors.motivo_excecao_bloqueio),
+    complementares: !!(errors.especialidadeDestino || errors.ubsOrigem || errors.cid || errors.justificativa || errors.motivo_excecao_bloqueio || errors.raca_cor),
   };
 
   return (
@@ -551,9 +551,9 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
 
               {!H("municipio") && (
                 <div>
-                  <Label>{L("municipio", "Município")}</Label>
+                  <Label>{L("municipio", "Município")} *</Label>
                   <Select value={form.municipio || ""} onValueChange={(v) => set("municipio", v)}>
-                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectTrigger className={errors.municipio ? "border-destructive" : ""}><SelectValue placeholder="Selecione" /></SelectTrigger>
                     <SelectContent>
                       {MUNICIPIOS.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                     </SelectContent>
@@ -564,13 +564,14 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
 
               {!H("uf") && (
               <div>
-                <Label>{L("uf", "UF")}</Label>
+                <Label>{L("uf", "UF")} *</Label>
                 <Select value={form.uf || ""} onValueChange={(v) => set("uf", v)}>
-                  <SelectTrigger><SelectValue placeholder="UF" /></SelectTrigger>
+                  <SelectTrigger className={errors.uf ? "border-destructive" : ""}><SelectValue placeholder="UF" /></SelectTrigger>
                   <SelectContent>
                     {UFS.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}
                   </SelectContent>
                 </Select>
+                {errors.uf && <p className="text-xs text-destructive mt-1">{errors.uf}</p>}
               </div>
               )}
 
