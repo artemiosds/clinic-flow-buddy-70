@@ -8,7 +8,7 @@ export interface ActiveCycle {
   start_date: string;
   end_date_predicted: string | null;
   frequency: string;
-  status: string;
+  status: 'em_andamento' | 'ativo' | 'concluido' | string;
   total_sessions: number;
   sessions_done: number;
   created_at: string;
@@ -24,7 +24,7 @@ export interface ActivePTS {
   especialidades_envolvidas: string[];
   created_at: string;
   professional_id: string;
-  status: string;
+  status: 'ativo' | 'concluido' | string;
 }
 
 export function usePatientTreatment(patientId: string | null) {
