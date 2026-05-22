@@ -143,11 +143,13 @@ export function buildInstitutionalCSS(
   const cfg = config ?? DEFAULT_CONFIG;
   const fontFamily = `'${cfg.fonte.replace(/'/g, '')}', Arial, 'Helvetica Neue', Helvetica, sans-serif`;
   // Painel salva em px; impressão usa pt → 1pt ≈ px * 0.75
-  const bodyPt = Math.max(8, Math.round((cfg.tamanhoFonte || 12) * 0.75 * 10) / 10);
-  const titlePt = Math.round((bodyPt + 1) * 10) / 10;
-  const sectionPt = Math.round((bodyPt + 0.5) * 10) / 10;
-  const smallPt = Math.max(7, Math.round((bodyPt - 1.5) * 10) / 10);
-  const microPt = Math.max(6.5, Math.round((bodyPt - 2.5) * 10) / 10);
+  // Limitamos o tamanho máximo na impressão para evitar o efeito "gigante" relatado.
+  const baseSize = Math.min(14, cfg.tamanhoFonte || 12); 
+  const bodyPt = Math.max(8, Math.round(baseSize * 0.75 * 10) / 10);
+  const titlePt = Math.round((bodyPt + 1.5) * 10) / 10;
+  const sectionPt = Math.round((bodyPt + 0.8) * 10) / 10;
+  const smallPt = Math.max(7, Math.round((bodyPt - 1.2) * 10) / 10);
+  const microPt = Math.max(6.5, Math.round((bodyPt - 2.2) * 10) / 10);
   const accent = cfg.corTitulo || '#0c4a6e';
   const headerAlign = cfg.alinhamento || 'center';
   return `
