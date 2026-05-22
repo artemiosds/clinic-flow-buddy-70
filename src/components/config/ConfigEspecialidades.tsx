@@ -392,22 +392,22 @@ const ConfigEspecialidades: React.FC = () => {
       <Dialog open={addFieldDialog} onOpenChange={(open) => {
         if (!isSaving) setAddFieldDialog(open);
       }}>
-        <DialogContent className="max-w-3xl p-0 overflow-hidden border-none shadow-2xl bg-[#F8FAFC] dark:bg-slate-950 rounded-2xl">
+        <DialogContent className="max-w-2xl p-0 overflow-hidden border-none shadow-2xl bg-white dark:bg-slate-950 rounded-[24px]">
           <div className="flex flex-col h-[90vh] max-h-[850px]">
-            {/* Cabeçalho Premium */}
-            <div className="bg-white dark:bg-slate-900 px-8 py-6 border-b flex items-center justify-between sticky top-0 z-20">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <div className="p-2 bg-primary/10 rounded-xl">
-                    <Sparkles className="w-5 h-5 text-primary" />
-                  </div>
-                  <h2 className="text-2xl font-bold font-display tracking-tight text-slate-900 dark:text-white">
-                    Configurar Novo Campo
-                  </h2>
+            {/* Cabeçalho */}
+            <div className="px-8 py-6 border-b flex items-center justify-between sticky top-0 z-20 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                  <PlusCircle className="w-6 h-6 text-primary" />
                 </div>
-                <p className="text-sm text-slate-500 font-medium ml-11">
-                  Crie campos dinâmicos para a especialidade <span className="text-primary font-bold">{esp?.label}</span>
-                </p>
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                    Novo Campo Personalizado
+                  </h2>
+                  <p className="text-sm text-slate-500 font-medium">
+                    Configure como este campo aparecerá no prontuário
+                  </p>
+                </div>
               </div>
               <Button 
                 variant="ghost" 
@@ -420,38 +420,23 @@ const ConfigEspecialidades: React.FC = () => {
             </div>
 
             <ScrollArea className="flex-1 px-8 py-8">
-              <div className="max-w-2xl mx-auto space-y-10 pb-10">
+              <div className="space-y-10 pb-10">
                 
-                {/* Bloco 1: Identificação */}
-                <section className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-1 h-4 bg-primary rounded-full"></div>
-                    <Label className="text-xs font-bold uppercase tracking-widest text-slate-400">Identificação do Campo</Label>
-                  </div>
-                  <div className="space-y-3">
-                    <Label className="text-lg font-semibold text-slate-700 dark:text-slate-200">Qual será o nome deste campo?</Label>
-                    <Input 
-                      placeholder="Ex: Histórico da Doença Atual, Motivo da Consulta..." 
-                      className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:ring-primary/20 transition-all h-14 text-lg font-medium shadow-sm rounded-xl px-5"
-                      value={newField.label} 
-                      onChange={e => setNewField(p => ({ ...p, label: e.target.value }))} 
-                    />
-                    <p className="text-xs text-slate-400 flex items-center gap-1.5 ml-1">
-                      <HelpCircle className="w-3.5 h-3.5" />
-                      Este nome aparecerá como título do campo no prontuário clínico.
-                    </p>
-                  </div>
-                </section>
+                {/* 1. Nome do Campo */}
+                <div className="space-y-3">
+                  <Label className="text-[11px] font-black uppercase tracking-[0.15em] text-slate-400">Nome do campo</Label>
+                  <Input 
+                    placeholder="Digite o título do campo (ex: Histórico da Doença)" 
+                    className="bg-slate-50 dark:bg-slate-900 border-none focus:ring-2 focus:ring-primary/20 transition-all h-14 text-base font-medium rounded-xl px-5"
+                    value={newField.label} 
+                    onChange={e => setNewField(p => ({ ...p, label: e.target.value }))} 
+                  />
+                </div>
 
-                {/* Bloco 2: Tipo de Campo */}
-                <section className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-1 h-4 bg-primary rounded-full"></div>
-                    <Label className="text-xs font-bold uppercase tracking-widest text-slate-400">Tipo de Entrada</Label>
-                  </div>
-                  <Label className="text-lg font-semibold text-slate-700 dark:text-slate-200 block">Como o profissional deve preencher?</Label>
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-2">
+                {/* 2. Tipo do Campo */}
+                <div className="space-y-4">
+                  <Label className="text-[11px] font-black uppercase tracking-[0.15em] text-slate-400">Tipo do campo</Label>
+                  <div className="grid grid-cols-2 gap-3">
                     {FIELD_TYPES.map((type) => {
                       const Icon = type.icon;
                       const isSelected = newField.tipo === type.id;
@@ -459,18 +444,16 @@ const ConfigEspecialidades: React.FC = () => {
                         <div 
                           key={type.id}
                           onClick={() => setNewField(p => ({ ...p, tipo: type.id }))}
-                          className={`group cursor-pointer p-4 rounded-xl border-2 transition-all duration-200 flex flex-col gap-3 ${
+                          className={`cursor-pointer p-4 rounded-xl border-2 transition-all duration-200 flex items-start gap-4 ${
                             isSelected 
-                              ? 'bg-primary/5 border-primary shadow-md ring-4 ring-primary/5' 
-                              : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:border-primary/40 hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                              ? 'bg-primary/5 border-primary shadow-[0_0_0_1px_rgba(var(--primary),0.1)]' 
+                              : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:border-slate-200'
                           }`}
                         >
-                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
-                            isSelected ? 'bg-primary text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 group-hover:text-primary'
-                          }`}>
-                            <Icon className="w-5 h-5" />
+                          <div className={`mt-1 p-2 rounded-lg ${isSelected ? 'bg-primary text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>
+                            <Icon className="w-4 h-4" />
                           </div>
-                          <div>
+                          <div className="flex-1">
                             <p className={`text-sm font-bold ${isSelected ? 'text-primary' : 'text-slate-700 dark:text-slate-200'}`}>
                               {type.label}
                             </p>
@@ -478,81 +461,102 @@ const ConfigEspecialidades: React.FC = () => {
                               {type.description}
                             </p>
                           </div>
+                          {isSelected && (
+                            <div className="w-4 h-4 rounded-full bg-primary flex items-center justify-center">
+                              <CheckCircle2 className="w-2.5 h-2.5 text-white" />
+                            </div>
+                          )}
                         </div>
                       );
                     })}
                   </div>
-                </section>
+                </div>
 
-                {/* Bloco 3: Opções (Condicional) */}
-                {newField.tipo === 'select' && (
-                  <section className="space-y-4 animate-in zoom-in-95 duration-300">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-1 h-4 bg-primary rounded-full"></div>
-                      <Label className="text-xs font-bold uppercase tracking-widest text-slate-400">Opções da Lista</Label>
-                    </div>
-                    <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
-                      <Label className="text-sm font-semibold text-slate-700 dark:text-slate-200">Liste as opções disponíveis:</Label>
-                      <Textarea 
-                        placeholder="Opção 1, Opção 2, Opção 3..." 
-                        className="min-h-[100px] bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 rounded-xl focus:ring-primary/20 text-sm leading-relaxed"
-                        value={newField.opcoes} 
-                        onChange={e => setNewField(p => ({ ...p, opcoes: e.target.value }))} 
+                {/* 3. Opções (Condicional) */}
+                {(newField.tipo === 'select' || newField.tipo === 'multiselect') && (
+                  <div className="space-y-4 animate-in slide-in-from-top-2 duration-300">
+                    <Label className="text-[11px] font-black uppercase tracking-[0.15em] text-slate-400">Opções de resposta</Label>
+                    <div className="flex gap-2">
+                      <Input 
+                        placeholder="Adicionar opção..." 
+                        className="bg-slate-50 dark:bg-slate-900 border-none h-12 rounded-xl"
+                        value={optionInput}
+                        onChange={e => setOptionInput(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            if (optionInput.trim()) {
+                              const current = newField.opcoes ? newField.opcoes.split(',').map(o => o.trim()).filter(Boolean) : [];
+                              if (!current.includes(optionInput.trim())) {
+                                setNewField(p => ({ ...p, opcoes: [...current, optionInput.trim()].join(', ') }));
+                              }
+                              setOptionInput('');
+                            }
+                          }
+                        }}
                       />
-                      <div className="flex items-start gap-2 p-3 bg-primary/5 rounded-lg border border-primary/10">
-                        <AlertCircle className="w-4 h-4 text-primary mt-0.5" />
-                        <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-normal font-medium">
-                          Dica: Separe as opções usando <span className="font-bold text-primary">vírgula ( , )</span>. Cada item se tornará uma escolha no menu de seleção.
-                        </p>
-                      </div>
+                      <Button 
+                        type="button" 
+                        size="icon" 
+                        className="h-12 w-12 rounded-xl shrink-0"
+                        onClick={() => {
+                          if (optionInput.trim()) {
+                            const current = newField.opcoes ? newField.opcoes.split(',').map(o => o.trim()).filter(Boolean) : [];
+                            if (!current.includes(optionInput.trim())) {
+                              setNewField(p => ({ ...p, opcoes: [...current, optionInput.trim()].join(', ') }));
+                            }
+                            setOptionInput('');
+                          }
+                        }}
+                      >
+                        <Plus className="w-5 h-5" />
+                      </Button>
                     </div>
-                  </section>
+                    
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      {newField.opcoes && newField.opcoes.split(',').map(o => o.trim()).filter(Boolean).map(op => (
+                        <div key={op} className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 group">
+                          {op}
+                          <button 
+                            className="text-slate-400 hover:text-destructive transition-colors"
+                            onClick={() => {
+                              const current = newField.opcoes.split(',').map(o => o.trim()).filter(Boolean);
+                              setNewField(p => ({ ...p, opcoes: current.filter(c => c !== op).join(', ') }));
+                            }}
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                      {(!newField.opcoes || !newField.opcoes.trim()) && (
+                        <p className="text-[11px] text-slate-400 italic">Nenhuma opção adicionada ainda.</p>
+                      )}
+                    </div>
+                  </div>
                 )}
 
-                {/* Bloco 4: Configurações de Regra */}
-                <section className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-1 h-4 bg-primary rounded-full"></div>
-                    <Label className="text-xs font-bold uppercase tracking-widest text-slate-400">Regras de Preenchimento</Label>
+                {/* 4. Campo Obrigatório */}
+                <div className="flex items-center justify-between p-6 rounded-2xl border-2 border-slate-50 dark:border-slate-900 bg-slate-50/30 dark:bg-slate-900/30">
+                  <div className="space-y-1">
+                    <p className="text-base font-bold text-slate-800 dark:text-slate-100">Campo Obrigatório</p>
+                    <p className="text-xs text-slate-500">O profissional deve preencher este campo para salvar</p>
                   </div>
-                  
-                  <div className="grid grid-cols-1 gap-4">
-                    <div className="flex items-center justify-between p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md group">
-                      <div className="space-y-1">
-                        <Label className="text-base font-bold text-slate-700 dark:text-slate-200 cursor-pointer" htmlFor="obrigatorio">
-                          Preenchimento Obrigatório
-                        </Label>
-                        <p className="text-xs text-slate-400">O prontuário não poderá ser salvo se este campo estiver vazio.</p>
-                      </div>
-                      <Switch 
-                        id="obrigatorio"
-                        className="data-[state=checked]:bg-primary"
-                        checked={newField.obrigatorio} 
-                        onCheckedChange={v => setNewField(p => ({ ...p, obrigatorio: v }))} 
-                      />
-                    </div>
-                  </div>
-                </section>
+                  <Switch 
+                    checked={newField.obrigatorio} 
+                    onCheckedChange={v => setNewField(p => ({ ...p, obrigatorio: v }))} 
+                    className="data-[state=checked]:bg-primary"
+                  />
+                </div>
 
-                {/* Bloco 5: Visibilidade */}
-                <section className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-1 h-4 bg-primary rounded-full"></div>
-                    <Label className="text-xs font-bold uppercase tracking-widest text-slate-400">Exibição e Contexto</Label>
-                  </div>
-                  <Label className="text-lg font-semibold text-slate-700 dark:text-slate-200 block">Onde este campo deve aparecer?</Label>
-                  
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3 pt-1">
+                {/* 5. Onde aparece */}
+                <div className="space-y-4">
+                  <Label className="text-[11px] font-black uppercase tracking-[0.15em] text-slate-400">Aparece nos tipos</Label>
+                  <div className="flex flex-wrap gap-2">
                     {TIPOS_PRONTUARIO.map(t => {
                       const isSelected = newField.tipos_prontuario.includes(t.key);
                       return (
                         <div 
                           key={t.key} 
-                          className={`flex items-center justify-between p-4 rounded-xl border-2 transition-all cursor-pointer select-none ${
-                            isSelected 
-                              ? 'bg-white dark:bg-slate-900 border-primary shadow-sm ring-2 ring-primary/5' 
-                              : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:border-slate-200'
-                          }`}
                           onClick={() => {
                             const cur = newField.tipos_prontuario;
                             setNewField(p => ({
@@ -562,67 +566,41 @@ const ConfigEspecialidades: React.FC = () => {
                                 : [...cur, t.key]
                             }));
                           }}
+                          className={`cursor-pointer px-5 py-3 rounded-full border-2 transition-all font-bold text-xs select-none ${
+                            isSelected 
+                              ? 'bg-primary border-primary text-white shadow-md' 
+                              : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-500 hover:border-slate-200'
+                          }`}
                         >
-                          <span className={`text-sm font-bold ${isSelected ? 'text-primary' : 'text-slate-600 dark:text-slate-400'}`}>
-                            {t.short}
-                          </span>
-                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-                            isSelected ? 'bg-primary border-primary' : 'border-slate-200 dark:border-slate-800'
-                          }`}>
-                            {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
-                          </div>
+                          {t.short}
                         </div>
                       );
                     })}
                   </div>
-                </section>
-
-                {/* Bloco 6: Ajuda Avançada */}
-                <section className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-400">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-1 h-4 bg-primary rounded-full"></div>
-                    <Label className="text-xs font-bold uppercase tracking-widest text-slate-400">Auxílio ao Profissional</Label>
-                  </div>
-                  <div className="space-y-3">
-                    <Label className="text-sm font-semibold text-slate-700 dark:text-slate-200">Placeholder ou Texto de Ajuda (Opcional)</Label>
-                    <Input 
-                      placeholder="Ex: Descreva a queixa principal do paciente..." 
-                      className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 h-12 rounded-xl"
-                      value={newField.ajuda} 
-                      onChange={e => setNewField(p => ({ ...p, ajuda: e.target.value }))} 
-                    />
-                    <p className="text-[10px] text-slate-400 italic px-1">Este texto aparece dentro do campo ou como dica para o profissional.</p>
-                  </div>
-                </section>
+                </div>
 
               </div>
             </ScrollArea>
 
-            {/* Rodapé Premium Fixo */}
-            <div className="bg-white dark:bg-slate-900 px-8 py-6 border-t flex items-center justify-end gap-4 shadow-[0_-4px_20px_rgba(0,0,0,0.03)] z-20">
+            {/* Rodapé */}
+            <div className="px-8 py-6 border-t bg-white dark:bg-slate-950 flex items-center justify-between gap-4">
               <Button 
                 variant="ghost" 
-                className="font-bold text-slate-500 hover:text-slate-700 h-12 px-8 rounded-xl transition-all"
+                className="font-bold text-slate-500 h-12 px-6 rounded-xl transition-all"
                 onClick={() => !isSaving && setAddFieldDialog(false)}
                 disabled={isSaving}
               >
                 Cancelar
               </Button>
               <Button 
-                className="bg-primary hover:bg-primary/90 text-white font-bold h-12 px-10 shadow-lg shadow-primary/20 rounded-xl transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 min-w-[180px]"
+                className="bg-primary hover:bg-primary/90 text-white font-bold h-12 px-10 shadow-lg shadow-primary/20 rounded-xl transition-all hover:scale-[1.02] active:scale-95 min-w-[180px]"
                 onClick={addCampoEsp}
                 disabled={!newField.label.trim() || isSaving}
               >
                 {isSaving ? (
-                  <>
-                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                    <span>Salvando...</span>
-                  </>
+                  <Loader2 className="w-5 h-5 animate-spin" />
                 ) : (
-                  <>
-                    <Save className="w-5 h-5 mr-2" />
-                    <span>Confirmar e Salvar</span>
-                  </>
+                  'Adicionar Campo'
                 )}
               </Button>
             </div>
