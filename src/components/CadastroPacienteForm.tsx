@@ -18,6 +18,7 @@ import { applyPhoneMask, formatPhoneForDisplay } from "@/lib/phoneUtils";
 import CustomFieldsRenderer from "@/components/CustomFieldsRenderer";
 import { useCustomFields } from "@/hooks/useCustomFields";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePermissions } from "@/contexts/PermissionsContext";
 import LogradouroDneAutocomplete from "@/components/LogradouroDneAutocomplete";
 import MunicipioIbgeCombobox from "@/components/MunicipioIbgeCombobox";
 import EspecialidadeCombobox from "@/components/EspecialidadeCombobox";
@@ -189,6 +190,7 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
   const [autoSaveStatus, setAutoSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const { user } = useAuth();
   const { resolved: customConfig, getNativeLabel, isNativeHidden } = useCustomFields("paciente", user?.unidadeId);
+  const { can } = usePermissions();
   const L = (name: string, fallback: string) => getNativeLabel(name, fallback);
   const H = (name: string) => isNativeHidden(name);
 
