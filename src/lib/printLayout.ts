@@ -271,51 +271,52 @@ export function buildInstitutionalCSS(
   }
 
   /* TABLES */
-  table { width: 100%; border-collapse: collapse; margin-bottom: 12px; page-break-inside: auto; font-size: ${smallPt}pt; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 10px; page-break-inside: auto; font-size: ${smallPt}pt; }
   thead { display: table-header-group; }
   tr { page-break-inside: avoid; page-break-after: auto; }
-  th, td { border: 1px solid #d1d5db; padding: 5px 8px; text-align: left; font-size: ${smallPt}pt; }
-  th { background: #f1f5f9; font-weight: 600; color: #1a1a1a; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  tr:nth-child(even) { background: #fafafa; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  th, td { border: 1px solid #cbd5e1; padding: 4px 6px; text-align: left; font-size: ${smallPt}pt; }
+  th { background: #f8fafc; font-weight: 700; color: #000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  tr:nth-child(even) { background: #fdfdfd; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 
   /* FIELDS */
   .content-block { text-align: justify; text-justify: inter-word; font-size: ${bodyPt}pt; }
-  .field { margin-bottom: 8px; }
-  .field-label { font-size: ${microPt}pt; text-transform: uppercase; color: #64748b; font-weight: 600; letter-spacing: 0.4px; }
-  .field-value { font-size: ${bodyPt}pt; margin-top: 2px; color: #1a1a1a; }
+  .field { margin-bottom: 6px; }
+  .field-label { font-size: ${microPt}pt; text-transform: uppercase; color: #475569; font-weight: 700; letter-spacing: 0.3px; }
+  .field-value { font-size: ${bodyPt}pt; margin-top: 1px; color: #000; }
 
   /* SECTIONS (prontuário) */
-  .section { margin-bottom: 14px; page-break-inside: avoid; }
-  .section-title { font-weight: 700; font-size: ${sectionPt}pt; text-transform: uppercase; color: ${accent}; border-bottom: 1.5px solid #bae6fd; padding-bottom: 4px; margin-bottom: 6px; }
-  .section-content { font-size: ${bodyPt}pt; line-height: 1.55; white-space: pre-wrap; min-height: 16px; text-align: justify; color: #1e293b; }
+  .section { margin-bottom: 10px; page-break-inside: avoid; }
+  .section-title { font-weight: 700; font-size: ${sectionPt}pt; text-transform: uppercase; color: ${accent}; border-bottom: 1px solid #bae6fd; padding-bottom: 2px; margin-bottom: 4px; }
+  .section-content { font-size: ${bodyPt}pt; line-height: 1.4; white-space: pre-wrap; min-height: 14px; text-align: justify; color: #000; }
 
   /* INFO GRID */
-  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; }
-  .info-label { font-weight: 600; font-size: ${microPt}pt; text-transform: uppercase; color: #64748b; }
-  .info-value { font-size: ${bodyPt}pt; color: #1a1a1a; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; padding: 8px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; }
+  .info-label { font-weight: 700; font-size: ${microPt}pt; text-transform: uppercase; color: #64748b; }
+  .info-value { font-size: ${bodyPt}pt; color: #000; }
 
   /* QR AREA */
-  .qr-area { text-align: center; margin-top: 24px; padding: 16px; border: 1px dashed #cbd5e1; border-radius: 6px; background: #fafafa; }
+  .qr-area { text-align: center; margin-top: 16px; padding: 12px; border: 1px dashed #cbd5e1; border-radius: 4px; background: #fafafa; }
   .qr-area p { font-size: ${smallPt}pt; color: #64748b; }
-  .qr-area .code { font-size: ${microPt}pt; color: #94a3b8; margin-top: 4px; font-family: monospace; }
+  .qr-area .code { font-size: ${microPt}pt; color: #94a3b8; margin-top: 2px; font-family: monospace; }
 
   /* SIGNATURE */
-  .signature { margin-top: 40px; text-align: center; }
-  .signature-line { width: 280px; border-top: 1px solid #333; margin: 0 auto 6px; }
-  .signature .name { font-size: ${bodyPt}pt; font-weight: 600; }
-  .signature .role { font-size: ${smallPt}pt; color: #64748b; }
+  .signature { margin-top: 30px; text-align: center; page-break-inside: avoid; }
+  .signature-line { width: 260px; border-top: 1.2px solid #000; margin: 0 auto 4px; }
+  .signature .name { font-size: ${bodyPt}pt; font-weight: 700; color: #000; }
+  .signature .role { font-size: ${smallPt}pt; color: #475569; }
 
   /* DOCUMENT FOOTER: carimbo + assinatura */
-  .doc-sign-footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 32px; gap: 20px; }
+  .doc-sign-footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 24px; gap: 16px; page-break-inside: avoid; }
   .doc-sign-footer .sign-block { flex: 1; }
   .doc-sign-footer .carimbo-block { text-align: right; }
 
   /* E-SIGNATURE */
   .e-signature-box {
-    border: 1px solid #94a3b8; border-radius: 4px; padding: 8px 12px;
-    font-size: ${microPt}pt; line-height: 1.5; color: #475569; max-width: 380px;
+    border: 1px solid #94a3b8; border-radius: 4px; padding: 6px 10px;
+    font-size: ${microPt}pt; line-height: 1.3; color: #475569; max-width: 350px;
+    background: #fff;
   }
-  .e-signature-box .sig-title { font-weight: 700; font-size: ${smallPt}pt; color: ${accent}; margin-bottom: 4px; text-align: center; }
+  .e-signature-box .sig-title { font-weight: 700; font-size: ${smallPt}pt; color: ${accent}; margin-bottom: 2px; text-align: center; }
   .e-signature-box .sig-legal { font-size: ${Math.max(6, microPt - 0.5)}pt; color: #94a3b8; margin-top: 6px; font-style: italic; }
 
   /* CARIMBO */
