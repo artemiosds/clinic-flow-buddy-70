@@ -916,35 +916,44 @@ const ConfigPersonalizarCampos: React.FC = () => {
                     <div className="w-1 h-5 bg-primary rounded-full" />
                     <Label className="text-base font-bold text-slate-800">Contexto de Uso</Label>
                   </div>
-                  <div className="flex flex-wrap gap-2 p-4 rounded-2xl border border-slate-100 bg-slate-50/30">
-                    {[
-                      { id: 'avaliacao_inicial', label: '1ª Consulta' },
-                      { id: 'retorno', label: 'Retorno' },
-                      { id: 'sessao', label: 'Sessão' },
-                      { id: 'urgencia', label: 'Urgência' },
-                      { id: 'procedimento', label: 'Procedimento' },
-                    ].map(t => {
-                      const isSelected = fieldForm.tiposProntuario.includes(t.id);
-                      return (
-                        <button
-                          key={t.id}
-                          type="button"
-                          onClick={() => setFieldForm(p => ({
-                            ...p,
-                            tiposProntuario: isSelected ? p.tiposProntuario.filter(x => x !== t.id) : [...p.tiposProntuario, t.id]
-                          }))}
-                          className={cn(
-                            "px-4 py-2 rounded-xl text-xs font-bold transition-all border",
-                            isSelected 
-                              ? "bg-primary text-white border-primary shadow-sm" 
-                              : "bg-white text-slate-500 border-slate-200 hover:border-slate-300"
-                          )}
-                        >
-                          {t.label}
-                        </button>
-                      );
-                    })}
-                    {fieldForm.tiposProntuario.length === 0 && <p className="text-[10px] text-slate-400 font-medium italic mt-1 w-full pl-1">Aparecerá em todos os atendimentos</p>}
+                  <div className="flex flex-col gap-2 p-5 rounded-2xl border border-slate-100 bg-slate-50/30">
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { id: 'avaliacao_inicial', label: '1ª Consulta', icon: UserCheck },
+                        { id: 'retorno', label: 'Retorno', icon: History },
+                        { id: 'sessao', label: 'Sessão', icon: Layers },
+                        { id: 'urgencia', label: 'Urgência', icon: AlertCircle },
+                        { id: 'procedimento', label: 'Procedimento', icon: ClipboardCheck },
+                      ].map(t => {
+                        const isSelected = fieldForm.tiposProntuario.includes(t.id);
+                        const Icon = t.icon;
+                        return (
+                          <button
+                            key={t.id}
+                            type="button"
+                            onClick={() => setFieldForm(p => ({
+                              ...p,
+                              tiposProntuario: isSelected ? p.tiposProntuario.filter(x => x !== t.id) : [...p.tiposProntuario, t.id]
+                            }))}
+                            className={cn(
+                              "px-3 py-2 rounded-xl text-[11px] font-bold transition-all border flex items-center gap-2",
+                              isSelected 
+                                ? "bg-primary text-white border-primary shadow-sm" 
+                                : "bg-white text-slate-500 border-slate-200 hover:border-slate-300"
+                            )}
+                          >
+                            <Icon className="w-3.5 h-3.5" />
+                            {t.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {fieldForm.tiposProntuario.length === 0 && (
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <Info className="w-3 h-3 text-slate-400" />
+                        <p className="text-[10px] text-slate-400 font-medium italic">Aparecerá em todos os atendimentos</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
