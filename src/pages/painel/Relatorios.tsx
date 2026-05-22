@@ -137,7 +137,8 @@ const Relatorios: React.FC = () => {
       }
 
       let qProc = (supabase as any).from('prontuario_procedimentos')
-        .select('prontuario_id, procedimento_id, procedimentos:procedimento_id(nome), prontuarios:prontuario_id(profissional_nome,unidade_id,data_atendimento)');
+        .select('prontuario_id, procedimento_id, procedimentos:procedimento_id(nome), prontuarios:prontuario_id(profissional_id,profissional_nome,unidade_id,data_atendimento)');
+
 
       let qCycles = supabase.from('treatment_cycles').select('id,patient_id,professional_id,unit_id,specialty,treatment_type,status,total_sessions,sessions_done,frequency,start_date,end_date_predicted,created_at');
       const loadAllTreatmentSessions = async () => {
