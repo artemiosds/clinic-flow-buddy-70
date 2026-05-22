@@ -196,8 +196,9 @@ const Tratamentos: React.FC = () => {
   const [ptsList, setPtsList] = useState<PTSRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCycle, setSelectedCycle] = useState<TreatmentCycle | null>(null);
-  // Map: "patientId|profId|date" -> { id, hora, status }
-  const [agendamentoMap, setAgendamentoMap] = useState<Record<string, { id: string; hora: string; status: string }>>({}); 
+  // Map: "patientId|profId|date" OR "appointmentId" -> { id, hora, status, falta_justificada, regularizada }
+  const [agendamentoMap, setAgendamentoMap] = useState<Record<string, { id: string; hora: string; status: string; falta_justificada?: boolean; regularizada?: boolean }>>({}); 
+
   const [ptsVinculado, setPtsVinculado] = useState<PTSRecord | null>(null);
   const [vincularPtsOpen, setVincularPtsOpen] = useState(false);
   const [selectedPtsId, setSelectedPtsId] = useState("");
