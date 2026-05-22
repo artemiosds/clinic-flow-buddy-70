@@ -805,7 +805,7 @@ const ConfigPersonalizarCampos: React.FC = () => {
                     </TabsContent>
                   </Tabs>
                 </div>
-                {/* [Sidebar placeholder omitted in partial replace, need to add back carefully or use fuller context] */}
+
                 <div className="lg:col-span-4 bg-muted/10 p-8">
                   <div className="sticky top-0 space-y-6">
                     <h3 className="font-semibold text-lg">Resumo do campo</h3>
@@ -815,28 +815,16 @@ const ConfigPersonalizarCampos: React.FC = () => {
               </div>
             </div>
 
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label className="text-sm font-semibold mb-1.5 block">Valor Padrão</Label>
-                          <Input
-                            value={fieldForm.valorPadrao}
-                            onChange={(e) => setFieldForm((p) => ({ ...p, valorPadrao: e.target.value }))}
-                            placeholder="Valor preenchido automaticamente"
-                            className="h-9"
-                          />
-                        </div>
-                        <div className="flex items-center gap-3 h-10 px-3 rounded-lg border bg-muted/10 mt-6">
-                          <Switch checked={fieldForm.mostrarListagem} onCheckedChange={(v) => setFieldForm(p => ({ ...p, mostrarListagem: v }))} />
-                          <span className="text-sm text-muted-foreground">Mostrar em listagem</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="md:col-span-1">
-                      <FieldPreview form={fieldForm} />
-                    </div>
-                  </div>
-                </TabsContent>
+            <div className="px-8 py-5 border-t bg-muted/20 flex items-center justify-end gap-3 shrink-0">
+              <Button variant="ghost" onClick={() => !isSaving && setModalOpen(false)}>Cancelar</Button>
+              <Button onClick={() => saveField()} className="h-11 px-8 shadow-lg" disabled={isSaving}>
+                {isSaving ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                Salvar campo
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
                 {/* ═══ Tab 2 — Tipo e Opções ═══ */}
                 <TabsContent value="tipo" className="mt-6 space-y-6">
