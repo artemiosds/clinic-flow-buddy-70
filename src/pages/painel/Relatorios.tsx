@@ -232,9 +232,15 @@ const Relatorios: React.FC = () => {
         // Por ora, garantimos que temos os dados necessários para os relatórios filtrados.
       }
       setLastUpdated(new Date());
+    } catch (err) {
+      console.error('Error loading report data:', err);
+    }
+  }, [user, dateFrom, dateTo]);
 
+  useEffect(() => {
+    loadReportData();
+  }, [loadReportData]);
 
-  useEffect(() => { loadReportData(); }, [loadReportData]);
 
   // Realtime subscription for auto-refresh
   useRealtimeSubscription({
