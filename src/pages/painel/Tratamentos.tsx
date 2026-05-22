@@ -825,6 +825,9 @@ const Tratamentos: React.FC = () => {
 
     setRegisteringSession(true);
     try {
+      // Recalcular status de falta após registro de falta
+      const needsStatusRefresh = newSession.status === "paciente_faltou";
+      
       if (newSession.status === "realizada") {
         const soapPayload = normalizeSoapPayload(soapNotes);
         const result = await treatmentService.registerCompletedSession({
@@ -863,6 +866,11 @@ const Tratamentos: React.FC = () => {
           status: newSession.status,
         },
       });
+
+      // Recalcular status de falta após registro de falta
+      if (needsStatusRefresh) {
+        await supabase.rpc('recalcular_status_falta_paciente', { p_paciente_id: nextSession.patient_id });
+      }
 
       // Optimistic refresh: reload only this cycle's sessions + silent cycle stats refresh
       await Promise.all([

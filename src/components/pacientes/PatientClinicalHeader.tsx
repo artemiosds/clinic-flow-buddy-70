@@ -18,7 +18,7 @@ interface PatientHeaderProps {
   numeroProntuario?: string;
   alertas?: string[];
   risco?: 'baixo' | 'medio' | 'alto';
-  statusFalta?: 'REGULAR' | 'FALTOSO' | 'BLOQUEADO' | string;
+  statusFalta?: 'OK' | 'FALTOSO' | 'BLOQUEADO' | string;
   totalFaltas?: number;
   className?: string;
   onEdit?: () => void;
@@ -55,12 +55,12 @@ const PatientHeader: React.FC<PatientHeaderProps> = ({
                   Risco {risco}
                 </Badge>
                 {statusFalta === "BLOQUEADO" && (
-                  <Badge className="bg-destructive text-destructive-foreground text-[10px] uppercase font-bold px-1.5 h-4.5 shrink-0" title={`Bloqueado por excesso de faltas (${totalFaltas ?? 0})`}>
-                    🚫 Bloqueado
+                  <Badge className="bg-destructive text-destructive-foreground text-[10px] uppercase font-bold px-1.5 h-4.5 shrink-0" title={`Bloqueado para este profissional por excesso de faltas (${totalFaltas ?? 0})`}>
+                    🚫 Bloqueado por Profissional
                   </Badge>
                 )}
                 {statusFalta === "FALTOSO" && (
-                  <Badge className="bg-warning/15 text-warning border border-warning/30 text-[10px] uppercase font-bold px-1.5 h-4.5 shrink-0" title={`${totalFaltas ?? 0} faltas registradas`}>
+                  <Badge className="bg-warning/15 text-warning border border-warning/30 text-[10px] uppercase font-bold px-1.5 h-4.5 shrink-0" title={`${totalFaltas ?? 0} faltas registradas com este profissional`}>
                     ⚠️ Faltoso
                   </Badge>
                 )}

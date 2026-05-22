@@ -6,52 +6,79 @@ export interface AbsenceInfo {
   alternadas: number;
   nivel: 'ok' | 'alerta' | 'revisao' | 'desligamento';
   mensagem: string;
+  statusFalta?: string;
 }
 
-export async function getPatientAbsenceInfo(patientId: string): Promise<AbsenceInfo> {
-  // Get sessions with falta status
-  const { data: sessions } = await (supabase as any)
-    .from('treatment_sessions')
-    .select('status, scheduled_date')
-    .eq('patient_id', patientId)
-    .order('scheduled_date', { ascending: true });
+export async function getPatientAbsenceInfo(patientId: string, profissionalId?: string): Promise<AbsenceInfo> {
+  // Check exemptions first
+  const { data: patient } = await supabase
+    .from('pacientes')
+    .select('is_tfd, possui_ordem_judicial')
+    .eq('id', patientId)
+    .single();
 
-  // Get agendamentos with falta status
-  const { data: agendamentos } = await (supabase as any)
-    .from('agendamentos')
-    .select('status, data')
-    .eq('paciente_id', patientId)
-    .eq('status', 'falta');
+  const isExempt = patient?.is_tfd || patient?.possui_ordem_judicial;
 
-  const totalFaltas = (sessions?.filter((s: any) => s.status === 'falta').length || 0)
-    + (agendamentos?.length || 0);
+  if (isExempt) {
+    return { 
+      totalFaltas: 0, 
+      consecutivas: 0, 
+      alternadas: 0, 
+      nivel: 'ok', 
+      mensagem: 'Paciente possui exceção administrativa (TFD/Ordem Judicial). Agendamento permitido.',
+      statusFalta: 'OK'
+    };
+  }
 
-  // Calculate consecutive absences (from most recent)
-  let consecutivas = 0;
-  if (sessions && sessions.length > 0) {
-    const sorted = [...sessions].sort((a: any, b: any) => b.scheduled_date.localeCompare(a.scheduled_date));
-    for (const s of sorted) {
-      if ((s as any).status === 'falta') consecutivas++;
-      else break;
+  // Get professional specific absence data
+  if (profissionalId) {
+    const { data: profAbsence } = await supabase
+      .from('paciente_faltas_profissional')
+      .select('total_faltas, faltas_consecutivas, status_falta')
+      .eq('paciente_id', patientId)
+      .eq('profissional_id', profissionalId)
+      .maybeSingle();
+
+    if (profAbsence) {
+      const totalFaltas = profAbsence.total_faltas || 0;
+      const consecutivas = profAbsence.faltas_consecutivas || 0;
+      const alternadas = Math.max(0, totalFaltas - consecutivas);
+      const statusFalta = profAbsence.status_falta || 'OK';
+
+      let nivel: AbsenceInfo['nivel'] = 'ok';
+      let mensagem = '';
+
+      if (statusFalta === 'BLOQUEADO') {
+        nivel = 'desligamento';
+        mensagem = `⚠️ BLOQUEADO: ${totalFaltas} faltas registradas para este profissional.`;
+      } else if (totalFaltas > 0) {
+        nivel = 'alerta';
+        mensagem = `⚠️ Atenção: ${totalFaltas} faltas registradas com este profissional.`;
+      }
+
+      return { totalFaltas, consecutivas, alternadas, nivel, mensagem, statusFalta };
     }
   }
 
-  // Calculate alternating absences (non-consecutive)
-  const alternadas = totalFaltas - consecutivas;
+  // Fallback to global patient status (legacy or if no professional record yet)
+  const { data: p } = await supabase
+    .from('pacientes')
+    .select('total_faltas, faltas_consecutivas, status_falta')
+    .eq('id', patientId)
+    .single();
+
+  const totalFaltas = p?.total_faltas || 0;
+  const consecutivas = p?.faltas_consecutivas || 0;
+  const alternadas = Math.max(0, totalFaltas - consecutivas);
+  const statusFalta = p?.status_falta || 'OK';
 
   let nivel: AbsenceInfo['nivel'] = 'ok';
   let mensagem = '';
 
-  if (totalFaltas >= 5) {
+  if (statusFalta === 'BLOQUEADO') {
     nivel = 'desligamento';
-    mensagem = `⚠️ ATENÇÃO: ${totalFaltas} faltas registradas — possível desligamento do tratamento.`;
-  } else if (alternadas >= 3) {
-    nivel = 'revisao';
-    mensagem = `⚠️ ${totalFaltas} faltas (${alternadas} alternadas) — necessário revisão do caso.`;
-  } else if (consecutivas >= 2) {
-    nivel = 'alerta';
-    mensagem = `⚠️ ${consecutivas} faltas consecutivas — atenção ao acompanhamento.`;
+    mensagem = `⚠️ Paciente bloqueado por excesso de faltas.`;
   }
 
-  return { totalFaltas, consecutivas, alternadas, nivel, mensagem };
+  return { totalFaltas, consecutivas, alternadas, nivel, mensagem, statusFalta };
 }

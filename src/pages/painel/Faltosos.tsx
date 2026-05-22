@@ -18,16 +18,17 @@ import { PageHeader } from "@/components/layout/PageHeader";
 
 interface PacienteFalta {
   id: string;
-  nome: string;
-  cpf?: string | null;
-  telefone?: string | null;
+  paciente_id: string;
+  profissional_id: string;
+  nome_paciente: string;
+  nome_profissional: string;
   total_faltas: number;
   faltas_consecutivas: number;
   status_falta: string;
-  unidade_id?: string | null;
   ultima_falta?: string | null;
   is_tfd?: boolean;
   possui_ordem_judicial?: boolean;
+  unidade_id?: string | null;
 }
 
 const Faltosos: React.FC = () => {
@@ -51,35 +52,46 @@ const Faltosos: React.FC = () => {
   const load = async () => {
     setLoading(true);
     try {
-      let query = (supabase as any)
-        .from("pacientes")
-        .select("id, nome, cpf, telefone, total_faltas, faltas_consecutivas, status_falta, unidade_id, is_tfd, possui_ordem_judicial")
-        .in("status_falta", ["FALTOSO", "BLOQUEADO"])
-        .order("total_faltas", { ascending: false })
-        .limit(1000);
+      // Carrega dados da nova tabela por profissional
+      let query = supabase
+        .from("paciente_faltas_profissional")
+        .select(`
+          id,
+          paciente_id,
+          profissional_id,
+          total_faltas,
+          faltas_consecutivas,
+          status_falta,
+          ultima_falta,
+          pacientes (nome, cpf, telefone, unidade_id, is_tfd, possui_ordem_judicial),
+          funcionarios (nome)
+        `)
+        .neq("status_falta", "OK")
+        .order("total_faltas", { ascending: false });
 
       if (unidadeId && user?.usuario !== "admin.sms") {
-        query = query.eq("unidade_id", unidadeId);
+        query = query.eq("pacientes.unidade_id", unidadeId);
       }
 
       const { data, error } = await query;
       if (error) throw error;
 
-      const ids = (data || []).map((p: any) => p.id);
-      let ultimasFaltas: Record<string, string> = {};
-      if (ids.length) {
-        const { data: ags } = await (supabase as any)
-          .from("agendamentos")
-          .select("paciente_id, data")
-          .in("paciente_id", ids)
-          .eq("status", "falta")
-          .order("data", { ascending: false });
-        (ags || []).forEach((a: any) => {
-          if (!ultimasFaltas[a.paciente_id]) ultimasFaltas[a.paciente_id] = a.data;
-        });
-      }
+      const mappedData: PacienteFalta[] = (data || []).map((item: any) => ({
+        id: item.id,
+        paciente_id: item.paciente_id,
+        profissional_id: item.profissional_id,
+        nome_paciente: item.pacientes?.nome || "Desconhecido",
+        nome_profissional: item.funcionarios?.nome || "Desconhecido",
+        total_faltas: item.total_faltas,
+        faltas_consecutivas: item.faltas_consecutivas,
+        status_falta: item.status_falta,
+        ultima_falta: item.ultima_falta,
+        is_tfd: item.pacientes?.is_tfd,
+        possui_ordem_judicial: item.pacientes?.possui_ordem_judicial,
+        unidade_id: item.pacientes?.unidade_id
+      }));
 
-      setList((data || []).map((p: any) => ({ ...p, ultima_falta: ultimasFaltas[p.id] || null })));
+      setList(mappedData);
     } catch (err: any) {
       console.error(err);
       toast.error("Erro ao carregar lista de faltosos.");
@@ -102,7 +114,7 @@ const Faltosos: React.FC = () => {
       if (!mostrarExcecoes && (p.is_tfd || p.possui_ordem_judicial)) return false;
 
       if (filtroStatus !== "todos" && p.status_falta !== filtroStatus) return false;
-      if (q && !p.nome.toLowerCase().includes(q) && !(p.cpf || "").includes(q)) return false;
+      if (q && !p.nome_paciente.toLowerCase().includes(q)) return false;
       if (limite && p.ultima_falta && p.ultima_falta < limite) return false;
       return true;
     });
@@ -116,9 +128,10 @@ const Faltosos: React.FC = () => {
     setSavingRegularizacao(true);
     try {
       const { error } = await supabase.rpc('regularizar_faltas_paciente', {
-        p_paciente_id: regularizarModal.paciente.id,
+        p_paciente_id: regularizarModal.paciente.paciente_id,
         p_motivo: motivoRegularizacao.trim(),
-        p_liberar_todas: liberarTodas
+        p_liberar_todas: liberarTodas,
+        p_profissional_id: regularizarModal.paciente.profissional_id
       });
       if (error) throw error;
       toast.success("Falta(s) regularizada(s) com sucesso!");
@@ -207,6 +220,7 @@ const Faltosos: React.FC = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Paciente</TableHead>
+                    <TableHead>Profissional</TableHead>
                     <TableHead className="text-center">Total Faltas</TableHead>
                     <TableHead className="text-center">Consecutivas</TableHead>
                     <TableHead>Última Falta</TableHead>
@@ -219,12 +233,12 @@ const Faltosos: React.FC = () => {
                     <TableRow key={p.id}>
                       <TableCell>
                         <div className="font-medium text-sm flex items-center gap-2">
-                          {p.nome}
+                          {p.nome_paciente}
                           {p.is_tfd && <Badge variant="outline" className="text-[10px] py-0 h-4 border-warning text-warning">TFD</Badge>}
                           {p.possui_ordem_judicial && <Badge variant="outline" className="text-[10px] py-0 h-4 border-warning text-warning">JUDICIAL</Badge>}
                         </div>
-                        {p.cpf && <div className="text-xs text-muted-foreground">{p.cpf}</div>}
                       </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{p.nome_profissional}</TableCell>
                       <TableCell className="text-center font-semibold">{p.total_faltas}</TableCell>
                       <TableCell className="text-center">{p.faltas_consecutivas}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">
@@ -266,8 +280,9 @@ const Faltosos: React.FC = () => {
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="bg-muted/50 p-3 rounded-md space-y-1">
-              <p className="text-sm font-medium">{regularizarModal.paciente?.nome}</p>
-              <p className="text-xs text-muted-foreground">Faltas injustificadas acumuladas: {regularizarModal.paciente?.total_faltas}</p>
+              <p className="text-sm font-medium">{regularizarModal.paciente?.nome_paciente}</p>
+              <p className="text-xs text-muted-foreground">Profissional: {regularizarModal.paciente?.nome_profissional}</p>
+              <p className="text-xs text-muted-foreground">Faltas injustificadas: {regularizarModal.paciente?.total_faltas}</p>
             </div>
             
             <div className="space-y-2">

@@ -2077,6 +2077,47 @@ export type Database = {
           },
         ]
       }
+      paciente_faltas_profissional: {
+        Row: {
+          atualizado_em: string | null
+          faltas_consecutivas: number | null
+          id: string
+          paciente_id: string | null
+          profissional_id: string | null
+          status_falta: string | null
+          total_faltas: number | null
+          ultima_falta: string | null
+        }
+        Insert: {
+          atualizado_em?: string | null
+          faltas_consecutivas?: number | null
+          id?: string
+          paciente_id?: string | null
+          profissional_id?: string | null
+          status_falta?: string | null
+          total_faltas?: number | null
+          ultima_falta?: string | null
+        }
+        Update: {
+          atualizado_em?: string | null
+          faltas_consecutivas?: number | null
+          id?: string
+          paciente_id?: string | null
+          profissional_id?: string | null
+          status_falta?: string | null
+          total_faltas?: number | null
+          ultima_falta?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "paciente_faltas_profissional_profissional_id_fkey"
+            columns: ["profissional_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pacientes: {
         Row: {
           atualizado_em: string | null
@@ -4444,14 +4485,24 @@ export type Database = {
         Args: { p_paciente_id: string }
         Returns: undefined
       }
-      regularizar_faltas_paciente: {
-        Args: {
-          p_liberar_todas?: boolean
-          p_motivo: string
-          p_paciente_id: string
-        }
-        Returns: undefined
-      }
+      regularizar_faltas_paciente:
+        | {
+            Args: {
+              p_liberar_todas?: boolean
+              p_motivo: string
+              p_paciente_id: string
+            }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              p_liberar_todas?: boolean
+              p_motivo: string
+              p_paciente_id: string
+              p_profissional_id?: string
+            }
+            Returns: undefined
+          }
       resetar_faltas_paciente: {
         Args: { p_paciente_id: string }
         Returns: undefined
