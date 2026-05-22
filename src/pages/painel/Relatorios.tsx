@@ -1088,12 +1088,13 @@ ${dataRows}
         munMap[mun].totalPacientes++;
       });
       filtered.forEach(a => {
-        const pac = allPacientes.find(p => p.id === a.pacienteId);
+        const pac = allPacientes.find(p => p.id === a.paciente_id || p.id === a.pacienteId);
         const mun = (pac?.naturalidade || 'Não informado').trim() || 'Não informado';
         if (!munMap[mun]) munMap[mun] = { nome: mun, totalPacientes: 0, atendimentos: 0, pacientesSet: new Set() };
         munMap[mun].atendimentos++;
-        munMap[mun].pacientesSet.add(a.pacienteId);
+        munMap[mun].pacientesSet.add(a.paciente_id || a.pacienteId);
       });
+
       const munRows = Object.values(munMap).sort((a, b) => b.totalPacientes - a.totalPacientes).map(m =>
         `<tr><td>${m.nome}</td><td style="text-align:center">${m.totalPacientes}</td><td style="text-align:center">${m.pacientesSet.size}</td><td style="text-align:center">${m.atendimentos}</td></tr>`
       ).join('');
