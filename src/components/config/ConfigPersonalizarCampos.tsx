@@ -743,83 +743,213 @@ const ConfigPersonalizarCampos: React.FC = () => {
       </Card>
 
       <Dialog open={modalOpen} onOpenChange={(open) => !isSaving && setModalOpen(open)}>
-        <DialogContent className="max-w-6xl max-h-[95vh] p-0 overflow-hidden border-none shadow-2xl rounded-2xl">
-          <div className="flex flex-col h-[95vh] bg-background">
-            {/* Header */}
-            <div className="px-8 py-6 border-b bg-muted/20 flex items-center justify-between shrink-0">
-              <div className="flex flex-col gap-1">
-                <DialogTitle className="text-2xl font-bold font-display">
-                  {editingField ? `Editar campo: ${editingField.rotulo}` : 'Adicionar Campo para Especialidade'}
-                </DialogTitle>
-                <p className="text-sm text-muted-foreground">Configure como este campo será usado no prontuário clínico.</p>
+        <DialogContent className="max-w-4xl p-0 overflow-hidden border-none shadow-2xl rounded-3xl">
+          <div className="bg-white flex flex-col max-h-[90vh]">
+            {/* 1. Cabeçalho */}
+            <div className="px-8 py-6 border-b flex items-center justify-between shrink-0 bg-slate-50/50">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-sm">
+                  {editingField ? <Pencil className="w-6 h-6" /> : <Plus className="w-6 h-6" />}
+                </div>
+                <div>
+                  <DialogTitle className="text-2xl font-bold font-display text-slate-900 tracking-tight">
+                    {editingField ? "Editar Campo Personalizado" : "Novo Campo Personalizado"}
+                  </DialogTitle>
+                  <p className="text-sm text-slate-500 font-medium">Este campo será integrado automaticamente ao prontuário clínico.</p>
+                </div>
               </div>
-              <Button variant="ghost" size="icon" onClick={() => !isSaving && setModalOpen(false)} className="rounded-full">
-                <Plus className="w-6 h-6 rotate-45 text-muted-foreground hover:text-foreground" />
+              <Button variant="ghost" size="icon" onClick={() => !isSaving && setModalOpen(false)} className="rounded-full hover:bg-slate-200/50 transition-colors">
+                <Plus className="w-6 h-6 rotate-45 text-slate-400" />
               </Button>
             </div>
 
-            {/* Content Body */}
-            <div className="flex-1 overflow-y-auto">
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 h-full">
-                {/* Main Tabs Column */}
-                <div className="lg:col-span-8 p-8 border-r">
-                  <Tabs defaultValue="dados" className="h-full">
-                    <TabsList className="grid w-full grid-cols-4 h-12 bg-muted/50 p-1 mb-8">
-                      <TabsTrigger value="dados" className="text-sm font-semibold">Dados básicos</TabsTrigger>
-                      <TabsTrigger value="tipo" className="text-sm font-semibold">Tipo e opções</TabsTrigger>
-                      <TabsTrigger value="visibilidade" className="text-sm font-semibold">Exibição</TabsTrigger>
-                      <TabsTrigger value="regras" className="text-sm font-semibold">Permissões e regras</TabsTrigger>
-                    </TabsList>
+            <div className="flex-1 overflow-y-auto px-8 py-8 space-y-10 custom-scrollbar">
+              {/* 2. Nome do campo */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-1 h-5 bg-primary rounded-full" />
+                  <Label className="text-base font-bold text-slate-800">Identificação do Campo</Label>
+                </div>
+                <div className="grid grid-cols-1 gap-6">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold text-slate-600 ml-1">Nome exibido no prontuário (Rótulo)</Label>
+                    <Input 
+                      value={fieldForm.rotulo} 
+                      onChange={(e) => setFieldForm(p => ({ ...p, rotulo: e.target.value }))} 
+                      className="h-14 text-lg font-medium border-slate-200 focus:ring-4 focus:ring-primary/10 transition-all rounded-2xl px-5" 
+                      placeholder="Ex: Queixa principal, Avaliação de Dor..." 
+                    />
+                  </div>
+                </div>
+              </div>
 
-                    <TabsContent value="dados" className="space-y-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <Label className="text-sm font-semibold block mb-2">Nome do campo</Label>
-                          <Input value={fieldForm.rotulo} onChange={(e) => setFieldForm(p => ({ ...p, rotulo: e.target.value }))} className="h-12 text-base" placeholder="Ex: Queixa principal" />
+              {/* 3. Tipo do campo */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-1 h-5 bg-primary rounded-full" />
+                  <Label className="text-base font-bold text-slate-800">Tipo de Dado</Label>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {[
+                    { id: 'text', label: 'Texto curto', desc: 'Respostas rápidas', icon: Type },
+                    { id: 'textarea', label: 'Texto longo', desc: 'Descrições e notas', icon: AlignLeft },
+                    { id: 'number', label: 'Número', desc: 'Valores e medidas', icon: Hash },
+                    { id: 'select', label: 'Seleção', icon: List, desc: 'Lista de opções' },
+                    { id: 'checkbox', label: 'Múltipla escolha', icon: CheckSquare, desc: 'Várias opções' },
+                    { id: 'date', label: 'Data', icon: Calendar, desc: 'Seletor de data' },
+                  ].map((t) => {
+                    const isSelected = fieldForm.tipo === t.id;
+                    const Icon = t.icon;
+                    return (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => setFieldForm(p => ({ ...p, tipo: t.id as any }))}
+                        className={cn(
+                          "flex flex-col items-start text-left p-5 rounded-2xl border-2 transition-all duration-300 group",
+                          isSelected 
+                            ? "border-primary bg-primary/[0.03] shadow-md shadow-primary/5 ring-4 ring-primary/5" 
+                            : "border-slate-100 hover:border-slate-300 hover:bg-slate-50"
+                        )}
+                      >
+                        <div className={cn(
+                          "w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-colors",
+                          isSelected ? "bg-primary text-white" : "bg-slate-100 text-slate-400 group-hover:bg-slate-200"
+                        )}>
+                          <Icon className="w-5 h-5" />
                         </div>
-                        <div>
-                          <Label className="text-sm font-semibold block mb-2">Chave interna (automática)</Label>
-                          <Input value={fieldForm.rotulo.toLowerCase().replace(/[^a-z0-9]+/g, '_')} disabled className="h-12 bg-muted/30" />
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <Label className="text-sm font-semibold block mb-2">Placeholder</Label>
-                          <Input value={fieldForm.placeholder} onChange={(e) => setFieldForm(p => ({ ...p, placeholder: e.target.value }))} className="h-12" />
-                        </div>
-                        <div>
-                          <Label className="text-sm font-semibold block mb-2">Texto de ajuda</Label>
-                          <Input value={fieldForm.ajuda} onChange={(e) => setFieldForm(p => ({ ...p, ajuda: e.target.value }))} className="h-12" />
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-6 p-4 rounded-xl border bg-muted/10">
-                        <div className="flex items-center gap-3">
-                          <Switch checked={fieldForm.obrigatorio} onCheckedChange={(v) => setFieldForm(p => ({ ...p, obrigatorio: v }))} />
-                          <span className="text-sm font-medium">Obrigatório</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <Switch checked={fieldForm.printSettings.visibleInProntuario} onCheckedChange={(v) => setFieldForm(p => ({ ...p, printSettings: { ...p.printSettings, visibleInProntuario: v } }))} />
-                          <span className="text-sm font-medium">Ativo no Prontuário</span>
-                        </div>
-                      </div>
-                    </TabsContent>
-                  </Tabs>
+                        <span className={cn("font-bold text-sm mb-1", isSelected ? "text-primary" : "text-slate-700")}>{t.label}</span>
+                        <span className="text-[11px] text-slate-400 leading-tight font-medium">{t.desc}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 4. Opções de resposta */}
+              {['select', 'checkbox'].includes(fieldForm.tipo) && (
+                <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="w-1 h-5 bg-primary rounded-full" />
+                    <Label className="text-base font-bold text-slate-800">Opções de Resposta</Label>
+                  </div>
+                  <div className="bg-slate-50 border border-slate-100 rounded-3xl p-6 space-y-5">
+                    <div className="flex gap-3">
+                      <Input
+                        value={fieldForm.novaOpcao}
+                        onChange={(e) => setFieldForm(p => ({ ...p, novaOpcao: e.target.value }))}
+                        placeholder="Digite uma nova opção..."
+                        className="h-12 border-slate-200 rounded-xl px-4 flex-1"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const v = fieldForm.novaOpcao.trim();
+                            if (v && !fieldForm.opcoes.includes(v)) {
+                              setFieldForm(p => ({ ...p, opcoes: [...p.opcoes, v], novaOpcao: '' }));
+                            }
+                          }
+                        }}
+                      />
+                      <Button 
+                        type="button" 
+                        onClick={() => {
+                          const v = fieldForm.novaOpcao.trim();
+                          if (v && !fieldForm.opcoes.includes(v)) {
+                            setFieldForm(p => ({ ...p, opcoes: [...p.opcoes, v], novaOpcao: '' }));
+                          }
+                        }}
+                        className="h-12 w-12 rounded-xl p-0"
+                      >
+                        <Plus className="w-6 h-6" />
+                      </Button>
+                    </div>
+                    
+                    <div className="flex flex-wrap gap-2 min-h-[40px]">
+                      {fieldForm.opcoes.map((opt, i) => (
+                        <Badge key={i} variant="secondary" className="pl-4 pr-2 py-2 rounded-xl bg-white border border-slate-200 text-slate-600 font-semibold text-sm flex items-center gap-3 group animate-in zoom-in-95 duration-200">
+                          {opt}
+                          <button 
+                            onClick={() => setFieldForm(p => ({ ...p, opcoes: p.opcoes.filter((_, idx) => idx !== i) }))}
+                            className="w-6 h-6 rounded-lg hover:bg-red-50 hover:text-red-500 transition-colors flex items-center justify-center"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </Badge>
+                      ))}
+                      {fieldForm.opcoes.length === 0 && <p className="text-sm text-slate-400 italic py-2">Nenhuma opção adicionada ainda.</p>}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
+                {/* 5. Campo obrigatório */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="w-1 h-5 bg-primary rounded-full" />
+                    <Label className="text-base font-bold text-slate-800">Validação</Label>
+                  </div>
+                  <div className="flex items-center justify-between p-5 rounded-2xl border border-slate-100 bg-slate-50/30 group hover:bg-slate-50 transition-colors">
+                    <div className="space-y-1">
+                      <Label className="text-sm font-bold text-slate-700 cursor-pointer">Campo Obrigatório</Label>
+                      <p className="text-[11px] text-slate-500 font-medium">Exige preenchimento para salvar atendimento</p>
+                    </div>
+                    <Switch checked={fieldForm.obrigatorio} onCheckedChange={(v) => setFieldForm(p => ({ ...p, obrigatorio: v }))} className="data-[state=checked]:bg-primary" />
+                  </div>
                 </div>
 
-                <div className="lg:col-span-4 bg-muted/10 p-8">
-                  <div className="sticky top-0 space-y-6">
-                    <h3 className="font-semibold text-lg">Resumo do campo</h3>
-                    <FieldPreview form={fieldForm} />
+                {/* 6. Onde o campo aparece */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="w-1 h-5 bg-primary rounded-full" />
+                    <Label className="text-base font-bold text-slate-800">Contexto de Uso</Label>
+                  </div>
+                  <div className="flex flex-wrap gap-2 p-4 rounded-2xl border border-slate-100 bg-slate-50/30">
+                    {[
+                      { id: 'avaliacao_inicial', label: '1ª Consulta' },
+                      { id: 'retorno', label: 'Retorno' },
+                      { id: 'sessao', label: 'Sessão' },
+                      { id: 'urgencia', label: 'Urgência' },
+                      { id: 'procedimento', label: 'Procedimento' },
+                    ].map(t => {
+                      const isSelected = fieldForm.tiposProntuario.includes(t.id);
+                      return (
+                        <button
+                          key={t.id}
+                          type="button"
+                          onClick={() => setFieldForm(p => ({
+                            ...p,
+                            tiposProntuario: isSelected ? p.tiposProntuario.filter(x => x !== t.id) : [...p.tiposProntuario, t.id]
+                          }))}
+                          className={cn(
+                            "px-4 py-2 rounded-xl text-xs font-bold transition-all border",
+                            isSelected 
+                              ? "bg-primary text-white border-primary shadow-sm" 
+                              : "bg-white text-slate-500 border-slate-200 hover:border-slate-300"
+                          )}
+                        >
+                          {t.label}
+                        </button>
+                      );
+                    })}
+                    {fieldForm.tiposProntuario.length === 0 && <p className="text-[10px] text-slate-400 font-medium italic mt-1 w-full pl-1">Aparecerá em todos os atendimentos</p>}
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="px-8 py-5 border-t bg-muted/20 flex items-center justify-end gap-3 shrink-0">
-              <Button variant="ghost" onClick={() => !isSaving && setModalOpen(false)}>Cancelar</Button>
-              <Button onClick={() => saveField()} className="h-11 px-8 shadow-lg" disabled={isSaving}>
-                {isSaving ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-                Salvar campo
+            {/* 7. Rodapé */}
+            <div className="px-8 py-6 border-t flex items-center justify-end gap-4 shrink-0 bg-slate-50/50">
+              <Button variant="ghost" onClick={() => !isSaving && setModalOpen(false)} className="h-12 px-6 rounded-xl font-bold text-slate-500 hover:bg-slate-200/50 transition-colors">
+                Cancelar
+              </Button>
+              <Button 
+                onClick={() => saveField()} 
+                className="h-12 px-8 rounded-xl font-bold shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-95" 
+                disabled={isSaving}
+              >
+                {isSaving ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Save className="w-5 h-5 mr-2" />}
+                {editingField ? "Salvar Alterações" : "Adicionar Campo"}
               </Button>
             </div>
           </div>
