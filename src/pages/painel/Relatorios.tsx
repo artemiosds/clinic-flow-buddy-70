@@ -1141,12 +1141,12 @@ ${dataRows}
       let query = supabase
         .from('agendamentos')
         .select('paciente_id, paciente_nome, profissional_id, profissional_nome, data, hora, tipo, setor_id, procedimento_sigtap, nome_procedimento, status')
-        .in('status', ['concluido', 'finalizado'])
-
+        .in('status', ['concluido', 'finalizado', 'confirmado', 'confirmado_chegada'])
         .gte('data', mapaDateFrom)
         .lte('data', mapaDateTo)
         .order('data', { ascending: true })
         .limit(2000);
+
 
       if (mapaProf !== 'all') {
         query = query.eq('profissional_id', mapaProf);
