@@ -10,6 +10,7 @@ export interface ProntuarioRow {
   profissional_nome: string;
   data_atendimento: string;
   unidade_id: string;
+  custom_data?: any;
 }
 
 export interface LinhaBPA {
