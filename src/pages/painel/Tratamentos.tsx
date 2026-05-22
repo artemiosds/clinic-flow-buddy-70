@@ -1868,15 +1868,16 @@ const Tratamentos: React.FC = () => {
         : 0;
     const pendingCount = (cycleSessions || []).filter((s) => {
       if (!s || s.status !== "pendente_agendamento") return false;
-      const agKey = `${s.patient_id}|${s.professional_id}|${s.scheduled_date}`;
-      return !agendamentoMap?.[agKey]; // only truly pending if no matching agendamento
+      const tripleKey = `${s.patient_id}|${s.professional_id}|${s.scheduled_date}`;
+      const hasAg = (s.appointment_id ? !!agendamentoMap?.[s.appointment_id] : false) || !!agendamentoMap?.[tripleKey];
+      return !hasAg;
     }).length;
     const scheduledCount = (cycleSessions || []).filter((s) => {
       if (!s) return false;
       if (s.status === "agendada") return true;
       if (s.status === "pendente_agendamento") {
-        const agKey = `${s.patient_id}|${s.professional_id}|${s.scheduled_date}`;
-        return !!agendamentoMap?.[agKey];
+        const tripleKey = `${s.patient_id}|${s.professional_id}|${s.scheduled_date}`;
+        return (s.appointment_id ? !!agendamentoMap?.[s.appointment_id] : false) || !!agendamentoMap?.[tripleKey];
       }
       return false;
     }).length;
