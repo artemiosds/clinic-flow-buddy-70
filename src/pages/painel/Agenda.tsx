@@ -1192,7 +1192,27 @@ const Agenda: React.FC = () => {
                           <span>ou selecione pela lista</span>
                           <div className="flex-1 h-px bg-border" />
                         </div>
-                        <Select value={newAg.pacienteId} onValueChange={(v) => handlePacienteSelecionadoNovoAg(v)}>
+                        <Select value={newAg.pacienteId} onValueChange={async (id) => {
+                            if (id) {
+                              const { data: pData } = await supabase
+                                .from("pacientes")
+                                .select("status_falta, is_tfd, possui_ordem_judicial, nome")
+                                .eq("id", id)
+                                .single();
+
+                              if (pData?.status_falta === "BLOQUEADO") {
+                                const isIsento = !!(pData.is_tfd || pData.possui_ordem_judicial);
+                                if (isIsento) {
+                                  toast.info(`Paciente ${pData.nome} possui exceção administrativa de bloqueio por TFD/Ordem Judicial. Agendamento permitido.`);
+                                } else {
+                                  toast.error(`Paciente ${pData.nome} está BLOQUEADO por faltas e não pode realizar novos agendamentos.`);
+                                  handlePacienteSelecionadoNovoAg("");
+                                  return;
+                                }
+                              }
+                            }
+                            handlePacienteSelecionadoNovoAg(id);
+                          }}>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecione um paciente..." />
                           </SelectTrigger>
