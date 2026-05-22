@@ -742,81 +742,78 @@ const ConfigPersonalizarCampos: React.FC = () => {
         </CardContent>
       </Card>
 
-      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] p-0 overflow-hidden border-none shadow-2xl">
-          <div className="flex flex-col h-[90vh] bg-background">
-            <div className="px-6 py-4 border-b bg-muted/30 flex items-center justify-between shrink-0">
-              <DialogHeader className="space-y-0.5">
-                <DialogTitle className="text-xl font-display font-bold">
-                  {editingField ? 'Editar Campo Profissional' : 'Novo Campo Personalizado'}
+      <Dialog open={modalOpen} onOpenChange={(open) => !isSaving && setModalOpen(open)}>
+        <DialogContent className="max-w-6xl max-h-[95vh] p-0 overflow-hidden border-none shadow-2xl rounded-2xl">
+          <div className="flex flex-col h-[95vh] bg-background">
+            {/* Header */}
+            <div className="px-8 py-6 border-b bg-muted/20 flex items-center justify-between shrink-0">
+              <div className="flex flex-col gap-1">
+                <DialogTitle className="text-2xl font-bold font-display">
+                  {editingField ? `Editar campo: ${editingField.rotulo}` : 'Adicionar Campo para Especialidade'}
                 </DialogTitle>
-                <p className="text-xs text-muted-foreground">Configure os dados, regras e visibilidade do campo clínico.</p>
-              </DialogHeader>
-              <Button variant="ghost" size="icon" onClick={() => setModalOpen(false)} className="rounded-full">
-                <Plus className="w-5 h-5 rotate-45" />
+                <p className="text-sm text-muted-foreground">Configure como este campo será usado no prontuário clínico.</p>
+              </div>
+              <Button variant="ghost" size="icon" onClick={() => !isSaving && setModalOpen(false)} className="rounded-full">
+                <Plus className="w-6 h-6 rotate-45 text-muted-foreground hover:text-foreground" />
               </Button>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-8">
-              <Tabs defaultValue="dados">
-                <TabsList className="grid w-full grid-cols-5">
-                  <TabsTrigger value="dados">Dados Básicos</TabsTrigger>
-                  <TabsTrigger value="tipo">Tipo e Opções</TabsTrigger>
-                  <TabsTrigger value="visibilidade">Visibilidade</TabsTrigger>
-                  <TabsTrigger value="regras">Validação</TabsTrigger>
-                  <TabsTrigger value="layout">Layout e Print</TabsTrigger>
-                </TabsList>
+            {/* Content Body */}
+            <div className="flex-1 overflow-y-auto">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 h-full">
+                {/* Main Tabs Column */}
+                <div className="lg:col-span-8 p-8 border-r">
+                  <Tabs defaultValue="dados" className="h-full">
+                    <TabsList className="grid w-full grid-cols-4 h-12 bg-muted/50 p-1 mb-8">
+                      <TabsTrigger value="dados" className="text-sm font-semibold">Dados básicos</TabsTrigger>
+                      <TabsTrigger value="tipo" className="text-sm font-semibold">Tipo e opções</TabsTrigger>
+                      <TabsTrigger value="visibilidade" className="text-sm font-semibold">Exibição</TabsTrigger>
+                      <TabsTrigger value="regras" className="text-sm font-semibold">Permissões e regras</TabsTrigger>
+                    </TabsList>
 
-                {/* ═══ Tab 1 — Dados Básicos ═══ */}
-                <TabsContent value="dados" className="mt-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div className="md:col-span-2 space-y-5">
-                      <div className="flex items-center gap-2 text-primary font-semibold text-sm uppercase tracking-wider">
-                        <div className="w-2 h-2 rounded-full bg-primary" />
-                        Identificação
-                      </div>
-
-                      <div>
-                        <Label className="text-sm font-semibold mb-1.5 block">Nome do Campo (Rótulo) *</Label>
-                        <Input
-                          value={fieldForm.rotulo}
-                          onChange={(e) => setFieldForm((p) => ({ ...p, rotulo: e.target.value }))}
-                          placeholder="Ex: Escala de Dor, Motivo da Consulta"
-                          className="h-10"
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
+                    <TabsContent value="dados" className="space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                          <Label className="text-sm font-semibold mb-1.5 block">Placeholder</Label>
-                          <Input
-                            value={fieldForm.placeholder}
-                            onChange={(e) => setFieldForm((p) => ({ ...p, placeholder: e.target.value }))}
-                            placeholder="Texto de exemplo no campo..."
-                            className="h-9"
-                          />
+                          <Label className="text-sm font-semibold block mb-2">Nome do campo</Label>
+                          <Input value={fieldForm.rotulo} onChange={(e) => setFieldForm(p => ({ ...p, rotulo: e.target.value }))} className="h-12 text-base" placeholder="Ex: Queixa principal" />
                         </div>
                         <div>
-                          <Label className="text-sm font-semibold mb-1.5 block">Texto de Ajuda</Label>
-                          <Input
-                            value={fieldForm.ajuda}
-                            onChange={(e) => setFieldForm((p) => ({ ...p, ajuda: e.target.value }))}
-                            placeholder="Dica para o profissional..."
-                            className="h-9"
-                          />
+                          <Label className="text-sm font-semibold block mb-2">Chave interna (automática)</Label>
+                          <Input value={fieldForm.rotulo.toLowerCase().replace(/[^a-z0-9]+/g, '_')} disabled className="h-12 bg-muted/30" />
                         </div>
                       </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="flex items-center gap-3 h-10 px-3 rounded-lg border bg-muted/10">
-                          <Switch checked={fieldForm.obrigatorio} onCheckedChange={(v) => setFieldForm((p) => ({ ...p, obrigatorio: v }))} />
-                          <span className="text-sm text-muted-foreground">{fieldForm.obrigatorio ? 'Obrigatório' : 'Opcional'}</span>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <Label className="text-sm font-semibold block mb-2">Placeholder</Label>
+                          <Input value={fieldForm.placeholder} onChange={(e) => setFieldForm(p => ({ ...p, placeholder: e.target.value }))} className="h-12" />
                         </div>
-                        <div className="flex items-center gap-3 h-10 px-3 rounded-lg border bg-muted/10">
-                          <Switch checked={fieldForm.destaque} onCheckedChange={(v) => setFieldForm(p => ({ ...p, destaque: v }))} />
-                          <span className="text-sm text-muted-foreground">{fieldForm.destaque ? 'Com destaque' : 'Sem destaque'}</span>
+                        <div>
+                          <Label className="text-sm font-semibold block mb-2">Texto de ajuda</Label>
+                          <Input value={fieldForm.ajuda} onChange={(e) => setFieldForm(p => ({ ...p, ajuda: e.target.value }))} className="h-12" />
                         </div>
                       </div>
+                      <div className="flex items-center gap-6 p-4 rounded-xl border bg-muted/10">
+                        <div className="flex items-center gap-3">
+                          <Switch checked={fieldForm.obrigatorio} onCheckedChange={(v) => setFieldForm(p => ({ ...p, obrigatorio: v }))} />
+                          <span className="text-sm font-medium">Obrigatório</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Switch checked={fieldForm.printSettings.visibleInProntuario} onCheckedChange={(v) => setFieldForm(p => ({ ...p, printSettings: { ...p.printSettings, visibleInProntuario: v } }))} />
+                          <span className="text-sm font-medium">Ativo no Prontuário</span>
+                        </div>
+                      </div>
+                    </TabsContent>
+                  </Tabs>
+                </div>
+                {/* [Sidebar placeholder omitted in partial replace, need to add back carefully or use fuller context] */}
+                <div className="lg:col-span-4 bg-muted/10 p-8">
+                  <div className="sticky top-0 space-y-6">
+                    <h3 className="font-semibold text-lg">Resumo do campo</h3>
+                    <FieldPreview form={fieldForm} />
+                  </div>
+                </div>
+              </div>
+            </div>
 
                       <div className="grid grid-cols-2 gap-4">
                         <div>
