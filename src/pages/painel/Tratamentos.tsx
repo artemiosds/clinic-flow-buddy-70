@@ -2208,7 +2208,7 @@ const Tratamentos: React.FC = () => {
               <div className="space-y-2">
                 {(cycleSessions || []).map((s) => {
                   if (!s || !s.id) return null;
-                  const isPendente = s.status === "pendente_agendamento";
+                  
                   const tripleKey = `${s.patient_id}|${s.professional_id}|${s.scheduled_date}`;
                   // Try matching by appointment_id first, then by triple key
                   const matchedAg = (s.appointment_id ? agendamentoMap?.[s.appointment_id] : null) || agendamentoMap?.[tripleKey];
