@@ -143,28 +143,37 @@ export function buildInstitutionalCSS(
   const cfg = config ?? DEFAULT_CONFIG;
   const fontFamily = `'${cfg.fonte.replace(/'/g, '')}', Arial, 'Helvetica Neue', Helvetica, sans-serif`;
   // Painel salva em px; impressão usa pt → 1pt ≈ px * 0.75
-  const bodyPt = Math.max(8, Math.round((cfg.tamanhoFonte || 12) * 0.75 * 10) / 10);
-  const titlePt = Math.round((bodyPt + 1) * 10) / 10;
-  const sectionPt = Math.round((bodyPt + 0.5) * 10) / 10;
-  const smallPt = Math.max(7, Math.round((bodyPt - 1.5) * 10) / 10);
-  const microPt = Math.max(6.5, Math.round((bodyPt - 2.5) * 10) / 10);
+  // Limitamos o tamanho máximo na impressão para evitar o efeito "gigante" relatado.
+  const baseSize = Math.min(14, cfg.tamanhoFonte || 12); 
+  const bodyPt = Math.max(8, Math.round(baseSize * 0.75 * 10) / 10);
+  const titlePt = Math.round((bodyPt + 1.5) * 10) / 10;
+  const sectionPt = Math.round((bodyPt + 0.8) * 10) / 10;
+  const smallPt = Math.max(7, Math.round((bodyPt - 1.2) * 10) / 10);
+  const microPt = Math.max(6.5, Math.round((bodyPt - 2.2) * 10) / 10);
   const accent = cfg.corTitulo || '#0c4a6e';
   const headerAlign = cfg.alinhamento || 'center';
   return `
 <style>
   @page {
     size: ${size} ${orientation};
-    margin: ${margin};
-    @bottom-center { content: "Página " counter(page) " de " counter(pages); font-size: ${microPt}pt; color: #666; }
+    margin: 15mm 15mm 15mm 15mm;
   }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { font-family: ${fontFamily}; }
+  @page :first {
+    margin-top: 10mm;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body { 
+    font-family: ${fontFamily};
+    width: 100%;
+    height: 100%;
+  }
   body {
     font-family: ${fontFamily};
     padding: 0;
-    color: #1a1a1a;
+    color: #000;
     font-size: ${bodyPt}pt;
-    line-height: 1.5;
+    line-height: 1.3;
+    background: #fff;
   }
 
   /* HEADER — institutional */
@@ -172,40 +181,42 @@ export function buildInstitutionalCSS(
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 0;
-    margin-bottom: 10px;
-    border-bottom: 2px solid ${accent};
+    padding: 0 0 6px 0;
+    margin-bottom: 8px;
+    border-bottom: 1.5px solid ${accent};
+    position: relative;
   }
   .doc-header .logo-left,
   .doc-header .logo-right { flex-shrink: 0; }
   .doc-header .header-center {
     flex: 1;
     text-align: ${headerAlign};
-    padding: 0 12px;
+    padding: 0 8px;
   }
   .doc-header h1 {
-    font-size: ${titlePt}pt;
+    font-size: ${titlePt - 1}pt;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
     color: ${accent};
     margin: 0;
-    font-family: ${fontFamily};
+    line-height: 1.1;
   }
   .doc-header .subtitle {
-    font-size: ${bodyPt}pt;
-    color: #334155;
-    margin-top: 2px;
+    font-size: ${bodyPt - 1}pt;
+    color: #475569;
+    margin-top: 1px;
+    font-weight: 600;
   }
   .doc-header .doc-title {
-    font-size: ${titlePt + 1}pt;
+    font-size: ${titlePt}pt;
     font-weight: 700;
-    margin-top: 6px;
+    margin-top: 4px;
     text-transform: uppercase;
-    letter-spacing: 0.8px;
-    color: #1a1a1a;
+    letter-spacing: 0.5px;
+    color: #000;
     border-top: 1px solid #e2e8f0;
-    padding-top: 5px;
+    padding-top: 3px;
   }
   .doc-header .emit-date {
     font-size: ${microPt}pt;
@@ -214,125 +225,156 @@ export function buildInstitutionalCSS(
     white-space: nowrap;
     position: absolute;
     right: 0;
-    bottom: 10px;
+    bottom: 2px;
   }
 
   /* META INFO BAR */
   .doc-meta {
     font-size: ${smallPt}pt;
     color: #334155;
-    padding: 6px 10px;
+    padding: 4px 8px;
     background: #f8fafc;
     border: 1px solid #e2e8f0;
     border-radius: 4px;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
     display: flex;
-    gap: 16px;
+    gap: 12px;
     flex-wrap: wrap;
+    line-height: 1.2;
   }
-  .doc-meta strong { color: #1a1a1a; }
+  .doc-meta strong { color: #000; }
 
   /* CONTENT — justified; honor user font size */
   .doc-content {
     text-align: justify;
     text-justify: inter-word;
     font-size: ${bodyPt}pt;
-    line-height: 1.5;
+    line-height: 1.4;
     word-break: break-word;
     hyphens: auto;
   }
 
   /* SUMMARY CARDS */
-  .summary { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
-  .stat { background: #f0f9ff; border: 1px solid #bae6fd; padding: 8px 14px; border-radius: 6px; text-align: center; min-width: 85px; }
-  .stat strong { display: block; font-size: ${titlePt + 4}pt; color: ${accent}; }
+  .summary { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+  .stat { background: #f0f9ff; border: 1px solid #bae6fd; padding: 6px 12px; border-radius: 4px; text-align: center; min-width: 80px; }
+  .stat strong { display: block; font-size: ${titlePt + 2}pt; color: ${accent}; }
   .stat small { font-size: ${microPt}pt; color: #64748b; }
 
   /* SECTION TITLES */
   h2 {
-    font-size: ${sectionPt + 0.5}pt;
+    font-size: ${sectionPt}pt;
     color: ${accent};
-    margin: 14px 0 6px;
-    padding-bottom: 4px;
-    border-bottom: 1.5px solid #bae6fd;
+    margin: 10px 0 4px;
+    padding-bottom: 2px;
+    border-bottom: 1px solid #bae6fd;
     text-transform: uppercase;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.2px;
+    font-weight: 700;
   }
 
   /* TABLES */
-  table { width: 100%; border-collapse: collapse; margin-bottom: 12px; page-break-inside: auto; font-size: ${smallPt}pt; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 10px; page-break-inside: auto; font-size: ${smallPt}pt; }
   thead { display: table-header-group; }
   tr { page-break-inside: avoid; page-break-after: auto; }
-  th, td { border: 1px solid #d1d5db; padding: 5px 8px; text-align: left; font-size: ${smallPt}pt; }
-  th { background: #f1f5f9; font-weight: 600; color: #1a1a1a; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  tr:nth-child(even) { background: #fafafa; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  th, td { border: 1px solid #cbd5e1; padding: 4px 6px; text-align: left; font-size: ${smallPt}pt; }
+  th { background: #f8fafc; font-weight: 700; color: #000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  tr:nth-child(even) { background: #fdfdfd; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 
   /* FIELDS */
   .content-block { text-align: justify; text-justify: inter-word; font-size: ${bodyPt}pt; }
-  .field { margin-bottom: 8px; }
-  .field-label { font-size: ${microPt}pt; text-transform: uppercase; color: #64748b; font-weight: 600; letter-spacing: 0.4px; }
-  .field-value { font-size: ${bodyPt}pt; margin-top: 2px; color: #1a1a1a; }
+  .field { margin-bottom: 6px; }
+  .field-label { font-size: ${microPt}pt; text-transform: uppercase; color: #475569; font-weight: 700; letter-spacing: 0.3px; }
+  .field-value { font-size: ${bodyPt}pt; margin-top: 1px; color: #000; }
 
   /* SECTIONS (prontuário) */
-  .section { margin-bottom: 14px; page-break-inside: avoid; }
-  .section-title { font-weight: 700; font-size: ${sectionPt}pt; text-transform: uppercase; color: ${accent}; border-bottom: 1.5px solid #bae6fd; padding-bottom: 4px; margin-bottom: 6px; }
-  .section-content { font-size: ${bodyPt}pt; line-height: 1.55; white-space: pre-wrap; min-height: 16px; text-align: justify; color: #1e293b; }
+  .section { margin-bottom: 10px; page-break-inside: avoid; }
+  .section-title { font-weight: 700; font-size: ${sectionPt}pt; text-transform: uppercase; color: ${accent}; border-bottom: 1px solid #bae6fd; padding-bottom: 2px; margin-bottom: 4px; }
+  .section-content { font-size: ${bodyPt}pt; line-height: 1.4; white-space: pre-wrap; min-height: 14px; text-align: justify; color: #000; }
 
   /* INFO GRID */
-  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; }
-  .info-label { font-weight: 600; font-size: ${microPt}pt; text-transform: uppercase; color: #64748b; }
-  .info-value { font-size: ${bodyPt}pt; color: #1a1a1a; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; padding: 8px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; }
+  .info-label { font-weight: 700; font-size: ${microPt}pt; text-transform: uppercase; color: #64748b; }
+  .info-value { font-size: ${bodyPt}pt; color: #000; }
 
   /* QR AREA */
-  .qr-area { text-align: center; margin-top: 24px; padding: 16px; border: 1px dashed #cbd5e1; border-radius: 6px; background: #fafafa; }
+  .qr-area { text-align: center; margin-top: 16px; padding: 12px; border: 1px dashed #cbd5e1; border-radius: 4px; background: #fafafa; }
   .qr-area p { font-size: ${smallPt}pt; color: #64748b; }
-  .qr-area .code { font-size: ${microPt}pt; color: #94a3b8; margin-top: 4px; font-family: monospace; }
+  .qr-area .code { font-size: ${microPt}pt; color: #94a3b8; margin-top: 2px; font-family: monospace; }
 
   /* SIGNATURE */
-  .signature { margin-top: 40px; text-align: center; }
-  .signature-line { width: 280px; border-top: 1px solid #333; margin: 0 auto 6px; }
-  .signature .name { font-size: ${bodyPt}pt; font-weight: 600; }
-  .signature .role { font-size: ${smallPt}pt; color: #64748b; }
+  .signature { margin-top: 30px; text-align: center; page-break-inside: avoid; }
+  .signature-line { width: 260px; border-top: 1.2px solid #000; margin: 0 auto 4px; }
+  .signature .name { font-size: ${bodyPt}pt; font-weight: 700; color: #000; }
+  .signature .role { font-size: ${smallPt}pt; color: #475569; }
 
   /* DOCUMENT FOOTER: carimbo + assinatura */
-  .doc-sign-footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 32px; gap: 20px; }
+  .doc-sign-footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 24px; gap: 16px; page-break-inside: avoid; }
   .doc-sign-footer .sign-block { flex: 1; }
   .doc-sign-footer .carimbo-block { text-align: right; }
 
   /* E-SIGNATURE */
   .e-signature-box {
-    border: 1px solid #94a3b8; border-radius: 4px; padding: 8px 12px;
-    font-size: ${microPt}pt; line-height: 1.5; color: #475569; max-width: 380px;
+    border: 1px solid #94a3b8; border-radius: 4px; padding: 6px 10px;
+    font-size: ${microPt}pt; line-height: 1.3; color: #475569; max-width: 350px;
+    background: #fff;
   }
-  .e-signature-box .sig-title { font-weight: 700; font-size: ${smallPt}pt; color: ${accent}; margin-bottom: 4px; text-align: center; }
-  .e-signature-box .sig-legal { font-size: ${Math.max(6, microPt - 0.5)}pt; color: #94a3b8; margin-top: 6px; font-style: italic; }
+  .e-signature-box .sig-title { font-weight: 700; font-size: ${smallPt}pt; color: ${accent}; margin-bottom: 2px; text-align: center; }
+  .e-signature-box .sig-legal { font-size: ${Math.max(6, microPt - 1)}pt; color: #94a3b8; margin-top: 4px; font-style: italic; }
 
   /* CARIMBO */
-  .carimbo-digital { border: 2px solid #1e293b; border-radius: 4px; padding: 8px 14px; text-align: center; font-size: ${smallPt}pt; display: inline-block; }
-  .carimbo-digital .carimbo-nome { font-weight: 700; font-size: ${bodyPt}pt; }
+  .carimbo-digital { border: 1.5px solid #000; border-radius: 4px; padding: 6px 12px; text-align: center; font-size: ${smallPt}pt; display: inline-block; background: #fff; }
+  .carimbo-digital .carimbo-nome { font-weight: 700; font-size: ${bodyPt}pt; color: #000; }
   .carimbo-digital .carimbo-info { font-size: ${microPt}pt; color: #475569; }
 
   /* FOOTER */
   .doc-footer {
-    margin-top: 24px;
-    padding-top: 6px;
-    border-top: 1.5px solid ${accent};
+    margin-top: 20px;
+    padding-top: 4px;
+    border-top: 1px solid ${accent};
     font-size: ${microPt}pt;
     color: #64748b;
     display: flex;
     justify-content: space-between;
     align-items: center;
   }
-  .doc-footer .institution { font-weight: 600; color: #334155; }
+  .doc-footer .institution { font-weight: 700; color: #334155; }
 
-  /* PRINT MEDIA */
+  /* PRINT MEDIA ENFORCEMENT */
   @media print {
-    body { padding: 0; }
-    .doc-header { border-radius: 0; }
+    body { 
+      padding: 0 !important; 
+      margin: 0 !important; 
+      width: 100% !important; 
+      color: #000 !important;
+      background: transparent !important;
+      -webkit-print-color-adjust: exact !important; 
+      print-color-adjust: exact !important;
+    }
+    .doc-header { border-bottom-width: 1px !important; margin-bottom: 6px !important; padding-bottom: 4px !important; border-bottom: 1.5px solid ${accent} !important; }
+    .doc-header h1 { font-size: ${titlePt - 1.5}pt !important; line-height: 1.1 !important; }
+    .doc-header .doc-title { font-size: ${titlePt - 0.5}pt !important; margin-top: 2px !important; padding-top: 2px !important; }
+    .doc-header .subtitle { font-size: ${bodyPt - 1.5}pt !important; margin-top: 0 !important; }
+    .doc-header img { max-height: 50px !important; width: auto !important; }
+    .doc-meta { margin-bottom: 8px !important; padding: 3px 6px !important; font-size: ${smallPt - 1}pt !important; line-height: 1.1 !important; gap: 8px !important; }
+    .section { margin-bottom: 8px !important; page-break-inside: avoid !important; }
+    .section-title { font-size: ${sectionPt - 0.5}pt !important; padding-bottom: 1px !important; margin-bottom: 3px !important; }
+    .info-grid { gap: 6px !important; padding: 6px !important; margin-bottom: 8px !important; grid-template-columns: repeat(2, 1fr) !important; border-width: 0.5px !important; }
     .no-print { display: none !important; }
-    nav, .sidebar, button, .toaster, [data-sonner-toaster] { display: none !important; }
-    .doc-sign-footer { page-break-inside: avoid; }
-    .e-signature-box { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    nav, .sidebar, button, .toaster, [data-sonner-toaster], .no-print { display: none !important; }
+    .doc-sign-footer { page-break-inside: avoid !important; margin-top: 15px !important; }
+    .signature { margin-top: 20px !important; page-break-inside: avoid !important; }
+    .e-signature-box { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; border-color: #cbd5e1 !important; padding: 5px !important; }
+    h2 { font-size: ${sectionPt - 0.5}pt !important; margin: 8px 0 3px !important; padding-bottom: 1px !important; }
+    table { margin-bottom: 8px !important; border-width: 0.5px !important; }
+    th, td { padding: 3px 5px !important; font-size: ${smallPt - 1}pt !important; line-height: 1.1 !important; border-width: 0.5px !important; }
+    .doc-footer { margin-top: 15px !important; padding-top: 2px !important; font-size: ${microPt - 0.5}pt !important; }
+  }
+  @page {
+    size: ${size} ${orientation};
+    margin: 10mm 15mm 10mm 15mm !important;
+  }
+  @page :first {
+    margin-top: 6mm !important;
   }
   ${opts.extraCSS || ''}
 </style>`;
@@ -348,7 +390,7 @@ export const institutionalCSS = buildInstitutionalCSS();
  * a logo is missing so there are no awkward gaps.
  */
 export function docHeader(title: string, config: DocumentConfig, extraRight?: string): string {
-  const clamp = (n: number, min = 28, max = 140) => Math.max(min, Math.min(max, n || 64));
+  const clamp = (n: number, min = 28, max = 100) => Math.max(min, Math.min(max, n || 64));
 
   const showLeft = config.logoEsquerdaAtiva !== false;
   const showCenter = config.logoCentroAtiva !== false && !!(config.logoCentro && config.logoCentro.trim());

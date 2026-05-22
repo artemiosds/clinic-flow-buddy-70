@@ -93,12 +93,12 @@ const section = (title: string, inner: string, badge?: string): string => `
   </div>`;
 
 export const FICHA_EXTRA_CSS = `
-  .ficha-section { border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 12px; margin-bottom: 10px; page-break-inside: avoid; break-inside: avoid; }
-  .ficha-section-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
-  .ficha-section-title { margin: 0 0 6px; font-size: 10pt; font-weight: 700; text-transform: uppercase; color: #0369a1; border-bottom: 1px solid #bae6fd; padding-bottom: 3px; letter-spacing: 0.3px; }
+  .ficha-section { border: 1px solid #e2e8f0; border-radius: 4px; padding: 6px 10px; margin-bottom: 8px; page-break-inside: avoid; break-inside: avoid; background: #fff; }
+  .ficha-section-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 4px; }
+  .ficha-section-title { margin: 0 0 4px; font-size: 9pt; font-weight: 700; text-transform: uppercase; color: #0369a1; border-bottom: 1px solid #bae6fd; padding-bottom: 2px; letter-spacing: 0.2px; }
   .ficha-section-head .ficha-section-title { flex: 1; margin-bottom: 0; }
-  .ficha-badge { display: inline-flex; align-items: center; border-radius: 999px; background: #fee2e2; color: #b91c1c; padding: 2px 8px; font-size: 8pt; font-weight: 700; text-transform: uppercase; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .ficha-grid { display: grid; gap: 4px 12px; margin-top: 4px; }
+  .ficha-badge { display: inline-flex; align-items: center; border-radius: 999px; background: #fee2e2; color: #b91c1c; padding: 1px 6px; font-size: 7.5pt; font-weight: 700; text-transform: uppercase; }
+  .ficha-grid { display: grid; gap: 2px 10px; margin-top: 2px; }
   .ficha-grid--1 { grid-template-columns: 1fr; }
   .ficha-grid--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .ficha-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -106,21 +106,19 @@ export const FICHA_EXTRA_CSS = `
   .ficha-grid--5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
   .ficha-grid--8 { grid-template-columns: repeat(8, minmax(0, 1fr)); }
   .ficha-grid--3-wide { grid-template-columns: 2fr 0.7fr 1fr; }
-  .ficha-field { min-width: 0; padding: 2px 0; }
-  .ficha-field-label { display: block; font-size: 7.5pt; font-weight: 700; text-transform: uppercase; color: #64748b; letter-spacing: 0.3px; }
-  .ficha-field-value { display: block; min-height: 14px; font-size: 10pt; font-weight: 500; color: #1a1a1a; overflow-wrap: anywhere; border-bottom: 1px solid transparent; }
-  .ficha-field-value--emphasis { font-weight: 700; font-size: 11pt; }
-  .ficha-field-value--manual { border-bottom: 1px solid #94a3b8; min-height: 20px; margin-top: 2px; }
-  .ficha-text-block { min-height: 38px; border: 1px dashed #cbd5e1; border-radius: 4px; background: #f8fafc; padding: 8px 10px; color: #1a1a1a; white-space: pre-wrap; font-size: 10pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .ficha-manual-lines { margin-top: 8px; }
-  .ficha-line { border-bottom: 1px solid #cbd5e1; height: 24px; margin-bottom: 4px; }
-  .ficha-signature-block { margin-top: 40px; text-align: center; page-break-inside: avoid; break-inside: avoid; }
-  .ficha-signature-date { font-size: 10pt; color: #1a1a1a; margin-bottom: 35px; text-align: left; }
-  .ficha-signature-block { margin-top: 28px; text-align: right; page-break-inside: avoid; break-inside: avoid; }
-  .ficha-signature-date { font-size: 9pt; color: #475569; margin-bottom: 28px; }
-  .ficha-signature-line { width: 280px; max-width: 100%; margin-left: auto; border-top: 1px solid #111827; }
-  .ficha-signature-name { margin-top: 4px; font-size: 10pt; font-weight: 700; color: #111827; }
-  .ficha-signature-meta { font-size: 9pt; color: #475569; }
+  .ficha-field { min-width: 0; padding: 1px 0; }
+  .ficha-field-label { display: block; font-size: 7pt; font-weight: 700; text-transform: uppercase; color: #64748b; letter-spacing: 0.2px; line-height: 1.1; }
+  .ficha-field-value { display: block; min-height: 13px; font-size: 9pt; font-weight: 500; color: #000; overflow-wrap: anywhere; border-bottom: 1px solid transparent; line-height: 1.2; }
+  .ficha-field-value--emphasis { font-weight: 700; font-size: 10pt; color: #000; }
+  .ficha-field-value--manual { border-bottom: 1px solid #94a3b8; min-height: 16px; margin-top: 1px; }
+  .ficha-text-block { min-height: 32px; border: 1px dashed #cbd5e1; border-radius: 3px; background: #f8fafc; padding: 6px 8px; color: #000; white-space: pre-wrap; font-size: 9pt; }
+  .ficha-manual-lines { margin-top: 6px; }
+  .ficha-line { border-bottom: 1px solid #cbd5e1; height: 20px; margin-bottom: 2px; }
+  .ficha-signature-block { margin-top: 24px; text-align: center; page-break-inside: avoid; break-inside: avoid; }
+  .ficha-signature-date { font-size: 9.5pt; color: #000; margin-bottom: 24px; text-align: left; font-weight: 500; }
+  .ficha-signature-line { width: 100%; border-top: 1px solid #111827; margin-bottom: 2px; }
+  .ficha-signature-name { font-size: 9pt; font-weight: 700; color: #111827; text-transform: uppercase; }
+  .ficha-signature-meta { font-size: 8pt; color: #475569; }
 `;
 
 export interface BuiltFicha {
@@ -236,7 +234,7 @@ export function buildFichaBody(
 
     body.push(section(
       '6. Triagem / sinais vitais',
-      grid(8, [
+      grid(4, [
         { label: 'PA', value: sv.pressao_arterial, manual: true },
         { label: 'FC', value: sv.frequencia_cardiaca, manual: true },
         { label: 'FR', value: sv.frequencia_respiratoria, manual: true },

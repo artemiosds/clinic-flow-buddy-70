@@ -69,12 +69,13 @@ export function filterVisibleFields(
   fields: CustomFieldDef[],
   allValues: Record<string, any>,
   ctx: ContextoCampos = {},
+  options: { isPrint?: boolean } = {}
 ): CustomFieldDef[] {
-  return fields.filter(f =>
-    f.ativo !== false &&
-    matchesContext(f, ctx) &&
-    evaluateConditions(f.condicional, allValues)
-  );
+  return fields.filter(f => {
+    if (f.ativo === false) return false;
+    if (options.isPrint && f.printSettings?.visibleInPrint === false) return false;
+    return matchesContext(f, ctx) && evaluateConditions(f.condicional, allValues);
+  });
 }
 
 /** Agrupa campos por `secao` mantendo a ordem original; campos sem seção vão em "". */
