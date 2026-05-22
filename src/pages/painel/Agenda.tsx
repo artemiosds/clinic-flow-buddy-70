@@ -1842,7 +1842,7 @@ const Agenda: React.FC = () => {
                           </>
                         )}
                         {canRetorno && ag.status === "concluido" && (
-                          <Button size="sm" variant="outline" className="h-8 px-3 text-xs border-accent text-accent-foreground" onClick={() => { setRetornoAg({ pacienteId: ag.pacienteId, pacienteNome: ag.pacienteNome }); setRetornoForm({ data: "", hora: "" }); setRetornoDialogOpen(true); }}><RotateCcw className="w-3.5 h-3.5 mr-1" /> Retorno</Button>
+                          <Button size="sm" variant="outline" className="h-8 px-3 text-xs border-accent text-accent-foreground" onClick={() => { setRetornoAg({ pacienteId: ag.pacienteId, pacienteNome: ag.pacienteNome }); setRetornoForm({ data: "", hora: "" }); setNewAg(p => ({ ...p, profissionalId: user?.id || "" })); setRetornoDialogOpen(true); }}><RotateCcw className="w-3.5 h-3.5 mr-1" /> Retorno</Button>
                         )}
                         {!isProfissional && ag.status !== "cancelado" && ag.status !== "concluido" && !ehPendenteOnline && statusActions.map((sa) => (
                           <Button key={sa.key} size="sm" variant="outline" className={cn("h-8 px-2 text-xs", ag.status === sa.key && sa.color)} onClick={() => handleStatusChange(ag.id, sa.key)} disabled={ag.status === sa.key || statusUpdating} title={sa.label}>{statusUpdating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <sa.icon className="w-3.5 h-3.5" />}</Button>
