@@ -70,6 +70,7 @@ const Relatorios: React.FC = () => {
   const [procedimentosDB, setProcedimentosDB] = useState<{ prontuario_id: string; procedimento_id: string; proc_nome?: string; prof_nome?: string; prof_id?: string; unidade_id?: string; data?: string }[]>([]);
   const [pacientesDB, setPacientesDB] = useState<any[]>([]);
   const [agendamentosDB, setAgendamentosDB] = useState<any[]>([]);
+  const [prontuariosDB, setProntuariosDB] = useState<any[]>([]);
   
   const [treatmentCycles, setTreatmentCycles] = useState<any[]>([]);
   const [treatmentSessions, setTreatmentSessions] = useState<any[]>([]);
