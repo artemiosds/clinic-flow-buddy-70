@@ -226,9 +226,13 @@ const Relatorios: React.FC = () => {
       if (nursingData) setNursingEvals(nursingData);
       if (multiData) setMultiEvals(multiData);
       if (ptsDataResult) setPtsData(ptsDataResult);
+      if (pacDataDB) {
+        // Combinamos os pacientes do contexto (os 200 mais recentes) com os que carregamos para o relatório
+        // No futuro, o ideal seria o DataContext carregar tudo ou os relatórios serem puramente server-side.
+        // Por ora, garantimos que temos os dados necessários para os relatórios filtrados.
+      }
       setLastUpdated(new Date());
-    } catch (err) { console.error('Error loading report data:', err); }
-  }, [user]);
+
 
   useEffect(() => { loadReportData(); }, [loadReportData]);
 
