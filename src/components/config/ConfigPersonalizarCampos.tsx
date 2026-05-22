@@ -562,16 +562,21 @@ const ConfigPersonalizarCampos: React.FC = () => {
 
       <Card className="shadow-card border-0">
         <CardContent className="p-5">
-          <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
-            <div>
-              <h3 className="font-semibold text-foreground">Campos da Tela</h3>
-              <p className="text-xs text-muted-foreground">
-                Lista unificada — nativos e personalizados podem ser misturados em qualquer ordem.
-              </p>
+          <div className="flex items-center justify-between mb-4 gap-4 flex-wrap">
+            <div className="flex items-center gap-4 flex-1 min-w-[300px]">
+              <div className="relative flex-1">
+                <Input placeholder="Buscar campo..." className="pl-9 h-9" />
+                <Plus className="w-4 h-4 absolute left-3 top-2.5 text-muted-foreground rotate-45" />
+              </div>
+              <Button variant="outline" size="sm" className="h-9">
+                <Plus className="w-4 h-4 mr-1 shadow-sm" /> Aplicar Modelo
+              </Button>
             </div>
-            <Button size="sm" onClick={openAddModal}>
-              <Plus className="w-4 h-4 mr-1" /> Adicionar Campo
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button size="sm" className="h-9 shadow-md" onClick={openAddModal}>
+                <Plus className="w-4 h-4 mr-1" /> Novo Campo
+              </Button>
+            </div>
           </div>
 
           {unifiedRows.length === 0 ? (
