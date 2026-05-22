@@ -1788,7 +1788,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const turnoEnd = td.horaFim;
         const nome = turnoStart < '12:00' ? 'Manhã' : turnoStart < '18:00' ? 'Tarde' : 'Noite';
 
-        const allInTurno = dayAppointments.filter(a => a.hora >= turnoStart && a.hora < turnoEnd);
+        const allInTurno = dayAppointments.filter(a => a.salaId === td.salaId && a.hora >= turnoStart && a.hora < turnoEnd);
         const intInTurno = allInTurno.filter(a => a.origem !== 'externo');
 
         // Reservas
@@ -1905,7 +1905,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const defaultNome = turnoStart < '12:00' ? 'Manhã' : turnoStart < '18:00' ? 'Tarde' : 'Noite';
         const nome = td.salaId || defaultNome;
 
-        const allInTurno = dayAppointments.filter(a => a.hora >= td.horaInicio && a.hora < td.horaFim);
+        const allInTurno = dayAppointments.filter(a => a.salaId === td.salaId && a.hora >= td.horaInicio && a.hora < td.horaFim);
         const extInTurno = allInTurno.filter(a => a.origem === 'externo');
         const intInTurno = allInTurno.filter(a => a.origem !== 'externo');
 

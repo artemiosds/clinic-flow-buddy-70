@@ -999,7 +999,24 @@ const Agenda: React.FC = () => {
     const agId = `ag${Date.now()}`;
     const pac = pacientes.find((p) => p.id === retornoAg.pacienteId);
     const unidade = unidades.find((u) => u.id === user.unidadeId);
-    const agData = { id: agId, pacienteId: retornoAg.pacienteId, pacienteNome: retornoAg.pacienteNome, unidadeId: user.unidadeId, salaId: user.salaId || "", setorId: "", profissionalId: user.id, profissionalNome: user.nome, data: retornoForm.data, hora: retornoForm.hora, status: "confirmado" as const, tipo: "Retorno", observacoes: "Retorno agendado pelo profissional", origem: "profissional" as const, criadoEm: new Date().toISOString(), criadoPor: user.id };
+    const agData = { 
+      id: agId, 
+      pacienteId: retornoAg.pacienteId, 
+      pacienteNome: retornoAg.pacienteNome, 
+      unidadeId: user.unidadeId, 
+      salaId: isTurnoMode ? newAg.salaId : (user.salaId || ""), 
+      setorId: "", 
+      profissionalId: user.id, 
+      profissionalNome: user.nome, 
+      data: retornoForm.data, 
+      hora: retornoForm.hora, 
+      status: "confirmado" as const, 
+      tipo: "Retorno", 
+      observacoes: "Retorno agendado pelo profissional", 
+      origem: "profissional" as const, 
+      criadoEm: new Date().toISOString(), 
+      criadoPor: user.id 
+    };
     setAgendamentoSaving(true);
     const toastId = toast.loading("Agendando retorno...");
     try { await addAgendamento(agData); toast.success("Retorno agendado com sucesso!", { id: toastId }); } catch (err) { toast.error("Erro ao agendar retorno.", { id: toastId }); } finally { setAgendamentoSaving(false); }
@@ -1152,17 +1169,27 @@ const Agenda: React.FC = () => {
                         </Select>
                       </div>
                       <div>
-                        <Label>Sala</Label>
+                        <Label>{isTurnoMode ? "Bloco" : "Sala"}</Label>
                         <Select value={newAg.salaId} onValueChange={(v) => setNewAg((p) => ({ ...p, salaId: v }))}>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecione" />
                           </SelectTrigger>
                           <SelectContent>
-                            {salas.map((s) => (
-                              <SelectItem key={s.id} value={s.id}>
-                                {s.nome}
-                              </SelectItem>
-                            ))}
+                            {isTurnoMode ? (
+                              newAgTurnoInfo
+                                .filter(t => !newAg.hora || (newAg.hora >= t.horaInicio && newAg.hora < t.horaFim))
+                                .map((t) => (
+                                  <SelectItem key={t.turnoId} value={t.nome}>
+                                    {t.nome} ({t.horaInicio} às {t.horaFim})
+                                  </SelectItem>
+                                ))
+                            ) : (
+                              salas.map((s) => (
+                                <SelectItem key={s.id} value={s.id}>
+                                  {s.nome}
+                                </SelectItem>
+                              ))
+                            )}
                           </SelectContent>
                         </Select>
                       </div>
@@ -1225,6 +1252,92 @@ const Agenda: React.FC = () => {
                         disabled={!newAg.hora || !newAg.pacienteId || !newAg.profissionalId}
                       >
                         Agendar
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+                
+                <Dialog open={retornoDialogOpen} onOpenChange={setRetornoDialogOpen}>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle className="font-display">Agendar Retorno</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div>
+                        <Label>Paciente</Label>
+                        <Input value={retornoAg?.pacienteNome || ""} readOnly className="bg-muted" />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <Label>Data</Label>
+                          <Select 
+                            value={retornoForm.data} 
+                            onValueChange={(v) => setRetornoForm(p => ({ ...p, data: v, hora: "" }))}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {retornoAvailableDates.map(d => (
+                                <SelectItem key={d} value={d}>
+                                  {new Date(d + "T12:00:00").toLocaleDateString("pt-BR")}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Horário</Label>
+                          <Select 
+                            value={retornoForm.hora} 
+                            onValueChange={(v) => setRetornoForm(p => ({ ...p, hora: v }))}
+                            disabled={!retornoForm.data}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {retornoAvailableSlots.map(h => (
+                                <SelectItem key={h} value={h}>
+                                  {h}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      {isTurnoMode && (
+                        <div>
+                          <Label>Bloco de Atendimento</Label>
+                          <Select 
+                            value={newAg.salaId} 
+                            onValueChange={(v) => setNewAg(p => ({ ...p, salaId: v }))}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o bloco" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {newAgTurnoInfo
+                                .filter(t => !retornoForm.hora || (retornoForm.hora >= t.horaInicio && retornoForm.hora < t.horaFim))
+                                .map((t) => (
+                                  <SelectItem key={t.turnoId} value={t.nome}>
+                                    {t.nome} ({t.horaInicio} às {t.horaFim})
+                                  </SelectItem>
+                                ))
+                              }
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+
+                      <Button 
+                        onClick={handleAgendarRetorno}
+                        className="w-full gradient-primary text-primary-foreground"
+                        disabled={!retornoForm.data || !retornoForm.hora || agendamentoSaving}
+                      >
+                        {agendamentoSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RotateCcw className="w-4 h-4 mr-2" />}
+                        Confirmar Retorno
                       </Button>
                     </div>
                   </DialogContent>
@@ -1439,6 +1552,7 @@ const Agenda: React.FC = () => {
                   setFilterUnit("all");
                   setFilterProf("all");
                   setFilterStatus("all");
+                  setFilterTipo("Todos");
                   setSearchTerm("");
                 }}
                 className="h-9 px-2 text-muted-foreground hover:text-foreground"
@@ -1729,7 +1843,7 @@ const Agenda: React.FC = () => {
                           </>
                         )}
                         {canRetorno && ag.status === "concluido" && (
-                          <Button size="sm" variant="outline" className="h-8 px-3 text-xs border-accent text-accent-foreground" onClick={() => { setRetornoAg({ pacienteId: ag.pacienteId, pacienteNome: ag.pacienteNome }); setRetornoForm({ data: "", hora: "" }); setRetornoDialogOpen(true); }}><RotateCcw className="w-3.5 h-3.5 mr-1" /> Retorno</Button>
+                          <Button size="sm" variant="outline" className="h-8 px-3 text-xs border-accent text-accent-foreground" onClick={() => { setRetornoAg({ pacienteId: ag.pacienteId, pacienteNome: ag.pacienteNome }); setRetornoForm({ data: "", hora: "" }); setNewAg(p => ({ ...p, profissionalId: user?.id || "" })); setRetornoDialogOpen(true); }}><RotateCcw className="w-3.5 h-3.5 mr-1" /> Retorno</Button>
                         )}
                         {!isProfissional && ag.status !== "cancelado" && ag.status !== "concluido" && !ehPendenteOnline && statusActions.map((sa) => (
                           <Button key={sa.key} size="sm" variant="outline" className={cn("h-8 px-2 text-xs", ag.status === sa.key && sa.color)} onClick={() => handleStatusChange(ag.id, sa.key)} disabled={ag.status === sa.key || statusUpdating} title={sa.label}>{statusUpdating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <sa.icon className="w-3.5 h-3.5" />}</Button>
