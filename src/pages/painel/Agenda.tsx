@@ -1239,6 +1239,92 @@ const Agenda: React.FC = () => {
                     </div>
                   </DialogContent>
                 </Dialog>
+                
+                <Dialog open={retornoDialogOpen} onOpenChange={setRetornoDialogOpen}>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle className="font-display">Agendar Retorno</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div>
+                        <Label>Paciente</Label>
+                        <Input value={retornoAg?.pacienteNome || ""} readOnly className="bg-muted" />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <Label>Data</Label>
+                          <Select 
+                            value={retornoForm.data} 
+                            onValueChange={(v) => setRetornoForm(p => ({ ...p, data: v, hora: "" }))}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {retornoAvailableDates.map(d => (
+                                <SelectItem key={d} value={d}>
+                                  {new Date(d + "T12:00:00").toLocaleDateString("pt-BR")}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Horário</Label>
+                          <Select 
+                            value={retornoForm.hora} 
+                            onValueChange={(v) => setRetornoForm(p => ({ ...p, hora: v }))}
+                            disabled={!retornoForm.data}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {retornoAvailableSlots.map(h => (
+                                <SelectItem key={h} value={h}>
+                                  {h}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      {isTurnoMode && (
+                        <div>
+                          <Label>Bloco de Atendimento</Label>
+                          <Select 
+                            value={newAg.salaId} 
+                            onValueChange={(v) => setNewAg(p => ({ ...p, salaId: v }))}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o bloco" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {newAgTurnoInfo
+                                .filter(t => !retornoForm.hora || (retornoForm.hora >= t.horaInicio && retornoForm.hora < t.horaFim))
+                                .map((t) => (
+                                  <SelectItem key={t.turnoId} value={t.nome}>
+                                    {t.nome} ({t.horaInicio} às {t.horaFim})
+                                  </SelectItem>
+                                ))
+                              }
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+
+                      <Button 
+                        onClick={handleAgendarRetorno}
+                        className="w-full gradient-primary text-primary-foreground"
+                        disabled={!retornoForm.data || !retornoForm.hora || agendamentoSaving}
+                      >
+                        {agendamentoSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RotateCcw className="w-4 h-4 mr-2" />}
+                        Confirmar Retorno
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </>
             )}
           </div>
