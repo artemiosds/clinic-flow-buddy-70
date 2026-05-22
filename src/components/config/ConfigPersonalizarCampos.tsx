@@ -963,8 +963,40 @@ const ConfigPersonalizarCampos: React.FC = () => {
                         </div>
                       </div>
                     </TabsContent>
-              </Tabs>
+                  </Tabs>
+                </div>
+
+                {/* Resumo Sidebar */}
+                <div className="lg:col-span-4 bg-muted/10 p-8">
+                  <div className="sticky top-0 space-y-6">
+                    <h3 className="font-semibold text-lg">Resumo do campo</h3>
+                    <div className="space-y-4">
+                      <div className="p-4 bg-white rounded-xl shadow-sm border border-border/50">
+                        <Label className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">Nome</Label>
+                        <p className="font-medium text-lg">{fieldForm.rotulo || 'Novo Campo'}</p>
+                      </div>
+                      <div className="p-4 bg-white rounded-xl shadow-sm border border-border/50">
+                        <Label className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">Tipo</Label>
+                        <p className="font-medium capitalize text-primary">{FIELD_TYPE_LABELS[fieldForm.tipo]?.label || fieldForm.tipo}</p>
+                      </div>
+                    </div>
+                    <FieldPreview form={fieldForm} />
+                  </div>
+                </div>
+              </div>
             </div>
+
+            {/* Footer */}
+            <div className="px-8 py-5 border-t bg-muted/20 flex items-center justify-end gap-3 shrink-0">
+              <Button variant="ghost" onClick={() => !isSaving && setModalOpen(false)}>Cancelar</Button>
+              <Button onClick={() => saveField()} className="h-11 px-8 shadow-lg" disabled={isSaving}>
+                {isSaving ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                Salvar campo
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
             <div className="px-6 py-4 border-t bg-muted/30 flex items-center justify-between shrink-0">
               <p className="text-[10px] text-muted-foreground">O campo será salvo exclusivamente para a unidade selecionada.</p>
