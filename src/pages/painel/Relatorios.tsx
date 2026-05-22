@@ -183,9 +183,10 @@ const Relatorios: React.FC = () => {
         qCycles = qCycles.eq('unit_id', user.unidadeId);
       }
 
-      let qNursing = supabase.from('nursing_evaluations').select('id,patient_id,unit_id,evaluation_date,resultado,prioridade,avaliacao_risco,created_at');
-      let qMulti = supabase.from('multiprofessional_evaluations').select('id,patient_id,unit_id,evaluation_date,specialty,parecer,professional_nome,created_at');
-      let qPts = supabase.from('pts').select('id,patient_id,professional_id,unit_id,status,especialidades_envolvidas,created_at');
+      let qNursing = supabase.from('nursing_evaluations').select('id,patient_id,unit_id,evaluation_date,resultado,prioridade,avaliacao_risco,created_at').gte('evaluation_date', dataFiltroFrom).lte('evaluation_date', dataFiltroTo);
+      let qMulti = supabase.from('multiprofessional_evaluations').select('id,patient_id,unit_id,evaluation_date,specialty,parecer,professional_nome,created_at').gte('evaluation_date', dataFiltroFrom).lte('evaluation_date', dataFiltroTo);
+      let qPts = supabase.from('pts').select('id,patient_id,professional_id,unit_id,status,especialidades_envolvidas,created_at').gte('created_at', dataFiltroFrom).lte('created_at', dataFiltroTo + 'T23:59:59');
+
       if (user?.unidadeId && user?.usuario !== 'admin.sms') {
         qNursing = qNursing.eq('unit_id', user.unidadeId);
         qMulti = qMulti.eq('unit_id', user.unidadeId);
