@@ -41,6 +41,10 @@ interface ProntuarioItem {
   observacoes: string;
   dados_acolhimento?: any;
   custom_data?: any;
+  soap_subjetivo?: string;
+  soap_objetivo?: string;
+  soap_avaliacao?: string;
+  soap_plano?: string;
 }
 
 interface EpisodioItem {
