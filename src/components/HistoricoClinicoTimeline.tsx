@@ -216,6 +216,11 @@ function transformProntuarios(
     unidade: unidadeMap.get(p.unidade_id)?.nome,
     episodioTitle: p.episodio_id ? episodioMap.get(p.episodio_id) || "" : "",
     dadosAcolhimento: p.dados_acolhimento,
+    soap_subjetivo: p.soap_subjetivo,
+    soap_objetivo: p.soap_objetivo,
+    soap_avaliacao: p.soap_avaliacao,
+    soap_plano: p.soap_plano,
+    custom_data: p.custom_data,
   }));
 }
 
