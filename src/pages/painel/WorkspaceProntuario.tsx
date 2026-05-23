@@ -123,7 +123,14 @@ const WorkspaceProntuario: React.FC = () => {
   });
 
   const handleFormChange = (updates: any) => {
-    setForm((prev: any) => ({ ...prev, ...updates }));
+    setForm((prev: any) => {
+      const next = { ...prev, ...updates };
+      // Se estamos mudando custom_data, garantimos o merge
+      if (updates.custom_data) {
+        next.custom_data = { ...prev.custom_data, ...updates.custom_data };
+      }
+      return next;
+    });
     setHasModifiedForm(true);
   };
 
@@ -529,6 +536,7 @@ const WorkspaceProntuario: React.FC = () => {
         episodio_id: (form.episodio_id && form.episodio_id !== 'no_episode') ? form.episodio_id : null,
         custom_data: {
           ...form.custom_data,
+          especialidade_fields: especialidadeFields,
           soap_enabled: soapEnabled
         }
       };
@@ -613,7 +621,7 @@ const WorkspaceProntuario: React.FC = () => {
     }
     setSavingAcolhimento(true);
     try {
-      const payload = {
+      const payload: any = {
         paciente_id: pacienteId || form.paciente_id || '',
         paciente_nome: pacienteData?.nome || pacienteNome || form.paciente_nome || 'Paciente',
         profissional_id: user?.id || '',
@@ -627,15 +635,29 @@ const WorkspaceProntuario: React.FC = () => {
         custom_data: {}
       };
 
-      const { data, error } = await supabase
-        .from('prontuarios')
-        .upsert((acolhimentoData?.id ? { ...payload, id: acolhimentoData.id } : payload) as any)
-        .select()
-        .single();
-
-      if (error) throw error;
+      let result;
+      if (acolhimentoData?.id) {
+        // Explicit update for existing record
+        const { data, error } = await supabase
+          .from('prontuarios')
+          .update(payload)
+          .eq('id', acolhimentoData.id)
+          .select()
+          .single();
+        if (error) throw error;
+        result = data;
+      } else {
+        // Explicit insert for new record
+        const { data, error } = await supabase
+          .from('prontuarios')
+          .insert(payload)
+          .select()
+          .single();
+        if (error) throw error;
+        result = data;
+      }
       
-      const typedResult = data as any;
+      const typedResult = result as any;
       setAcolhimentoData(typedResult);
       if (typedResult?.dados_acolhimento) {
         setAcolhimentoDraft(typedResult.dados_acolhimento);
@@ -839,9 +861,12 @@ const WorkspaceProntuario: React.FC = () => {
                         formValues={form}
                         customValues={form.custom_data || {}}
                         onFormChange={(k, v) => handleFormChange({ [k]: v })}
-                        onCustomChange={(k, v) => handleFormChange({ custom_data: { ...form.custom_data, [k]: v } })}
+                        onCustomChange={(k, v) => handleFormChange({ custom_data: { [k]: v } })}
                         especialidadeFields={especialidadeFields}
-                        onEspecialidadeChange={(k, v) => setEspecialidadeFields(p => ({...p, [k]: v}))}
+                        onEspecialidadeChange={(k, v) => {
+                          setEspecialidadeFields(p => ({...p, [k]: v}));
+                          setHasModifiedForm(true);
+                        }}
                         profissao={user?.profissao}
                         profissionalId={user?.id}
                         tipoProntuario={form.tipo_registro === 'avaliacao_inicial' ? 'avaliacao' : (form.tipo_registro === 'retorno' ? 'retorno' : (form.tipo_registro === 'sessao' ? 'sessao' : (form.tipo_registro === 'urgencia' ? 'urgencia' : (form.tipo_registro === 'procedimento' ? 'procedimento' : 'avaliacao'))))}
