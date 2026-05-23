@@ -1,5 +1,8 @@
 import { PageHeader } from '@/components/layout/PageHeader';
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { useData } from '@/contexts/DataContext';
 import { useDebounce } from "@/hooks/useDebounce";
 import FichaPacienteCabecalho from "@/components/FichaPacienteCabecalho";
 import { useProntuarioStructure } from "@/hooks/useProntuarioStructure";
