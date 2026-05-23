@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import HistoricoCompletoModal from "@/components/HistoricoCompletoModal";
 import GerarDocumentoModal from "@/components/GerarDocumentoModal";
 import { buildInstitutionalCSS, openPrintDocument, docHeader, docFooter } from "@/lib/printLayout";
+import { AcolhimentoView } from "./prontuario/AcolhimentoView";
 
 interface ProntuarioItem {
   id: string;
