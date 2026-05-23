@@ -421,8 +421,8 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
             </div>
 
             <div class="section">
-              <div class="section-title">2. DIAGNÓSTICO</div>
-              <div class="field"><span class="field-label">CID-10:</span><div class="field-value"><strong>${data.cid10 || "—"}</strong> ${data.cidDesc ? ` - ${data.cidDesc}` : ""}</div></div>
+              <div class="section-title">Informações Clínicas</div>
+              <div style="margin-bottom: 5px;"><strong>CID-10:</strong> ${data.cid10 || "—"} ${data.cidDesc ? ` - ${data.cidDesc}` : ""}</div>
             </div>
 
             <div class="section">
