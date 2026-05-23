@@ -49,6 +49,7 @@ interface FullEvent {
   faltaJustificativa?: any;
   rawAgendamento?: any;
   rawProntuario?: any;
+  dadosAcolhimento?: any;
 }
 
 interface Props {
