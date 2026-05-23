@@ -3474,13 +3474,47 @@ const ProntuarioPage: React.FC = () => {
                 {viewerProntuario.prescricao && (
                   <div>
                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Prescrição / Medicamentos</p>
-                    <p className="text-foreground whitespace-pre-wrap">{viewerProntuario.prescricao}</p>
+                    {(() => {
+                      try {
+                        const parsed = JSON.parse(viewerProntuario.prescricao);
+                        const meds = parsed.medicamentos || (Array.isArray(parsed) ? parsed : null);
+                        if (Array.isArray(meds)) {
+                          return (
+                            <div className="space-y-1.5 mt-1">
+                              {meds.map((m: any, i: number) => (
+                                <div key={i} className="text-xs border-l-2 border-primary/30 pl-2 py-1.5 bg-muted/30 rounded-r-md">
+                                  <span className="font-bold text-primary">{m.nome}</span> {m.dosagem ? `— ${m.dosagem}` : ''} {m.via ? `| ${m.via}` : ''} {m.posologia ? `| ${m.posologia}` : ''} {m.duracao ? `| ${m.duracao}` : ''}
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        }
+                      } catch (e) {}
+                      return <p className="text-foreground whitespace-pre-wrap">{viewerProntuario.prescricao}</p>;
+                    })()}
                   </div>
                 )}
                 {viewerProntuario.solicitacao_exames && (
                   <div>
                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Exames Solicitados</p>
-                    <p className="text-foreground whitespace-pre-wrap">{viewerProntuario.solicitacao_exames}</p>
+                    {(() => {
+                      try {
+                        const parsed = JSON.parse(viewerProntuario.solicitacao_exames);
+                        const exames = parsed.exames || (Array.isArray(parsed) ? parsed : null);
+                        if (Array.isArray(exames)) {
+                          return (
+                            <div className="space-y-1.5 mt-1">
+                              {exames.map((ex: any, i: number) => (
+                                <div key={i} className="text-xs border-l-2 border-primary/30 pl-2 py-1.5 bg-muted/30 rounded-r-md">
+                                  <span className="font-bold text-primary">{ex.nome}</span> {ex.codigo_sus ? `(${ex.codigo_sus})` : ''} {ex.indicacao ? `— ${ex.indicacao}` : ''}
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        }
+                      } catch (e) {}
+                      return <p className="text-foreground whitespace-pre-wrap">{viewerProntuario.solicitacao_exames}</p>;
+                    })()}
                   </div>
                 )}
 
