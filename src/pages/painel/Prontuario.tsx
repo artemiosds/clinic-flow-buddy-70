@@ -1150,7 +1150,7 @@ const ProntuarioPage: React.FC = () => {
     setSaving(true);
     const toastId = toast.loading("Salvando prontuário...");
     let insertedNewProntuario = false;
-    let prontuarioId: string | null = editId || form.id;
+    let prontuarioId: string | null = editId || (form as any).id;
     try {
       const procTexto = selectedProcIds
         .map((id) => {
