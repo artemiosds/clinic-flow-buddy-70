@@ -504,9 +504,10 @@ const WorkspaceProntuario: React.FC = () => {
 
       if (error) throw error;
       
-      setAcolhimentoData(data);
-      if (data.dados_acolhimento) {
-        setAcolhimentoDraft(data.dados_acolhimento);
+      const typedResult = data as any;
+      setAcolhimentoData(typedResult);
+      if (typedResult?.dados_acolhimento) {
+        setAcolhimentoDraft(typedResult.dados_acolhimento);
       }
       toast.success("Acolhimento salvo com sucesso!");
     } catch (e: any) {
