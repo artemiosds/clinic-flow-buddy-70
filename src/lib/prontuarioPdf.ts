@@ -32,6 +32,7 @@ interface ProntuarioLike {
   soap_avaliacao?: string;
   soap_plano?: string;
   tipo_registro?: string;
+  indicacao_retorno?: string;
   custom_data?: Record<string, any>;
   unidade_id?: string;
   especialidade?: string;
@@ -195,6 +196,10 @@ async function buildProntuarioBody(p: ProntuarioLike, extraHtml = ""): Promise<s
     ["Evolução Clínica", p.evolucao],
   ];
 
+  if (p.indicacao_retorno && p.indicacao_retorno !== "no_indication") {
+    sections.push(["Indicação de Retorno", p.indicacao_retorno]);
+  }
+
   let obsHtml = "";
   const obsValue = p.observacoes?.trim() || "";
   if (obsValue.startsWith("{")) {
@@ -253,7 +258,7 @@ async function buildProntuarioBody(p: ProntuarioLike, extraHtml = ""): Promise<s
   }
 
   const signature = `
-    <div class="signature" style="margin-top: 35px;">
+    <div class="signature" style="margin-top: 30px;">
       <div class="signature-line" style="width: 280px;"></div>
       <div class="name">${escapeHtml(p.profissional_nome || "Profissional responsável")}</div>
       ${p.setor ? `<div class="role">${escapeHtml(p.setor)}</div>` : ""}
@@ -262,7 +267,7 @@ async function buildProntuarioBody(p: ProntuarioLike, extraHtml = ""): Promise<s
   const tipoLabel = TIPO_LABELS[p.tipo_registro || ""] || p.tipo_registro || "Atendimento Clínico";
 
   return `
-    <div class="info-grid" style="margin-bottom: 12px; grid-template-columns: 2fr 1fr; padding: 10px; border-width: 0.5px;">
+    <div class="info-grid" style="margin-bottom: 10px; grid-template-columns: 2fr 1fr; padding: 8px; border-width: 0.5px;">
       <div>
         <span class="info-label">Paciente</span>
         <div class="info-value" style="font-weight: 700; font-size: 10.5pt;">${escapeHtml(p.paciente_nome || "—")}</div>

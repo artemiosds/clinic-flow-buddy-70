@@ -3392,6 +3392,34 @@ const ProntuarioPage: React.FC = () => {
                     <p className="text-foreground whitespace-pre-wrap">{viewerProntuario.soap_plano}</p>
                   </div>
                 )}
+
+                {viewerProntuario.anamnese && (
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Anamnese</p>
+                    <p className="text-foreground whitespace-pre-wrap">{viewerProntuario.anamnese}</p>
+                  </div>
+                )}
+
+                {viewerProntuario.sinais_sintomas && (
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Sinais e Sintomas</p>
+                    <p className="text-foreground whitespace-pre-wrap">{viewerProntuario.sinais_sintomas}</p>
+                  </div>
+                )}
+
+                {viewerProntuario.exame_fisico && (
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Exame Físico</p>
+                    <p className="text-foreground whitespace-pre-wrap">{viewerProntuario.exame_fisico}</p>
+                  </div>
+                )}
+
+                {viewerProntuario.hipotese && (
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Hipótese Diagnóstica</p>
+                    <p className="text-foreground whitespace-pre-wrap">{viewerProntuario.hipotese}</p>
+                  </div>
+                )}
                 
                 {/* Campos de Especialidade se existirem em observacoes */}
                 {(() => {
@@ -3421,13 +3449,13 @@ const ProntuarioPage: React.FC = () => {
 
                 {viewerProntuario.evolucao && (
                   <div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Evolução</p>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Evolução Clínica</p>
                     <p className="text-foreground whitespace-pre-wrap">{viewerProntuario.evolucao}</p>
                   </div>
                 )}
                 {viewerProntuario.conduta && (
                   <div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Conduta</p>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Conduta / Orientações</p>
                     <p className="text-foreground whitespace-pre-wrap">{viewerProntuario.conduta}</p>
                   </div>
                 )}
@@ -3439,7 +3467,7 @@ const ProntuarioPage: React.FC = () => {
                 )}
                 {viewerProntuario.prescricao && (
                   <div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Prescrição</p>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Prescrição / Medicamentos</p>
                     <p className="text-foreground whitespace-pre-wrap">{viewerProntuario.prescricao}</p>
                   </div>
                 )}
@@ -3449,6 +3477,26 @@ const ProntuarioPage: React.FC = () => {
                     <p className="text-foreground whitespace-pre-wrap">{viewerProntuario.solicitacao_exames}</p>
                   </div>
                 )}
+
+                {viewerProntuario.indicacao_retorno && viewerProntuario.indicacao_retorno !== "no_indication" && (
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Indicação de Retorno</p>
+                    <Badge variant="outline" className="text-primary border-primary/30">
+                      {retornoOptions.find(o => o.value === viewerProntuario.indicacao_retorno)?.label || viewerProntuario.indicacao_retorno}
+                    </Badge>
+                  </div>
+                )}
+
+                {/* Anexos */}
+                <div className="mt-2">
+                  <ProntuarioAnexos 
+                    prontuarioId={viewerProntuario.id} 
+                    pacienteId={viewerProntuario.paciente_id} 
+                    tipoRegistro={viewerProntuario.tipo_registro}
+                    disabled={true} 
+                  />
+                </div>
+
               </div>
 
               <Separator className="my-4" />

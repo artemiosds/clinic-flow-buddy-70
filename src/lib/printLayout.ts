@@ -156,10 +156,10 @@ export function buildInstitutionalCSS(
 <style>
   @page {
     size: ${size} ${orientation};
-    margin: 15mm 12mm 15mm 12mm;
+    margin: 10mm 10mm 10mm 10mm;
   }
   @page :first {
-    margin-top: 12mm;
+    margin-top: 10mm;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   html, body { 
@@ -173,7 +173,7 @@ export function buildInstitutionalCSS(
     padding: 0;
     color: #000;
     font-size: ${bodyPt}pt;
-    line-height: 1.3;
+    line-height: 1.25;
     background: #fff;
   }
 
@@ -182,9 +182,9 @@ export function buildInstitutionalCSS(
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 0 4px 0;
-    margin-bottom: 6px;
-    border-bottom: 1.5px solid ${accent};
+    padding: 0 0 3px 0;
+    margin-bottom: 5px;
+    border-bottom: 1.2px solid ${accent};
     position: relative;
   }
   .doc-header .logo-left,
@@ -283,28 +283,28 @@ export function buildInstitutionalCSS(
 
   /* FIELDS */
   .content-block { text-align: justify; text-justify: inter-word; font-size: ${bodyPt}pt; }
-  .field { margin-bottom: 4px; }
-  .field-label { font-size: ${microPt}pt; text-transform: uppercase; color: #475569; font-weight: 700; letter-spacing: 0.3px; line-height: 1; }
-  .field-value { font-size: ${bodyPt}pt; margin-top: 0; color: #000; line-height: 1.2; }
+  .field { margin-bottom: 3px; }
+  .field-label { font-size: ${microPt}pt; text-transform: uppercase; color: #475569; font-weight: 700; letter-spacing: 0.2px; line-height: 1; }
+  .field-value { font-size: ${bodyPt}pt; margin-top: 0; color: #000; line-height: 1.15; }
 
   /* SECTIONS (prontuário) */
-  .section { margin-bottom: 8px; page-break-inside: auto; break-inside: auto; }
-  .section-title { font-weight: 700; font-size: ${sectionPt}pt; text-transform: uppercase; color: ${accent}; border-bottom: 1px solid #bae6fd; padding-bottom: 1px; margin-bottom: 4px; }
-  .section-content { font-size: ${bodyPt}pt; line-height: 1.4; white-space: pre-wrap; min-height: 12px; text-align: justify; color: #000; overflow-wrap: break-word; }
+  .section { margin-bottom: 6px; page-break-inside: auto; break-inside: auto; }
+  .section-title { font-weight: 700; font-size: ${sectionPt}pt; text-transform: uppercase; color: ${accent}; border-bottom: 1px solid #bae6fd; padding-bottom: 1px; margin-bottom: 3px; }
+  .section-content { font-size: ${bodyPt}pt; line-height: 1.35; white-space: pre-wrap; min-height: 10px; text-align: justify; color: #000; overflow-wrap: break-word; }
 
   /* INFO GRID */
-  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; padding: 6px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 8px; padding: 6px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; }
   .info-label { font-weight: 700; font-size: ${microPt}pt; text-transform: uppercase; color: #64748b; line-height: 1; }
-  .info-value { font-size: ${bodyPt}pt; color: #000; line-height: 1.1; }
+  .info-value { font-size: ${bodyPt}pt; color: #000; line-height: 1.05; }
 
   /* QR AREA */
-  .qr-area { text-align: center; margin-top: 12px; padding: 10px; border: 1px dashed #cbd5e1; border-radius: 4px; background: #fafafa; }
+  .qr-area { text-align: center; margin-top: 10px; padding: 8px; border: 1px dashed #cbd5e1; border-radius: 4px; background: #fafafa; }
   .qr-area p { font-size: ${smallPt}pt; color: #64748b; }
   .qr-area .code { font-size: ${microPt}pt; color: #94a3b8; margin-top: 1px; font-family: monospace; }
 
   /* SIGNATURE */
-  .signature { margin-top: 25px; text-align: center; page-break-inside: avoid; break-inside: avoid; }
-  .signature-line { width: 240px; border-top: 1.2px solid #000; margin: 0 auto 3px; }
+  .signature { margin-top: 20px; text-align: center; page-break-inside: avoid; break-inside: avoid; }
+  .signature-line { width: 220px; border-top: 1px solid #000; margin: 0 auto 3px; }
   .signature .name { font-size: ${bodyPt}pt; font-weight: 700; color: #000; line-height: 1.1; }
   .signature .role { font-size: ${smallPt}pt; color: #475569; line-height: 1; }
 
@@ -351,31 +351,31 @@ export function buildInstitutionalCSS(
       -webkit-print-color-adjust: exact !important; 
       print-color-adjust: exact !important;
     }
-    .doc-header { border-bottom-width: 1px !important; margin-bottom: 6px !important; padding-bottom: 4px !important; border-bottom: 1.5px solid ${accent} !important; }
-    .doc-header h1 { font-size: ${titlePt - 1.5}pt !important; line-height: 1.1 !important; }
-    .doc-header .doc-title { font-size: ${titlePt - 0.5}pt !important; margin-top: 2px !important; padding-top: 2px !important; }
-    .doc-header .subtitle { font-size: ${bodyPt - 1.5}pt !important; margin-top: 0 !important; }
-    .doc-header img { max-height: 50px !important; width: auto !important; }
-    .doc-meta { margin-bottom: 8px !important; padding: 3px 6px !important; font-size: ${smallPt - 1}pt !important; line-height: 1.1 !important; gap: 8px !important; }
-    .section { margin-bottom: 8px !important; page-break-inside: avoid !important; }
-    .section-title { font-size: ${sectionPt - 0.5}pt !important; padding-bottom: 1px !important; margin-bottom: 3px !important; }
-    .info-grid { gap: 6px !important; padding: 6px !important; margin-bottom: 8px !important; grid-template-columns: repeat(2, 1fr) !important; border-width: 0.5px !important; }
+    .doc-header { border-bottom-width: 1px !important; margin-bottom: 4px !important; padding-bottom: 2px !important; border-bottom: 1px solid ${accent} !important; }
+    .doc-header h1 { font-size: ${titlePt - 1.8}pt !important; line-height: 1.1 !important; }
+    .doc-header .doc-title { font-size: ${titlePt - 0.5}pt !important; margin-top: 1px !important; padding-top: 1px !important; }
+    .doc-header .subtitle { font-size: ${bodyPt - 1.8}pt !important; margin-top: 0 !important; }
+    .doc-header img { max-height: 42px !important; width: auto !important; }
+    .doc-meta { margin-bottom: 6px !important; padding: 2px 5px !important; font-size: ${smallPt - 1.2}pt !important; line-height: 1.1 !important; gap: 6px !important; }
+    .section { margin-bottom: 6px !important; page-break-inside: avoid !important; }
+    .section-title { font-size: ${sectionPt - 0.8}pt !important; padding-bottom: 1px !important; margin-bottom: 2px !important; }
+    .info-grid { gap: 4px !important; padding: 5px !important; margin-bottom: 6px !important; grid-template-columns: repeat(2, 1fr) !important; border-width: 0.5px !important; }
     .no-print { display: none !important; }
     nav, .sidebar, button, .toaster, [data-sonner-toaster], .no-print { display: none !important; }
-    .doc-sign-footer { page-break-inside: avoid !important; margin-top: 15px !important; }
-    .signature { margin-top: 20px !important; page-break-inside: avoid !important; }
-    .e-signature-box { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; border-color: #cbd5e1 !important; padding: 5px !important; }
-    h2 { font-size: ${sectionPt - 0.5}pt !important; margin: 8px 0 3px !important; padding-bottom: 1px !important; }
-    table { margin-bottom: 8px !important; border-width: 0.5px !important; }
-    th, td { padding: 3px 5px !important; font-size: ${smallPt - 1}pt !important; line-height: 1.1 !important; border-width: 0.5px !important; }
-    .doc-footer { margin-top: 15px !important; padding-top: 2px !important; font-size: ${microPt - 0.5}pt !important; }
+    .doc-sign-footer { page-break-inside: avoid !important; margin-top: 12px !important; }
+    .signature { margin-top: 15px !important; page-break-inside: avoid !important; }
+    .e-signature-box { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; border-color: #cbd5e1 !important; padding: 4px !important; }
+    h2 { font-size: ${sectionPt - 0.8}pt !important; margin: 6px 0 2px !important; padding-bottom: 1px !important; }
+    table { margin-bottom: 6px !important; border-width: 0.5px !important; }
+    th, td { padding: 2px 4px !important; font-size: ${smallPt - 1.2}pt !important; line-height: 1.1 !important; border-width: 0.5px !important; }
+    .doc-footer { margin-top: 12px !important; padding-top: 1px !important; font-size: ${microPt - 0.5}pt !important; }
   }
   @page {
     size: ${size} ${orientation};
-    margin: 10mm 12mm 10mm 12mm !important;
+    margin: 8mm 10mm 8mm 10mm !important;
   }
   @page :first {
-    margin-top: 8mm !important;
+    margin-top: 6mm !important;
   }
   ${opts.extraCSS || ''}
 </style>`;
