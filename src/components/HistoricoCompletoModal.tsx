@@ -18,6 +18,7 @@ import { downloadFullHistoryPdf } from "@/lib/prontuarioPdf";
 import { getSpecialtyColors } from "@/lib/specialtyColors";
 import { TIPO_REGISTRO_LABELS } from "@/utils/labels";
 import { openPrintDocument } from "@/lib/printLayout";
+import { AcolhimentoView } from "./prontuario/AcolhimentoView";
 
 // ── Types ──────────────────────────────────────────────────
 type EventType = "avaliacao_inicial" | "retorno" | "sessao" | "urgencia" | "procedimento" | "alta" | "falta" | "consulta";
