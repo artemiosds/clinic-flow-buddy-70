@@ -151,7 +151,7 @@ export const AcolhimentoForm: React.FC<AcolhimentoFormProps> = ({
 
       {/* SEÇÃO IV */}
       <section>
-        <SectionHeader title="SEÇÃO IV — SINTOMAS NOS ÚLTIMOS 30 DIAS" subtitle="Baseado nos últimos 30 dias — marque Sim ou Não:" />
+        <SectionHeader title="SEÇÃO IV — SINTOMAS NOS ÚLTIMOS 30 DIAS" subtitle="IV-Baseado nos últimos 30 dias responda sim ou não para os sintomas:" />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {SINTOMAS_OPTIONS.map(sintoma => (
             <div key={sintoma} className="flex items-center space-x-2">
