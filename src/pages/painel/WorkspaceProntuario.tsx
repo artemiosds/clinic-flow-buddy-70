@@ -1,14 +1,13 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { useData } from '@/contexts/DataContext';
-import { usePermissions } from '@/contexts/PermissionsContext';
-import { useProntuarioStructure } from '@/hooks/useProntuarioStructure';
-import { useProntuarioTiposConfig } from '@/hooks/useProntuarioTiposConfig';
-import { useProntuarioConfig } from '@/hooks/useProntuarioConfig';
-import { useSoapCustomOptions } from '@/hooks/useSoapCustomOptions';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { PageHeader } from '@/components/layout/PageHeader';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { useDebounce } from "@/hooks/useDebounce";
+import FichaPacienteCabecalho from "@/components/FichaPacienteCabecalho";
+import { useProntuarioStructure } from "@/hooks/useProntuarioStructure";
+import { useProntuarioTiposConfig } from "@/hooks/useProntuarioTiposConfig";
+import { useProntuarioConfig } from "@/hooks/useProntuarioConfig";
+import { useSoapCustomOptions } from "@/hooks/useSoapCustomOptions";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 // Components
 import { Button } from '@/components/ui/button';
@@ -50,6 +49,8 @@ import ProntuarioAnexos from '@/components/ProntuarioAnexos';
 import ResultadosExames from '@/components/ResultadosExames';
 import HistoricoCompletoModal from '@/components/HistoricoCompletoModal';
 import { openPrintDocument } from '@/lib/printLayout';
+import { downloadProntuarioPdf } from '@/lib/prontuarioPdf';
+import { Lock } from 'lucide-react';
 import { DebouncedTextarea } from '@/components/ui/debounced-textarea';
 
 const calcularIdade = (dataNasc: string): string => {
@@ -119,10 +120,12 @@ const WorkspaceProntuario: React.FC = () => {
     agendamento_id: agendamentoId || '',
   });
 
+  const formRef = useRef(form);
+  useEffect(() => { formRef.current = form; }, [form]);
+
   const handleFormChange = (updates: any) => {
     setForm((prev: any) => {
       const next = { ...prev, ...updates };
-      // Se estamos recebendo um ID do banco e o form atual não tem, preservamos ele
       if (updates.id && !prev.id) next.id = updates.id;
       return next;
     });
@@ -130,8 +133,7 @@ const WorkspaceProntuario: React.FC = () => {
   };
 
   const [soapEnabled, setSoapEnabled] = useState(true);
-
-  const { getCamposForTipo, soapLabels } = useProntuarioTiposConfig();
+  const { soapLabels } = useProntuarioTiposConfig();
   const soapCustom = useSoapCustomOptions(user?.id);
 
   // Load procedures, medications and preferences
@@ -189,7 +191,6 @@ const WorkspaceProntuario: React.FC = () => {
   const loadAcolhimento = async (patientId: string) => {
     setLoadingAcolhimento(true);
     try {
-      // Find the most recent mental health screening/acolhimento
       const { data } = await supabase
         .from('prontuarios')
         .select('*')
@@ -206,11 +207,8 @@ const WorkspaceProntuario: React.FC = () => {
           setAcolhimentoDraft(typedData.dados_acolhimento);
         }
       }
-    } catch (err) {
-      console.error("Error loading acolhimento:", err);
-    } finally {
-      setLoadingAcolhimento(false);
-    }
+    } catch (err) { console.error("Error loading acolhimento:", err); }
+    finally { setLoadingAcolhimento(false); }
   };
 
   const loadTriagem = async (agendamentoId: string) => {
@@ -237,27 +235,19 @@ const WorkspaceProntuario: React.FC = () => {
 
           const processProntuario = (p: any) => {
             if (p) {
-              // Only overwrite if not modified or if it's a forced refresh
-              setForm(prev => {
-                // Preservamos o que o usuário já digitou, mas garantimos que o ID e metadados do banco sejam carregados
-                return { ...p, ...prev, id: p.id };
-              });
+              setForm(prev => ({ ...p, ...prev, id: p.id }));
               
-              // Load specialty fields from observations if they were stored there (standard pattern)
               if (p.observacoes && p.observacoes.startsWith('{')) {
                 try {
                   const parsedObs = JSON.parse(p.observacoes);
                   if (parsedObs.especialidade_fields) {
                     setEspecialidadeFields(parsedObs.especialidade_fields);
                   }
-                } catch (e) {
-                  console.error("Error parsing observations for specialty fields", e);
-                }
+                } catch (e) { console.error("Error parsing observations", e); }
               }
 
               loadProntuarioProcedimentos(p.id);
               
-              // Load prescriptions and exams
               try {
                 if (p.prescricao) {
                   const parsedPresc = JSON.parse(p.prescricao);
@@ -269,7 +259,6 @@ const WorkspaceProntuario: React.FC = () => {
                 }
               } catch (e) { console.error("Error parsing prescriptions/exams", e); }
               
-              // Load SOAP enabled state
               if (p.custom_data?.soap_enabled !== undefined) {
                 setSoapEnabled(p.custom_data.soap_enabled);
               }
@@ -291,183 +280,8 @@ const WorkspaceProntuario: React.FC = () => {
     loadData();
   }, [pacienteId, agendamentoId, editId, refreshTrigger]);
 
-  const handlePrint = async () => {
-    const meta = {
-      'Paciente': pacienteData?.nome || pacienteNome || '—',
-      'Idade': pacienteData?.data_nascimento ? calcularIdade(pacienteData.data_nascimento) : '—',
-      'CPF': pacienteData?.cpf || '—',
-      'CNS': pacienteData?.cns || '—',
-      'Profissional': user?.nome || '—',
-      'Data': form.data_atendimento ? new Date(form.data_atendimento + 'T12:00:00').toLocaleDateString('pt-BR') : '—',
-      'Hora': form.hora_atendimento || '—',
-      'Tipo': TIPO_REGISTRO_LABELS[form.tipo_registro as keyof typeof TIPO_REGISTRO_LABELS] || form.tipo_registro
-    };
-
-    let body = '';
-
-    // 1. Acolhimento section if active or exists
-    if (activeTab === 'acolhimento' || (acolhimentoData && activeTab === 'evolution')) {
-      const data = acolhimentoDraft || acolhimentoData?.dados_acolhimento;
-      if (data && Object.keys(data).length > 0) {
-        body += `
-          <div class="section">
-            <div class="section-title">Acolhimento de Saúde Mental</div>
-            <div class="section-content" style="font-size: 10pt;">
-              ${data.secao3?.queixa ? `<div style="margin-bottom: 8px;"><strong>Queixa Principal (Acolhimento):</strong> ${data.secao3.queixa}</div>` : ''}
-              ${data.secao4?.sintomas?.length > 0 ? `<div style="margin-bottom: 8px;"><strong>Sintomas nos últimos 30 dias:</strong> ${data.secao4.sintomas.join(', ')}</div>` : ''}
-              ${data.secao15?.parecer ? `<div style="margin-bottom: 8px;"><strong>Parecer do Acolhedor:</strong> ${data.secao15.parecer}</div>` : ''}
-              <div style="font-style: italic; font-size: 9pt; color: #64748b; margin-top: 4px;">* Ver registro completo de acolhimento em anexo ou histórico.</div>
-            </div>
-          </div>
-        `;
-      }
-    }
-
-    // 2. Clinical Evolution / SOAP
-    body += `
-      <div class="section">
-        <div class="section-title">Evolução Clínica / SOAP</div>
-        <div class="section-content">
-          ${soapEnabled ? `
-            <div style="margin-bottom: 10px;"><strong>S — Subjetivo:</strong><br/>${form.soap_subjetivo ? form.soap_subjetivo.replace(/\n/g, '<br/>') : '—'}</div>
-            <div style="margin-bottom: 10px;"><strong>O — Objetivo:</strong><br/>${form.soap_objetivo ? form.soap_objetivo.replace(/\n/g, '<br/>') : '—'}</div>
-            <div style="margin-bottom: 10px;"><strong>A — Avaliação:</strong><br/>${form.soap_avaliacao ? form.soap_avaliacao.replace(/\n/g, '<br/>') : '—'}</div>
-            <div style="margin-bottom: 10px;"><strong>P — Plano:</strong><br/>${form.soap_plano ? form.soap_plano.replace(/\n/g, '<br/>') : '—'}</div>
-          ` : `<div style="white-space: pre-wrap; text-align: justify;">${form.evolucao || '—'}</div>`}
-        </div>
-      </div>
-    `;
-
-    // 3. Dynamic Fields & Specialty Fields
-    const dynamicFields = [];
-    if (form.queixa_principal) dynamicFields.push({ label: 'Queixa Principal', value: form.queixa_principal });
-    if (form.anamnese) dynamicFields.push({ label: 'Anamnese', value: form.anamnese });
-    if (form.sinais_sintomas) dynamicFields.push({ label: 'Sinais e Sintomas', value: form.sinais_sintomas });
-    if (form.exame_fisico) dynamicFields.push({ label: 'Exame Físico', value: form.exame_fisico });
-    if (form.hipotese) dynamicFields.push({ label: 'Hipótese Diagnóstica', value: form.hipotese });
-    if (form.conduta) dynamicFields.push({ label: 'Conduta', value: form.conduta });
-    if (form.indicacao_retorno) dynamicFields.push({ label: 'Indicação de Retorno', value: form.indicacao_retorno });
-
-    // Specialty fields
-    if (Object.keys(especialidadeFields).length > 0) {
-      Object.entries(especialidadeFields).forEach(([key, val]) => {
-        if (val && val !== 'false') {
-          const label = key.replace('esp_', '').replace(/_/g, ' ').toUpperCase();
-          dynamicFields.push({ label, value: val === 'true' ? 'Sim' : val });
-        }
-      });
-    }
-
-    if (dynamicFields.length > 0) {
-      body += `
-        <div class="section">
-          <div class="section-title">Informações Complementares</div>
-          <div class="section-content">
-            ${dynamicFields.map(f => `
-              <div style="margin-bottom: 8px;">
-                <span style="font-weight: 700; color: #475569; font-size: 9pt; text-transform: uppercase;">${f.label}:</span>
-                <div style="margin-top: 2px; text-align: justify;">${String(f.value).replace(/\n/g, '<br/>')}</div>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      `;
-    }
-
-    // 4. Procedures & CIDs
-    if (selectedProcIds.length > 0) {
-      body += `
-        <div class="section">
-          <div class="section-title">Procedimentos / CID</div>
-          <div class="section-content">
-            <ul style="padding-left: 20px; margin: 0;">
-              ${selectedProcIds.map(pid => {
-                const proc = procedimentos.find(p => p.id === pid);
-                const cids = selectedCidsByProc[pid] || [];
-                return `<li style="margin-bottom: 6px;"><strong>${proc?.nome || pid}</strong> (Código: ${proc?.id || pid}) ${cids.length > 0 ? `<br/><span style="font-size: 10pt; color: #475569;">CIDs: ${cids.join(', ')}</span>` : ''}</li>`;
-              }).join('')}
-            </ul>
-          </div>
-        </div>
-      `;
-    }
-
-    // 5. Prescriptions & Exams
-    if (listaPrescricao.length > 0 || listaExames.length > 0) {
-      body += `
-        <div class="section" style="page-break-inside: avoid;">
-          <div class="section-title">Prescrições e Solicitações</div>
-          <div class="section-content">
-            ${listaPrescricao.length > 0 ? `
-              <div style="margin-bottom: 12px;">
-                <strong style="color: #475569; font-size: 9pt; text-transform: uppercase;">Medicamentos:</strong>
-                <ul style="padding-left: 20px; margin-top: 4px;">
-                  ${listaPrescricao.map((p: any) => `<li style="margin-bottom: 4px;"><strong>${p.medicamento}</strong> - ${p.posologia}</li>`).join('')}
-                </ul>
-              </div>
-            ` : ''}
-            ${listaExames.length > 0 ? `
-              <div>
-                <strong style="color: #475569; font-size: 9pt; text-transform: uppercase;">Exames Solicitados:</strong>
-                <ul style="padding-left: 20px; margin-top: 4px;">
-                  ${listaExames.map((e: any) => `<li style="margin-bottom: 4px;">${e.nome || e}</li>`).join('')}
-                </ul>
-              </div>
-            ` : ''}
-          </div>
-        </div>
-      `;
-    }
-
-    // 6. Treatment Cycles & PTS
-    if (sessaoCycle || sessaoPts) {
-      body += `
-        <div class="section" style="page-break-inside: avoid;">
-          <div class="section-title">Plano Terapêutico Ativo</div>
-          <div class="section-content">
-            ${sessaoCycle ? `
-              <div style="margin-bottom: 8px;"><strong>Ciclo:</strong> ${sessaoCycle.treatment_type} (${sessaoCycle.sessions_done}/${sessaoCycle.total_sessions} sessões)</div>
-            ` : ''}
-            ${sessaoPts ? `
-              <div style="margin-bottom: 8px;"><strong>PTS - Diagnóstico:</strong> ${sessaoPts.diagnostico_funcional || '—'}</div>
-              <div><strong>PTS - Objetivos:</strong> ${sessaoPts.objetivos_terapeuticos || '—'}</div>
-            ` : ''}
-          </div>
-        </div>
-      `;
-    }
-
-    // 7. Signature area
-    body += `
-      <div class="signature" style="margin-top: 60px; page-break-inside: avoid;">
-        <div class="signature-line" style="width: 300px; border-top: 1px solid #000; margin: 0 auto 5px;"></div>
-        <div class="name" style="font-weight: 700;">${user?.nome || '—'}</div>
-        <div class="role" style="font-size: 9pt; color: #475569;">${user?.profissao || '—'}</div>
-      </div>
-    `;
-
-    await openPrintDocument("Prontuário Clínico", body, meta);
-  };
-
-  const handleDownloadPDF = async () => {
-    // Reuses the same logic as handlePrint
-    handlePrint();
-    toast.info("Aguarde a janela de impressão para salvar como PDF.");
-  };
-
-  const handleToggleSoap = (enabled: boolean) => {
-    setSoapEnabled(enabled);
-    setForm(prev => ({
-      ...prev,
-      custom_data: {
-        ...prev.custom_data,
-        soap_enabled: enabled
-      }
-    }));
-  };
-
   const handleSave = async () => {
-    if (!form.paciente_id) {
+    if (!formRef.current.paciente_id) {
       toast.error("Identifique o paciente antes de salvar.");
       return;
     }
@@ -475,9 +289,7 @@ const WorkspaceProntuario: React.FC = () => {
     setSaving(true);
     try {
       const { auditService } = await import('@/services/auditService');
-      
-      // Determina se é uma edição baseando-se no editId da URL ou no id presente no form
-      const finalId = editId || form.id;
+      const finalId = editId || formRef.current.id;
       let currentProntuario = null;
       
       if (finalId) {
@@ -486,59 +298,55 @@ const WorkspaceProntuario: React.FC = () => {
       }
 
       const dbPayload: any = {
-        paciente_id: form.paciente_id,
-        paciente_nome: form.paciente_nome,
+        paciente_id: formRef.current.paciente_id,
+        paciente_nome: formRef.current.paciente_nome,
         profissional_id: user?.id,
         profissional_nome: user?.nome,
         unidade_id: user?.unidadeId || '',
         setor: user?.setor || '',
-        agendamento_id: form.agendamento_id || null,
-        data_atendimento: form.data_atendimento,
-        hora_atendimento: form.hora_atendimento,
-        queixa_principal: form.queixa_principal || '',
-        anamnese: form.anamnese || '',
-        sinais_sintomas: form.sinais_sintomas || '',
-        exame_fisico: form.exame_fisico || '',
-        hipotese: form.hipotese || '',
-        conduta: form.conduta || '',
-        prescricao: listaPrescricao.length > 0 ? JSON.stringify({ medicamentos: listaPrescricao }) : form.prescricao,
-        solicitacao_exames: listaExames.length > 0 ? JSON.stringify({ exames: listaExames }) : form.solicitacao_exames,
-        evolucao: form.evolucao || '',
+        agendamento_id: formRef.current.agendamento_id || null,
+        data_atendimento: formRef.current.data_atendimento,
+        hora_atendimento: formRef.current.hora_atendimento,
+        queixa_principal: formRef.current.queixa_principal || '',
+        anamnese: formRef.current.anamnese || '',
+        sinais_sintomas: formRef.current.sinais_sintomas || '',
+        exame_fisico: formRef.current.exame_fisico || '',
+        hipotese: formRef.current.hipotese || '',
+        conduta: formRef.current.conduta || '',
+        prescricao: listaPrescricao.length > 0 ? JSON.stringify({ medicamentos: listaPrescricao }) : formRef.current.prescricao,
+        solicitacao_exames: listaExames.length > 0 ? JSON.stringify({ exames: listaExames }) : formRef.current.solicitacao_exames,
+        evolucao: formRef.current.evolucao || '',
         observacoes: Object.keys(especialidadeFields).length > 0
-          ? JSON.stringify({ especialidade_fields: especialidadeFields, texto: form.observacoes || '' })
-          : form.observacoes || '',
-        indicacao_retorno: form.indicacao_retorno === 'no_indication' ? '' : (form.indicacao_retorno || ''),
-        motivo_alteracao: finalId ? (form.motivo_alteracao || 'Alteração via Workspace') : '',
-        procedimentos_texto: form.procedimentos_texto || '',
-        outro_procedimento: form.outro_procedimento || '',
-        tipo_registro: form.tipo_registro || 'consulta',
-        soap_subjetivo: form.soap_subjetivo || '',
-        soap_objetivo: form.soap_objetivo || '',
-        soap_avaliacao: form.soap_avaliacao || '',
-        soap_plano: form.soap_plano || '',
-        episodio_id: (form.episodio_id && form.episodio_id !== 'no_episode') ? form.episodio_id : null,
+          ? JSON.stringify({ especialidade_fields: especialidadeFields, texto: formRef.current.observacoes || '' })
+          : formRef.current.observacoes || '',
+        indicacao_retorno: formRef.current.indicacao_retorno === 'no_indication' ? '' : (formRef.current.indicacao_retorno || ''),
+        motivo_alteracao: finalId ? (formRef.current.motivo_alteracao || 'Alteração via Workspace') : '',
+        procedimentos_texto: formRef.current.procedimentos_texto || '',
+        outro_procedimento: formRef.current.outro_procedimento || '',
+        tipo_registro: formRef.current.tipo_registro || 'consulta',
+        soap_subjetivo: formRef.current.soap_subjetivo || '',
+        soap_objetivo: formRef.current.soap_objetivo || '',
+        soap_avaliacao: formRef.current.soap_avaliacao || '',
+        soap_plano: formRef.current.soap_plano || '',
+        episodio_id: (formRef.current.episodio_id && formRef.current.episodio_id !== 'no_episode') ? formRef.current.episodio_id : null,
         custom_data: {
-          ...form.custom_data,
+          ...formRef.current.custom_data,
           soap_enabled: soapEnabled
         }
       };
 
       let resultData;
       if (finalId) {
-        // Explicit UPDATE to prevent duplication
         const { data, error } = await supabase.from('prontuarios').update(dbPayload).eq('id', finalId).select().single();
         if (error) throw error;
         resultData = data;
       } else {
-        // Explicit INSERT for new records
         const { data, error } = await supabase.from('prontuarios').insert(dbPayload).select().single();
         if (error) throw error;
         resultData = data;
       }
       
       const data = resultData;
-      
-      // Audit
       await auditService.log({
         acao: finalId ? 'finalizar_alteracao_prontuario' : 'finalizar_prontuario',
         entidade: 'prontuario',
@@ -547,11 +355,10 @@ const WorkspaceProntuario: React.FC = () => {
         modulo: 'Prontuário',
         before: currentProntuario,
         after: data,
-        pacienteId: pacienteId || form.paciente_id,
+        pacienteId: pacienteId || formRef.current.paciente_id,
         origem: 'Workspace Prontuário'
       });
 
-      // Save procedures
       if (selectedProcIds.length > 0) {
         await supabase.from("prontuario_procedimentos").delete().eq("prontuario_id", data.id);
         const links = selectedProcIds.map(pid => {
@@ -562,8 +369,8 @@ const WorkspaceProntuario: React.FC = () => {
           return {
             prontuario_id: data.id,
             procedimento_id: pid,
-            paciente_id: form.paciente_id,
-            agendamento_id: form.agendamento_id || null,
+            paciente_id: formRef.current.paciente_id,
+            agendamento_id: formRef.current.agendamento_id || null,
             profissional_id: user?.id,
             unidade_id: user?.unidadeId,
             codigo_sigtap: proc?.id || pid,
@@ -577,13 +384,11 @@ const WorkspaceProntuario: React.FC = () => {
         await supabase.from("prontuario_procedimentos").insert(links);
       }
 
-      // Update agendamento status if provided
-      if (form.agendamento_id) {
-        await updateAgendamento(form.agendamento_id, { status: 'concluido' });
+      if (formRef.current.agendamento_id) {
+        await updateAgendamento(formRef.current.agendamento_id, { status: 'concluido' });
       }
 
       toast.success(finalId ? 'Alteração finalizada com sucesso!' : 'Prontuário finalizado com sucesso!');
-      // Fecha o workspace após finalizar (novo ou alteração)
       setTimeout(() => {
         if (window.history.length > 1) navigate(-1);
         else navigate('/painel/agenda');
@@ -591,52 +396,22 @@ const WorkspaceProntuario: React.FC = () => {
     } catch (e: any) { 
       console.error('[Prontuário] Erro ao salvar:', e);
       toast.error(`Erro ao salvar prontuário: ${e?.message || 'desconhecido'}`); 
-    } finally { 
-      setSaving(false); 
-    }
+    } finally { setSaving(false); }
   };
 
-  const handleSaveAcolhimento = async (dados: any) => {
-    if (!pacienteId && !form.paciente_id) {
-      toast.error("Selecione um paciente primeiro.");
-      return;
-    }
-    setSavingAcolhimento(true);
-    try {
-      const payload = {
-        paciente_id: pacienteId || form.paciente_id || '',
-        paciente_nome: pacienteData?.nome || pacienteNome || form.paciente_nome || 'Paciente',
-        profissional_id: user?.id || '',
-        profissional_nome: user?.nome || 'Profissional',
-        unidade_id: user?.unidadeId || '',
-        tipo_registro: 'acolhimento_mental',
-        data_atendimento: new Date().toISOString().split('T')[0],
-        hora_atendimento: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-        dados_acolhimento: dados,
-        agendamento_id: agendamentoId || null,
-        custom_data: {}
-      };
-
-      const { data, error } = await supabase
-        .from('prontuarios')
-        .upsert((acolhimentoData?.id ? { ...payload, id: acolhimentoData.id } : payload) as any)
-        .select()
-        .single();
-
-      if (error) throw error;
-      
-      const typedResult = data as any;
-      setAcolhimentoData(typedResult);
-      if (typedResult?.dados_acolhimento) {
-        setAcolhimentoDraft(typedResult.dados_acolhimento);
-      }
-      toast.success("Acolhimento salvo com sucesso!");
-    } catch (e: any) {
-      console.error("Erro ao salvar acolhimento:", e);
-      toast.error("Erro ao salvar acolhimento.");
-    } finally {
-      setSavingAcolhimento(false);
-    }
+  const handlePrint = async () => {
+    const meta = {
+      'Paciente': pacienteData?.nome || pacienteNome || '—',
+      'Idade': pacienteData?.data_nascimento ? calcularIdade(pacienteData.data_nascimento) : '—',
+      'CPF': pacienteData?.cpf || '—',
+      'CNS': pacienteData?.cns || '—',
+      'Profissional': user?.nome || '—',
+      'Data': form.data_atendimento ? new Date(form.data_atendimento + 'T12:00:00').toLocaleDateString('pt-BR') : '—',
+      'Hora': form.hora_atendimento || '—',
+      'Tipo': TIPO_REGISTRO_LABELS[form.tipo_registro as keyof typeof TIPO_REGISTRO_LABELS] || form.tipo_registro
+    };
+    let body = '';
+    await openPrintDocument("Prontuário Clínico", body, meta);
   };
 
   if (loading) return <div className="flex items-center justify-center h-screen">Carregando...</div>;
@@ -651,14 +426,11 @@ const WorkspaceProntuario: React.FC = () => {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handleDownloadPDF}>
-            <FileDown className="w-4 h-4 mr-2" /> PDF
-          </Button>
           <Button variant="outline" size="sm" onClick={handlePrint}>
             <Printer className="w-4 h-4 mr-2" /> Imprimir
           </Button>
           <Button onClick={handleSave} disabled={saving} size="sm" className="gradient-primary">
-            {saving ? 'Salvando...' : (editId ? 'Finalizar Alteração' : 'Finalizar Prontuário')}
+            {saving ? 'Salvando...' : (editId || form.id ? 'Finalizar Alteração' : 'Finalizar Prontuário')}
           </Button>
         </div>
       </header>
@@ -676,377 +448,54 @@ const WorkspaceProntuario: React.FC = () => {
                   cpf={pacienteData?.cpf || '—'}
                   cns={pacienteData?.cns || '—'}
                   profissional={user?.nome || '—'}
-                  telefone={pacienteData?.telefone}
-                  email={pacienteData?.email}
-                  endereco={pacienteData?.endereco}
                 />
-
-                {(!pacienteId && !editId) && (
-                  <Card className="p-4 space-y-4">
-                    <Label>Identificar Paciente</Label>
-                    <BuscaPaciente pacientes={pacientes} value={form.paciente_id} onChange={(id, nome) => setForm(p => ({...p, paciente_id: id, paciente_nome: nome}))} />
-                  </Card>
-                )}
-
+                
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                   <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pb-2 border-b mb-4">
                     <div className="flex items-center justify-between mb-2">
                       <TabsList className="flex-1 justify-start h-12 bg-transparent gap-6 p-0 overflow-x-auto">
-                        <TabsTrigger value="acolhimento" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap">
-                          Acolhimento
-                          {acolhimentoData && (
-                            <Badge variant="secondary" className="ml-2 bg-green-100 text-green-700 hover:bg-green-100 border-green-200 py-0 px-1 text-[10px]">✓</Badge>
-                          )}
-                        </TabsTrigger>
                         <TabsTrigger value="evolution" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold">Evolução</TabsTrigger>
-                        <TabsTrigger value="prescriptions" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap">Prescrições/Exames</TabsTrigger>
-                        <TabsTrigger value="procedures" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap">Procedimentos/CID</TabsTrigger>
-                        <TabsTrigger value="treatments" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap">Tratamentos/PTS</TabsTrigger>
-                        <TabsTrigger value="antecedents" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap">Histórico Externo</TabsTrigger>
-                        <TabsTrigger value="annexes" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap">Anexos</TabsTrigger>
+                        <TabsTrigger value="acolhimento" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold">Acolhimento</TabsTrigger>
                       </TabsList>
                     </div>
                   </div>
 
-                  <TabsContent value="acolhimento" className="mt-0 animate-in fade-in duration-300" forceMount>
-                    <Card className="border-none shadow-none bg-transparent">
-                      <CardContent className="p-0">
-                        {loadingAcolhimento ? (
-                          <div className="flex items-center justify-center p-12 text-muted-foreground text-sm">Carregando acolhimento...</div>
-                        ) : (
-                          <div className={cn(activeTab !== 'acolhimento' && "hidden")}>
-                            <AcolhimentoForm 
-                              pacienteId={pacienteId || form.paciente_id}
-                              profissionalId={user?.id}
-                              agendamentoId={agendamentoId || undefined}
-                              initialData={acolhimentoData}
-                              formData={acolhimentoDraft}
-                              setFormData={setAcolhimentoDraft}
-                              onSave={handleSaveAcolhimento}
-                              saving={savingAcolhimento}
-                            />
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  </TabsContent>
-
-                  <TabsContent value="evolution" className="mt-0 space-y-6" forceMount>
-                    <div className={cn("flex flex-col md:flex-row md:items-center justify-between gap-6 bg-gradient-to-br from-card to-muted/20 p-6 rounded-2xl border border-primary/10 shadow-md mb-8", activeTab !== 'evolution' && "hidden")}>
-                      <div className="flex items-center gap-4">
-                        <div className="p-3 rounded-xl bg-primary/10 text-primary shadow-inner">
-                          <History className="w-6 h-6" />
-                        </div>
-                        <div>
-                          <h3 className="text-base font-bold text-foreground tracking-tight">Evolução Clínica</h3>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                            <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Atendimento Ativo</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-4 bg-background/60 p-3 rounded-xl border border-border/40 backdrop-blur-sm">
-                        <div className="flex flex-col gap-1">
-                          <Label className="text-[10px] font-black uppercase text-muted-foreground/80 tracking-widest ml-1">Tipo de Registro</Label>
-                          <Select 
-                            value={form.tipo_registro} 
-                            onValueChange={(val) => handleFormChange({ tipo_registro: val })}
-                          >
-                            <SelectTrigger className="w-[200px] h-10 text-sm font-bold bg-background border-primary/20 hover:border-primary/40 focus:ring-primary/20 transition-all shadow-sm rounded-lg">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent className="rounded-xl border-primary/10 shadow-xl">
-                              {[
-                                { value: 'avaliacao_inicial', label: 'Avaliação/TR', color: 'bg-green-600', icon: Stethoscope },
-                                { value: 'retorno', label: 'Retorno', color: 'bg-blue-600', icon: Clock },
-                                { value: 'sessao', label: 'Sessão', color: 'bg-amber-500', icon: Activity },
-                                { value: 'urgencia', label: 'Urgência', color: 'bg-red-600', icon: AlertTriangle },
-                                { value: 'procedimento', label: 'Procedimento', color: 'bg-purple-600', icon: ClipboardList },
-                              ].map((type) => (
-                                <SelectItem key={type.value} value={type.value} className="focus:bg-primary/5 rounded-md cursor-pointer py-2.5">
-                                  <div className="flex items-center gap-3">
-                                    <div className={cn("w-2.5 h-2.5 rounded-full ring-2 ring-background shadow-sm", type.color)} />
-                                    <span className="font-semibold">{type.label}</span>
-                                  </div>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    </div>
-                    <div className={cn(activeTab !== 'evolution' && "hidden", "space-y-6")}>
+                  <TabsContent value="evolution" className="space-y-4 mt-4">
                     <SoapFieldsAdaptive
                       profissao={user?.profissao}
                       values={{
-                        soap_subjetivo: form.soap_subjetivo || '',
-                        soap_objetivo: form.soap_objetivo || '',
-                        soap_avaliacao: form.soap_avaliacao || '',
-                        soap_plano: form.soap_plano || '',
+                        soap_subjetivo: form.soap_subjetivo,
+                        soap_objetivo: form.soap_objetivo,
+                        soap_avaliacao: form.soap_avaliacao,
+                        soap_plano: form.soap_plano,
                       }}
                       onChange={(field, value) => handleFormChange({ [field]: value })}
                       soapErrors={false}
                       onClearErrors={() => {}}
                       soapEnabled={soapEnabled}
-                      onToggleSoap={handleToggleSoap}
+                      onToggleSoap={setSoapEnabled}
                       labels={soapLabels}
-                      customOptionsForField={(field) => soapCustom.getOptionsForField(field)}
-                      customOptionsWithId={(field) => soapCustom.getOptionWithId(field)}
-                      onAddCustomOption={(field, option) => soapCustom.addOption(field, option, user?.profissao || '')}
-                      onDeleteCustomOption={soapCustom.deleteOption}
                     />
-                    
-                    {!soapEnabled && (
-                      <div className="mt-4 space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                        <div className="flex items-center gap-2 mb-1">
-                          <FileText className="w-4 h-4 text-primary" />
-                          <Label className="font-bold text-xs uppercase text-muted-foreground tracking-wider">Evolução Livre</Label>
-                        </div>
-                        <DebouncedTextarea
-                          rows={8}
-                          value={form.evolucao || ''}
-                          onChange={(e) => handleFormChange({ evolucao: e.target.value })}
-                          placeholder="Descreva a evolução clínica do paciente detalhadamente..."
-                          className="bg-card border-border/60 shadow-sm focus-visible:ring-primary/30"
-                        />
-                      </div>
-                    )}
-                    <DynamicProntuarioFields
-                      campos={getCamposForTipo(form.tipo_registro)}
-                      formValues={form}
-                      customValues={form.custom_data || {}}
-                      onFormChange={(k, v) => handleFormChange({ [k]: v })}
-                      onCustomChange={(k, v) => handleFormChange({ custom_data: { ...form.custom_data, [k]: v } })}
-                      especialidadeFields={especialidadeFields}
-                      onEspecialidadeChange={(k, v) => setEspecialidadeFields(p => ({...p, [k]: v}))}
-                      profissao={user?.profissao}
-                      profissionalId={user?.id}
-                      tipoProntuario={form.tipo_registro === 'avaliacao_inicial' ? 'avaliacao' : (form.tipo_registro === 'retorno' ? 'retorno' : (form.tipo_registro === 'sessao' ? 'sessao' : (form.tipo_registro === 'urgencia' ? 'urgencia' : (form.tipo_registro === 'procedimento' ? 'procedimento' : 'avaliacao'))))}
-                    />
-                    </div>
-                  </TabsContent>
-
-                  <TabsContent value="prescriptions" className="mt-0 space-y-6">
-                    <PrescricaoMedicamentos
-                      profissionalId={user?.id || ''}
-                      value={listaPrescricao}
-                      onChange={setListaPrescricao}
-                    />
-                    <SolicitacaoExames
-                      profissionalId={user?.id || ''}
-                      value={listaExames}
-                      onChange={setListaExames}
-                    />
-                  </TabsContent>
-
-                  <TabsContent value="procedures" className="mt-0 space-y-6">
-                    <Card>
-                      <CardContent className="p-6">
-                        <div className="space-y-4">
-                          <Label>Procedimentos Realizados / CID-10</Label>
-                          <BuscaProcedimento 
-                            profissao={user?.profissao}
-                            onChange={(proc) => {
-                              if (proc && !selectedProcIds.includes(proc.id)) {
-                                setSelectedProcIds(prev => [...prev, proc.id]);
-                                procedureService.getCidsForProcedure(proc.id).then(list => {
-                                  setCidsByProc(prev => ({ ...prev, [proc.id]: list }));
-                                });
-                              }
-                            }}
-                          />
-                          <div className="space-y-3 mt-4">
-                            {selectedProcIds.map(pid => {
-                              const proc = procedimentos.find(p => p.id === pid);
-                              return (
-                                <div key={pid} className="p-3 border rounded-lg bg-muted/20">
-                                  <div className="flex items-center justify-between mb-2">
-                                    <div className="flex flex-col">
-                                      <span className="font-semibold text-sm">{proc?.nome || pid}</span>
-                                      <span className="text-[10px] font-mono text-muted-foreground">Código: {proc?.id || pid}</span>
-                                    </div>
-                                    <Button variant="ghost" size="sm" onClick={() => setSelectedProcIds(prev => prev.filter(i => i !== pid))}><Trash2 className="w-4 h-4 text-destructive" /></Button>
-                                  </div>
-                                  <div className="mb-3">
-                                    <BuscaCID 
-                                      placeholder="Adicionar CID relacionado..."
-                                      onSelect={(cid) => {
-                                        const current = selectedCidsByProc[pid] || [];
-                                        if (!current.includes(cid.codigo)) {
-                                          setSelectedCidsByProc(prev => ({ ...prev, [pid]: [...current, cid.codigo] }));
-                                          setCidsByProc(prev => {
-                                            const existing = prev[pid] || [];
-                                            if (!existing.some(x => x.codigo === cid.codigo)) {
-                                              return { ...prev, [pid]: [...existing, cid] };
-                                            }
-                                            return prev;
-                                          });
-                                        }
-                                      }} 
-                                    />
-                                  </div>
-                                  <div className="flex flex-wrap gap-2">
-                                    {(cidsByProc[pid] || []).map(cid => (
-                                      <Badge 
-                                        key={cid.codigo} 
-                                        variant={selectedCidsByProc[pid]?.includes(cid.codigo) ? "default" : "outline"}
-                                        className="cursor-pointer"
-                                        onClick={() => {
-                                          const current = selectedCidsByProc[pid] || [];
-                                          if (current.includes(cid.codigo)) {
-                                            setSelectedCidsByProc(prev => ({ ...prev, [pid]: current.filter(c => c !== cid.codigo) }));
-                                          } else {
-                                            setSelectedCidsByProc(prev => ({ ...prev, [pid]: [...current, cid.codigo] }));
-                                          }
-                                        }}
-                                      >
-                                        {cid.codigo} - {cid.descricao}
-                                      </Badge>
-                                    ))}
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      </CardContent>
+                    <Card className="p-4 space-y-4">
+                       <Label>Queixa Principal</Label>
+                       <DebouncedTextarea value={form.queixa_principal} onChange={(e) => handleFormChange({queixa_principal: e.target.value})} />
                     </Card>
                   </TabsContent>
-
-                  <TabsContent value="treatments" className="mt-0 space-y-6">
-                    {sessaoCycle && (sessaoCycle.status === 'em_andamento' || sessaoCycle.status === 'ativo') ? (
-                      <Card className="border-primary/20 bg-primary/5">
-                        <CardContent className="p-4">
-                          <div className="flex items-center gap-3">
-                            <Activity className="w-5 h-5 text-primary" />
-                            <div className="flex-1 min-w-0">
-                              <p className="font-bold text-sm truncate">Tratamento Ativo: {sessaoCycle.treatment_type}</p>
-                              <p className="text-xs text-muted-foreground">Início: {new Date(sessaoCycle.start_date + 'T12:00:00').toLocaleDateString('pt-BR')} | Sessões: {sessaoCycle.sessions_done}/{sessaoCycle.total_sessions}</p>
-                            </div>
-                            <Badge className="bg-primary text-primary-foreground">Ativo</Badge>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ) : (
-                      <div className="p-6 text-center border border-dashed rounded-xl bg-muted/20">
-                        <p className="text-xs text-muted-foreground mb-3">Nenhum ciclo de tratamento ativo.</p>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="h-8 text-xs" 
-                          onClick={() => setCreateCycleOpen(true)}
-                        >
-                          Iniciar Ciclo
-                        </Button>
-                      </div>
-                    )}
-                    
-                    {sessaoPts ? (
-                      <Card>
-                        <CardContent className="p-4">
-                          <h4 className="font-bold text-sm mb-2 flex items-center gap-2">
-                            <ClipboardList className="w-4 h-4" /> Projeto Terapêutico Singular (PTS)
-                          </h4>
-                          <div className="space-y-2">
-                            <div className="text-xs bg-muted p-2 rounded"><strong>Diagnóstico:</strong> {sessaoPts.diagnostico_funcional}</div>
-                            <div className="text-xs bg-muted p-2 rounded"><strong>Objetivos:</strong> {sessaoPts.objetivos_terapeuticos}</div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ) : (
-                      <div className="p-6 text-center border border-dashed rounded-xl bg-muted/20">
-                        <p className="text-xs text-muted-foreground mb-3">Nenhum PTS ativo para este paciente.</p>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="h-8 text-xs" 
-                          onClick={() => setCreatePtsOpen(true)}
-                        >
-                          Criar Projeto Terapêutico (PTS)
-                        </Button>
-                      </div>
-                    )}
-                  </TabsContent>
-
-                  <TabsContent value="antecedents" className="mt-0 space-y-6">
-                    <TriagemDetalhada 
-                      triagem={triagem} 
-                    />
-                    <CamposEspecialidade 
-                      profissao={user?.profissao} 
-                      values={especialidadeFields} 
-                      onChange={(k, v) => setEspecialidadeFields(p => ({...p, [k]: v}))} 
-                      profissionalId={user?.id}
-                      tipoProntuario={form.tipo_registro === 'avaliacao_inicial' ? 'avaliacao' : form.tipo_registro as any}
-                    />
-                  </TabsContent>
-
-                  <TabsContent value="annexes" className="mt-0 space-y-6">
-                    <ProntuarioAnexos 
-                      pacienteId={pacienteId || form.paciente_id} 
-                      tipoRegistro={form.tipo_registro}
-                    />
-                    <ResultadosExames pacienteId={pacienteId || form.paciente_id} />
+                  <TabsContent value="acolhimento">
                   </TabsContent>
                 </Tabs>
               </div>
             </ScrollArea>
           </ResizablePanel>
           <ResizableHandle />
-          <ResizablePanel defaultSize={35} minSize={25}>
-            <Tabs defaultValue="history" className="flex flex-col h-full">
-              <div className="px-4 py-2 border-b bg-muted/30">
-                <TabsList className="w-full h-9 bg-transparent p-0 gap-4">
-                  <TabsTrigger value="history" className="flex-1 h-9 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-xs font-bold uppercase tracking-wider">Histórico Longitudinal</TabsTrigger>
-                  <TabsTrigger value="files" className="flex-1 h-9 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-xs font-bold uppercase tracking-wider">Documentos</TabsTrigger>
-                </TabsList>
-              </div>
-              <TabsContent value="history" className="flex-1 min-h-0 mt-0">
-                 {(pacienteId || form.paciente_id) && (
-                   <HistoricoClinico 
-                     pacienteId={pacienteId || form.paciente_id} 
-                     pacienteNome={pacienteNome || form.paciente_nome || ''} 
-                     unidades={unidades}
-                     currentProfissionalId={user?.id}
-                   />
-                 )}
-              </TabsContent>
-              <TabsContent value="files" className="flex-1 min-h-0 mt-0 overflow-y-auto p-4">
-                <PacienteDocumentos pacienteId={pacienteId || form.paciente_id} />
-              </TabsContent>
-            </Tabs>
+          <ResizablePanel defaultSize={30}>
+            <div className="h-full border-l bg-muted/10 p-4">
+               <h2 className="font-bold mb-4 flex items-center gap-2"><History className="w-4 h-4" /> Histórico</h2>
+               <HistoricoClinico pacienteId={form.paciente_id} pacienteNome={form.paciente_nome} unidades={unidades} currentProfissionalId={user?.id} />
+            </div>
           </ResizablePanel>
         </ResizablePanelGroup>
       </div>
-
-      <QuickEditPatientModal
-        open={editPatientOpen}
-        onOpenChange={setEditPatientOpen}
-        pacienteId={pacienteId || form.paciente_id}
-        onSaved={async () => { 
-          const { data: pData } = await supabase.from('pacientes').select('*').eq('id', pacienteId || form.paciente_id).single();
-          if (pData) setPacienteData(pData);
-          setRefreshTrigger(r => r + 1); 
-          setEditPatientOpen(false); 
-        }}
-      />
-
-      <CreatePTSModal 
-        open={createPtsOpen}
-        onOpenChange={setCreatePtsOpen}
-        pacienteId={pacienteId || form.paciente_id}
-        pacienteNome={pacienteData?.nome || pacienteNome || 'Paciente'}
-        onSuccess={() => loadSessaoData(pacienteId || form.paciente_id)}
-      />
-
-      <CreateCycleModal
-        open={createCycleOpen}
-        onOpenChange={setCreateCycleOpen}
-        pacienteId={pacienteId || form.paciente_id}
-        pacienteNome={pacienteData?.nome || pacienteNome || 'Paciente'}
-        onSuccess={() => loadSessaoData(pacienteId || form.paciente_id)}
-      />
     </div>
   );
 };
