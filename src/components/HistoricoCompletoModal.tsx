@@ -273,9 +273,15 @@ const EventDetail: React.FC<{ event: FullEvent }> = ({ event }) => {
   const hasExames = event.exames?.exames && event.exames.exames.length > 0;
   const hasVitals = event.sinaisVitais && Object.values(event.sinaisVitais).some(Boolean);
   const hasEspecialidade = event.especialidadeFields && Object.keys(event.especialidadeFields).length > 0;
+  const hasAcolhimento = !!event.dadosAcolhimento;
 
   return (
     <div className="mt-3 space-y-3 border-t pt-3 animate-in fade-in-0 slide-in-from-top-1 duration-200">
+      {/* Acolhimento */}
+      {hasAcolhimento && (
+        <AcolhimentoView data={event.dadosAcolhimento} />
+      )}
+
       {/* Falta Details */}
       {event.type === "falta" && event.faltaJustificativa && (
         <div className="space-y-1.5 p-3 rounded-lg bg-destructive/5 border border-destructive/10">
