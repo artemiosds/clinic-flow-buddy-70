@@ -3361,6 +3361,10 @@ const ProntuarioPage: React.FC = () => {
                   </div>
                 </div>
 
+                {viewerProntuario.dados_acolhimento && (
+                  <AcolhimentoView data={viewerProntuario.dados_acolhimento} />
+                )}
+
                 <TriagemInline viewerProntuario={viewerProntuario} />
 
                 {viewerProntuario.queixa_principal && (
