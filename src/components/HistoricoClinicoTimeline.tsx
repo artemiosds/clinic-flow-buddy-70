@@ -59,6 +59,7 @@ interface TimelineEvent {
   episodioTitle?: string;
   sessionInfo?: string;
   status?: string;
+  dadosAcolhimento?: any;
 }
 
 interface Unidade {
