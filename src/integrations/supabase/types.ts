@@ -3079,6 +3079,7 @@ export type Database = {
           conduta: string | null
           criado_em: string | null
           custom_data: Json
+          dados_acolhimento: Json | null
           data_atendimento: string
           episodio_id: string | null
           evolucao: string | null
@@ -3115,6 +3116,7 @@ export type Database = {
           conduta?: string | null
           criado_em?: string | null
           custom_data?: Json
+          dados_acolhimento?: Json | null
           data_atendimento?: string
           episodio_id?: string | null
           evolucao?: string | null
@@ -3151,6 +3153,7 @@ export type Database = {
           conduta?: string | null
           criado_em?: string | null
           custom_data?: Json
+          dados_acolhimento?: Json | null
           data_atendimento?: string
           episodio_id?: string | null
           evolucao?: string | null
