@@ -344,6 +344,7 @@ async function buildProntuarioBody(p: ProntuarioLike, extraHtml = ""): Promise<s
     </div>`;
 
   const tipoLabel = TIPO_LABELS[p.tipo_registro || ""] || p.tipo_registro || "Atendimento Clínico";
+  const acolhimentoHtml = p.dados_acolhimento ? renderAcolhimentoHtml(p.dados_acolhimento) : "";
 
   return `
     <div class="info-grid" style="margin-bottom: 10px; grid-template-columns: 2fr 1fr; padding: 8px; border-width: 0.5px;">
@@ -367,6 +368,7 @@ async function buildProntuarioBody(p: ProntuarioLike, extraHtml = ""): Promise<s
     
     <div class="doc-content">
       ${triagemHtml}
+      ${acolhimentoHtml}
       ${sectionsHtml}
       ${obsHtml}
       ${extraHtml}
