@@ -105,12 +105,12 @@ function section(label: string, raw: string | undefined): string {
 async function fetchAnexosHtml(prontuarioId: string): Promise<string> {
   if (!prontuarioId || prontuarioId === 'rascunho') return '';
   try {
-    const { data } = await (supabase as any)
+    const { data, error } = await supabase
       .from("prontuario_anexos")
       .select("nome_arquivo, categoria, criado_em")
       .eq("prontuario_id", prontuarioId);
     
-    if (!data || data.length === 0) return '';
+    if (error || !data || data.length === 0) return '';
 
     const items = data.map((a: any) => `
       <div style="margin-bottom: 4px; font-size: 9pt;">
@@ -133,27 +133,29 @@ async function fetchAnexosHtml(prontuarioId: string): Promise<string> {
 
 async function fetchTriagemHtml(pacienteId: string, dataAtendimento: string): Promise<string> {
   try {
-    const { data } = await (supabase as any)
+    const { data, error } = await supabase
       .from("triagem")
       .select("*")
       .eq("paciente_id", pacienteId)
       .eq("data_atendimento", dataAtendimento)
       .maybeSingle();
 
-    if (!data) return '';
+    if (error || !data) return '';
+
+    const triagemData = data as any;
 
     const fields = [
-      { label: "Peso", value: data.peso ? `${data.peso} kg` : null },
-      { label: "Altura", value: data.altura ? `${data.altura} m` : null },
-      { label: "IMC", value: data.imc ? `${Number(data.imc).toFixed(1)}` : null },
-      { label: "PA", value: data.pressao_arterial },
-      { label: "Temp", value: data.temperatura ? `${data.temperatura} °C` : null },
-      { label: "FC", value: data.frequencia_cardiaca ? `${data.frequencia_cardiaca} bpm` : null },
-      { label: "SpO2", value: data.saturacao_oxigenio ? `${data.saturacao_oxigenio}%` : null },
-      { label: "Glicemia", value: data.glicemia ? `${data.glicemia} mg/dL` : null },
+      { label: "Peso", value: triagemData.peso ? `${triagemData.peso} kg` : null },
+      { label: "Altura", value: triagemData.altura ? `${triagemData.altura} m` : null },
+      { label: "IMC", value: triagemData.imc ? `${Number(triagemData.imc).toFixed(1)}` : null },
+      { label: "PA", value: triagemData.pressao_arterial },
+      { label: "Temp", value: triagemData.temperatura ? `${triagemData.temperatura} °C` : null },
+      { label: "FC", value: triagemData.frequencia_cardiaca ? `${triagemData.frequencia_cardiaca} bpm` : null },
+      { label: "SpO2", value: triagemData.saturacao_oxigenio ? `${triagemData.saturacao_oxigenio}%` : null },
+      { label: "Glicemia", value: triagemData.glicemia ? `${triagemData.glicemia} mg/dL` : null },
     ].filter(f => f.value);
 
-    if (fields.length === 0 && !data.queixa) return '';
+    if (fields.length === 0 && !triagemData.queixa) return '';
 
     const triagemGrid = fields.map(f => `
       <div class="field">
@@ -168,7 +170,7 @@ async function fetchTriagemHtml(pacienteId: string, dataAtendimento: string): Pr
         ${fields.length > 0 ? `<div class="section-content" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px 15px; background: #f8fafc; padding: 8px; border-radius: 4px; margin-bottom: 8px;">
           ${triagemGrid}
         </div>` : ''}
-        ${data.queixa ? `<div class="section-content"><strong>Queixa (Acolhimento):</strong> ${escapeHtml(data.queixa)}</div>` : ''}
+        ${triagemData.queixa ? `<div class="section-content"><strong>Queixa (Acolhimento):</strong> ${escapeHtml(triagemData.queixa)}</div>` : ''}
       </div>`;
   } catch {
     return '';
