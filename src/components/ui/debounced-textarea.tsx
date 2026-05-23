@@ -51,7 +51,14 @@ const DebouncedTextarea = React.forwardRef<HTMLTextAreaElement, DebouncedTextare
     // Flush on unmount
     React.useEffect(() => {
       return () => {
-        if (timerRef.current) clearTimeout(timerRef.current);
+        if (timerRef.current) {
+          clearTimeout(timerRef.current);
+          // Flush the current value on unmount
+          const fakeEvent = {
+            target: { value: lastPropValue.current },
+          } as React.ChangeEvent<HTMLTextAreaElement>;
+          onChangeRef.current(fakeEvent);
+        }
       };
     }, []);
 
