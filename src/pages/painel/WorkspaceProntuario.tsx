@@ -291,40 +291,85 @@ const WorkspaceProntuario: React.FC = () => {
       'Paciente': pacienteData?.nome || pacienteNome || '—',
       'Idade': pacienteData?.data_nascimento ? calcularIdade(pacienteData.data_nascimento) : '—',
       'CPF': pacienteData?.cpf || '—',
+      'CNS': pacienteData?.cns || '—',
       'Profissional': user?.nome || '—',
       'Data': form.data_atendimento ? new Date(form.data_atendimento + 'T12:00:00').toLocaleDateString('pt-BR') : '—',
+      'Hora': form.hora_atendimento || '—',
       'Tipo': TIPO_REGISTRO_LABELS[form.tipo_registro as keyof typeof TIPO_REGISTRO_LABELS] || form.tipo_registro
     };
 
-    let body = `
+    let body = '';
+
+    // 1. Acolhimento section if active or exists
+    if (activeTab === 'acolhimento' || (acolhimentoData && activeTab === 'evolution')) {
+      const data = acolhimentoDraft || acolhimentoData?.dados_acolhimento;
+      if (data && Object.keys(data).length > 0) {
+        body += `
+          <div class="section">
+            <div class="section-title">Acolhimento de Saúde Mental</div>
+            <div class="section-content" style="font-size: 10pt;">
+              ${data.secao3?.queixa ? `<div style="margin-bottom: 8px;"><strong>Queixa Principal (Acolhimento):</strong> ${data.secao3.queixa}</div>` : ''}
+              ${data.secao4?.sintomas?.length > 0 ? `<div style="margin-bottom: 8px;"><strong>Sintomas nos últimos 30 dias:</strong> ${data.secao4.sintomas.join(', ')}</div>` : ''}
+              ${data.secao15?.parecer ? `<div style="margin-bottom: 8px;"><strong>Parecer do Acolhedor:</strong> ${data.secao15.parecer}</div>` : ''}
+              <div style="font-style: italic; font-size: 9pt; color: #64748b; margin-top: 4px;">* Ver registro completo de acolhimento em anexo ou histórico.</div>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    // 2. Clinical Evolution / SOAP
+    body += `
       <div class="section">
         <div class="section-title">Evolução Clínica / SOAP</div>
         <div class="section-content">
           ${soapEnabled ? `
-            <div style="margin-bottom: 8px;"><strong>S — Subjetivo:</strong> ${form.soap_subjetivo || '—'}</div>
-            <div style="margin-bottom: 8px;"><strong>O — Objetivo:</strong> ${form.soap_objetivo || '—'}</div>
-            <div style="margin-bottom: 8px;"><strong>A — Avaliação:</strong> ${form.soap_avaliacao || '—'}</div>
-            <div style="margin-bottom: 8px;"><strong>P — Plano:</strong> ${form.soap_plano || '—'}</div>
-          ` : `<div style="white-space: pre-wrap;">${form.evolucao || '—'}</div>`}
+            <div style="margin-bottom: 10px;"><strong>S — Subjetivo:</strong><br/>${form.soap_subjetivo ? form.soap_subjetivo.replace(/\n/g, '<br/>') : '—'}</div>
+            <div style="margin-bottom: 10px;"><strong>O — Objetivo:</strong><br/>${form.soap_objetivo ? form.soap_objetivo.replace(/\n/g, '<br/>') : '—'}</div>
+            <div style="margin-bottom: 10px;"><strong>A — Avaliação:</strong><br/>${form.soap_avaliacao ? form.soap_avaliacao.replace(/\n/g, '<br/>') : '—'}</div>
+            <div style="margin-bottom: 10px;"><strong>P — Plano:</strong><br/>${form.soap_plano ? form.soap_plano.replace(/\n/g, '<br/>') : '—'}</div>
+          ` : `<div style="white-space: pre-wrap; text-align: justify;">${form.evolucao || '—'}</div>`}
         </div>
       </div>
-      
-      ${form.queixa_principal ? `
-        <div class="section">
-          <div class="section-title">Queixa Principal</div>
-          <div class="section-content">${form.queixa_principal}</div>
-        </div>
-      ` : ''}
-
-      ${form.conduta ? `
-        <div class="section">
-          <div class="section-title">Conduta</div>
-          <div class="section-content">${form.conduta}</div>
-        </div>
-      ` : ''}
     `;
 
-    // Add procedures
+    // 3. Dynamic Fields & Specialty Fields
+    const dynamicFields = [];
+    if (form.queixa_principal) dynamicFields.push({ label: 'Queixa Principal', value: form.queixa_principal });
+    if (form.anamnese) dynamicFields.push({ label: 'Anamnese', value: form.anamnese });
+    if (form.sinais_sintomas) dynamicFields.push({ label: 'Sinais e Sintomas', value: form.sinais_sintomas });
+    if (form.exame_fisico) dynamicFields.push({ label: 'Exame Físico', value: form.exame_fisico });
+    if (form.hipotese) dynamicFields.push({ label: 'Hipótese Diagnóstica', value: form.hipotese });
+    if (form.conduta) dynamicFields.push({ label: 'Conduta', value: form.conduta });
+    if (form.indicacao_retorno) dynamicFields.push({ label: 'Indicação de Retorno', value: form.indicacao_retorno });
+
+    // Specialty fields
+    if (Object.keys(especialidadeFields).length > 0) {
+      Object.entries(especialidadeFields).forEach(([key, val]) => {
+        if (val && val !== 'false') {
+          const label = key.replace('esp_', '').replace(/_/g, ' ').toUpperCase();
+          dynamicFields.push({ label, value: val === 'true' ? 'Sim' : val });
+        }
+      });
+    }
+
+    if (dynamicFields.length > 0) {
+      body += `
+        <div class="section">
+          <div class="section-title">Informações Complementares</div>
+          <div class="section-content">
+            ${dynamicFields.map(f => `
+              <div style="margin-bottom: 8px;">
+                <span style="font-weight: 700; color: #475569; font-size: 9pt; text-transform: uppercase;">${f.label}:</span>
+                <div style="margin-top: 2px; text-align: justify;">${String(f.value).replace(/\n/g, '<br/>')}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    // 4. Procedures & CIDs
     if (selectedProcIds.length > 0) {
       body += `
         <div class="section">
@@ -334,7 +379,7 @@ const WorkspaceProntuario: React.FC = () => {
               ${selectedProcIds.map(pid => {
                 const proc = procedimentos.find(p => p.id === pid);
                 const cids = selectedCidsByProc[pid] || [];
-                return `<li style="margin-bottom: 4px;"><strong>${proc?.nome || pid}</strong> (Código: ${proc?.id || pid}) ${cids.length > 0 ? `<br/><span style="font-size: 10pt; color: #475569;">CIDs: ${cids.join(', ')}</span>` : ''}</li>`;
+                return `<li style="margin-bottom: 6px;"><strong>${proc?.nome || pid}</strong> (Código: ${proc?.id || pid}) ${cids.length > 0 ? `<br/><span style="font-size: 10pt; color: #475569;">CIDs: ${cids.join(', ')}</span>` : ''}</li>`;
               }).join('')}
             </ul>
           </div>
@@ -342,33 +387,59 @@ const WorkspaceProntuario: React.FC = () => {
       `;
     }
 
-    // Add prescriptions if any
-    if (listaPrescricao.length > 0) {
-       body += `
-        <div class="section">
-          <div class="section-title">Prescrições</div>
+    // 5. Prescriptions & Exams
+    if (listaPrescricao.length > 0 || listaExames.length > 0) {
+      body += `
+        <div class="section" style="page-break-inside: avoid;">
+          <div class="section-title">Prescrições e Solicitações</div>
           <div class="section-content">
-            <ul style="padding-left: 20px; margin: 0;">
-              ${listaPrescricao.map((p: any) => `<li style="margin-bottom: 4px;"><strong>${p.medicamento}</strong> - ${p.posologia}</li>`).join('')}
-            </ul>
+            ${listaPrescricao.length > 0 ? `
+              <div style="margin-bottom: 12px;">
+                <strong style="color: #475569; font-size: 9pt; text-transform: uppercase;">Medicamentos:</strong>
+                <ul style="padding-left: 20px; margin-top: 4px;">
+                  ${listaPrescricao.map((p: any) => `<li style="margin-bottom: 4px;"><strong>${p.medicamento}</strong> - ${p.posologia}</li>`).join('')}
+                </ul>
+              </div>
+            ` : ''}
+            ${listaExames.length > 0 ? `
+              <div>
+                <strong style="color: #475569; font-size: 9pt; text-transform: uppercase;">Exames Solicitados:</strong>
+                <ul style="padding-left: 20px; margin-top: 4px;">
+                  ${listaExames.map((e: any) => `<li style="margin-bottom: 4px;">${e.nome || e}</li>`).join('')}
+                </ul>
+              </div>
+            ` : ''}
           </div>
         </div>
       `;
     }
 
-    // Add exams if any
-    if (listaExames.length > 0) {
-       body += `
-        <div class="section">
-          <div class="section-title">Exames Solicitados</div>
+    // 6. Treatment Cycles & PTS
+    if (sessaoCycle || sessaoPts) {
+      body += `
+        <div class="section" style="page-break-inside: avoid;">
+          <div class="section-title">Plano Terapêutico Ativo</div>
           <div class="section-content">
-            <ul style="padding-left: 20px; margin: 0;">
-              ${listaExames.map((e: any) => `<li style="margin-bottom: 4px;">${e.nome || e}</li>`).join('')}
-            </ul>
+            ${sessaoCycle ? `
+              <div style="margin-bottom: 8px;"><strong>Ciclo:</strong> ${sessaoCycle.treatment_type} (${sessaoCycle.sessions_done}/${sessaoCycle.total_sessions} sessões)</div>
+            ` : ''}
+            ${sessaoPts ? `
+              <div style="margin-bottom: 8px;"><strong>PTS - Diagnóstico:</strong> ${sessaoPts.diagnostico_funcional || '—'}</div>
+              <div><strong>PTS - Objetivos:</strong> ${sessaoPts.objetivos_terapeuticos || '—'}</div>
+            ` : ''}
           </div>
         </div>
       `;
     }
+
+    // 7. Signature area
+    body += `
+      <div class="signature" style="margin-top: 60px; page-break-inside: avoid;">
+        <div class="signature-line" style="width: 300px; border-top: 1px solid #000; margin: 0 auto 5px;"></div>
+        <div class="name" style="font-weight: 700;">${user?.nome || '—'}</div>
+        <div class="role" style="font-size: 9pt; color: #475569;">${user?.profissao || '—'}</div>
+      </div>
+    `;
 
     openPrintDocument("Prontuário Clínico", body, meta);
   };

@@ -249,7 +249,7 @@ export function buildInstitutionalCSS(
     text-align: justify;
     text-justify: inter-word;
     font-size: ${bodyPt}pt;
-    line-height: 1.4;
+    line-height: 1.5;
     word-break: break-word;
     hyphens: auto;
   }
@@ -287,9 +287,9 @@ export function buildInstitutionalCSS(
   .field-value { font-size: ${bodyPt}pt; margin-top: 1px; color: #000; }
 
   /* SECTIONS (prontuário) */
-  .section { margin-bottom: 10px; page-break-inside: avoid; }
-  .section-title { font-weight: 700; font-size: ${sectionPt}pt; text-transform: uppercase; color: ${accent}; border-bottom: 1px solid #bae6fd; padding-bottom: 2px; margin-bottom: 4px; }
-  .section-content { font-size: ${bodyPt}pt; line-height: 1.4; white-space: pre-wrap; min-height: 14px; text-align: justify; color: #000; }
+  .section { margin-bottom: 12px; page-break-inside: auto; }
+  .section-title { font-weight: 700; font-size: ${sectionPt}pt; text-transform: uppercase; color: ${accent}; border-bottom: 1px solid #bae6fd; padding-bottom: 2px; margin-bottom: 6px; }
+  .section-content { font-size: ${bodyPt}pt; line-height: 1.5; white-space: pre-wrap; min-height: 14px; text-align: justify; color: #000; overflow-wrap: break-word; }
 
   /* INFO GRID */
   .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; padding: 8px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; }

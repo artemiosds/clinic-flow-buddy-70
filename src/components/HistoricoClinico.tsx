@@ -384,19 +384,74 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
         body = `<div class="p-4 bg-destructive/10 text-destructive rounded-md">Erro ao processar dados do relatório para impressão.</div>`;
       }
     } else {
-      const row = (label: string, val?: string) =>
-        val ? `<div class="section"><div class="section-title">${label}</div><div class="section-content">${String(val).replace(/\n/g, "<br/>")}</div></div>` : "";
+      const row = (label: string, val?: any) => {
+        if (!val || val === 'false' || val === '[]' || val === '{}') return "";
+        let displayVal = val;
+        if (typeof val === 'string' && val.startsWith('[') && val.endsWith(']')) {
+          try {
+            const parsed = JSON.parse(val);
+            if (Array.isArray(parsed)) {
+              if (parsed.length === 0) return "";
+              if (typeof parsed[0] === 'string') displayVal = parsed.join(', ');
+              else if (parsed[0].medicamento) displayVal = parsed.map((p: any) => `• ${p.medicamento}: ${p.posologia}`).join('<br/>');
+              else if (parsed[0].nome) displayVal = parsed.map((e: any) => `• ${e.nome}`).join('<br/>');
+            }
+          } catch (e) { /* use raw */ }
+        }
+        return `<div class="section"><div class="section-title">${label}</div><div class="section-content">${String(displayVal).replace(/\n/g, "<br/>")}</div></div>`;
+      };
+      
+      let evolucaoContent = item.evolucao || "";
+      let observacoesExtra = "";
+      
+      // Try to parse structured data if evolution is empty or looks like JSON
+      if (item.observacoes && item.observacoes.startsWith('{')) {
+        try {
+          const obs = JSON.parse(item.observacoes);
+          if (obs.especialidade_fields) {
+            Object.entries(obs.especialidade_fields).forEach(([key, val]) => {
+              if (val && val !== 'false') {
+                const label = key.replace('esp_', '').replace(/_/g, ' ').toUpperCase();
+                observacoesExtra += `<div style="margin-bottom: 4px;"><span style="font-weight:700; font-size:9pt;">${label}:</span> ${val === 'true' ? 'Sim' : val}</div>`;
+              }
+            });
+          }
+        } catch (e) {}
+      }
+
+      // Handle acolhimento specifically
+      let acolhimentoBody = "";
+      if (item.tipo_registro === 'acolhimento_mental') {
+        try {
+          const { data: fullItem } = await supabase.from('prontuarios').select('dados_acolhimento').eq('id', item.id).single();
+          if (fullItem?.dados_acolhimento) {
+            const d = fullItem.dados_acolhimento as any;
+            acolhimentoBody = `
+              <div class="section">
+                <div class="section-title">DADOS DO ACOLHIMENTO</div>
+                <div class="section-content" style="font-size: 10pt;">
+                  ${d.secao3?.queixa ? `<div><strong>Queixa Principal:</strong> ${d.secao3.queixa}</div>` : ""}
+                  ${d.secao4?.sintomas?.length > 0 ? `<div><strong>Sintomas:</strong> ${d.secao4.sintomas.join(', ')}</div>` : ""}
+                  ${d.secao15?.parecer ? `<div><strong>Parecer:</strong> ${d.secao15.parecer}</div>` : ""}
+                </div>
+              </div>
+            `;
+          }
+        } catch (e) {}
+      }
       
       body = `
         <div class="doc-content">
+          ${acolhimentoBody}
           ${row("Queixa principal", item.queixa_principal)}
-          ${row("Evolução / SOAP", item.evolucao)}
+          ${row("Evolução / SOAP", evolucaoContent)}
+          ${observacoesExtra ? `<div class="section"><div class="section-title">Campos Complementares</div><div class="section-content">${observacoesExtra}</div></div>` : ""}
           ${row("Conduta", item.conduta)}
           ${row("Procedimentos", item.procedimentos_texto)}
           ${row("Outro procedimento", item.outro_procedimento)}
           ${row("Indicação de retorno", item.indicacao_retorno)}
         </div>
-        <div class="signature" style="margin-top:50px">
+        <div class="signature" style="margin-top:50px; page-break-inside: avoid;">
           <div class="signature-line"></div>
           <div class="name">${item.profissional_nome || ""}</div>
         </div>
