@@ -18,6 +18,7 @@ interface ProntuarioLike {
   setor?: string;
   queixa_principal?: string;
   anamnese?: string;
+  sinais_sintomas?: string;
   exame_fisico?: string;
   hipotese?: string;
   conduta?: string;
@@ -35,6 +36,7 @@ interface ProntuarioLike {
   unidade_id?: string;
   especialidade?: string;
   tipo_prontuario?: string;
+  episodio_id?: string;
 }
 
 const TIPO_LABELS: Record<string, string> = {
@@ -100,20 +102,20 @@ function section(label: string, raw: string | undefined): string {
     </div>`;
 }
 
-async function fetchAnexosHtml(pacienteId: string, prontuarioId: string): Promise<string> {
+async function fetchAnexosHtml(prontuarioId: string): Promise<string> {
   if (!prontuarioId || prontuarioId === 'rascunho') return '';
   try {
-    const { data } = await supabase
+    const { data, error } = await (supabase as any)
       .from("prontuario_anexos")
       .select("nome_arquivo, categoria, criado_em")
       .eq("prontuario_id", prontuarioId);
     
-    if (!data || data.length === 0) return '';
+    if (error || !data || data.length === 0) return '';
 
-    const items = data.map(a => `
+    const items = data.map((a: any) => `
       <div style="margin-bottom: 4px; font-size: 9pt;">
         • <strong>${escapeHtml(a.nome_arquivo)}</strong> 
-        <span style="color: #64748b; font-size: 8pt;">(${escapeHtml(a.categoria)} — ${fmtDate(a.criado_em.split('T')[0])})</span>
+        <span style="color: #64748b; font-size: 8pt;">(${escapeHtml(a.categoria)} — ${fmtDate(a.criado_em?.split('T')[0])})</span>
       </div>
     `).join('');
 
@@ -129,6 +131,52 @@ async function fetchAnexosHtml(pacienteId: string, prontuarioId: string): Promis
   }
 }
 
+async function fetchTriagemHtml(pacienteId: string, dataAtendimento: string): Promise<string> {
+  try {
+    const { data, error } = await (supabase as any)
+      .from("triagem")
+      .select("*")
+      .eq("paciente_id", pacienteId)
+      .eq("data_atendimento", dataAtendimento)
+      .maybeSingle();
+
+    if (error || !data) return '';
+
+    const triagemData = data as any;
+
+    const fields = [
+      { label: "Peso", value: triagemData.peso ? `${triagemData.peso} kg` : null },
+      { label: "Altura", value: triagemData.altura ? `${triagemData.altura} m` : null },
+      { label: "IMC", value: triagemData.imc ? `${Number(triagemData.imc).toFixed(1)}` : null },
+      { label: "PA", value: triagemData.pressao_arterial },
+      { label: "Temp", value: triagemData.temperatura ? `${triagemData.temperatura} °C` : null },
+      { label: "FC", value: triagemData.frequencia_cardiaca ? `${triagemData.frequencia_cardiaca} bpm` : null },
+      { label: "SpO2", value: triagemData.saturacao_oxigenio ? `${triagemData.saturacao_oxigenio}%` : null },
+      { label: "Glicemia", value: triagemData.glicemia ? `${triagemData.glicemia} mg/dL` : null },
+    ].filter(f => f.value);
+
+    if (fields.length === 0 && !triagemData.queixa) return '';
+
+    const triagemGrid = fields.map(f => `
+      <div class="field">
+        <span class="field-label">${escapeHtml(f.label)}</span>
+        <div class="field-value">${escapeHtml(f.value)}</div>
+      </div>
+    `).join('');
+
+    return `
+      <div class="section">
+        <div class="section-title">Triagem / Acolhimento</div>
+        ${fields.length > 0 ? `<div class="section-content" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px 15px; background: #f8fafc; padding: 8px; border-radius: 4px; margin-bottom: 8px;">
+          ${triagemGrid}
+        </div>` : ''}
+        ${triagemData.queixa ? `<div class="section-content"><strong>Queixa (Acolhimento):</strong> ${escapeHtml(triagemData.queixa)}</div>` : ''}
+      </div>`;
+  } catch {
+    return '';
+  }
+}
+
 async function buildProntuarioBody(p: ProntuarioLike, extraHtml = ""): Promise<string> {
   const sections: Array<[string, string | undefined]> = [
     ["Queixa Principal", p.queixa_principal],
@@ -137,10 +185,11 @@ async function buildProntuarioBody(p: ProntuarioLike, extraHtml = ""): Promise<s
     ["A — Avaliação", p.soap_avaliacao],
     ["P — Plano", p.soap_plano],
     ["Anamnese", p.anamnese],
+    ["Sinais e Sintomas", p.sinais_sintomas],
     ["Exame Físico", p.exame_fisico],
     ["Hipótese Diagnóstica", p.hipotese],
-    ["Conduta", p.conduta],
-    ["Procedimentos", p.procedimentos_texto],
+    ["Conduta / Orientações", p.conduta],
+    ["Procedimentos Efetuados", p.procedimentos_texto],
     ["Prescrição / Medicamentos", p.prescricao],
     ["Solicitação de Exames", p.solicitacao_exames],
     ["Evolução Clínica", p.evolucao],
@@ -194,12 +243,17 @@ async function buildProntuarioBody(p: ProntuarioLike, extraHtml = ""): Promise<s
     .join("");
 
   let anexosHtml = "";
-  if (p.paciente_id && p.id) {
-    anexosHtml = await fetchAnexosHtml(p.paciente_id, p.id);
+  if (p.id) {
+    anexosHtml = await fetchAnexosHtml(p.id);
+  }
+
+  let triagemHtml = "";
+  if (p.paciente_id && p.data_atendimento) {
+    triagemHtml = await fetchTriagemHtml(p.paciente_id, p.data_atendimento);
   }
 
   const signature = `
-    <div class="signature" style="margin-top: 40px;">
+    <div class="signature" style="margin-top: 35px;">
       <div class="signature-line" style="width: 280px;"></div>
       <div class="name">${escapeHtml(p.profissional_nome || "Profissional responsável")}</div>
       ${p.setor ? `<div class="role">${escapeHtml(p.setor)}</div>` : ""}
@@ -208,26 +262,27 @@ async function buildProntuarioBody(p: ProntuarioLike, extraHtml = ""): Promise<s
   const tipoLabel = TIPO_LABELS[p.tipo_registro || ""] || p.tipo_registro || "Atendimento Clínico";
 
   return `
-    <div class="info-grid" style="margin-bottom: 15px; grid-template-columns: 2fr 1fr; padding: 10px;">
+    <div class="info-grid" style="margin-bottom: 12px; grid-template-columns: 2fr 1fr; padding: 10px; border-width: 0.5px;">
       <div>
         <span class="info-label">Paciente</span>
-        <div class="info-value" style="font-weight: 700; font-size: 11pt;">${escapeHtml(p.paciente_nome || "—")}</div>
+        <div class="info-value" style="font-weight: 700; font-size: 10.5pt;">${escapeHtml(p.paciente_nome || "—")}</div>
       </div>
       <div>
         <span class="info-label">Tipo de Registro</span>
         <div class="info-value" style="color: #0369a1; font-weight: 700;">${escapeHtml(tipoLabel)}</div>
       </div>
       <div>
-        <span class="info-label">Profissional</span>
-        <div class="info-value">${escapeHtml(p.profissional_nome || "—")} ${p.setor ? `(${escapeHtml(p.setor)})` : ""}</div>
+        <span class="info-label">Profissional / Setor</span>
+        <div class="info-value">${escapeHtml(p.profissional_nome || "—")} ${p.setor ? `— ${escapeHtml(p.setor)}` : ""}</div>
       </div>
       <div>
-        <span class="info-label">Data / Hora</span>
+        <span class="info-label">Data e Hora</span>
         <div class="info-value">${escapeHtml(fmtDate(p.data_atendimento))} ${p.hora_atendimento ? `às ${escapeHtml(p.hora_atendimento)}` : ""}</div>
       </div>
     </div>
     
     <div class="doc-content">
+      ${triagemHtml}
       ${sectionsHtml}
       ${obsHtml}
       ${extraHtml}
@@ -285,26 +340,26 @@ function buildHistoryBody(pacienteNome: string, entries: TimelineEntry[]): strin
           <td><strong>${escapeHtml([e.type || "—", e.sessionInfo].filter(Boolean).join(" "))}</strong></td>
           <td>${escapeHtml(e.professional || "—")}</td>
           <td>${escapeHtml(e.specialty || "—")}</td>
-          <td><div style="font-size: 8.5pt; max-height: 100px; overflow: hidden;">${escapeHtml(e.summary || "")}</div></td>
+          <td><div style="font-size: 8.5pt; max-height: 120px; overflow: hidden; line-height: 1.2;">${escapeHtml(e.summary || "")}</div></td>
         </tr>`,
     )
     .join("");
 
   return `
-    <div class="info-grid" style="margin-bottom: 15px; grid-template-columns: 3fr 1fr;">
+    <div class="info-grid" style="margin-bottom: 15px; grid-template-columns: 3fr 1fr; border-width: 0.5px;">
       <div><span class="info-label">Paciente</span><div class="info-value" style="font-weight: 700; font-size: 11pt;">${escapeHtml(pacienteNome)}</div></div>
       <div><span class="info-label">Total de Registros</span><div class="info-value" style="font-weight: 700;">${entries.length}</div></div>
     </div>
 
-    <h2 style="margin-top: 15px; margin-bottom: 10px;">Linha do Tempo Clínica</h2>
-    <table style="width: 100%; border-collapse: collapse; font-size: 9pt;">
+    <h2 style="margin-top: 15px; margin-bottom: 8px; font-size: 11pt;">Linha do Tempo Clínica</h2>
+    <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
       <thead>
         <tr style="background-color: #f8fafc;">
-          <th style="width:12%; border: 1px solid #e2e8f0; padding: 6px;">Data</th>
-          <th style="width:18%; border: 1px solid #e2e8f0; padding: 6px;">Tipo</th>
-          <th style="width:20%; border: 1px solid #e2e8f0; padding: 6px;">Profissional</th>
-          <th style="width:15%; border: 1px solid #e2e8f0; padding: 6px;">Especialidade</th>
-          <th style="border: 1px solid #e2e8f0; padding: 6px;">Resumo Clínico</th>
+          <th style="width:12%; border: 0.5px solid #e2e8f0; padding: 4px;">Data</th>
+          <th style="width:18%; border: 0.5px solid #e2e8f0; padding: 4px;">Tipo</th>
+          <th style="width:20%; border: 0.5px solid #e2e8f0; padding: 4px;">Profissional</th>
+          <th style="width:15%; border: 0.5px solid #e2e8f0; padding: 4px;">Especialidade</th>
+          <th style="border: 0.5px solid #e2e8f0; padding: 4px;">Resumo Clínico</th>
         </tr>
       </thead>
       <tbody>${rows || '<tr><td colspan="5" style="text-align:center; padding: 20px; color:#64748b;">Nenhum registro encontrado no histórico.</td></tr>'}</tbody>
@@ -326,4 +381,9 @@ export function downloadFullHistoryPdf(pacienteNome: string, entries: TimelineEn
     }
   })();
 }
+
+
+
+
+
 
