@@ -666,12 +666,54 @@ export const HistoricoClinicoTimeline: React.FC<Props> = ({ pacienteId, unidades
                   </div>
                 </div>
               )}
-              <div>
-                <p className="text-xs font-semibold text-muted-foreground mb-1">Evolução</p>
-                <div className="border rounded p-3 whitespace-pre-wrap break-words" style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}>
-                  {viewEvent.summary || <span className="italic text-muted-foreground">Sem registro de evolução</span>}
+              {viewEvent.soap_subjetivo && (
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground mb-1">S — Subjetivo</p>
+                  <div className="border rounded p-3 whitespace-pre-wrap break-words">{viewEvent.soap_subjetivo}</div>
                 </div>
-              </div>
+              )}
+              {viewEvent.soap_objetivo && (
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground mb-1">O — Objetivo</p>
+                  <div className="border rounded p-3 whitespace-pre-wrap break-words">{viewEvent.soap_objetivo}</div>
+                </div>
+              )}
+              {viewEvent.soap_avaliacao && (
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground mb-1">A — Avaliação</p>
+                  <div className="border rounded p-3 whitespace-pre-wrap break-words">{viewEvent.soap_avaliacao}</div>
+                </div>
+              )}
+              {viewEvent.soap_plano && (
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground mb-1">P — Plano</p>
+                  <div className="border rounded p-3 whitespace-pre-wrap break-words">{viewEvent.soap_plano}</div>
+                </div>
+              )}
+              {!viewEvent.soap_subjetivo && (
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground mb-1">Evolução</p>
+                  <div className="border rounded p-3 whitespace-pre-wrap break-words" style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}>
+                    {viewEvent.summary || <span className="italic text-muted-foreground">Sem registro de evolução</span>}
+                  </div>
+                </div>
+              )}
+              {viewEvent.custom_data && Object.keys(viewEvent.custom_data).length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground mb-1">Campos Adicionais</p>
+                  <div className="border rounded p-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {Object.entries(viewEvent.custom_data).map(([k, v]) => {
+                      if (!v || k === 'soap_enabled' || k === 'acolhimento_mental') return null;
+                      return (
+                        <div key={k} className="text-xs">
+                          <span className="font-bold uppercase text-[10px] text-muted-foreground block">{k.replace(/_/g, " ")}</span>
+                          <span>{String(v === true ? 'Sim' : v === false ? 'Não' : v)}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           )}
           <DialogFooter className="gap-2">
