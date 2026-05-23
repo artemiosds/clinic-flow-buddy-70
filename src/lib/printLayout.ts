@@ -156,10 +156,10 @@ export function buildInstitutionalCSS(
 <style>
   @page {
     size: ${size} ${orientation};
-    margin: 15mm 15mm 15mm 15mm;
+    margin: 20mm 15mm 20mm 15mm;
   }
   @page :first {
-    margin-top: 10mm;
+    margin-top: 15mm;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   html, body { 
