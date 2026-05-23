@@ -102,20 +102,20 @@ function section(label: string, raw: string | undefined): string {
     </div>`;
 }
 
-async function fetchAnexosHtml(pacienteId: string, prontuarioId: string): Promise<string> {
+async function fetchAnexosHtml(prontuarioId: string): Promise<string> {
   if (!prontuarioId || prontuarioId === 'rascunho') return '';
   try {
     const { data } = await supabase
-      .from("prontuario_anexos")
+      .from("prontuario_anexos" as any)
       .select("nome_arquivo, categoria, criado_em")
       .eq("prontuario_id", prontuarioId);
     
     if (!data || data.length === 0) return '';
 
-    const items = data.map(a => `
+    const items = data.map((a: any) => `
       <div style="margin-bottom: 4px; font-size: 9pt;">
         • <strong>${escapeHtml(a.nome_arquivo)}</strong> 
-        <span style="color: #64748b; font-size: 8pt;">(${escapeHtml(a.categoria)} — ${fmtDate(a.criado_em.split('T')[0])})</span>
+        <span style="color: #64748b; font-size: 8pt;">(${escapeHtml(a.categoria)} — ${fmtDate(a.criado_em?.split('T')[0])})</span>
       </div>
     `).join('');
 
@@ -134,7 +134,7 @@ async function fetchAnexosHtml(pacienteId: string, prontuarioId: string): Promis
 async function fetchTriagemHtml(pacienteId: string, dataAtendimento: string): Promise<string> {
   try {
     const { data } = await supabase
-      .from("triagem")
+      .from("triagem" as any)
       .select("*")
       .eq("paciente_id", pacienteId)
       .eq("data_atendimento", dataAtendimento)
@@ -145,7 +145,7 @@ async function fetchTriagemHtml(pacienteId: string, dataAtendimento: string): Pr
     const fields = [
       { label: "Peso", value: data.peso ? `${data.peso} kg` : null },
       { label: "Altura", value: data.altura ? `${data.altura} m` : null },
-      { label: "IMC", value: data.imc ? `${data.imc.toFixed(1)}` : null },
+      { label: "IMC", value: data.imc ? `${Number(data.imc).toFixed(1)}` : null },
       { label: "PA", value: data.pressao_arterial },
       { label: "Temp", value: data.temperatura ? `${data.temperatura} °C` : null },
       { label: "FC", value: data.frequencia_cardiaca ? `${data.frequencia_cardiaca} bpm` : null },
@@ -241,8 +241,8 @@ async function buildProntuarioBody(p: ProntuarioLike, extraHtml = ""): Promise<s
     .join("");
 
   let anexosHtml = "";
-  if (p.paciente_id && p.id) {
-    anexosHtml = await fetchAnexosHtml(p.paciente_id, p.id);
+  if (p.id) {
+    anexosHtml = await fetchAnexosHtml(p.id);
   }
 
   let triagemHtml = "";
@@ -379,5 +379,6 @@ export function downloadFullHistoryPdf(pacienteNome: string, entries: TimelineEn
     }
   })();
 }
+
 
 
