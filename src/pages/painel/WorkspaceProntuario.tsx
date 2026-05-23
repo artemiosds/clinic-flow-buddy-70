@@ -469,7 +469,7 @@ const WorkspaceProntuario: React.FC = () => {
       <div class="signature" style="margin-top: 30px; page-break-inside: avoid;">
         <div class="signature-line" style="width: 280px; border-top: 1px solid #000; margin: 0 auto 5px;"></div>
         <div class="name" style="font-weight: 700;">${user?.nome || '—'}</div>
-        <div class="role" style="font-size: 9pt; color: #475569;">${user?.profissao || '—'} ${user?.conselho ? `| ${user.conselho}` : ''}</div>
+        <div class="role" style="font-size: 9pt; color: #475569;">${user?.profissao || '—'}</div>
       </div>
     `;
 
