@@ -186,6 +186,7 @@ function useFullHistory(pacienteId: string, unidades: { id: string; nome: string
           unidade: unidadeMap.get(p.unidade_id),
           procedimentos: p.procedimentos_texto || undefined,
           rawProntuario: p,
+          dadosAcolhimento: p.dados_acolhimento,
         });
       }
 
