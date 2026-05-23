@@ -21,7 +21,7 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/componen
 import { 
   History, FileText, User, Activity, ArrowLeft, Save, Printer, 
   Stethoscope, ClipboardList, Clock, Search, UserCog, Stamp, Trash2,
-  Calendar, Info, AlertTriangle
+  Calendar, Info, AlertTriangle, FileDown
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { TIPO_REGISTRO_LABELS } from '@/utils/labels';
@@ -441,7 +441,13 @@ const WorkspaceProntuario: React.FC = () => {
       </div>
     `;
 
-    openPrintDocument("Prontuário Clínico", body, meta);
+    await openPrintDocument("Prontuário Clínico", body, meta);
+  };
+
+  const handleDownloadPDF = async () => {
+    // Reuses the same logic as handlePrint
+    handlePrint();
+    toast.info("Aguarde a janela de impressão para salvar como PDF.");
   };
 
   const handleToggleSoap = (enabled: boolean) => {
@@ -601,6 +607,9 @@ const WorkspaceProntuario: React.FC = () => {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handleDownloadPDF}>
+            <FileDown className="w-4 h-4 mr-2" /> PDF
+          </Button>
           <Button variant="outline" size="sm" onClick={handlePrint}>
             <Printer className="w-4 h-4 mr-2" /> Imprimir
           </Button>
