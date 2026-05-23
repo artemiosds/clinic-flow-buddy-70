@@ -236,6 +236,7 @@ const WorkspaceProntuario: React.FC = () => {
           const processProntuario = (p: any) => {
             if (p) {
               // Only overwrite if not modified or if it's a forced refresh
+              setForm(prev => {
                 // Durante o carregamento inicial, sempre sobrepomos com os dados do banco
                 // para garantir que o ID e o conteúdo original sejam preservados.
                 return { ...prev, ...p, custom_data: { ...(prev.custom_data || {}), ...(p.custom_data || {}) } };
