@@ -130,7 +130,8 @@ async function fetchProntuarios(pacienteId: string) {
       profissional_nome, queixa_principal, evolucao,
       procedimentos_texto, outro_procedimento,
       indicacao_retorno, unidade_id, episodio_id,
-      dados_acolhimento
+      dados_acolhimento, soap_subjetivo, soap_objetivo,
+      soap_avaliacao, soap_plano, custom_data
     `,
     )
     .eq("paciente_id", pacienteId)
