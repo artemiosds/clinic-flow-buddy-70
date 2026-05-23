@@ -61,6 +61,7 @@ import ProntuarioAnexos from "@/components/ProntuarioAnexos";
 import { cn } from "@/lib/utils";
 import ResultadosExames from "@/components/ResultadosExames";
 import ProcedimentosCidCards from "@/components/prontuario/ProcedimentosCidCards";
+import { AcolhimentoView } from "@/components/prontuario/AcolhimentoView";
 import { isMedico, hasDropdownSoap } from "@/data/soapOptionsByProfession";
 import { useSoapCustomOptions } from "@/hooks/useSoapCustomOptions";
 import { Stamp } from "lucide-react";
@@ -104,6 +105,7 @@ interface ProntuarioDB {
   episodio_id: string | null;
   criado_em: string;
   atualizado_em: string;
+  dados_acolhimento?: any;
 }
 
 interface ProcedimentoDB {
@@ -3359,6 +3361,10 @@ const ProntuarioPage: React.FC = () => {
                     </p>
                   </div>
                 </div>
+
+                {viewerProntuario.dados_acolhimento && (
+                  <AcolhimentoView data={viewerProntuario.dados_acolhimento} />
+                )}
 
                 <TriagemInline viewerProntuario={viewerProntuario} />
 
