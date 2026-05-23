@@ -156,16 +156,17 @@ export function buildInstitutionalCSS(
 <style>
   @page {
     size: ${size} ${orientation};
-    margin: 20mm 15mm 20mm 15mm;
+    margin: 15mm 12mm 15mm 12mm;
   }
   @page :first {
-    margin-top: 15mm;
+    margin-top: 12mm;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   html, body { 
     font-family: ${fontFamily};
     width: 100%;
     height: 100%;
+    background: #fff;
   }
   body {
     font-family: ${fontFamily};
@@ -181,8 +182,8 @@ export function buildInstitutionalCSS(
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 0 6px 0;
-    margin-bottom: 8px;
+    padding: 0 0 4px 0;
+    margin-bottom: 6px;
     border-bottom: 1.5px solid ${accent};
     position: relative;
   }
