@@ -146,7 +146,11 @@ const renderContent = (item: ProntuarioItem) => {
     <div className="space-y-4">
       {item.dados_acolhimento && <AcolhimentoView data={item.dados_acolhimento} />}
       {item.queixa_principal && <Section label="Queixa principal" value={item.queixa_principal} />}
-      {item.evolucao && <Section label="Evolução / SOAP" value={item.evolucao} />}
+      {item.soap_subjetivo && <Section label="S — Subjetivo" value={item.soap_subjetivo} />}
+      {item.soap_objetivo && <Section label="O — Objetivo" value={item.soap_objetivo} />}
+      {item.soap_avaliacao && <Section label="A — Avaliação" value={item.soap_avaliacao} />}
+      {item.soap_plano && <Section label="P — Plano" value={item.soap_plano} />}
+      {item.evolucao && !item.soap_subjetivo && <Section label="Evolução" value={item.evolucao} />}
       {item.conduta && <Section label="Conduta" value={item.conduta} />}
       {item.procedimentos_texto && <Section label="Procedimentos" value={item.procedimentos_texto} />}
       {item.outro_procedimento && <Section label="Outro procedimento" value={item.outro_procedimento} />}
