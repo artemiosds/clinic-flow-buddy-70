@@ -430,23 +430,47 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
       
       // Load extra data for the print if available
       let acolhimentoBody = "";
-      if (item.tipo_registro === 'acolhimento_mental') {
+      if (item.tipo_registro === 'acolhimento_mental' || item.dados_acolhimento) {
         try {
-          const { data: fullItem } = await supabase.from('prontuarios').select('dados_acolhimento').eq('id', item.id).single();
-          if (fullItem?.dados_acolhimento) {
-            const d = fullItem.dados_acolhimento as any;
-            acolhimentoBody = `
-              <div class="section">
-                <div class="section-title">DADOS DO ACOLHIMENTO</div>
-                <div class="section-content" style="font-size: 10pt;">
-                  ${d.secao3?.queixa ? `<div><strong>Queixa Principal:</strong> ${d.secao3.queixa}</div>` : ""}
-                  ${d.secao4?.sintomas?.length > 0 ? `<div><strong>Sintomas:</strong> ${d.secao4.sintomas.join(', ')}</div>` : ""}
-                  ${d.secao15?.parecer ? `<div><strong>Parecer:</strong> ${d.secao15.parecer}</div>` : ""}
+          const d = item.dados_acolhimento || (await supabase.from('prontuarios').select('dados_acolhimento').eq('id', item.id).single()).data?.dados_acolhimento;
+          
+          if (d) {
+            const row = (label: string, value: any) => {
+              if (value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0)) return "";
+              const displayValue = Array.isArray(value) ? value.join(', ') : String(value === 'sim' ? 'Sim' : value === 'nao' ? 'Não' : value);
+              return `
+                <div style="margin-bottom: 6px;">
+                  <div style="font-size: 8pt; color: #64748b; text-transform: uppercase; font-weight: 700;">${label}</div>
+                  <div style="font-size: 10pt; color: #000; font-weight: 500; white-space: pre-wrap;">${displayValue}</div>
                 </div>
+              `;
+            };
+
+            const section = (title: string, content: string) => {
+              if (!content) return "";
+              return `
+                <div style="margin-top: 12px; border-top: 0.5px solid #e2e8f0; padding-top: 8px;">
+                  <div style="font-size: 9pt; color: #0369a1; font-weight: 800; margin-bottom: 8px; text-transform: uppercase;">${title}</div>
+                  ${content}
+                </div>
+              `;
+            };
+
+            const s3 = section("Motivo da Procura", row("Queixa Principal", d.secao3?.queixa) + row("Outros", d.secao3?.outros));
+            const s4 = section("Sintomas", row("Sintomas Observados", d.secao4?.sintomas));
+            const s5 = section("Antecedentes", row("Antecedentes", d.secao5?.antecedentes) + row("Uso de Psicofármacos", d.secao5?.uso_psicofarmacos) + row("Medicação Atual", d.secao5?.medicacao_atual));
+            const s15 = section("Parecer e Conduta", row("Parecer", d.secao15?.parecer));
+
+            acolhimentoBody = `
+              <div class="section" style="background: #f8fafc; padding: 12px; border-radius: 6px; border: 0.5px solid #e2e8f0; margin-bottom: 15px;">
+                <div style="font-size: 10pt; color: #0369a1; font-weight: 900; margin-bottom: 10px; border-bottom: 1px solid #0369a1; padding-bottom: 4px;">ACOLHIMENTO EM SAÚDE MENTAL</div>
+                ${s3}${s4}${s5}${s15}
               </div>
             `;
           }
-        } catch (e) {}
+        } catch (e) {
+          console.error("Erro ao carregar acolhimento para impressão:", e);
+        }
       }
 
       body = `
