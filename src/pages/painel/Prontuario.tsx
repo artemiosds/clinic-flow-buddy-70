@@ -3323,6 +3323,15 @@ const ProntuarioPage: React.FC = () => {
               </SheetHeader>
 
               <div className="mt-4 space-y-4 text-sm">
+                <div className="flex items-center gap-2 px-3 py-2 bg-primary/5 rounded-lg border border-primary/10">
+                  <div className="flex-1">
+                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Tipo de Registro</p>
+                    <p className="text-sm font-bold text-primary">
+                      {TIPOS_REGISTRO.find(t => t.value === (viewerProntuario as any).tipo_registro)?.label || (viewerProntuario as any).tipo_registro || "Atendimento Clínico"}
+                    </p>
+                  </div>
+                </div>
+
                 {viewerProntuario.queixa_principal && (
                   <div>
                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Queixa Principal</p>
@@ -3353,6 +3362,33 @@ const ProntuarioPage: React.FC = () => {
                     <p className="text-foreground whitespace-pre-wrap">{viewerProntuario.soap_plano}</p>
                   </div>
                 )}
+                
+                {/* Campos de Especialidade se existirem em observacoes */}
+                {(() => {
+                  try {
+                    const parsed = viewerProntuario.observacoes ? JSON.parse(viewerProntuario.observacoes) : null;
+                    if (parsed?.especialidade_fields) {
+                      const entries = Object.entries(parsed.especialidade_fields);
+                      if (entries.length > 0) {
+                        return (
+                          <div className="bg-muted/30 p-3 rounded-lg border border-border/50">
+                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Avaliação Especializada</p>
+                            <div className="grid grid-cols-2 gap-3">
+                              {entries.map(([k, v]) => (
+                                <div key={k} className="space-y-0.5">
+                                  <p className="text-[10px] text-muted-foreground uppercase font-bold">{k.replace(/^esp_/, "").replace(/_/g, " ")}</p>
+                                  <p className="text-xs font-medium">{String(v === true ? 'Sim' : v === false ? 'Não' : v)}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      }
+                    }
+                  } catch (e) {}
+                  return null;
+                })()}
+
                 {viewerProntuario.evolucao && (
                   <div>
                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Evolução</p>
