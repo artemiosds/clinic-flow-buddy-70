@@ -3493,6 +3493,24 @@ const ProntuarioPage: React.FC = () => {
                   </div>
                 )}
 
+                {/* Dados Customizados / Campos Dinâmicos */}
+                {viewerProntuario.custom_data && Object.keys(viewerProntuario.custom_data).length > 0 && (
+                  <div className="bg-muted/30 p-3 rounded-lg border border-border/50">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Campos Adicionais</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {Object.entries(viewerProntuario.custom_data).map(([k, v]) => {
+                        if (!v || k === 'soap_enabled' || k === 'acolhimento_mental') return null;
+                        return (
+                          <div key={k} className="space-y-0.5">
+                            <p className="text-[10px] text-muted-foreground uppercase font-bold">{k.replace(/_/g, " ")}</p>
+                            <p className="text-xs font-medium">{String(v === true ? 'Sim' : v === false ? 'Não' : v)}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {/* Anexos */}
                 <div className="mt-2">
                   <ProntuarioAnexos 
