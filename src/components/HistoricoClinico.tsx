@@ -428,25 +428,25 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
             <div class="section">
               <div class="section-title">3. SEÇÕES PROFISSIONAIS</div>
               ${data.profissionais?.map((p: any) => `
-                <div style="margin-bottom: 20px; border: 1px solid #e2e8f0; padding: 12px; border-radius: 4px; page-break-inside: avoid;">
-                  <strong>${p.profissional_nome} (${p.profissao || "—"})</strong><br/>
-                  <div style="font-size: 10pt; margin-top: 5px; text-align: justify;">${p.evolucao || "—"}</div>
+                <div style="margin-bottom: 12px; border-bottom: 0.5px solid #e2e8f0; padding-bottom: 8px; page-break-inside: avoid;">
+                  <div style="font-size: 8.5pt; font-weight: 800; text-transform: uppercase; color: #475569;">${p.profissional_nome} (${p.profissao || "—"})</div>
+                  <div style="font-size: 10pt; margin-top: 3px; text-align: justify;">${p.evolucao || "—"}</div>
                 </div>
               `).join('')}
             </div>
 
             <div class="section">
               <div class="section-title">4. CONCLUSÃO E ORIENTAÇÕES</div>
-              ${data.motivoAlta ? `<div class="field"><span class="field-label">Motivo da Alta:</span><div class="field-value">${data.motivoAlta}</div></div>` : ""}
-              ${data.condicaoFuncional ? `<div class="field"><span class="field-label">Condição Funcional:</span><div class="field-value">${data.condicaoFuncional}</div></div>` : ""}
-              ${data.orientacoesUsuario ? `<div class="field"><span class="field-label">Orientações:</span><div class="field-value">${data.orientacoesUsuario}</div></div>` : ""}
+              ${data.motivoAlta ? `<div style="margin-bottom: 4px;"><strong>Motivo da Alta:</strong> ${data.motivoAlta}</div>` : ""}
+              ${data.condicaoFuncional ? `<div style="margin-bottom: 4px;"><strong>Condição Funcional:</strong> ${data.condicaoFuncional}</div>` : ""}
+              ${data.orientacoesUsuario ? `<div style="margin-bottom: 4px;"><strong>Orientações:</strong> ${data.orientacoesUsuario}</div>` : ""}
             </div>
 
             <div style="margin-top: 60px; display: flex; justify-content: center; page-break-inside: avoid;">
               <div class="signature">
-                <div class="signature-line" style="width: 300px;"></div>
+                <div class="signature-line" style="width: 250px;"></div>
                 <div class="name">Coordenação / Responsável Técnico</div>
-                <div class="role">CER II — Oriximiná-PA</div>
+                <div class="role">Unidade de Atendimento — Oriximiná-PA</div>
               </div>
             </div>
           `;
