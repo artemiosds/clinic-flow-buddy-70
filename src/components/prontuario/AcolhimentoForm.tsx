@@ -19,6 +19,7 @@ interface AcolhimentoFormProps {
 }
 
 const SINTOMAS_OPTIONS = [
+  "Alucinação", "Delírios", "Labilidade emocional", "Embotamento afetivo", 
   "Pensamento e fala alterada", "Aparência alterada", "Tristeza", "Medo",
   "Ansiedade", "Nervosismo", "Falta de prazer", "Perda de interesse",
   "Insônia ou sono alterado", "Culpa", "Agressividade", "Raiva",
