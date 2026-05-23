@@ -58,6 +58,7 @@ import EncaminhamentoExternoModal from "@/components/EncaminhamentoExternoModal"
 import SoapFieldsAdaptive from "@/components/SoapFieldsAdaptive";
 import TriagemDetalhada from "@/components/TriagemDetalhada";
 import ProntuarioAnexos from "@/components/ProntuarioAnexos";
+import { cn } from "@/lib/utils";
 import ResultadosExames from "@/components/ResultadosExames";
 import ProcedimentosCidCards from "@/components/prontuario/ProcedimentosCidCards";
 import { isMedico, hasDropdownSoap } from "@/data/soapOptionsByProfession";
@@ -116,12 +117,12 @@ interface ProcedimentoDB {
 }
 
 const TIPOS_REGISTRO = [
-  { value: 'avaliacao_inicial', label: `🟢 ${TIPO_REGISTRO_LABELS.avaliacao_inicial}` },
+  { value: 'avaliacao_inicial', label: `🟢 Avaliação/TR` },
   { value: 'retorno', label: `🔵 ${TIPO_REGISTRO_LABELS.retorno}` },
   { value: 'sessao', label: `🟡 ${TIPO_REGISTRO_LABELS.sessao}` },
   { value: 'urgencia', label: `🔴 ${TIPO_REGISTRO_LABELS.urgencia}` },
   { value: 'procedimento', label: `🟣 ${TIPO_REGISTRO_LABELS.procedimento}` },
-  { value: 'consulta', label: 'Consulta (legado)' },
+  { value: 'consulta', label: 'Avaliação/TR (legado)' },
   { value: 'reavaliacao', label: 'Reavaliação (legado)' },
   { value: 'avaliacao_enfermagem', label: 'Avaliação de Enfermagem (legado)' },
   { value: 'pts', label: 'PTS (legado)' },
@@ -2310,27 +2311,43 @@ const ProntuarioPage: React.FC = () => {
               </div>
             )}
 
-            {/* Tipo de Registro */}
-            <div>
-              <Label>Tipo de Registro *</Label>
-              <Select
-                value={form.tipo_registro}
-                onValueChange={(v) => {
-                  setSessionRegistrationRequested((prev) => (v === 'sessao' ? prev : false));
-                  setForm((p) => ({ ...p, tipo_registro: v }));
-                }}
-              >
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {TIPOS_REGISTRO.map(t => (
-                    <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <div className="flex items-center justify-end mt-1">
-                <Button type="button" variant="ghost" size="sm" className="text-xs text-muted-foreground gap-1" onClick={() => navigate('/painel/meu-prontuario')}>
-                  <Settings className="w-3 h-3" /> Personalizar meu prontuário
-                </Button>
+            {/* Tipo de Registro Highlighted */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-gradient-to-br from-card to-muted/20 p-6 rounded-2xl border border-primary/10 shadow-md mb-4">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-xl bg-primary/10 text-primary shadow-inner">
+                  <Activity className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-foreground tracking-tight">Atendimento Clínico</h3>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Atendimento Ativo</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4 bg-background/60 p-3 rounded-xl border border-border/40 backdrop-blur-sm">
+                <div className="flex flex-col gap-1">
+                  <Label className="text-[10px] font-black uppercase text-muted-foreground/80 tracking-widest ml-1">Tipo de Registro</Label>
+                  <Select
+                    value={form.tipo_registro}
+                    onValueChange={(v) => {
+                      setSessionRegistrationRequested((prev) => (v === 'sessao' ? prev : false));
+                      setForm((p) => ({ ...p, tipo_registro: v }));
+                    }}
+                  >
+                    <SelectTrigger className="w-[200px] h-10 text-sm font-bold bg-background border-primary/20 hover:border-primary/40 focus:ring-primary/20 transition-all shadow-sm rounded-lg">
+                      <SelectValue placeholder="Selecione o tipo..." />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl border-primary/10 shadow-xl">
+                      {TIPOS_REGISTRO.map(t => (
+                        <SelectItem key={t.value} value={t.value} className={cn("focus:bg-primary/5 rounded-md cursor-pointer py-2.5", t.label.includes('(legado)') && "opacity-60 italic text-xs")}>
+                          <span className="font-semibold">{t.label}</span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
 

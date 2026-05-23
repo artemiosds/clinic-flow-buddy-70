@@ -3,7 +3,7 @@
  * This ensures consistency across all screens while keeping internal keys intact.
  */
 export const TIPO_REGISTRO_LABELS: Record<string, string> = {
-  avaliacao_inicial: "1ª Consulta",
+  avaliacao_inicial: "Avaliação/TR",
   retorno: "Retorno",
   sessao: "Sessão",
   urgencia: "Urgência",
@@ -12,7 +12,7 @@ export const TIPO_REGISTRO_LABELS: Record<string, string> = {
   alta_individual: "Relatório de Alta Individual",
   alta_multiprofissional: "Relatório de Alta Multiprofissional",
   falta: "Falta",
-  consulta: "1ª Consulta", // Legacy mapping
+  consulta: "Avaliação/TR", // Legacy mapping
 };
 
 /**

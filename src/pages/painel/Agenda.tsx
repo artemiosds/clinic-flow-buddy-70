@@ -115,7 +115,7 @@ const STATUS_GROUPS: Record<string, string[]> = {
   confirmado_chegada: ["confirmado_chegada"],
   aguardando_triagem: ["aguardando_triagem"],
   triagem_concluida: ["triagem_concluida"],
-  pendente: ["pendente"],
+  pendente: ["pendente", "avaliacao"],
 };
 
 const STATUS_GROUP_LABELS: Record<string, string> = {
@@ -153,7 +153,8 @@ const statusBadgeClass: Record<string, string> = {
 };
 
 const tipoBadge: Record<string, { label: string; class: string; icon: string }> = {
-  Consulta: { label: "1ª Consulta", class: "bg-success/15 text-success border border-success/30", icon: "🟢" },
+  "Avaliação/TR": { label: "Avaliação/TR", class: "bg-success/15 text-success border border-success/30", icon: "🟢" },
+  Consulta: { label: "Avaliação/TR", class: "bg-success/15 text-success border border-success/30", icon: "🟢" },
   Retorno: { label: "Retorno", class: "bg-info/15 text-info border border-info/30", icon: "🔵" },
   Exame: { label: "Exame", class: "bg-warning/15 text-warning border border-warning/30", icon: "🟡" },
   Procedimento: {
@@ -222,7 +223,7 @@ const Agenda: React.FC = () => {
     profissionalId: filterProf !== "all" ? filterProf : "",
     salaId: "",
     hora: "",
-    tipo: "Consulta",
+    tipo: "Avaliação/TR",
     obs: "",
   });
   const [detalheOpen, setDetalheOpen] = useState(false);
@@ -1654,7 +1655,7 @@ const Agenda: React.FC = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="Todos">Todos os tipos</SelectItem>
-                <SelectItem value="Consulta">Primeira Consulta</SelectItem>
+                <SelectItem value="Consulta">Avaliação/TR</SelectItem>
                 <SelectItem value="Retorno">Retorno</SelectItem>
                 <SelectItem value="Exame">Exame</SelectItem>
                 <SelectItem value="Procedimento">Procedimento</SelectItem>
@@ -1872,7 +1873,7 @@ const Agenda: React.FC = () => {
                 const isPendenteRevisao = agendamentosPendentesRevisao.some(p => p.id === ag.id);
                 const anexoUrl = (ag as any).attachment_url || ag.attachmentUrl;
                 const typeColorBar: Record<string, string> = {
-                  Consulta: "border-l-[#3B82F6]",
+                  "Avaliação/TR": "border-l-[#3B82F6]",
                   Retorno: "border-l-[#10B981]",
                   Procedimento: "border-l-[#8B5CF6]",
                   Exame: "border-l-[#F59E0B]",
