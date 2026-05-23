@@ -3360,6 +3360,8 @@ const ProntuarioPage: React.FC = () => {
                   </div>
                 </div>
 
+                <TriagemInline viewerProntuario={viewerProntuario} />
+
                 {viewerProntuario.queixa_principal && (
                   <div>
                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Queixa Principal</p>
