@@ -45,6 +45,8 @@ interface ProntuarioItem {
   soap_objetivo?: string;
   soap_avaliacao?: string;
   soap_plano?: string;
+  prescricao?: string;
+  solicitacao_exames?: string;
 }
 
 interface EpisodioItem {
