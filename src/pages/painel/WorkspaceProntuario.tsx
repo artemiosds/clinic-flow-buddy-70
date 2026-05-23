@@ -523,6 +523,7 @@ const WorkspaceProntuario: React.FC = () => {
         soap_objetivo: form.soap_objetivo || '',
         soap_avaliacao: form.soap_avaliacao || '',
         soap_plano: form.soap_plano || '',
+        dados_acolhimento: (acolhimentoDraft && Object.keys(acolhimentoDraft).length > 0) ? acolhimentoDraft : (form.dados_acolhimento || null),
         episodio_id: (form.episodio_id && form.episodio_id !== 'no_episode') ? form.episodio_id : null,
         custom_data: {
           ...form.custom_data,
