@@ -2808,6 +2808,7 @@ const ProntuarioPage: React.FC = () => {
                     downloadProntuarioPdf({
                       ...form,
                       id: editId || 'rascunho',
+                      paciente_id: form.paciente_id,
                       profissional_nome: user?.nome || '',
                       setor: user?.setor || '',
                       custom_data: { ...customFields, ...especialidadeFields },
@@ -2817,6 +2818,7 @@ const ProntuarioPage: React.FC = () => {
                       observacoes: Object.keys(especialidadeFields).length > 0 ? JSON.stringify({ especialidade_fields: especialidadeFields, texto: form.observacoes }) : form.observacoes,
                       unidade_id: user?.unidadeId || '',
                       especialidade: user?.profissao || '',
+                      tipo_registro: form.tipo_registro,
                     });
                   }}>
                     <Printer className="w-4 h-4 mr-2" />
