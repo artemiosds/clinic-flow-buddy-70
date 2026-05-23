@@ -371,15 +371,12 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
             </div>
 
             <div class="section">
-              <div class="section-title">3. DIAGNÓSTICO</div>
-              <div class="field"><span class="field-label">CID-10:</span><div class="field-value"><strong>${data.diagCid || "—"}</strong> ${data.cidDesc ? ` - ${data.cidDesc}` : ""}</div></div>
-              ${data.cif ? `<div class="field"><span class="field-label">CIF:</span><div class="field-value">${data.cif}</div></div>` : ""}
+              <div class="section-title">Diagnóstico e Objetivos</div>
+              <div style="margin-bottom: 5px;"><strong>CID-10:</strong> ${data.diagCid || "—"} ${data.cidDesc ? ` - ${data.cidDesc}` : ""}</div>
+              ${data.cif ? `<div style="margin-bottom: 5px;"><strong>CIF:</strong> ${data.cif}</div>` : ""}
+              <div style="margin-bottom: 5px;"><strong>Objetivos:</strong> ${data.objetivos || "—"}</div>
             </div>
 
-            <div class="section">
-              <div class="section-title">4. OBJETIVOS TERAPÊUTICOS</div>
-              <div class="field-value">${data.objetivos || "—"}</div>
-            </div>
 
             <div class="section">
               <div class="section-title">5. INTERVENÇÕES / PROCEDIMENTOS REALIZADOS</div>
@@ -406,19 +403,20 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
               <div class="field-value">${data.orientacoes || data.encaminhamento || "—"}</div>
             </div>
 
-            <div class="signature" style="margin-top:50px">
-              <div class="signature-line"></div>
+            <div class="signature" style="margin-top:40px">
+              <div class="signature-line" style="width: 250px;"></div>
               <div class="name">${item.profissional_nome}</div>
             </div>
           `;
         } else {
           body = `
-            <div class="section">
-              <div class="section-title">1. IDENTIFICAÇÃO DO PACIENTE</div>
-              <div class="info-grid">
-                <div><span class="info-label">Paciente:</span> <span class="info-value">${pacienteNome}</span></div>
-                <div><span class="info-label">Data de Alta:</span> <span class="info-value">${data.dataAlta ? formatDateBR(data.dataAlta) : formatDateBR(item.data_atendimento)}</span></div>
-                <div style="grid-column: span 2;"><span class="info-label">Modalidades:</span> <span class="info-value">${data.modalidades?.join(', ') || "—"}</span></div>
+            <div class="info-grid" style="grid-template-columns: 2fr 1fr; border-color: #000; border-width: 0.8px; margin-bottom: 10px;">
+              <div>
+                <span class="info-label">Paciente:</span> <span class="info-value" style="font-weight:700;">${pacienteNome}</span><br/>
+                <span class="info-label">Data da Alta:</span> <span class="info-value" style="font-weight:700;">${data.dataAlta ? formatDateBR(data.dataAlta) : formatDateBR(item.data_atendimento)}</span>
+              </div>
+              <div style="text-align: right;">
+                 <span class="info-label">Modalidades:</span> <span class="info-value">${data.modalidades?.join(', ') || "—"}</span>
               </div>
             </div>
 
