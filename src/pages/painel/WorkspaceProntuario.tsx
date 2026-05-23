@@ -190,7 +190,7 @@ const WorkspaceProntuario: React.FC = () => {
         .select('*')
         .eq('paciente_id', patientId)
         .eq('tipo_registro', 'acolhimento_mental')
-        .order('data_registro', { ascending: false })
+        .order('criado_em', { ascending: false })
         .limit(1)
         .maybeSingle();
       
