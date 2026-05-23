@@ -139,6 +139,7 @@ const renderContent = (item: ProntuarioItem) => {
 
   return (
     <div className="space-y-4">
+      {item.dados_acolhimento && <AcolhimentoView data={item.dados_acolhimento} />}
       {item.queixa_principal && <Section label="Queixa principal" value={item.queixa_principal} />}
       {item.evolucao && <Section label="Evolução / SOAP" value={item.evolucao} />}
       {item.conduta && <Section label="Conduta" value={item.conduta} />}
