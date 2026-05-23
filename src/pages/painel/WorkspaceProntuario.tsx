@@ -234,8 +234,8 @@ const WorkspaceProntuario: React.FC = () => {
             if (p) {
               // Only overwrite if not modified or if it's a forced refresh
               setForm(prev => {
-                if (hasModifiedForm) return prev;
-                return { ...prev, ...p };
+                // Preservamos o que o usuário já digitou, mas garantimos que o ID e metadados do banco sejam carregados
+                return { ...p, ...prev, id: p.id };
               });
               
               // Load specialty fields from observations if they were stored there (standard pattern)
