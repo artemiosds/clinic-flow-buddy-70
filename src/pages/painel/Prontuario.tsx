@@ -1839,22 +1839,7 @@ const ProntuarioPage: React.FC = () => {
         return `<div class="section"><div class="section-title">${s.title}</div><div class="section-content">${displayContent}</div></div>`;
       })
       .join("");
-    const body = `
-      <div class="info-grid">
-        <div><span class="info-label">Paciente:</span><br/><span class="info-value">${p.paciente_nome}</span></div>
-        <div><span class="info-label">Data:</span><br/><span class="info-value">${new Date(p.data_atendimento + "T12:00:00").toLocaleDateString("pt-BR")}</span></div>
-        <div><span class="info-label">Profissional:</span><br/><span class="info-value">${p.profissional_nome}</span></div>
-        <div><span class="info-label">Hora:</span><br/><span class="info-value">${p.hora_atendimento || "-"}</span></div>
-        <div><span class="info-label">Unidade:</span><br/><span class="info-value">${unidadeNome}</span></div>
-        <div><span class="info-label">Setor:</span><br/><span class="info-value">${p.setor || "-"}</span></div>
-      </div>
-      ${sections}
-      <div class="signature">
-        <div class="signature-line"></div>
-        <div class="name">${p.profissional_nome}</div>
-        <div class="role">${p.setor || ""}</div>
-      </div>`;
-    openPrintDocument("Prontuário de Atendimento", body, { Unidade: unidadeNome });
+    downloadProntuarioPdf(p);
   };
 
   const handlePrintFullHistory = (pacienteId: string, pacienteNome: string) => {
