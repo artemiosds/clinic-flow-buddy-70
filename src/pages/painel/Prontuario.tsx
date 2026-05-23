@@ -58,6 +58,7 @@ import EncaminhamentoExternoModal from "@/components/EncaminhamentoExternoModal"
 import SoapFieldsAdaptive from "@/components/SoapFieldsAdaptive";
 import TriagemDetalhada from "@/components/TriagemDetalhada";
 import ProntuarioAnexos from "@/components/ProntuarioAnexos";
+import { cn } from "@/lib/utils";
 import ResultadosExames from "@/components/ResultadosExames";
 import ProcedimentosCidCards from "@/components/prontuario/ProcedimentosCidCards";
 import { isMedico, hasDropdownSoap } from "@/data/soapOptionsByProfession";
