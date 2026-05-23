@@ -105,7 +105,7 @@ function section(label: string, raw: string | undefined): string {
 async function fetchAnexosHtml(prontuarioId: string): Promise<string> {
   if (!prontuarioId || prontuarioId === 'rascunho') return '';
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("prontuario_anexos")
       .select("nome_arquivo, categoria, criado_em")
       .eq("prontuario_id", prontuarioId);
@@ -133,7 +133,7 @@ async function fetchAnexosHtml(prontuarioId: string): Promise<string> {
 
 async function fetchTriagemHtml(pacienteId: string, dataAtendimento: string): Promise<string> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("triagem")
       .select("*")
       .eq("paciente_id", pacienteId)
