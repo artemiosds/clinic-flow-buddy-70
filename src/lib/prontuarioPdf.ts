@@ -1,25 +1,16 @@
 /**
  * Geração de PDF/impressão do Prontuário Clínico e do Histórico Completo
  * passando 100% pelo shell institucional global (openPrintDocument).
- *
- * Antes este módulo gerava PDF diretamente com jsPDF, produzindo um cabeçalho
- * próprio (faixa azul + texto solto) totalmente fora do padrão institucional.
- * Agora a impressão herda automaticamente:
- *  - logos (esquerda / centro / direita) com tamanho e formato configurados
- *  - linhas institucionais (linha1, linha2)
- *  - rodapé global com data/hora e endereço institucional
- *
- * As chamadas existentes (`downloadProntuarioPdf`, `downloadFullHistoryPdf`)
- * continuam funcionando — internamente abrem a janela de impressão usando o
- * mesmo template usado pelos outros documentos.
  */
 
 import { openPrintDocument } from "@/lib/printLayout";
 import { renderCustomFieldsHtml } from "@/lib/customFieldsPrint";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ProntuarioLike {
   id: string;
+  paciente_id?: string;
   paciente_nome: string;
   profissional_nome: string;
   data_atendimento: string;
@@ -39,15 +30,20 @@ interface ProntuarioLike {
   soap_objetivo?: string;
   soap_avaliacao?: string;
   soap_plano?: string;
-  /** Valores brutos de campos personalizados do prontuário. */
+  tipo_registro?: string;
   custom_data?: Record<string, any>;
-  /** Unidade — resolve campos personalizados por unidade. */
   unidade_id?: string;
-  /** Especialidade — usada para regras condicionais. */
   especialidade?: string;
-  /** Tipo de prontuário — usado para regras condicionais. */
   tipo_prontuario?: string;
 }
+
+const TIPO_LABELS: Record<string, string> = {
+  avaliacao_inicial: "Avaliação/TR",
+  retorno: "Retorno",
+  sessao: "Sessão de Tratamento",
+  urgencia: "Atendimento de Urgência",
+  procedimento: "Procedimento",
+};
 
 function fmtDate(iso: string | undefined): string {
   if (!iso) return "—";
@@ -67,10 +63,6 @@ function escapeHtml(value: unknown): string {
     .replace(/"/g, "&quot;");
 }
 
-/**
- * Tenta interpretar campos que vieram como JSON estruturado
- * (medicamentos, exames, relatório de alta) e renderiza de forma legível.
- */
 function safe(str: string | undefined | null): string {
   if (!str) return "";
   const trimmed = str.trim();
@@ -93,30 +85,48 @@ function safe(str: string | undefined | null): string {
           )
           .join("\n");
       }
-      if (
-        parsed?.diagCid ||
-        parsed?.cid10 ||
-        parsed?.profissionais ||
-        parsed?.motivoAlta ||
-        parsed?.motivo
-      ) {
-        return "Este registro é um Relatório de Alta. Utilize a tela do Relatório de Alta para imprimir o documento estruturado.";
-      }
-    } catch {
-      /* não é JSON — segue como texto */
-    }
+    } catch { /* não é JSON */ }
   }
   return str;
 }
 
-function section(label: string, raw: string | undefined, forceShow = false): string {
+function section(label: string, raw: string | undefined): string {
   const value = safe(raw);
-  if (!forceShow && (!value || !value.trim())) return "";
+  if (!value || !value.trim()) return "";
   return `
     <div class="section">
       <div class="section-title">${escapeHtml(label)}</div>
-      <div class="section-content">${escapeHtml(value || "—")}</div>
+      <div class="section-content">${escapeHtml(value)}</div>
     </div>`;
+}
+
+async function fetchAnexosHtml(pacienteId: string, prontuarioId: string): Promise<string> {
+  if (!prontuarioId || prontuarioId === 'rascunho') return '';
+  try {
+    const { data } = await supabase
+      .from("prontuario_anexos")
+      .select("nome_arquivo, categoria, criado_em")
+      .eq("prontuario_id", prontuarioId);
+    
+    if (!data || data.length === 0) return '';
+
+    const items = data.map(a => `
+      <div style="margin-bottom: 4px; font-size: 9pt;">
+        • <strong>${escapeHtml(a.nome_arquivo)}</strong> 
+        <span style="color: #64748b; font-size: 8pt;">(${escapeHtml(a.categoria)} — ${fmtDate(a.criado_em.split('T')[0])})</span>
+      </div>
+    `).join('');
+
+    return `
+      <div class="section">
+        <div class="section-title">Anexos e Documentos</div>
+        <div class="section-content">
+          ${items}
+        </div>
+      </div>`;
+  } catch {
+    return '';
+  }
 }
 
 async function buildProntuarioBody(p: ProntuarioLike, extraHtml = ""): Promise<string> {
@@ -131,21 +141,18 @@ async function buildProntuarioBody(p: ProntuarioLike, extraHtml = ""): Promise<s
     ["Hipótese Diagnóstica", p.hipotese],
     ["Conduta", p.conduta],
     ["Procedimentos", p.procedimentos_texto],
-    ["Prescrição", p.prescricao],
+    ["Prescrição / Medicamentos", p.prescricao],
     ["Solicitação de Exames", p.solicitacao_exames],
-    ["Evolução", p.evolucao],
-    ["Observações", p.observacoes],
+    ["Evolução Clínica", p.evolucao],
   ];
 
-  // Identificar se as observações contém campos de especialidade JSON
   let obsHtml = "";
   const obsValue = p.observacoes?.trim() || "";
   if (obsValue.startsWith("{")) {
     try {
       const parsed = JSON.parse(obsValue);
       if (parsed.especialidade_fields) {
-        const fields = parsed.especialidade_fields;
-        const fieldEntries = Object.entries(fields)
+        const fieldEntries = Object.entries(parsed.especialidade_fields)
           .filter(([_, v]) => v !== undefined && v !== null && String(v).trim() !== "")
           .map(([k, v]) => {
             const label = k.replace(/^esp_/, "").replace(/_/g, " ").toUpperCase();
@@ -153,9 +160,9 @@ async function buildProntuarioBody(p: ProntuarioLike, extraHtml = ""): Promise<s
             if (displayValue === "true") displayValue = "Sim";
             if (displayValue === "false") displayValue = "Não";
             return `
-              <div class="field" style="margin-bottom: 4px;">
-                <span class="field-label" style="font-size: 7pt; color: #475569; font-weight: 700;">${escapeHtml(label)}</span>
-                <div class="field-value" style="font-size: 10pt; color: #000;">${escapeHtml(displayValue)}</div>
+              <div class="field">
+                <span class="field-label" style="font-size: 7.5pt; color: #475569; font-weight: 700; text-transform: uppercase;">${escapeHtml(label)}</span>
+                <div class="field-value" style="font-size: 10pt; color: #000; font-weight: 500;">${escapeHtml(displayValue)}</div>
               </div>`;
           })
           .join("");
@@ -164,72 +171,86 @@ async function buildProntuarioBody(p: ProntuarioLike, extraHtml = ""): Promise<s
           obsHtml = `
             <div class="section">
               <div class="section-title">Avaliação Especializada</div>
-              <div class="section-content" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+              <div class="section-content" style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px 15px;">
                 ${fieldEntries}
               </div>
             </div>`;
         }
-        
-        // Se houver texto adicional além dos campos, mostrar separadamente
         if (parsed.texto?.trim()) {
           sections.push(["Observações Adicionais", parsed.texto]);
         }
+      } else {
+        sections.push(["Observações", p.observacoes]);
       }
-    } catch (e) {
-      // Not JSON or parse error, keep original behavior
+    } catch {
+      sections.push(["Observações", p.observacoes]);
     }
+  } else {
+    sections.push(["Observações", p.observacoes]);
   }
 
   const sectionsHtml = sections
-    .filter(([label, _]) => label !== "Observações" || !obsHtml) // Pular Observações se já processamos como JSON
     .map(([label, value]) => section(label, value))
     .join("");
 
+  let anexosHtml = "";
+  if (p.paciente_id && p.id) {
+    anexosHtml = await fetchAnexosHtml(p.paciente_id, p.id);
+  }
+
   const signature = `
-    <div class="signature">
-      <div class="signature-line"></div>
+    <div class="signature" style="margin-top: 40px;">
+      <div class="signature-line" style="width: 280px;"></div>
       <div class="name">${escapeHtml(p.profissional_nome || "Profissional responsável")}</div>
       ${p.setor ? `<div class="role">${escapeHtml(p.setor)}</div>` : ""}
     </div>`;
 
+  const tipoLabel = TIPO_LABELS[p.tipo_registro || ""] || p.tipo_registro || "Atendimento Clínico";
+
   return `
-    <div class="info-grid">
-      <div><span class="info-label">Paciente</span><div class="info-value">${escapeHtml(p.paciente_nome || "—")}</div></div>
-      <div><span class="info-label">Data do atendimento</span><div class="info-value">${escapeHtml(fmtDate(p.data_atendimento))}</div></div>
-      <div><span class="info-label">Profissional</span><div class="info-value">${escapeHtml(p.profissional_nome || "—")}</div></div>
-      <div><span class="info-label">Hora</span><div class="info-value">${escapeHtml(p.hora_atendimento || "—")}</div></div>
-      <div><span class="info-label">Setor</span><div class="info-value">${escapeHtml(p.setor || "—")}</div></div>
-      <div><span class="info-label">ID</span><div class="info-value">${escapeHtml((p.id || "").slice(0, 8))}</div></div>
+    <div class="info-grid" style="margin-bottom: 15px; grid-template-columns: 2fr 1fr; padding: 10px;">
+      <div>
+        <span class="info-label">Paciente</span>
+        <div class="info-value" style="font-weight: 700; font-size: 11pt;">${escapeHtml(p.paciente_nome || "—")}</div>
+      </div>
+      <div>
+        <span class="info-label">Tipo de Registro</span>
+        <div class="info-value" style="color: #0369a1; font-weight: 700;">${escapeHtml(tipoLabel)}</div>
+      </div>
+      <div>
+        <span class="info-label">Profissional</span>
+        <div class="info-value">${escapeHtml(p.profissional_nome || "—")} ${p.setor ? `(${escapeHtml(p.setor)})` : ""}</div>
+      </div>
+      <div>
+        <span class="info-label">Data / Hora</span>
+        <div class="info-value">${escapeHtml(fmtDate(p.data_atendimento))} ${p.hora_atendimento ? `às ${escapeHtml(p.hora_atendimento)}` : ""}</div>
+      </div>
     </div>
-    ${sectionsHtml}
-    ${obsHtml}
-    ${extraHtml || ""}
+    
+    <div class="doc-content">
+      ${sectionsHtml}
+      ${obsHtml}
+      ${extraHtml}
+      ${anexosHtml}
+    </div>
+    
     ${signature}
   `;
 }
 
-/**
- * Mantém a assinatura pública anterior (`downloadProntuarioPdf(p)`).
- * Em vez de gerar um PDF jsPDF próprio, abre o documento institucional
- * unificado e dispara a impressão (o usuário escolhe "Salvar como PDF"
- * no diálogo do navegador, garantindo PDF = Preview = Impressão).
- */
-export function downloadProntuarioPdf(
-  p: ProntuarioLike,
-  _clinica = "Secretaria Municipal de Saúde — Oriximiná",
-): void {
+export function downloadProntuarioPdf(p: ProntuarioLike): void {
   void (async () => {
     try {
       const extraHtml = await renderCustomFieldsHtml('prontuario', p.custom_data || {}, {
         unidadeId: p.unidade_id,
         contexto: { especialidade: p.especialidade, tipoProntuario: p.tipo_prontuario },
-        titulo: 'Campos Personalizados do Prontuário',
+        titulo: 'Informações Complementares',
       }).catch(() => '');
       
       const body = await buildProntuarioBody(p, extraHtml);
       
       await openPrintDocument(
-        `PRONTUÁRIO CLÍNICO — ${fmtDate(p.data_atendimento)}`,
+        `PRONTUÁRIO CLÍNICO — ${p.paciente_nome}`,
         body,
         {
           Paciente: p.paciente_nome || "—",
@@ -238,12 +259,8 @@ export function downloadProntuarioPdf(
         },
       );
     } catch (err: any) {
-      if (err?.message === "POPUP_BLOCKED") {
-        toast.error("Bloqueio de pop-up impediu abrir o documento. Permita pop-ups e tente novamente.");
-      } else {
-        console.error("[Prontuário] Falha ao abrir impressão", err);
-        toast.error("Não foi possível gerar o prontuário para impressão.");
-      }
+      console.error("[Prontuário] Falha ao abrir impressão", err);
+      toast.error("Não foi possível gerar o prontuário para impressão.");
     }
   })();
 }
@@ -259,71 +276,54 @@ interface TimelineEntry {
 }
 
 function buildHistoryBody(pacienteNome: string, entries: TimelineEntry[]): string {
-  const sorted = [...entries].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
-  const first = sorted[0]?.date ? fmtDate(sorted[0].date) : "—";
-  const last = sorted[sorted.length - 1]?.date ? fmtDate(sorted[sorted.length - 1].date) : "—";
-
   const rows = [...entries]
     .sort((a, b) => (b.date || "").localeCompare(a.date || ""))
     .map(
       (e) => `
         <tr>
-          <td>${escapeHtml(fmtDate(e.date))}</td>
-          <td>${escapeHtml([e.type || "—", e.sessionInfo].filter(Boolean).join(" "))}</td>
+          <td style="white-space: nowrap;">${escapeHtml(fmtDate(e.date))}</td>
+          <td><strong>${escapeHtml([e.type || "—", e.sessionInfo].filter(Boolean).join(" "))}</strong></td>
           <td>${escapeHtml(e.professional || "—")}</td>
           <td>${escapeHtml(e.specialty || "—")}</td>
-          <td>${escapeHtml((e.summary || "").slice(0, 320))}</td>
+          <td><div style="font-size: 8.5pt; max-height: 100px; overflow: hidden;">${escapeHtml(e.summary || "")}</div></td>
         </tr>`,
     )
     .join("");
 
   return `
-    <div class="info-grid">
-      <div><span class="info-label">Paciente</span><div class="info-value">${escapeHtml(pacienteNome)}</div></div>
-      <div><span class="info-label">Total de eventos</span><div class="info-value">${entries.length}</div></div>
-      <div><span class="info-label">Primeiro registro</span><div class="info-value">${escapeHtml(first)}</div></div>
-      <div><span class="info-label">Último registro</span><div class="info-value">${escapeHtml(last)}</div></div>
+    <div class="info-grid" style="margin-bottom: 15px; grid-template-columns: 3fr 1fr;">
+      <div><span class="info-label">Paciente</span><div class="info-value" style="font-weight: 700; font-size: 11pt;">${escapeHtml(pacienteNome)}</div></div>
+      <div><span class="info-label">Total de Registros</span><div class="info-value" style="font-weight: 700;">${entries.length}</div></div>
     </div>
 
-    <h2>Linha do tempo clínica</h2>
-    <table>
+    <h2 style="margin-top: 15px; margin-bottom: 10px;">Linha do Tempo Clínica</h2>
+    <table style="width: 100%; border-collapse: collapse; font-size: 9pt;">
       <thead>
-        <tr>
-          <th style="width:14%">Data</th>
-          <th style="width:16%">Tipo</th>
-          <th style="width:22%">Profissional</th>
-          <th style="width:16%">Especialidade</th>
-          <th>Resumo</th>
+        <tr style="background-color: #f8fafc;">
+          <th style="width:12%; border: 1px solid #e2e8f0; padding: 6px;">Data</th>
+          <th style="width:18%; border: 1px solid #e2e8f0; padding: 6px;">Tipo</th>
+          <th style="width:20%; border: 1px solid #e2e8f0; padding: 6px;">Profissional</th>
+          <th style="width:15%; border: 1px solid #e2e8f0; padding: 6px;">Especialidade</th>
+          <th style="border: 1px solid #e2e8f0; padding: 6px;">Resumo Clínico</th>
         </tr>
       </thead>
-      <tbody>${rows || '<tr><td colspan="5" style="text-align:center;color:#64748b;">Sem registros encontrados.</td></tr>'}</tbody>
+      <tbody>${rows || '<tr><td colspan="5" style="text-align:center; padding: 20px; color:#64748b;">Nenhum registro encontrado no histórico.</td></tr>'}</tbody>
     </table>
   `;
 }
 
-/**
- * Mesma assinatura anterior — `downloadFullHistoryPdf(nome, entries)` —
- * mas usando o shell institucional unificado.
- */
-export function downloadFullHistoryPdf(
-  pacienteNome: string,
-  entries: TimelineEntry[],
-  _clinica = "Secretaria Municipal de Saúde — Oriximiná",
-): void {
+export function downloadFullHistoryPdf(pacienteNome: string, entries: TimelineEntry[]): void {
   void (async () => {
     try {
       await openPrintDocument(
-        `HISTÓRICO CLÍNICO COMPLETO — ${pacienteNome}`,
+        `HISTÓRICO CLÍNICO — ${pacienteNome}`,
         buildHistoryBody(pacienteNome, entries),
         { Paciente: pacienteNome, Eventos: String(entries.length) },
       );
     } catch (err: any) {
-      if (err?.message === "POPUP_BLOCKED") {
-        toast.error("Bloqueio de pop-up impediu abrir o documento. Permita pop-ups e tente novamente.");
-      } else {
-        console.error("[HistóricoClínico] Falha ao abrir impressão", err);
-        toast.error("Não foi possível gerar o histórico para impressão.");
-      }
+      console.error("[HistóricoClínico] Falha ao abrir impressão", err);
+      toast.error("Não foi possível gerar o histórico para impressão.");
     }
   })();
 }
+
