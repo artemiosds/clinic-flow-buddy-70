@@ -1150,7 +1150,7 @@ const ProntuarioPage: React.FC = () => {
     setSaving(true);
     const toastId = toast.loading("Salvando prontuário...");
     let insertedNewProntuario = false;
-    let prontuarioId: string | null = editId;
+    let prontuarioId: string | null = editId || form.id;
     try {
       const procTexto = selectedProcIds
         .map((id) => {
@@ -1231,8 +1231,8 @@ const ProntuarioPage: React.FC = () => {
       }
 
       const pac = pacientes.find((px) => px.id === (form.paciente_id || record.paciente_id));
-      if (editId) {
-        const { error } = await (supabase as any).from("prontuarios").update(record).eq("id", editId);
+      if (prontuarioId) {
+        const { error } = await (supabase as any).from("prontuarios").update(record).eq("id", prontuarioId);
         if (error) throw error;
         const camposAlterados: Record<string, { anterior: string; novo: string }> = {};
         if (previousForm) {
@@ -1262,7 +1262,7 @@ const ProntuarioPage: React.FC = () => {
         await logAction({
           acao: "prontuario_editado",
           entidade: "prontuario",
-          entidadeId: editId,
+          entidadeId: prontuarioId,
           modulo: "prontuario",
           user,
           detalhes: {
