@@ -1226,6 +1226,8 @@ const ProntuarioPage: React.FC = () => {
       // CORRIGIDO: não salva 'no_episode' no banco
       if (form.episodio_id && form.episodio_id !== "no_episode") {
         record.episodio_id = form.episodio_id;
+      } else {
+        record.episodio_id = null;
       }
 
       const pac = pacientes.find((px) => px.id === (form.paciente_id || record.paciente_id));
