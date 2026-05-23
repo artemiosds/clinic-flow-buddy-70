@@ -195,6 +195,25 @@ const retornoOptions = [
   { value: "outro", label: "Outro prazo" },
 ];
 
+const TriagemInline: React.FC<{ viewerProntuario: any }> = ({ viewerProntuario }) => {
+  const [triagem, setTriagem] = useState<any>(null);
+
+  useEffect(() => {
+    if (viewerProntuario?.paciente_id && viewerProntuario?.data_atendimento) {
+      supabase
+        .from("triagem" as any)
+        .select("*")
+        .eq("paciente_id", viewerProntuario.paciente_id)
+        .eq("data_atendimento", viewerProntuario.data_atendimento)
+        .maybeSingle()
+        .then(({ data }) => setTriagem(data));
+    }
+  }, [viewerProntuario]);
+
+  if (!triagem) return null;
+  return <TriagemDetalhada triagem={triagem} />;
+};
+
 const ProntuarioPage: React.FC = () => {
   const { user } = useAuth();
   const { can } = usePermissions();
