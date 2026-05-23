@@ -105,8 +105,8 @@ function section(label: string, raw: string | undefined): string {
 async function fetchAnexosHtml(prontuarioId: string): Promise<string> {
   if (!prontuarioId || prontuarioId === 'rascunho') return '';
   try {
-    const { data } = await supabase
-      .from("prontuario_anexos" as any)
+    const { data } = await (supabase as any)
+      .from("prontuario_anexos")
       .select("nome_arquivo, categoria, criado_em")
       .eq("prontuario_id", prontuarioId);
     
@@ -133,8 +133,8 @@ async function fetchAnexosHtml(prontuarioId: string): Promise<string> {
 
 async function fetchTriagemHtml(pacienteId: string, dataAtendimento: string): Promise<string> {
   try {
-    const { data } = await supabase
-      .from("triagem" as any)
+    const { data } = await (supabase as any)
+      .from("triagem")
       .select("*")
       .eq("paciente_id", pacienteId)
       .eq("data_atendimento", dataAtendimento)
@@ -379,6 +379,7 @@ export function downloadFullHistoryPdf(pacienteNome: string, entries: TimelineEn
     }
   })();
 }
+
 
 
 
