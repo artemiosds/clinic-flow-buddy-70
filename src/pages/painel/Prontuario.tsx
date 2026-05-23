@@ -61,6 +61,7 @@ import ProntuarioAnexos from "@/components/ProntuarioAnexos";
 import { cn } from "@/lib/utils";
 import ResultadosExames from "@/components/ResultadosExames";
 import ProcedimentosCidCards from "@/components/prontuario/ProcedimentosCidCards";
+import { AcolhimentoView } from "@/components/prontuario/AcolhimentoView";
 import { isMedico, hasDropdownSoap } from "@/data/soapOptionsByProfession";
 import { useSoapCustomOptions } from "@/hooks/useSoapCustomOptions";
 import { Stamp } from "lucide-react";
