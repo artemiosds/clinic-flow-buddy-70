@@ -29,6 +29,7 @@ import { TIPO_REGISTRO_LABELS } from '@/utils/labels';
 import PatientClinicalHeader from '@/components/pacientes/PatientClinicalHeader';
 import { HistoricoClinico } from '@/components/HistoricoClinico';
 import TriagemDetalhada from '@/components/TriagemDetalhada';
+import { AcolhimentoView } from '@/components/prontuario/AcolhimentoView';
 import DynamicProntuarioFields from '@/components/DynamicProntuarioFields';
 import SoapFieldsAdaptive from '@/components/SoapFieldsAdaptive';
 import PacienteDocumentos from '@/components/PacienteDocumentos';
