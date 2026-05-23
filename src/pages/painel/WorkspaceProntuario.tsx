@@ -120,7 +120,12 @@ const WorkspaceProntuario: React.FC = () => {
   });
 
   const handleFormChange = (updates: any) => {
-    setForm((prev: any) => ({ ...prev, ...updates }));
+    setForm((prev: any) => {
+      const next = { ...prev, ...updates };
+      // Se estamos recebendo um ID do banco e o form atual não tem, preservamos ele
+      if (updates.id && !prev.id) next.id = updates.id;
+      return next;
+    });
     setHasModifiedForm(true);
   };
 
