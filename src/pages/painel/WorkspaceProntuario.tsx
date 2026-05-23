@@ -311,40 +311,43 @@ const WorkspaceProntuario: React.FC = () => {
 
     let body = '';
 
-    // 1. Acolhimento section if active or exists
-    if (activeTab === 'acolhimento' || (acolhimentoData && activeTab === 'evolution')) {
-      const data = acolhimentoDraft || acolhimentoData?.dados_acolhimento;
-      if (data && Object.keys(data).length > 0) {
-        body += `
-          <div class="section">
-            <div class="section-title">Acolhimento de Saúde Mental</div>
-            <div class="section-content" style="font-size: 10pt;">
-              ${data.secao3?.queixa ? `<div style="margin-bottom: 8px;"><strong>Queixa Principal (Acolhimento):</strong> ${data.secao3.queixa}</div>` : ''}
-              ${data.secao4?.sintomas?.length > 0 ? `<div style="margin-bottom: 8px;"><strong>Sintomas nos últimos 30 dias:</strong> ${data.secao4.sintomas.join(', ')}</div>` : ''}
-              ${data.secao15?.parecer ? `<div style="margin-bottom: 8px;"><strong>Parecer do Acolhedor:</strong> ${data.secao15.parecer}</div>` : ''}
-              <div style="font-style: italic; font-size: 9pt; color: #64748b; margin-top: 4px;">* Ver registro completo de acolhimento em anexo ou histórico.</div>
-            </div>
-          </div>
-        `;
-      }
-    }
+    // 1. Identification Header
+    body += `
+      <div class="info-grid" style="margin-bottom: 8px; grid-template-columns: 2fr 1fr; border-color: #000; border-width: 0.8px;">
+        <div>
+          <span class="info-label">Paciente</span>
+          <div class="info-value" style="font-weight: 700; font-size: 11pt;">${meta.Paciente}</div>
+        </div>
+        <div>
+          <span class="info-label">Tipo de Registro</span>
+          <div class="info-value" style="font-weight: 700;">${meta.Tipo}</div>
+        </div>
+        <div>
+          <span class="info-label">Dados do Paciente</span>
+          <div class="info-value">Idade: ${meta.Idade} | CPF: ${meta.CPF} | CNS: ${meta.CNS}</div>
+        </div>
+        <div>
+          <span class="info-label">Data e Hora</span>
+          <div class="info-value">${meta.Data} às ${meta.Hora}</div>
+        </div>
+      </div>
+    `;
 
-    // 1. Acolhimento section if data exists
-    if (acolhimentoData || acolhimentoDraft) {
-      const data = acolhimentoDraft && Object.keys(acolhimentoDraft).length > 0 ? acolhimentoDraft : acolhimentoData?.dados_acolhimento;
-      if (data && Object.keys(data).length > 0) {
-        body += `
-          <div class="section">
-            <div class="section-title">Acolhimento de Saúde Mental</div>
-            <div class="section-content" style="font-size: 10pt;">
-              ${data.secao3?.queixa ? `<div style="margin-bottom: 8px;"><strong>Queixa Principal (Acolhimento):</strong> ${data.secao3.queixa}</div>` : ''}
-              ${data.secao4?.sintomas?.length > 0 ? `<div style="margin-bottom: 8px;"><strong>Sintomas nos últimos 30 dias:</strong> ${data.secao4.sintomas.join(', ')}</div>` : ''}
-              ${data.secao15?.parecer ? `<div style="margin-bottom: 8px;"><strong>Parecer do Acolhedor:</strong> ${data.secao15.parecer}</div>` : ''}
-              <div style="font-style: italic; font-size: 9pt; color: #64748b; margin-top: 4px;">* Ver registro completo de acolhimento em anexo ou histórico.</div>
-            </div>
-          </div>
-        `;
-      }
+    // 2. Acolhimento section if data exists
+    const acolhimentoRaw = acolhimentoDraft && Object.keys(acolhimentoDraft).length > 0 ? acolhimentoDraft : acolhimentoData?.dados_acolhimento;
+    if (acolhimentoRaw && Object.keys(acolhimentoRaw).length > 0) {
+      const data = acolhimentoRaw;
+      const s3 = data.secao3?.queixa ? `<div style="margin-bottom: 4px;"><strong>Queixa Principal:</strong> ${data.secao3.queixa}</div>` : '';
+      const s4 = data.secao4?.sintomas?.length > 0 ? `<div style="margin-bottom: 4px;"><strong>Sintomas (30 dias):</strong> ${data.secao4.sintomas.join(', ')}</div>` : '';
+      const s15 = data.secao15?.parecer ? `<div style="margin-bottom: 4px;"><strong>Parecer Profissional:</strong> ${data.secao15.parecer}</div>` : '';
+      
+      body += `
+        <div style="border: 0.8px solid #000; padding: 10px; margin-bottom: 10px; page-break-inside: avoid;">
+          <div style="font-size: 9pt; font-weight: 800; text-transform: uppercase; border-bottom: 0.8px solid #000; padding-bottom: 2px; margin-bottom: 6px;">Acolhimento em Saúde Mental</div>
+          ${s3}${s4}${s15}
+          <div style="font-style: italic; font-size: 8pt; color: #64748b; margin-top: 4px;">* Registro clínico estruturado.</div>
+        </div>
+      `;
     }
 
     // 2. Clinical Evolution / SOAP
@@ -463,8 +466,8 @@ const WorkspaceProntuario: React.FC = () => {
 
     // 7. Signature area
     body += `
-      <div class="signature" style="margin-top: 60px; page-break-inside: avoid;">
-        <div class="signature-line" style="width: 300px; border-top: 1px solid #000; margin: 0 auto 5px;"></div>
+      <div class="signature" style="margin-top: 30px; page-break-inside: avoid;">
+        <div class="signature-line" style="width: 280px; border-top: 1px solid #000; margin: 0 auto 5px;"></div>
         <div class="name" style="font-weight: 700;">${user?.nome || '—'}</div>
         <div class="role" style="font-size: 9pt; color: #475569;">${user?.profissao || '—'}</div>
       </div>

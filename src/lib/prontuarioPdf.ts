@@ -186,9 +186,9 @@ function renderAcolhimentoHtml(data: any): string {
     if (value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0)) return "";
     const displayValue = Array.isArray(value) ? value.join(', ') : String(value === 'sim' ? 'Sim' : value === 'nao' ? 'Não' : value);
     return `
-      <div style="margin-bottom: 8px;">
-        <div style="font-size: 8pt; color: #64748b; text-transform: uppercase; font-weight: 700;">${escapeHtml(label)}</div>
-        <div style="font-size: 10pt; color: #000; font-weight: 500; white-space: pre-wrap;">${escapeHtml(displayValue)}</div>
+      <div style="margin-bottom: 5px; display: flex; gap: 5px;">
+        <span style="font-size: 8pt; color: #475569; text-transform: uppercase; font-weight: 700; min-width: 150px;">${escapeHtml(label)}:</span>
+        <span style="font-size: 10pt; color: #000; font-weight: 400; text-align: justify; flex: 1;">${escapeHtml(displayValue)}</span>
       </div>
     `;
   };
@@ -196,63 +196,49 @@ function renderAcolhimentoHtml(data: any): string {
   const section = (title: string, content: string) => {
     if (!content) return "";
     return `
-      <div style="margin-top: 15px; border-top: 0.5px solid #e2e8f0; padding-top: 10px;">
-        <div style="font-size: 9pt; color: #0369a1; font-weight: 800; margin-bottom: 10px; text-transform: uppercase;">${escapeHtml(title)}</div>
+      <div style="margin-top: 8px; border-top: 0.5px solid #cbd5e1; padding-top: 5px;">
+        <div style="font-size: 8.5pt; color: #000; font-weight: 800; margin-bottom: 4px; text-transform: uppercase;">${escapeHtml(title)}</div>
         ${content}
       </div>
     `;
   };
 
   const s3 = section("Motivo da Procura", 
-    row("Queixa Principal, Sintomas e Evolução", data.secao3?.queixa) + 
+    row("Queixa Principal", data.secao3?.queixa) + 
     row("Outros", data.secao3?.outros)
   );
   
-  const s4 = section("Sintomas (últimos 30 dias)", 
-    row("Sintomas Observados", data.secao4?.sintomas)
+  const s4 = section("Sintomas (30 dias)", 
+    row("Sintomas", data.secao4?.sintomas)
   );
-
+  
   const s5 = section("Antecedentes Pessoais", 
-    row("Antecedentes", data.secao5?.antecedentes) +
-    row("Uso de Psicofármacos", data.secao5?.uso_psicofarmacos) +
-    row("Medicação Anterior", data.secao5?.medicacao_anterior) +
-    row("Medicação Atual", data.secao5?.medicacao_atual)
+    row("Descrição", data.secao5?.antecedentes) +
+    row("Psicofármacos", data.secao5?.uso_psicofarmacos) +
+    row("Medic. Anterior", data.secao5?.medicacao_anterior) +
+    row("Medic. Atual", data.secao5?.medicacao_atual)
   );
 
-  const s6 = section("Uso de Substâncias", 
-    row("Uso de Álcool", data.secao6?.uso_alcool) +
-    row("Qual / Frequência (Álcool)", data.secao6?.alcool_qual || data.secao6?.alcool_frequencia ? `${data.secao6.alcool_qual || ''} ${data.secao6.alcool_frequencia ? `(${data.secao6.alcool_frequencia})` : ''}` : null) +
-    row("Uso de Droga", data.secao6?.uso_droga) +
-    row("Qual / Frequência (Droga)", data.secao6?.droga_qual || data.secao6?.droga_frequencia ? `${data.secao6.droga_qual || ''} ${data.secao6.droga_frequencia ? `(${data.secao6.droga_frequencia})` : ''}` : null) +
-    row("Tabagismo", data.secao6?.habito_fumar)
+  const s6 = section("Substâncias", 
+    row("Álcool", data.secao6?.uso_alcool) +
+    row("Álcool Detalhes", data.secao6?.alcool_qual || data.secao6?.alcool_frequencia ? `${data.secao6.alcool_qual || ''} ${data.secao6.alcool_frequencia ? `(${data.secao6.alcool_frequencia})` : ''}` : null) +
+    row("Drogas", data.secao6?.uso_droga) +
+    row("Tabaco", data.secao6?.habito_fumar)
   );
 
-  const s7 = section("Histórico e Risco de Suicídio", 
-    row("Tratamento de Suicídio", data.secao7?.tratamento_suicidio) +
-    row("Ideação Suicida", data.secao7?.ideacao_suicida) +
-    row("Tentativa nos últimos 6 meses", data.secao7?.tentativa_suicidio_6meses) +
-    row("Acompanhamento Psiquiatra", data.secao7?.acompanhamento_psiquiatra) +
-    row("Problemas Saúde Mental", data.secao7?.problemas_saude_mental) +
-    row("Avaliado por Equipe", data.secao7?.avaliado_equipe_mental)
+  const s7 = section("Risco Suicídio", 
+    row("Ideação", data.secao7?.ideacao_suicida) +
+    row("Tentativa Recente", data.secao7?.tentativa_suicidio_6meses)
   );
 
-  const s10 = section("Histórico Pessoal e Familiar", 
-    row("Características Observadas", data.secao10?.caracteristicas_gerais) +
-    row("Situação Sociofamiliar", data.secao11?.situacao_sociofamiliar) +
-    row("História Moradia", data.secao11?.historia_moradia) +
-    row("Renda Familiar", data.secao11?.renda_familiar)
-  );
-
-  const s15 = section("Parecer e Conduta", 
-    row("Parecer do Profissional", data.secao15?.parecer)
+  const s15 = section("Parecer Profissional", 
+    row("Parecer", data.secao15?.parecer)
   );
 
   return `
-    <div style="background: #fdfdfd; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-bottom: 20px; page-break-inside: avoid;">
-      <div style="background: #f1f5f9; padding: 5px 10px; border-radius: 4px; display: inline-block; margin-bottom: 10px;">
-        <strong style="color: #0369a1; font-size: 10pt; text-transform: uppercase;">Acolhimento em Saúde Mental</strong>
-      </div>
-      ${s3}${s4}${s5}${s6}${s7}${s10}${s15}
+    <div style="border: 0.8px solid #000; padding: 10px; margin-bottom: 12px; page-break-inside: avoid;">
+      <div style="font-size: 9pt; font-weight: 800; text-transform: uppercase; border-bottom: 1px solid #000; padding-bottom: 2px; margin-bottom: 6px;">Acolhimento em Saúde Mental</div>
+      ${s3}${s4}${s5}${s6}${s7}${s15}
     </div>
   `;
 }
@@ -293,9 +279,9 @@ async function buildProntuarioBody(p: ProntuarioLike, extraHtml = ""): Promise<s
             if (displayValue === "true") displayValue = "Sim";
             if (displayValue === "false") displayValue = "Não";
             return `
-              <div class="field">
-                <span class="field-label" style="font-size: 7.5pt; color: #475569; font-weight: 700; text-transform: uppercase;">${escapeHtml(label)}</span>
-                <div class="field-value" style="font-size: 10pt; color: #000; font-weight: 500;">${escapeHtml(displayValue)}</div>
+              <div style="margin-bottom: 2px;">
+                <span style="font-size: 8pt; color: #475569; font-weight: 700; text-transform: uppercase;">${escapeHtml(label)}:</span>
+                <span style="font-size: 10pt; color: #000; font-weight: 400;">${escapeHtml(displayValue)}</span>
               </div>`;
           })
           .join("");
@@ -347,14 +333,14 @@ async function buildProntuarioBody(p: ProntuarioLike, extraHtml = ""): Promise<s
   const acolhimentoHtml = p.dados_acolhimento ? renderAcolhimentoHtml(p.dados_acolhimento) : "";
 
   return `
-    <div class="info-grid" style="margin-bottom: 10px; grid-template-columns: 2fr 1fr; padding: 8px; border-width: 0.5px;">
+    <div class="info-grid" style="margin-bottom: 8px; grid-template-columns: 2fr 1fr; padding: 8px; border-width: 0.8px; border-color: #000;">
       <div>
         <span class="info-label">Paciente</span>
-        <div class="info-value" style="font-weight: 700; font-size: 10.5pt;">${escapeHtml(p.paciente_nome || "—")}</div>
+        <div class="info-value" style="font-weight: 700; font-size: 11pt;">${escapeHtml(p.paciente_nome || "—")}</div>
       </div>
       <div>
         <span class="info-label">Tipo de Registro</span>
-        <div class="info-value" style="color: #0369a1; font-weight: 700;">${escapeHtml(tipoLabel)}</div>
+        <div class="info-value" style="font-weight: 700;">${escapeHtml(tipoLabel)}</div>
       </div>
       <div>
         <span class="info-label">Profissional / Setor</span>
