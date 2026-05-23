@@ -190,7 +190,7 @@ const WorkspaceProntuario: React.FC = () => {
         .select('*')
         .eq('paciente_id', patientId)
         .eq('tipo_registro', 'acolhimento_mental')
-        .order('data_registro', { ascending: false })
+        .order('criado_em', { ascending: false })
         .limit(1)
         .maybeSingle();
       
@@ -483,17 +483,17 @@ const WorkspaceProntuario: React.FC = () => {
     setSavingAcolhimento(true);
     try {
       const payload = {
-        paciente_id: pacienteId || form.paciente_id,
-        profissional_id: user?.id,
-        profissional_nome: user?.nome,
+        paciente_id: pacienteId || form.paciente_id || '',
+        paciente_nome: pacienteData?.nome || pacienteNome || form.paciente_nome || 'Paciente',
+        profissional_id: user?.id || '',
+        profissional_nome: user?.nome || 'Profissional',
         unidade_id: user?.unidadeId || '',
         tipo_registro: 'acolhimento_mental',
-        data_registro: new Date().toISOString(),
         data_atendimento: new Date().toISOString().split('T')[0],
         hora_atendimento: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
         dados_acolhimento: dados,
         agendamento_id: agendamentoId || null,
-        status: 'finalizado'
+        custom_data: {}
       };
 
       const { data, error } = await supabase
