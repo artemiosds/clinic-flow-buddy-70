@@ -234,7 +234,8 @@ const WorkspaceProntuario: React.FC = () => {
             if (p) {
               // Only overwrite if not modified or if it's a forced refresh
               setForm(prev => {
-                if (hasModifiedForm) return prev;
+                // Durante o carregamento inicial, sempre sobrepomos com os dados do banco
+                // para garantir que o ID e o conteúdo original sejam preservados.
                 return { ...prev, ...p };
               });
               
