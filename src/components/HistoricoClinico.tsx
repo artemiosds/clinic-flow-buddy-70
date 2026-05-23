@@ -349,24 +349,25 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
                             data.metas === "nao_atingidas" ? "Não atingidas" : data.metas;
 
           body = `
-            <div class="section">
-              <div class="section-title">1. IDENTIFICAÇÃO DO PACIENTE</div>
-              <div class="info-grid">
-                <div><span class="info-label">Paciente:</span> <span class="info-value">${pacienteNome}</span></div>
-                <div><span class="info-label">Data Nasc:</span> <span class="info-value">${data.dataNascimento ? formatDateBR(data.dataNascimento) : "—"}</span></div>
-                <div><span class="info-label">CNS:</span> <span class="info-value">${data.pacienteCns || "—"}</span></div>
-                <div><span class="info-label">Prontuário/ID:</span> <span class="info-value">${item.id.slice(0, 8)}</span></div>
+            <div class="info-grid" style="grid-template-columns: 2fr 1fr; border-color: #000; border-width: 0.8px; margin-bottom: 10px;">
+              <div>
+                <span class="info-label">Paciente:</span> <span class="info-value" style="font-weight:700;">${pacienteNome}</span><br/>
+                <span class="info-label">CNS:</span> <span class="info-value">${data.pacienteCns || "—"}</span> | 
+                <span class="info-label">Nasc:</span> <span class="info-value">${data.dataNascimento ? formatDateBR(data.dataNascimento) : "—"}</span>
+              </div>
+              <div style="text-align: right;">
+                <span class="info-label">ID:</span> <span class="info-value">${item.id.slice(0, 8)}</span><br/>
+                <span class="info-label">Data Alta:</span> <span class="info-value" style="font-weight:700;">${data.dataAlta ? formatDateBR(data.dataAlta) : formatDateBR(item.data_atendimento)}</span>
               </div>
             </div>
 
             <div class="section">
-              <div class="section-title">2. IDENTIFICAÇÃO DO ATENDIMENTO</div>
-              <div class="info-grid">
-                <div><span class="info-label">Profissional:</span> <span class="info-value">${item.profissional_nome}</span></div>
-                <div><span class="info-label">Modalidade:</span> <span class="info-value">${data.modalidade || "—"}</span></div>
-                <div><span class="info-label">Data de Alta:</span> <span class="info-value">${data.dataAlta ? formatDateBR(data.dataAlta) : formatDateBR(item.data_atendimento)}</span></div>
-                <div><span class="info-label">Período:</span> <span class="info-value">${data.periodoInicio ? formatDateBR(data.periodoInicio) : "—"} a ${data.periodoFim ? formatDateBR(data.periodoFim) : "—"}</span></div>
-                <div><span class="info-label">Sessões:</span> <span class="info-value">${data.sessoes || "0"}</span></div>
+              <div class="section-title">Informações do Atendimento</div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 9pt;">
+                <div><strong>Profissional:</strong> ${item.profissional_nome}</div>
+                <div><strong>Modalidade:</strong> ${data.modalidade || "—"}</div>
+                <div><strong>Período:</strong> ${data.periodoInicio ? formatDateBR(data.periodoInicio) : "—"} a ${data.periodoFim ? formatDateBR(data.periodoFim) : "—"}</div>
+                <div><strong>Sessões Realizadas:</strong> ${data.sessoes || "0"}</div>
               </div>
             </div>
 
@@ -376,7 +377,6 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
               ${data.cif ? `<div style="margin-bottom: 5px;"><strong>CIF:</strong> ${data.cif}</div>` : ""}
               <div style="margin-bottom: 5px;"><strong>Objetivos:</strong> ${data.objetivos || "—"}</div>
             </div>
-
 
             <div class="section">
               <div class="section-title">5. INTERVENÇÕES / PROCEDIMENTOS REALIZADOS</div>
