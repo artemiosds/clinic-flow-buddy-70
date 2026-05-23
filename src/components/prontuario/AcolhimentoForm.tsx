@@ -14,6 +14,8 @@ interface AcolhimentoFormProps {
   profissionalId?: string;
   agendamentoId?: string;
   initialData?: any;
+  formData: any;
+  setFormData: (data: any) => void;
   onSave: (data: any) => Promise<void>;
   saving?: boolean;
 }
@@ -43,19 +45,20 @@ export const AcolhimentoForm: React.FC<AcolhimentoFormProps> = ({
   profissionalId,
   agendamentoId,
   initialData,
+  formData,
+  setFormData,
   onSave,
   saving
 }) => {
-  const [formData, setFormData] = React.useState<any>(initialData?.dados_acolhimento || {});
 
   const updateField = (section: string, field: string, value: any) => {
-    setFormData((prev: any) => ({
-      ...prev,
+    setFormData({
+      ...formData,
       [section]: {
-        ...(prev[section] || {}),
+        ...(formData[section] || {}),
         [field]: value
       }
-    }));
+    });
   };
 
   const handleCheckboxChange = (section: string, listField: string, item: string, checked: boolean) => {

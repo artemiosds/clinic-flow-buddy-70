@@ -80,6 +80,7 @@ const WorkspaceProntuario: React.FC = () => {
   const [pacienteData, setPacienteData] = useState<any>(null);
   const [editPatientOpen, setEditPatientOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [activeTab, setActiveTab] = useState('evolution');
 
   // Expanded clinical state
   const [procedimentos, setProcedimentos] = useState<any[]>([]);
@@ -98,8 +99,10 @@ const WorkspaceProntuario: React.FC = () => {
   const [createPtsOpen, setCreatePtsOpen] = useState(false);
   const [createCycleOpen, setCreateCycleOpen] = useState(false);
   const [acolhimentoData, setAcolhimentoData] = useState<any>(null);
+  const [acolhimentoDraft, setAcolhimentoDraft] = useState<any>({});
   const [loadingAcolhimento, setLoadingAcolhimento] = useState(false);
   const [savingAcolhimento, setSavingAcolhimento] = useState(false);
+  const [hasModifiedForm, setHasModifiedForm] = useState(false);
 
   const [form, setForm] = useState<any>({
     tipo_registro: searchParams.get('tipo') === 'Retorno' ? 'retorno' : (searchParams.get('tipo') === 'Consulta' ? 'avaliacao_inicial' : (searchParams.get('tipo') || 'avaliacao_inicial')),
@@ -115,6 +118,11 @@ const WorkspaceProntuario: React.FC = () => {
     custom_data: {},
     agendamento_id: agendamentoId || '',
   });
+
+  const handleFormChange = (updates: any) => {
+    setForm((prev: any) => ({ ...prev, ...updates }));
+    setHasModifiedForm(true);
+  };
 
   const [soapEnabled, setSoapEnabled] = useState(true);
 
@@ -186,8 +194,12 @@ const WorkspaceProntuario: React.FC = () => {
         .limit(1)
         .maybeSingle();
       
-      if (data) {
-        setAcolhimentoData(data);
+      const typedData = data as any;
+      if (typedData) {
+        setAcolhimentoData(typedData);
+        if (typedData.dados_acolhimento) {
+          setAcolhimentoDraft(typedData.dados_acolhimento);
+        }
       }
     } catch (err) {
       console.error("Error loading acolhimento:", err);
@@ -220,7 +232,11 @@ const WorkspaceProntuario: React.FC = () => {
 
           const processProntuario = (p: any) => {
             if (p) {
-              setForm(prev => ({ ...prev, ...p }));
+              // Only overwrite if not modified or if it's a forced refresh
+              setForm(prev => {
+                if (hasModifiedForm) return prev;
+                return { ...prev, ...p };
+              });
               
               // Load specialty fields from observations if they were stored there (standard pattern)
               if (p.observacoes && p.observacoes.startsWith('{')) {
@@ -544,7 +560,7 @@ const WorkspaceProntuario: React.FC = () => {
                   </Card>
                 )}
 
-                <Tabs defaultValue="evolution" className="w-full">
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                   <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pb-2 border-b mb-4">
                     <div className="flex items-center justify-between mb-2">
                       <TabsList className="flex-1 justify-start h-12 bg-transparent gap-6 p-0 overflow-x-auto">
@@ -564,27 +580,31 @@ const WorkspaceProntuario: React.FC = () => {
                     </div>
                   </div>
 
-                  <TabsContent value="acolhimento" className="mt-0 animate-in fade-in duration-300">
+                  <TabsContent value="acolhimento" className="mt-0 animate-in fade-in duration-300" forceMount>
                     <Card className="border-none shadow-none bg-transparent">
                       <CardContent className="p-0">
                         {loadingAcolhimento ? (
                           <div className="flex items-center justify-center p-12 text-muted-foreground text-sm">Carregando acolhimento...</div>
                         ) : (
-                          <AcolhimentoForm 
-                            pacienteId={pacienteId || form.paciente_id}
-                            profissionalId={user?.id}
-                            agendamentoId={agendamentoId || undefined}
-                            initialData={acolhimentoData}
-                            onSave={handleSaveAcolhimento}
-                            saving={savingAcolhimento}
-                          />
+                          <div className={cn(activeTab !== 'acolhimento' && "hidden")}>
+                            <AcolhimentoForm 
+                              pacienteId={pacienteId || form.paciente_id}
+                              profissionalId={user?.id}
+                              agendamentoId={agendamentoId || undefined}
+                              initialData={acolhimentoData}
+                              formData={acolhimentoDraft}
+                              setFormData={setAcolhimentoDraft}
+                              onSave={handleSaveAcolhimento}
+                              saving={savingAcolhimento}
+                            />
+                          </div>
                         )}
                       </CardContent>
                     </Card>
                   </TabsContent>
 
-                  <TabsContent value="evolution" className="mt-0 space-y-6">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card p-4 rounded-xl border border-border/60 shadow-sm mb-6">
+                  <TabsContent value="evolution" className="mt-0 space-y-6" forceMount>
+                    <div className={cn("flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card p-4 rounded-xl border border-border/60 shadow-sm mb-6", activeTab !== 'evolution' && "hidden")}>
                       <div className="flex items-center gap-3">
                         <div className="p-2 rounded-lg bg-primary/10 text-primary">
                           <History className="w-5 h-5" />
@@ -599,7 +619,7 @@ const WorkspaceProntuario: React.FC = () => {
                         <Label className="text-[10px] font-bold uppercase text-muted-foreground whitespace-nowrap">Tipo de Registro:</Label>
                         <Select 
                           value={form.tipo_registro} 
-                          onValueChange={(val) => setForm(p => ({...p, tipo_registro: val}))}
+                          onValueChange={(val) => handleFormChange({ tipo_registro: val })}
                         >
                           <SelectTrigger className="w-[180px] h-9 text-xs font-bold bg-background border-border/50">
                             <SelectValue />
@@ -623,6 +643,7 @@ const WorkspaceProntuario: React.FC = () => {
                         </Select>
                       </div>
                     </div>
+                    <div className={cn(activeTab !== 'evolution' && "hidden", "space-y-6")}>
                     <SoapFieldsAdaptive
                       profissao={user?.profissao}
                       values={{
@@ -631,7 +652,7 @@ const WorkspaceProntuario: React.FC = () => {
                         soap_avaliacao: form.soap_avaliacao || '',
                         soap_plano: form.soap_plano || '',
                       }}
-                      onChange={(field, value) => setForm(prev => ({ ...prev, [field]: value }))}
+                      onChange={(field, value) => handleFormChange({ [field]: value })}
                       soapErrors={false}
                       onClearErrors={() => {}}
                       soapEnabled={soapEnabled}
@@ -652,7 +673,7 @@ const WorkspaceProntuario: React.FC = () => {
                         <DebouncedTextarea
                           rows={8}
                           value={form.evolucao || ''}
-                          onChange={(e) => setForm(prev => ({ ...prev, evolucao: e.target.value }))}
+                          onChange={(e) => handleFormChange({ evolucao: e.target.value })}
                           placeholder="Descreva a evolução clínica do paciente detalhadamente..."
                           className="bg-card border-border/60 shadow-sm focus-visible:ring-primary/30"
                         />
@@ -662,14 +683,15 @@ const WorkspaceProntuario: React.FC = () => {
                       campos={getCamposForTipo(form.tipo_registro)}
                       formValues={form}
                       customValues={form.custom_data || {}}
-                      onFormChange={(k, v) => setForm(p => ({...p, [k]: v}))}
-                      onCustomChange={(k, v) => setForm(p => ({...p, custom_data: {...p.custom_data, [k]: v}}))}
+                      onFormChange={(k, v) => handleFormChange({ [k]: v })}
+                      onCustomChange={(k, v) => handleFormChange({ custom_data: { ...form.custom_data, [k]: v } })}
                       especialidadeFields={especialidadeFields}
                       onEspecialidadeChange={(k, v) => setEspecialidadeFields(p => ({...p, [k]: v}))}
                       profissao={user?.profissao}
                       profissionalId={user?.id}
                       tipoProntuario={form.tipo_registro === 'avaliacao_inicial' ? 'avaliacao' : (form.tipo_registro === 'retorno' ? 'retorno' : (form.tipo_registro === 'sessao' ? 'sessao' : (form.tipo_registro === 'urgencia' ? 'urgencia' : (form.tipo_registro === 'procedimento' ? 'procedimento' : 'avaliacao'))))}
                     />
+                    </div>
                   </TabsContent>
 
                   <TabsContent value="prescriptions" className="mt-0 space-y-6">
