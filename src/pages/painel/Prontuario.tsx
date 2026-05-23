@@ -105,6 +105,7 @@ interface ProntuarioDB {
   episodio_id: string | null;
   criado_em: string;
   atualizado_em: string;
+  dados_acolhimento?: any;
 }
 
 interface ProcedimentoDB {
