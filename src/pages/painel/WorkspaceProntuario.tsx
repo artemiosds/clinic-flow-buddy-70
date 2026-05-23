@@ -577,7 +577,7 @@ const WorkspaceProntuario: React.FC = () => {
         await updateAgendamento(form.agendamento_id, { status: 'concluido' });
       }
 
-      toast.success(editId ? 'Alteração finalizada com sucesso!' : 'Prontuário finalizado com sucesso!');
+      toast.success(finalId ? 'Alteração finalizada com sucesso!' : 'Prontuário finalizado com sucesso!');
       // Fecha o workspace após finalizar (novo ou alteração)
       setTimeout(() => {
         if (window.history.length > 1) navigate(-1);
