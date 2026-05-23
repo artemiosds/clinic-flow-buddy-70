@@ -484,16 +484,15 @@ const WorkspaceProntuario: React.FC = () => {
     try {
       const payload = {
         paciente_id: pacienteId || form.paciente_id,
+        paciente_nome: pacienteData?.nome || pacienteNome,
         profissional_id: user?.id,
         profissional_nome: user?.nome,
         unidade_id: user?.unidadeId || '',
         tipo_registro: 'acolhimento_mental',
-        data_registro: new Date().toISOString(),
         data_atendimento: new Date().toISOString().split('T')[0],
         hora_atendimento: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
         dados_acolhimento: dados,
-        agendamento_id: agendamentoId || null,
-        status: 'finalizado'
+        agendamento_id: agendamentoId || null
       };
 
       const { data, error } = await supabase
