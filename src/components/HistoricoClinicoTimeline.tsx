@@ -38,6 +38,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { AcolhimentoView } from "./prontuario/AcolhimentoView";
 
 // ============================================================
 // TIPOS E CONSTANTES
@@ -58,6 +59,12 @@ interface TimelineEvent {
   episodioTitle?: string;
   sessionInfo?: string;
   status?: string;
+  dadosAcolhimento?: any;
+  soap_subjetivo?: string;
+  soap_objetivo?: string;
+  soap_avaliacao?: string;
+  soap_plano?: string;
+  custom_data?: any;
 }
 
 interface Unidade {
@@ -127,7 +134,9 @@ async function fetchProntuarios(pacienteId: string) {
       id, data_atendimento, hora_atendimento,
       profissional_nome, queixa_principal, evolucao,
       procedimentos_texto, outro_procedimento,
-      indicacao_retorno, unidade_id, episodio_id
+      indicacao_retorno, unidade_id, episodio_id,
+      dados_acolhimento, soap_subjetivo, soap_objetivo,
+      soap_avaliacao, soap_plano, custom_data
     `,
     )
     .eq("paciente_id", pacienteId)
@@ -202,10 +211,16 @@ function transformProntuarios(
     time: p.hora_atendimento || undefined,
     professional: p.profissional_nome || "",
     specialtyOrType: "Consulta",
-    summary: p.queixa_principal || p.evolucao || "",
+    summary: p.queixa_principal || p.evolucao || (p.dados_acolhimento ? `Acolhimento: ${p.dados_acolhimento.secao3?.queixa || 'Ver detalhes'}` : ""),
     procedimentos: p.procedimentos_texto || undefined,
     unidade: unidadeMap.get(p.unidade_id)?.nome,
     episodioTitle: p.episodio_id ? episodioMap.get(p.episodio_id) || "" : "",
+    dadosAcolhimento: p.dados_acolhimento,
+    soap_subjetivo: p.soap_subjetivo,
+    soap_objetivo: p.soap_objetivo,
+    soap_avaliacao: p.soap_avaliacao,
+    soap_plano: p.soap_plano,
+    custom_data: p.custom_data,
   }));
 }
 
@@ -638,6 +653,11 @@ export const HistoricoClinicoTimeline: React.FC<Props> = ({ pacienteId, unidades
           </DialogHeader>
           {viewEvent && (
             <div className="space-y-3 text-sm">
+              {viewEvent.dadosAcolhimento && (
+                <div className="mb-4">
+                  <AcolhimentoView data={viewEvent.dadosAcolhimento} />
+                </div>
+              )}
               {viewEvent.procedimentos && (
                 <div>
                   <p className="text-xs font-semibold text-muted-foreground mb-1">Procedimentos</p>
@@ -646,12 +666,54 @@ export const HistoricoClinicoTimeline: React.FC<Props> = ({ pacienteId, unidades
                   </div>
                 </div>
               )}
-              <div>
-                <p className="text-xs font-semibold text-muted-foreground mb-1">Evolução</p>
-                <div className="border rounded p-3 whitespace-pre-wrap break-words" style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}>
-                  {viewEvent.summary || <span className="italic text-muted-foreground">Sem registro de evolução</span>}
+              {viewEvent.soap_subjetivo && (
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground mb-1">S — Subjetivo</p>
+                  <div className="border rounded p-3 whitespace-pre-wrap break-words">{viewEvent.soap_subjetivo}</div>
                 </div>
-              </div>
+              )}
+              {viewEvent.soap_objetivo && (
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground mb-1">O — Objetivo</p>
+                  <div className="border rounded p-3 whitespace-pre-wrap break-words">{viewEvent.soap_objetivo}</div>
+                </div>
+              )}
+              {viewEvent.soap_avaliacao && (
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground mb-1">A — Avaliação</p>
+                  <div className="border rounded p-3 whitespace-pre-wrap break-words">{viewEvent.soap_avaliacao}</div>
+                </div>
+              )}
+              {viewEvent.soap_plano && (
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground mb-1">P — Plano</p>
+                  <div className="border rounded p-3 whitespace-pre-wrap break-words">{viewEvent.soap_plano}</div>
+                </div>
+              )}
+              {!viewEvent.soap_subjetivo && (
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground mb-1">Evolução</p>
+                  <div className="border rounded p-3 whitespace-pre-wrap break-words" style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}>
+                    {viewEvent.summary || <span className="italic text-muted-foreground">Sem registro de evolução</span>}
+                  </div>
+                </div>
+              )}
+              {viewEvent.custom_data && Object.keys(viewEvent.custom_data).length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground mb-1">Campos Adicionais</p>
+                  <div className="border rounded p-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {Object.entries(viewEvent.custom_data).map(([k, v]) => {
+                      if (!v || k === 'soap_enabled' || k === 'acolhimento_mental') return null;
+                      return (
+                        <div key={k} className="text-xs">
+                          <span className="font-bold uppercase text-[10px] text-muted-foreground block">{k.replace(/_/g, " ")}</span>
+                          <span>{String(v === true ? 'Sim' : v === false ? 'Não' : v)}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           )}
           <DialogFooter className="gap-2">

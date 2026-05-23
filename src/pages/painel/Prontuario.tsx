@@ -3474,13 +3474,47 @@ const ProntuarioPage: React.FC = () => {
                 {viewerProntuario.prescricao && (
                   <div>
                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Prescrição / Medicamentos</p>
-                    <p className="text-foreground whitespace-pre-wrap">{viewerProntuario.prescricao}</p>
+                    {(() => {
+                      try {
+                        const parsed = JSON.parse(viewerProntuario.prescricao);
+                        const meds = parsed.medicamentos || (Array.isArray(parsed) ? parsed : null);
+                        if (Array.isArray(meds)) {
+                          return (
+                            <div className="space-y-1.5 mt-1">
+                              {meds.map((m: any, i: number) => (
+                                <div key={i} className="text-xs border-l-2 border-primary/30 pl-2 py-1.5 bg-muted/30 rounded-r-md">
+                                  <span className="font-bold text-primary">{m.nome}</span> {m.dosagem ? `— ${m.dosagem}` : ''} {m.via ? `| ${m.via}` : ''} {m.posologia ? `| ${m.posologia}` : ''} {m.duracao ? `| ${m.duracao}` : ''}
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        }
+                      } catch (e) {}
+                      return <p className="text-foreground whitespace-pre-wrap">{viewerProntuario.prescricao}</p>;
+                    })()}
                   </div>
                 )}
                 {viewerProntuario.solicitacao_exames && (
                   <div>
                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Exames Solicitados</p>
-                    <p className="text-foreground whitespace-pre-wrap">{viewerProntuario.solicitacao_exames}</p>
+                    {(() => {
+                      try {
+                        const parsed = JSON.parse(viewerProntuario.solicitacao_exames);
+                        const exames = parsed.exames || (Array.isArray(parsed) ? parsed : null);
+                        if (Array.isArray(exames)) {
+                          return (
+                            <div className="space-y-1.5 mt-1">
+                              {exames.map((ex: any, i: number) => (
+                                <div key={i} className="text-xs border-l-2 border-primary/30 pl-2 py-1.5 bg-muted/30 rounded-r-md">
+                                  <span className="font-bold text-primary">{ex.nome}</span> {ex.codigo_sus ? `(${ex.codigo_sus})` : ''} {ex.indicacao ? `— ${ex.indicacao}` : ''}
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        }
+                      } catch (e) {}
+                      return <p className="text-foreground whitespace-pre-wrap">{viewerProntuario.solicitacao_exames}</p>;
+                    })()}
                   </div>
                 )}
 
@@ -3490,6 +3524,24 @@ const ProntuarioPage: React.FC = () => {
                     <Badge variant="outline" className="text-primary border-primary/30">
                       {retornoOptions.find(o => o.value === viewerProntuario.indicacao_retorno)?.label || viewerProntuario.indicacao_retorno}
                     </Badge>
+                  </div>
+                )}
+
+                {/* Dados Customizados / Campos Dinâmicos */}
+                {viewerProntuario.custom_data && Object.keys(viewerProntuario.custom_data).length > 0 && (
+                  <div className="bg-muted/30 p-3 rounded-lg border border-border/50">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Campos Adicionais</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {Object.entries(viewerProntuario.custom_data).map(([k, v]) => {
+                        if (!v || k === 'soap_enabled' || k === 'acolhimento_mental') return null;
+                        return (
+                          <div key={k} className="space-y-0.5">
+                            <p className="text-[10px] text-muted-foreground uppercase font-bold">{k.replace(/_/g, " ")}</p>
+                            <p className="text-xs font-medium">{String(v === true ? 'Sim' : v === false ? 'Não' : v)}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
 

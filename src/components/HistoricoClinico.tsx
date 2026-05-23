@@ -40,6 +40,13 @@ interface ProntuarioItem {
   tipo_registro: string;
   observacoes: string;
   dados_acolhimento?: any;
+  custom_data?: any;
+  soap_subjetivo?: string;
+  soap_objetivo?: string;
+  soap_avaliacao?: string;
+  soap_plano?: string;
+  prescricao?: string;
+  solicitacao_exames?: string;
 }
 
 interface EpisodioItem {
@@ -141,11 +148,75 @@ const renderContent = (item: ProntuarioItem) => {
     <div className="space-y-4">
       {item.dados_acolhimento && <AcolhimentoView data={item.dados_acolhimento} />}
       {item.queixa_principal && <Section label="Queixa principal" value={item.queixa_principal} />}
-      {item.evolucao && <Section label="Evolução / SOAP" value={item.evolucao} />}
+      {item.soap_subjetivo && <Section label="S — Subjetivo" value={item.soap_subjetivo} />}
+      {item.soap_objetivo && <Section label="O — Objetivo" value={item.soap_objetivo} />}
+      {item.soap_avaliacao && <Section label="A — Avaliação" value={item.soap_avaliacao} />}
+      {item.soap_plano && <Section label="P — Plano" value={item.soap_plano} />}
+      {item.evolucao && !item.soap_subjetivo && <Section label="Evolução" value={item.evolucao} />}
       {item.conduta && <Section label="Conduta" value={item.conduta} />}
       {item.procedimentos_texto && <Section label="Procedimentos" value={item.procedimentos_texto} />}
       {item.outro_procedimento && <Section label="Outro procedimento" value={item.outro_procedimento} />}
+      {item.prescricao && (
+        <div className="mb-4">
+          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1 px-1">Prescrição / Medicamentos</p>
+          <div className="text-sm border-l-2 border-primary/30 pl-3 py-2 bg-muted/40 rounded-r-lg ring-1 ring-border/50 shadow-sm space-y-1.5">
+            {(() => {
+              try {
+                const parsed = JSON.parse(item.prescricao);
+                const meds = parsed.medicamentos || (Array.isArray(parsed) ? parsed : null);
+                if (Array.isArray(meds)) {
+                  return meds.map((m: any, i: number) => (
+                    <div key={i} className="text-xs">
+                      <span className="font-bold text-primary">{m.nome}</span> {m.dosagem ? `— ${m.dosagem}` : ''} {m.posologia ? `| ${m.posologia}` : ''}
+                    </div>
+                  ));
+                }
+              } catch (e) {}
+              return <div className="text-sm whitespace-pre-wrap">{item.prescricao}</div>;
+            })()}
+          </div>
+        </div>
+      )}
+      {item.solicitacao_exames && (
+        <div className="mb-4">
+          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1 px-1">Exames Solicitados</p>
+          <div className="text-sm border-l-2 border-primary/30 pl-3 py-2 bg-muted/40 rounded-r-lg ring-1 ring-border/50 shadow-sm space-y-1.5">
+            {(() => {
+              try {
+                const parsed = JSON.parse(item.solicitacao_exames);
+                const exames = parsed.exames || (Array.isArray(parsed) ? parsed : null);
+                if (Array.isArray(exames)) {
+                  return exames.map((ex: any, i: number) => (
+                    <div key={i} className="text-xs">
+                      <span className="font-bold text-primary">{ex.nome}</span> {ex.codigo_sus ? `(${ex.codigo_sus})` : ''} {ex.indicacao ? `— ${ex.indicacao}` : ''}
+                    </div>
+                  ));
+                }
+              } catch (e) {}
+              return <div className="text-sm whitespace-pre-wrap">{item.solicitacao_exames}</div>;
+            })()}
+          </div>
+        </div>
+      )}
       {item.indicacao_retorno && <Section label="Indicação de retorno" value={item.indicacao_retorno} />}
+      
+      {/* Campos dinâmicos em custom_data */}
+      {(item as any).custom_data && Object.keys((item as any).custom_data).length > 0 && (
+        <div className="mt-4 p-3 rounded-lg bg-muted/30 border border-border/50">
+          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Campos Adicionais</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {Object.entries((item as any).custom_data).map(([k, v]) => {
+              if (!v || k === 'soap_enabled' || k === 'acolhimento_mental') return null;
+              return (
+                <div key={k} className="flex flex-col gap-0.5">
+                  <span className="text-[10px] text-muted-foreground uppercase font-semibold">{k.replace(/_/g, " ")}</span>
+                  <span className="text-sm font-medium">{String(v === true ? 'Sim' : v === false ? 'Não' : v)}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -186,7 +257,7 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
       const { data: pData, error: pError } = await supabase
         .from("prontuarios")
         .select(
-          "id,data_atendimento,hora_atendimento,profissional_nome,profissional_id,queixa_principal,evolucao,conduta,indicacao_retorno,procedimentos_texto,outro_procedimento,unidade_id,episodio_id,tipo_registro,observacoes,dados_acolhimento",
+          "id,data_atendimento,hora_atendimento,profissional_nome,profissional_id,queixa_principal,evolucao,conduta,indicacao_retorno,procedimentos_texto,outro_procedimento,unidade_id,episodio_id,tipo_registro,observacoes,dados_acolhimento,custom_data,soap_subjetivo,soap_objetivo,soap_avaliacao,soap_plano,prescricao,solicitacao_exames",
         )
         .eq("paciente_id", pacienteId)
         .order("data_atendimento", { ascending: false })
