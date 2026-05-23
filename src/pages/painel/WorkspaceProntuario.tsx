@@ -505,6 +505,9 @@ const WorkspaceProntuario: React.FC = () => {
       if (error) throw error;
       
       setAcolhimentoData(data);
+      if (data.dados_acolhimento) {
+        setAcolhimentoDraft(data.dados_acolhimento);
+      }
       toast.success("Acolhimento salvo com sucesso!");
     } catch (e: any) {
       console.error("Erro ao salvar acolhimento:", e);
