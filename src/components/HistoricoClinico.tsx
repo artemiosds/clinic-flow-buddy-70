@@ -156,6 +156,48 @@ const renderContent = (item: ProntuarioItem) => {
       {item.conduta && <Section label="Conduta" value={item.conduta} />}
       {item.procedimentos_texto && <Section label="Procedimentos" value={item.procedimentos_texto} />}
       {item.outro_procedimento && <Section label="Outro procedimento" value={item.outro_procedimento} />}
+      {item.prescricao && (
+        <div className="mb-4">
+          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1 px-1">Prescrição / Medicamentos</p>
+          <div className="text-sm border-l-2 border-primary/30 pl-3 py-2 bg-muted/40 rounded-r-lg ring-1 ring-border/50 shadow-sm space-y-1.5">
+            {(() => {
+              try {
+                const parsed = JSON.parse(item.prescricao);
+                const meds = parsed.medicamentos || (Array.isArray(parsed) ? parsed : null);
+                if (Array.isArray(meds)) {
+                  return meds.map((m: any, i: number) => (
+                    <div key={i} className="text-xs">
+                      <span className="font-bold text-primary">{m.nome}</span> {m.dosagem ? `— ${m.dosagem}` : ''} {m.posologia ? `| ${m.posologia}` : ''}
+                    </div>
+                  ));
+                }
+              } catch (e) {}
+              return <div className="text-sm whitespace-pre-wrap">{item.prescricao}</div>;
+            })()}
+          </div>
+        </div>
+      )}
+      {item.solicitacao_exames && (
+        <div className="mb-4">
+          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1 px-1">Exames Solicitados</p>
+          <div className="text-sm border-l-2 border-primary/30 pl-3 py-2 bg-muted/40 rounded-r-lg ring-1 ring-border/50 shadow-sm space-y-1.5">
+            {(() => {
+              try {
+                const parsed = JSON.parse(item.solicitacao_exames);
+                const exames = parsed.exames || (Array.isArray(parsed) ? parsed : null);
+                if (Array.isArray(exames)) {
+                  return exames.map((ex: any, i: number) => (
+                    <div key={i} className="text-xs">
+                      <span className="font-bold text-primary">{ex.nome}</span> {ex.codigo_sus ? `(${ex.codigo_sus})` : ''} {ex.indicacao ? `— ${ex.indicacao}` : ''}
+                    </div>
+                  ));
+                }
+              } catch (e) {}
+              return <div className="text-sm whitespace-pre-wrap">{item.solicitacao_exames}</div>;
+            })()}
+          </div>
+        </div>
+      )}
       {item.indicacao_retorno && <Section label="Indicação de retorno" value={item.indicacao_retorno} />}
       
       {/* Campos dinâmicos em custom_data */}
