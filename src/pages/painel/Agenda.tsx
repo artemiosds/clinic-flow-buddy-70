@@ -115,7 +115,7 @@ const STATUS_GROUPS: Record<string, string[]> = {
   confirmado_chegada: ["confirmado_chegada"],
   aguardando_triagem: ["aguardando_triagem"],
   triagem_concluida: ["triagem_concluida"],
-  pendente: ["pendente"],
+  pendente: ["pendente", "avaliacao"],
 };
 
 const STATUS_GROUP_LABELS: Record<string, string> = {

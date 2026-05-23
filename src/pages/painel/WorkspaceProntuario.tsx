@@ -608,43 +608,48 @@ const WorkspaceProntuario: React.FC = () => {
                   </TabsContent>
 
                   <TabsContent value="evolution" className="mt-0 space-y-6" forceMount>
-                    <div className={cn("flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card p-4 rounded-xl border border-border/60 shadow-sm mb-6", activeTab !== 'evolution' && "hidden")}>
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-primary/10 text-primary">
-                          <History className="w-5 h-5" />
+                    <div className={cn("flex flex-col md:flex-row md:items-center justify-between gap-6 bg-gradient-to-br from-card to-muted/20 p-6 rounded-2xl border border-primary/10 shadow-md mb-8", activeTab !== 'evolution' && "hidden")}>
+                      <div className="flex items-center gap-4">
+                        <div className="p-3 rounded-xl bg-primary/10 text-primary shadow-inner">
+                          <History className="w-6 h-6" />
                         </div>
                         <div>
-                          <h3 className="text-sm font-bold text-foreground">Evolução Clínica</h3>
-                          <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Atendimento Atual</p>
+                          <h3 className="text-base font-bold text-foreground tracking-tight">Evolução Clínica</h3>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                            <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Atendimento Ativo</p>
+                          </div>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-3">
-                        <Label className="text-[10px] font-bold uppercase text-muted-foreground whitespace-nowrap">Tipo de Registro:</Label>
-                        <Select 
-                          value={form.tipo_registro} 
-                          onValueChange={(val) => handleFormChange({ tipo_registro: val })}
-                        >
-                          <SelectTrigger className="w-[180px] h-9 text-xs font-bold bg-background border-border/50">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {[
-                              { value: 'avaliacao_inicial', label: 'Avaliação', color: 'bg-green-600', icon: Stethoscope },
-                              { value: 'retorno', label: 'Retorno', color: 'bg-blue-600', icon: Clock },
-                              { value: 'sessao', label: 'Sessão', color: 'bg-amber-500', icon: Activity },
-                              { value: 'urgencia', label: 'Urgência', color: 'bg-red-600', icon: AlertTriangle },
-                              { value: 'procedimento', label: 'Procedimento', color: 'bg-purple-600', icon: ClipboardList },
-                            ].map((type) => (
-                              <SelectItem key={type.value} value={type.value}>
-                                <div className="flex items-center gap-2">
-                                  <div className={cn("w-2 h-2 rounded-full", type.color)} />
-                                  <span>{type.label}</span>
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                      <div className="flex items-center gap-4 bg-background/60 p-3 rounded-xl border border-border/40 backdrop-blur-sm">
+                        <div className="flex flex-col gap-1">
+                          <Label className="text-[10px] font-black uppercase text-muted-foreground/80 tracking-widest ml-1">Tipo de Registro</Label>
+                          <Select 
+                            value={form.tipo_registro} 
+                            onValueChange={(val) => handleFormChange({ tipo_registro: val })}
+                          >
+                            <SelectTrigger className="w-[200px] h-10 text-sm font-bold bg-background border-primary/20 hover:border-primary/40 focus:ring-primary/20 transition-all shadow-sm rounded-lg">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="rounded-xl border-primary/10 shadow-xl">
+                              {[
+                                { value: 'avaliacao_inicial', label: 'Avaliação/TR', color: 'bg-green-600', icon: Stethoscope },
+                                { value: 'retorno', label: 'Retorno', color: 'bg-blue-600', icon: Clock },
+                                { value: 'sessao', label: 'Sessão', color: 'bg-amber-500', icon: Activity },
+                                { value: 'urgencia', label: 'Urgência', color: 'bg-red-600', icon: AlertTriangle },
+                                { value: 'procedimento', label: 'Procedimento', color: 'bg-purple-600', icon: ClipboardList },
+                              ].map((type) => (
+                                <SelectItem key={type.value} value={type.value} className="focus:bg-primary/5 rounded-md cursor-pointer py-2.5">
+                                  <div className="flex items-center gap-3">
+                                    <div className={cn("w-2.5 h-2.5 rounded-full ring-2 ring-background shadow-sm", type.color)} />
+                                    <span className="font-semibold">{type.label}</span>
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
                     </div>
                     <div className={cn(activeTab !== 'evolution' && "hidden", "space-y-6")}>
