@@ -80,6 +80,7 @@ const WorkspaceProntuario: React.FC = () => {
   const [pacienteData, setPacienteData] = useState<any>(null);
   const [editPatientOpen, setEditPatientOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [activeTab, setActiveTab] = useState('evolution');
 
   // Expanded clinical state
   const [procedimentos, setProcedimentos] = useState<any[]>([]);
@@ -559,7 +560,7 @@ const WorkspaceProntuario: React.FC = () => {
                   </Card>
                 )}
 
-                <Tabs defaultValue="evolution" className="w-full">
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                   <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pb-2 border-b mb-4">
                     <div className="flex items-center justify-between mb-2">
                       <TabsList className="flex-1 justify-start h-12 bg-transparent gap-6 p-0 overflow-x-auto">
@@ -585,7 +586,7 @@ const WorkspaceProntuario: React.FC = () => {
                         {loadingAcolhimento ? (
                           <div className="flex items-center justify-center p-12 text-muted-foreground text-sm">Carregando acolhimento...</div>
                         ) : (
-                          <div className={cn(form.tipo_registro !== 'acolhimento' && "hidden")}>
+                          <div className={cn(activeTab !== 'acolhimento' && "hidden")}>
                             <AcolhimentoForm 
                               pacienteId={pacienteId || form.paciente_id}
                               profissionalId={user?.id}
@@ -603,7 +604,7 @@ const WorkspaceProntuario: React.FC = () => {
                   </TabsContent>
 
                   <TabsContent value="evolution" className="mt-0 space-y-6" forceMount>
-                    <div className={cn(form.tipo_registro === 'acolhimento' && "hidden")}>
+                    <div className={cn("flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card p-4 rounded-xl border border-border/60 shadow-sm mb-6", activeTab !== 'evolution' && "hidden")}>
                       <div className="flex items-center gap-3">
                         <div className="p-2 rounded-lg bg-primary/10 text-primary">
                           <History className="w-5 h-5" />
@@ -642,6 +643,7 @@ const WorkspaceProntuario: React.FC = () => {
                         </Select>
                       </div>
                     </div>
+                    <div className={cn(activeTab !== 'evolution' && "hidden", "space-y-6")}>
                     <SoapFieldsAdaptive
                       profissao={user?.profissao}
                       values={{
@@ -689,6 +691,7 @@ const WorkspaceProntuario: React.FC = () => {
                       profissionalId={user?.id}
                       tipoProntuario={form.tipo_registro === 'avaliacao_inicial' ? 'avaliacao' : (form.tipo_registro === 'retorno' ? 'retorno' : (form.tipo_registro === 'sessao' ? 'sessao' : (form.tipo_registro === 'urgencia' ? 'urgencia' : (form.tipo_registro === 'procedimento' ? 'procedimento' : 'avaliacao'))))}
                     />
+                    </div>
                   </TabsContent>
 
                   <TabsContent value="prescriptions" className="mt-0 space-y-6">
