@@ -60,6 +60,11 @@ interface TimelineEvent {
   sessionInfo?: string;
   status?: string;
   dadosAcolhimento?: any;
+  soap_subjetivo?: string;
+  soap_objetivo?: string;
+  soap_avaliacao?: string;
+  soap_plano?: string;
+  custom_data?: any;
 }
 
 interface Unidade {
