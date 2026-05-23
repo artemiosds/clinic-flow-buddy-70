@@ -122,7 +122,7 @@ const TIPOS_REGISTRO = [
   { value: 'sessao', label: `🟡 ${TIPO_REGISTRO_LABELS.sessao}` },
   { value: 'urgencia', label: `🔴 ${TIPO_REGISTRO_LABELS.urgencia}` },
   { value: 'procedimento', label: `🟣 ${TIPO_REGISTRO_LABELS.procedimento}` },
-  { value: 'consulta', label: 'Consulta (legado)' },
+  { value: 'consulta', label: 'Avaliação/TR (legado)' },
   { value: 'reavaliacao', label: 'Reavaliação (legado)' },
   { value: 'avaliacao_enfermagem', label: 'Avaliação de Enfermagem (legado)' },
   { value: 'pts', label: 'PTS (legado)' },
