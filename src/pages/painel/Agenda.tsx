@@ -1655,7 +1655,7 @@ const Agenda: React.FC = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="Todos">Todos os tipos</SelectItem>
-                <SelectItem value="Consulta">Primeira Consulta</SelectItem>
+                <SelectItem value="Consulta">Avaliação/TR</SelectItem>
                 <SelectItem value="Retorno">Retorno</SelectItem>
                 <SelectItem value="Exame">Exame</SelectItem>
                 <SelectItem value="Procedimento">Procedimento</SelectItem>
