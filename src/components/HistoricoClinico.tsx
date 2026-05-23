@@ -184,7 +184,7 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
       const { data: pData, error: pError } = await supabase
         .from("prontuarios")
         .select(
-          "id,data_atendimento,hora_atendimento,profissional_nome,profissional_id,queixa_principal,evolucao,conduta,indicacao_retorno,procedimentos_texto,outro_procedimento,unidade_id,episodio_id,tipo_registro,observacoes",
+          "id,data_atendimento,hora_atendimento,profissional_nome,profissional_id,queixa_principal,evolucao,conduta,indicacao_retorno,procedimentos_texto,outro_procedimento,unidade_id,episodio_id,tipo_registro,observacoes,dados_acolhimento",
         )
         .eq("paciente_id", pacienteId)
         .order("data_atendimento", { ascending: false })
