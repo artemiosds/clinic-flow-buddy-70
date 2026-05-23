@@ -1004,10 +1004,16 @@ const WorkspaceProntuario: React.FC = () => {
                     />
                   </TabsContent>
 
-                  <TabsContent value="annexes" className="mt-0 space-y-6">
-                    <ProntuarioAnexos 
-                      pacienteId={pacienteId || form.paciente_id} 
+                   <TabsContent value="annexes" className="mt-0 space-y-6">
+                    <ProntuarioAnexos
+                      prontuarioId={editId || form.id}
+                      pacienteId={pacienteId || form.paciente_id}
+                      agendamentoId={agendamentoId || form.agendamento_id}
                       tipoRegistro={form.tipo_registro}
+                      unidadeId={user?.unidadeId}
+                      uploadedBy={user?.id}
+                      uploadedByNome={user?.nome}
+                      showResultadosAnteriores={form.tipo_registro === 'retorno'}
                     />
                     <ResultadosExames pacienteId={pacienteId || form.paciente_id} />
                   </TabsContent>
