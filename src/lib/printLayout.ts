@@ -283,30 +283,30 @@ export function buildInstitutionalCSS(
 
   /* FIELDS */
   .content-block { text-align: justify; text-justify: inter-word; font-size: ${bodyPt}pt; }
-  .field { margin-bottom: 6px; }
-  .field-label { font-size: ${microPt}pt; text-transform: uppercase; color: #475569; font-weight: 700; letter-spacing: 0.3px; }
-  .field-value { font-size: ${bodyPt}pt; margin-top: 1px; color: #000; }
+  .field { margin-bottom: 4px; }
+  .field-label { font-size: ${microPt}pt; text-transform: uppercase; color: #475569; font-weight: 700; letter-spacing: 0.3px; line-height: 1; }
+  .field-value { font-size: ${bodyPt}pt; margin-top: 0; color: #000; line-height: 1.2; }
 
   /* SECTIONS (prontuário) */
-  .section { margin-bottom: 12px; page-break-inside: auto; }
-  .section-title { font-weight: 700; font-size: ${sectionPt}pt; text-transform: uppercase; color: ${accent}; border-bottom: 1px solid #bae6fd; padding-bottom: 2px; margin-bottom: 6px; }
-  .section-content { font-size: ${bodyPt}pt; line-height: 1.5; white-space: pre-wrap; min-height: 14px; text-align: justify; color: #000; overflow-wrap: break-word; }
+  .section { margin-bottom: 8px; page-break-inside: auto; break-inside: auto; }
+  .section-title { font-weight: 700; font-size: ${sectionPt}pt; text-transform: uppercase; color: ${accent}; border-bottom: 1px solid #bae6fd; padding-bottom: 1px; margin-bottom: 4px; }
+  .section-content { font-size: ${bodyPt}pt; line-height: 1.4; white-space: pre-wrap; min-height: 12px; text-align: justify; color: #000; overflow-wrap: break-word; }
 
   /* INFO GRID */
-  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; padding: 8px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; }
-  .info-label { font-weight: 700; font-size: ${microPt}pt; text-transform: uppercase; color: #64748b; }
-  .info-value { font-size: ${bodyPt}pt; color: #000; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; padding: 6px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; }
+  .info-label { font-weight: 700; font-size: ${microPt}pt; text-transform: uppercase; color: #64748b; line-height: 1; }
+  .info-value { font-size: ${bodyPt}pt; color: #000; line-height: 1.1; }
 
   /* QR AREA */
-  .qr-area { text-align: center; margin-top: 16px; padding: 12px; border: 1px dashed #cbd5e1; border-radius: 4px; background: #fafafa; }
+  .qr-area { text-align: center; margin-top: 12px; padding: 10px; border: 1px dashed #cbd5e1; border-radius: 4px; background: #fafafa; }
   .qr-area p { font-size: ${smallPt}pt; color: #64748b; }
-  .qr-area .code { font-size: ${microPt}pt; color: #94a3b8; margin-top: 2px; font-family: monospace; }
+  .qr-area .code { font-size: ${microPt}pt; color: #94a3b8; margin-top: 1px; font-family: monospace; }
 
   /* SIGNATURE */
-  .signature { margin-top: 30px; text-align: center; page-break-inside: avoid; }
-  .signature-line { width: 260px; border-top: 1.2px solid #000; margin: 0 auto 4px; }
-  .signature .name { font-size: ${bodyPt}pt; font-weight: 700; color: #000; }
-  .signature .role { font-size: ${smallPt}pt; color: #475569; }
+  .signature { margin-top: 25px; text-align: center; page-break-inside: avoid; break-inside: avoid; }
+  .signature-line { width: 240px; border-top: 1.2px solid #000; margin: 0 auto 3px; }
+  .signature .name { font-size: ${bodyPt}pt; font-weight: 700; color: #000; line-height: 1.1; }
+  .signature .role { font-size: ${smallPt}pt; color: #475569; line-height: 1; }
 
   /* DOCUMENT FOOTER: carimbo + assinatura */
   .doc-sign-footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 24px; gap: 16px; page-break-inside: avoid; }
