@@ -53,12 +53,12 @@ export const AcolhimentoForm: React.FC<AcolhimentoFormProps> = ({
 
   const updateField = (section: string, field: string, value: any) => {
     setFormData({
-      ...prev,
+      ...formData,
       [section]: {
-        ...(prev[section] || {}),
+        ...(formData[section] || {}),
         [field]: value
       }
-    }));
+    });
   };
 
   const handleCheckboxChange = (section: string, listField: string, item: string, checked: boolean) => {
