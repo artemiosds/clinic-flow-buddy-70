@@ -153,7 +153,8 @@ const statusBadgeClass: Record<string, string> = {
 };
 
 const tipoBadge: Record<string, { label: string; class: string; icon: string }> = {
-  Consulta: { label: "1ª Consulta", class: "bg-success/15 text-success border border-success/30", icon: "🟢" },
+  "Avaliação/TR": { label: "Avaliação/TR", class: "bg-success/15 text-success border border-success/30", icon: "🟢" },
+  Consulta: { label: "Avaliação/TR", class: "bg-success/15 text-success border border-success/30", icon: "🟢" },
   Retorno: { label: "Retorno", class: "bg-info/15 text-info border border-info/30", icon: "🔵" },
   Exame: { label: "Exame", class: "bg-warning/15 text-warning border border-warning/30", icon: "🟡" },
   Procedimento: {
@@ -222,7 +223,7 @@ const Agenda: React.FC = () => {
     profissionalId: filterProf !== "all" ? filterProf : "",
     salaId: "",
     hora: "",
-    tipo: "Consulta",
+    tipo: "Avaliação/TR",
     obs: "",
   });
   const [detalheOpen, setDetalheOpen] = useState(false);

@@ -116,7 +116,7 @@ interface ProcedimentoDB {
 }
 
 const TIPOS_REGISTRO = [
-  { value: 'avaliacao_inicial', label: `🟢 ${TIPO_REGISTRO_LABELS.avaliacao_inicial}` },
+  { value: 'avaliacao_inicial', label: `🟢 Avaliação/TR` },
   { value: 'retorno', label: `🔵 ${TIPO_REGISTRO_LABELS.retorno}` },
   { value: 'sessao', label: `🟡 ${TIPO_REGISTRO_LABELS.sessao}` },
   { value: 'urgencia', label: `🔴 ${TIPO_REGISTRO_LABELS.urgencia}` },

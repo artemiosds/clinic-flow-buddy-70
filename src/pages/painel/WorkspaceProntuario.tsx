@@ -105,7 +105,7 @@ const WorkspaceProntuario: React.FC = () => {
   const [hasModifiedForm, setHasModifiedForm] = useState(false);
 
   const [form, setForm] = useState<any>({
-    tipo_registro: searchParams.get('tipo') === 'Retorno' ? 'retorno' : (searchParams.get('tipo') === 'Consulta' ? 'avaliacao_inicial' : (searchParams.get('tipo') || 'avaliacao_inicial')),
+    tipo_registro: searchParams.get('tipo') === 'Retorno' ? 'retorno' : (searchParams.get('tipo') === 'Consulta' || searchParams.get('tipo') === 'Avaliação/TR' ? 'avaliacao_inicial' : (searchParams.get('tipo') || 'avaliacao_inicial')),
     data_atendimento: searchParams.get('data') || new Date().toISOString().split('T')[0],
     hora_atendimento: searchParams.get('horaInicio') || new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
     soap_subjetivo: '', soap_objetivo: '', soap_avaliacao: '', soap_plano: '',
