@@ -118,7 +118,7 @@ export const AcolhimentoForm: React.FC<AcolhimentoFormProps> = ({
           <div className="flex items-center gap-4 text-[10px] text-muted-foreground uppercase font-bold">
             <div className="flex items-center gap-1">
               <Clock className="w-3 h-3" />
-              {new Date(initialData.data_registro).toLocaleString('pt-BR')}
+              {new Date(initialData.criado_em).toLocaleString('pt-BR')}
             </div>
             <div className="flex items-center gap-1">
               <User className="w-3 h-3" />
