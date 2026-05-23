@@ -642,6 +642,11 @@ export const HistoricoClinicoTimeline: React.FC<Props> = ({ pacienteId, unidades
           </DialogHeader>
           {viewEvent && (
             <div className="space-y-3 text-sm">
+              {viewEvent.dadosAcolhimento && (
+                <div className="mb-4">
+                  <AcolhimentoView data={viewEvent.dadosAcolhimento} />
+                </div>
+              )}
               {viewEvent.procedimentos && (
                 <div>
                   <p className="text-xs font-semibold text-muted-foreground mb-1">Procedimentos</p>
