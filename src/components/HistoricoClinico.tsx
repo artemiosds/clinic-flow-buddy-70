@@ -38,6 +38,7 @@ interface ProntuarioItem {
   episodio_id: string | null;
   tipo_registro: string;
   observacoes: string;
+  dados_acolhimento?: any;
 }
 
 interface EpisodioItem {
