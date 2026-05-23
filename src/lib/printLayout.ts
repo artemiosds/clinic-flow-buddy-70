@@ -156,10 +156,10 @@ export function buildInstitutionalCSS(
 <style>
   @page {
     size: ${size} ${orientation};
-    margin: 15mm 12mm 15mm 12mm;
+    margin: 10mm 10mm 10mm 10mm;
   }
   @page :first {
-    margin-top: 12mm;
+    margin-top: 10mm;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   html, body { 
@@ -173,7 +173,7 @@ export function buildInstitutionalCSS(
     padding: 0;
     color: #000;
     font-size: ${bodyPt}pt;
-    line-height: 1.3;
+    line-height: 1.25;
     background: #fff;
   }
 
@@ -182,9 +182,9 @@ export function buildInstitutionalCSS(
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 0 4px 0;
-    margin-bottom: 6px;
-    border-bottom: 1.5px solid ${accent};
+    padding: 0 0 3px 0;
+    margin-bottom: 5px;
+    border-bottom: 1.2px solid ${accent};
     position: relative;
   }
   .doc-header .logo-left,
