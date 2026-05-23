@@ -118,6 +118,8 @@ const WorkspaceProntuario: React.FC = () => {
     paciente_nome: pacienteNome || '',
     custom_data: {},
     agendamento_id: agendamentoId || '',
+    prescricao: '',
+    solicitacao_exames: '',
   });
 
   const handleFormChange = (updates: any) => {
@@ -237,7 +239,7 @@ const WorkspaceProntuario: React.FC = () => {
               setForm(prev => {
                 // Durante o carregamento inicial, sempre sobrepomos com os dados do banco
                 // para garantir que o ID e o conteúdo original sejam preservados.
-                return { ...prev, ...p };
+                return { ...prev, ...p, custom_data: { ...(prev.custom_data || {}), ...(p.custom_data || {}) } };
               });
               
               // Load specialty fields from observations if they were stored there (standard pattern)
@@ -742,7 +744,7 @@ const WorkspaceProntuario: React.FC = () => {
                   <TabsContent value="evolution" className="mt-0 space-y-6" forceMount>
                     <div className={cn("space-y-6", activeTab !== 'evolution' && "hidden")}>
                       {/* View-only Acolhimento if exists and in Evolution tab */}
-                      {(acolhimentoData || acolhimentoDraft) && (
+                      {(acolhimentoData || (acolhimentoDraft && Object.keys(acolhimentoDraft).length > 0)) && (
                         <div className="animate-in fade-in slide-in-from-top-4 duration-500">
                           <AcolhimentoView 
                             data={acolhimentoDraft && Object.keys(acolhimentoDraft).length > 0 ? acolhimentoDraft : acolhimentoData?.dados_acolhimento} 
@@ -1002,10 +1004,16 @@ const WorkspaceProntuario: React.FC = () => {
                     />
                   </TabsContent>
 
-                  <TabsContent value="annexes" className="mt-0 space-y-6">
-                    <ProntuarioAnexos 
-                      pacienteId={pacienteId || form.paciente_id} 
+                   <TabsContent value="annexes" className="mt-0 space-y-6">
+                    <ProntuarioAnexos
+                      prontuarioId={editId || form.id}
+                      pacienteId={pacienteId || form.paciente_id}
+                      agendamentoId={agendamentoId || form.agendamento_id}
                       tipoRegistro={form.tipo_registro}
+                      unidadeId={user?.unidadeId}
+                      uploadedBy={user?.id}
+                      uploadedByNome={user?.nome}
+                      showResultadosAnteriores={form.tipo_registro === 'retorno'}
                     />
                     <ResultadosExames pacienteId={pacienteId || form.paciente_id} />
                   </TabsContent>
