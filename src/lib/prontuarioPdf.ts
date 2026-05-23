@@ -146,7 +146,7 @@ async function fetchTriagemHtml(pacienteId: string, dataAtendimento: string): Pr
 
     const fields = [
       { label: "Peso", value: triagemData.peso ? `${triagemData.peso} kg` : null },
-      { label: "Altura", value: triagemData.altura ? `${triagemData.altura} m` : null },
+      { label: "Altura", value: triagemData.altura ? `${triagemData.altura} cm` : null },
       { label: "IMC", value: triagemData.imc ? `${Number(triagemData.imc).toFixed(1)}` : null },
       { label: "PA", value: triagemData.pressao_arterial },
       { label: "Temp", value: triagemData.temperatura ? `${triagemData.temperatura} °C` : null },
@@ -381,6 +381,7 @@ export function downloadFullHistoryPdf(pacienteNome: string, entries: TimelineEn
     }
   })();
 }
+
 
 
 
