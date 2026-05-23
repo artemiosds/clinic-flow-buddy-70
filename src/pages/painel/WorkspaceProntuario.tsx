@@ -739,7 +739,18 @@ const WorkspaceProntuario: React.FC = () => {
                   </TabsContent>
 
                   <TabsContent value="evolution" className="mt-0 space-y-6" forceMount>
-                    <div className={cn("flex flex-col md:flex-row md:items-center justify-between gap-6 bg-gradient-to-br from-card to-muted/20 p-6 rounded-2xl border border-primary/10 shadow-md mb-8", activeTab !== 'evolution' && "hidden")}>
+                    <div className={cn("space-y-6", activeTab !== 'evolution' && "hidden")}>
+                      {/* View-only Acolhimento if exists and in Evolution tab */}
+                      {(acolhimentoData || acolhimentoDraft) && (
+                        <div className="animate-in fade-in slide-in-from-top-4 duration-500">
+                          <AcolhimentoView 
+                            data={acolhimentoDraft && Object.keys(acolhimentoDraft).length > 0 ? acolhimentoDraft : acolhimentoData?.dados_acolhimento} 
+                            isCollapsedDefault={true}
+                          />
+                        </div>
+                      )}
+
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-gradient-to-br from-card to-muted/20 p-6 rounded-2xl border border-primary/10 shadow-md mb-8">
                       <div className="flex items-center gap-4">
                         <div className="p-3 rounded-xl bg-primary/10 text-primary shadow-inner">
                           <History className="w-6 h-6" />
