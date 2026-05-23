@@ -29,6 +29,7 @@ import { TIPO_REGISTRO_LABELS } from '@/utils/labels';
 import PatientClinicalHeader from '@/components/pacientes/PatientClinicalHeader';
 import { HistoricoClinico } from '@/components/HistoricoClinico';
 import TriagemDetalhada from '@/components/TriagemDetalhada';
+import { AcolhimentoView } from '@/components/prontuario/AcolhimentoView';
 import DynamicProntuarioFields from '@/components/DynamicProntuarioFields';
 import SoapFieldsAdaptive from '@/components/SoapFieldsAdaptive';
 import PacienteDocumentos from '@/components/PacienteDocumentos';
@@ -304,6 +305,24 @@ const WorkspaceProntuario: React.FC = () => {
     // 1. Acolhimento section if active or exists
     if (activeTab === 'acolhimento' || (acolhimentoData && activeTab === 'evolution')) {
       const data = acolhimentoDraft || acolhimentoData?.dados_acolhimento;
+      if (data && Object.keys(data).length > 0) {
+        body += `
+          <div class="section">
+            <div class="section-title">Acolhimento de Saúde Mental</div>
+            <div class="section-content" style="font-size: 10pt;">
+              ${data.secao3?.queixa ? `<div style="margin-bottom: 8px;"><strong>Queixa Principal (Acolhimento):</strong> ${data.secao3.queixa}</div>` : ''}
+              ${data.secao4?.sintomas?.length > 0 ? `<div style="margin-bottom: 8px;"><strong>Sintomas nos últimos 30 dias:</strong> ${data.secao4.sintomas.join(', ')}</div>` : ''}
+              ${data.secao15?.parecer ? `<div style="margin-bottom: 8px;"><strong>Parecer do Acolhedor:</strong> ${data.secao15.parecer}</div>` : ''}
+              <div style="font-style: italic; font-size: 9pt; color: #64748b; margin-top: 4px;">* Ver registro completo de acolhimento em anexo ou histórico.</div>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    // 1. Acolhimento section if data exists
+    if (acolhimentoData || acolhimentoDraft) {
+      const data = acolhimentoDraft && Object.keys(acolhimentoDraft).length > 0 ? acolhimentoDraft : acolhimentoData?.dados_acolhimento;
       if (data && Object.keys(data).length > 0) {
         body += `
           <div class="section">
@@ -720,98 +739,110 @@ const WorkspaceProntuario: React.FC = () => {
                   </TabsContent>
 
                   <TabsContent value="evolution" className="mt-0 space-y-6" forceMount>
-                    <div className={cn("flex flex-col md:flex-row md:items-center justify-between gap-6 bg-gradient-to-br from-card to-muted/20 p-6 rounded-2xl border border-primary/10 shadow-md mb-8", activeTab !== 'evolution' && "hidden")}>
-                      <div className="flex items-center gap-4">
-                        <div className="p-3 rounded-xl bg-primary/10 text-primary shadow-inner">
-                          <History className="w-6 h-6" />
+                    <div className={cn("space-y-6", activeTab !== 'evolution' && "hidden")}>
+                      {/* View-only Acolhimento if exists and in Evolution tab */}
+                      {(acolhimentoData || acolhimentoDraft) && (
+                        <div className="animate-in fade-in slide-in-from-top-4 duration-500">
+                          <AcolhimentoView 
+                            data={acolhimentoDraft && Object.keys(acolhimentoDraft).length > 0 ? acolhimentoDraft : acolhimentoData?.dados_acolhimento} 
+                            isCollapsedDefault={true}
+                          />
                         </div>
-                        <div>
-                          <h3 className="text-base font-bold text-foreground tracking-tight">Evolução Clínica</h3>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                            <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Atendimento Ativo</p>
+                      )}
+
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-gradient-to-br from-card to-muted/20 p-6 rounded-2xl border border-primary/10 shadow-md mb-8">
+                        <div className="flex items-center gap-4">
+                          <div className="p-3 rounded-xl bg-primary/10 text-primary shadow-inner">
+                            <History className="w-6 h-6" />
+                          </div>
+                          <div>
+                            <h3 className="text-base font-bold text-foreground tracking-tight">Evolução Clínica</h3>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                              <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Atendimento Ativo</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-4 bg-background/60 p-3 rounded-xl border border-border/40 backdrop-blur-sm">
+                          <div className="flex flex-col gap-1">
+                            <Label className="text-[10px] font-black uppercase text-muted-foreground/80 tracking-widest ml-1">Tipo de Registro</Label>
+                            <Select 
+                              value={form.tipo_registro} 
+                              onValueChange={(val) => handleFormChange({ tipo_registro: val })}
+                            >
+                              <SelectTrigger className="w-[200px] h-10 text-sm font-bold bg-background border-primary/20 hover:border-primary/40 focus:ring-primary/20 transition-all shadow-sm rounded-lg">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent className="rounded-xl border-primary/10 shadow-xl">
+                                {[
+                                  { value: 'avaliacao_inicial', label: 'Avaliação/TR', color: 'bg-green-600', icon: Stethoscope },
+                                  { value: 'retorno', label: 'Retorno', color: 'bg-blue-600', icon: Clock },
+                                  { value: 'sessao', label: 'Sessão', color: 'bg-amber-500', icon: Activity },
+                                  { value: 'urgencia', label: 'Urgência', color: 'bg-red-600', icon: AlertTriangle },
+                                  { value: 'procedimento', label: 'Procedimento', color: 'bg-purple-600', icon: ClipboardList },
+                                ].map((type) => (
+                                  <SelectItem key={type.value} value={type.value} className="focus:bg-primary/5 rounded-md cursor-pointer py-2.5">
+                                    <div className="flex items-center gap-3">
+                                      <div className={cn("w-2.5 h-2.5 rounded-full ring-2 ring-background shadow-sm", type.color)} />
+                                      <span className="font-semibold">{type.label}</span>
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           </div>
                         </div>
                       </div>
-
-                      <div className="flex items-center gap-4 bg-background/60 p-3 rounded-xl border border-border/40 backdrop-blur-sm">
-                        <div className="flex flex-col gap-1">
-                          <Label className="text-[10px] font-black uppercase text-muted-foreground/80 tracking-widest ml-1">Tipo de Registro</Label>
-                          <Select 
-                            value={form.tipo_registro} 
-                            onValueChange={(val) => handleFormChange({ tipo_registro: val })}
-                          >
-                            <SelectTrigger className="w-[200px] h-10 text-sm font-bold bg-background border-primary/20 hover:border-primary/40 focus:ring-primary/20 transition-all shadow-sm rounded-lg">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent className="rounded-xl border-primary/10 shadow-xl">
-                              {[
-                                { value: 'avaliacao_inicial', label: 'Avaliação/TR', color: 'bg-green-600', icon: Stethoscope },
-                                { value: 'retorno', label: 'Retorno', color: 'bg-blue-600', icon: Clock },
-                                { value: 'sessao', label: 'Sessão', color: 'bg-amber-500', icon: Activity },
-                                { value: 'urgencia', label: 'Urgência', color: 'bg-red-600', icon: AlertTriangle },
-                                { value: 'procedimento', label: 'Procedimento', color: 'bg-purple-600', icon: ClipboardList },
-                              ].map((type) => (
-                                <SelectItem key={type.value} value={type.value} className="focus:bg-primary/5 rounded-md cursor-pointer py-2.5">
-                                  <div className="flex items-center gap-3">
-                                    <div className={cn("w-2.5 h-2.5 rounded-full ring-2 ring-background shadow-sm", type.color)} />
-                                    <span className="font-semibold">{type.label}</span>
-                                  </div>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                      
+                      <SoapFieldsAdaptive
+                        profissao={user?.profissao}
+                        values={{
+                          soap_subjetivo: form.soap_subjetivo || '',
+                          soap_objetivo: form.soap_objetivo || '',
+                          soap_avaliacao: form.soap_avaliacao || '',
+                          soap_plano: form.soap_plano || '',
+                        }}
+                        onChange={(field, value) => handleFormChange({ [field]: value })}
+                        soapErrors={false}
+                        onClearErrors={() => {}}
+                        soapEnabled={soapEnabled}
+                        onToggleSoap={handleToggleSoap}
+                        labels={soapLabels}
+                        customOptionsForField={(field) => soapCustom.getOptionsForField(field)}
+                        customOptionsWithId={(field) => soapCustom.getOptionWithId(field)}
+                        onAddCustomOption={(field, option) => soapCustom.addOption(field, option, user?.profissao || '')}
+                        onDeleteCustomOption={soapCustom.deleteOption}
+                      />
+                      
+                      {!soapEnabled && (
+                        <div className="mt-4 space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                          <div className="flex items-center gap-2 mb-1">
+                            <FileText className="w-4 h-4 text-primary" />
+                            <Label className="font-bold text-xs uppercase text-muted-foreground tracking-wider">Evolução Livre</Label>
+                          </div>
+                          <DebouncedTextarea
+                            rows={8}
+                            value={form.evolucao || ''}
+                            onChange={(e) => handleFormChange({ evolucao: e.target.value })}
+                            placeholder="Descreva a evolução clínica do paciente detalhadamente..."
+                            className="bg-card border-border/60 shadow-sm focus-visible:ring-primary/30"
+                          />
                         </div>
-                      </div>
-                    </div>
-                    <div className={cn(activeTab !== 'evolution' && "hidden", "space-y-6")}>
-                    <SoapFieldsAdaptive
-                      profissao={user?.profissao}
-                      values={{
-                        soap_subjetivo: form.soap_subjetivo || '',
-                        soap_objetivo: form.soap_objetivo || '',
-                        soap_avaliacao: form.soap_avaliacao || '',
-                        soap_plano: form.soap_plano || '',
-                      }}
-                      onChange={(field, value) => handleFormChange({ [field]: value })}
-                      soapErrors={false}
-                      onClearErrors={() => {}}
-                      soapEnabled={soapEnabled}
-                      onToggleSoap={handleToggleSoap}
-                      labels={soapLabels}
-                      customOptionsForField={(field) => soapCustom.getOptionsForField(field)}
-                      customOptionsWithId={(field) => soapCustom.getOptionWithId(field)}
-                      onAddCustomOption={(field, option) => soapCustom.addOption(field, option, user?.profissao || '')}
-                      onDeleteCustomOption={soapCustom.deleteOption}
-                    />
-                    
-                    {!soapEnabled && (
-                      <div className="mt-4 space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                        <div className="flex items-center gap-2 mb-1">
-                          <FileText className="w-4 h-4 text-primary" />
-                          <Label className="font-bold text-xs uppercase text-muted-foreground tracking-wider">Evolução Livre</Label>
-                        </div>
-                        <DebouncedTextarea
-                          rows={8}
-                          value={form.evolucao || ''}
-                          onChange={(e) => handleFormChange({ evolucao: e.target.value })}
-                          placeholder="Descreva a evolução clínica do paciente detalhadamente..."
-                          className="bg-card border-border/60 shadow-sm focus-visible:ring-primary/30"
-                        />
-                      </div>
-                    )}
-                    <DynamicProntuarioFields
-                      campos={getCamposForTipo(form.tipo_registro)}
-                      formValues={form}
-                      customValues={form.custom_data || {}}
-                      onFormChange={(k, v) => handleFormChange({ [k]: v })}
-                      onCustomChange={(k, v) => handleFormChange({ custom_data: { ...form.custom_data, [k]: v } })}
-                      especialidadeFields={especialidadeFields}
-                      onEspecialidadeChange={(k, v) => setEspecialidadeFields(p => ({...p, [k]: v}))}
-                      profissao={user?.profissao}
-                      profissionalId={user?.id}
-                      tipoProntuario={form.tipo_registro === 'avaliacao_inicial' ? 'avaliacao' : (form.tipo_registro === 'retorno' ? 'retorno' : (form.tipo_registro === 'sessao' ? 'sessao' : (form.tipo_registro === 'urgencia' ? 'urgencia' : (form.tipo_registro === 'procedimento' ? 'procedimento' : 'avaliacao'))))}
-                    />
+                      )}
+                      
+                      <DynamicProntuarioFields
+                        campos={getCamposForTipo(form.tipo_registro)}
+                        formValues={form}
+                        customValues={form.custom_data || {}}
+                        onFormChange={(k, v) => handleFormChange({ [k]: v })}
+                        onCustomChange={(k, v) => handleFormChange({ custom_data: { ...form.custom_data, [k]: v } })}
+                        especialidadeFields={especialidadeFields}
+                        onEspecialidadeChange={(k, v) => setEspecialidadeFields(p => ({...p, [k]: v}))}
+                        profissao={user?.profissao}
+                        profissionalId={user?.id}
+                        tipoProntuario={form.tipo_registro === 'avaliacao_inicial' ? 'avaliacao' : (form.tipo_registro === 'retorno' ? 'retorno' : (form.tipo_registro === 'sessao' ? 'sessao' : (form.tipo_registro === 'urgencia' ? 'urgencia' : (form.tipo_registro === 'procedimento' ? 'procedimento' : 'avaliacao'))))}
+                      />
                     </div>
                   </TabsContent>
 
