@@ -179,6 +179,84 @@ async function fetchTriagemHtml(pacienteId: string, dataAtendimento: string): Pr
   }
 }
 
+function renderAcolhimentoHtml(data: any): string {
+  if (!data) return "";
+
+  const row = (label: string, value: any) => {
+    if (value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0)) return "";
+    const displayValue = Array.isArray(value) ? value.join(', ') : String(value === 'sim' ? 'Sim' : value === 'nao' ? 'Não' : value);
+    return `
+      <div style="margin-bottom: 8px;">
+        <div style="font-size: 8pt; color: #64748b; text-transform: uppercase; font-weight: 700;">${escapeHtml(label)}</div>
+        <div style="font-size: 10pt; color: #000; font-weight: 500; white-space: pre-wrap;">${escapeHtml(displayValue)}</div>
+      </div>
+    `;
+  };
+
+  const section = (title: string, content: string) => {
+    if (!content) return "";
+    return `
+      <div style="margin-top: 15px; border-top: 0.5px solid #e2e8f0; padding-top: 10px;">
+        <div style="font-size: 9pt; color: #0369a1; font-weight: 800; margin-bottom: 10px; text-transform: uppercase;">${escapeHtml(title)}</div>
+        ${content}
+      </div>
+    `;
+  };
+
+  const s3 = section("Motivo da Procura", 
+    row("Queixa Principal, Sintomas e Evolução", data.secao3?.queixa) + 
+    row("Outros", data.secao3?.outros)
+  );
+  
+  const s4 = section("Sintomas (últimos 30 dias)", 
+    row("Sintomas Observados", data.secao4?.sintomas)
+  );
+
+  const s5 = section("Antecedentes Pessoais", 
+    row("Antecedentes", data.secao5?.antecedentes) +
+    row("Uso de Psicofármacos", data.secao5?.uso_psicofarmacos) +
+    row("Medicação Anterior", data.secao5?.medicacao_anterior) +
+    row("Medicação Atual", data.secao5?.medicacao_atual)
+  );
+
+  const s6 = section("Uso de Substâncias", 
+    row("Uso de Álcool", data.secao6?.uso_alcool) +
+    row("Qual / Frequência (Álcool)", data.secao6?.alcool_qual || data.secao6?.alcool_frequencia ? `${data.secao6.alcool_qual || ''} ${data.secao6.alcool_frequencia ? `(${data.secao6.alcool_frequencia})` : ''}` : null) +
+    row("Uso de Droga", data.secao6?.uso_droga) +
+    row("Qual / Frequência (Droga)", data.secao6?.droga_qual || data.secao6?.droga_frequencia ? `${data.secao6.droga_qual || ''} ${data.secao6.droga_frequencia ? `(${data.secao6.droga_frequencia})` : ''}` : null) +
+    row("Tabagismo", data.secao6?.habito_fumar)
+  );
+
+  const s7 = section("Histórico e Risco de Suicídio", 
+    row("Tratamento de Suicídio", data.secao7?.tratamento_suicidio) +
+    row("Ideação Suicida", data.secao7?.ideacao_suicida) +
+    row("Tentativa nos últimos 6 meses", data.secao7?.tentativa_suicidio_6meses) +
+    row("Acompanhamento Psiquiatra", data.secao7?.acompanhamento_psiquiatra) +
+    row("Problemas Saúde Mental", data.secao7?.problemas_saude_mental) +
+    row("Avaliado por Equipe", data.secao7?.avaliado_equipe_mental)
+  );
+
+  const s10 = section("Histórico Pessoal e Familiar", 
+    row("Características Observadas", data.secao10?.caracteristicas_gerais) +
+    row("Situação Sociofamiliar", data.secao11?.situacao_sociofamiliar) +
+    row("História Moradia", data.secao11?.historia_moradia) +
+    row("Renda Familiar", data.secao11?.renda_familiar)
+  );
+
+  const s15 = section("Parecer e Conduta", 
+    row("Parecer do Profissional", data.secao15?.parecer)
+  );
+
+  return `
+    <div style="background: #fdfdfd; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-bottom: 20px; page-break-inside: avoid;">
+      <div style="background: #f1f5f9; padding: 5px 10px; border-radius: 4px; display: inline-block; margin-bottom: 10px;">
+        <strong style="color: #0369a1; font-size: 10pt; text-transform: uppercase;">Acolhimento em Saúde Mental</strong>
+      </div>
+      ${s3}${s4}${s5}${s6}${s7}${s10}${s15}
+    </div>
+  `;
+}
+
 async function buildProntuarioBody(p: ProntuarioLike, extraHtml = ""): Promise<string> {
   const sections: Array<[string, string | undefined]> = [
     ["Queixa Principal", p.queixa_principal],
