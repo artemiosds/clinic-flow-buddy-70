@@ -466,38 +466,69 @@ const WorkspaceProntuario: React.FC = () => {
     setSaving(true);
     try {
       const { auditService } = await import('@/services/auditService');
+      const finalId = editId || form.id;
       let currentProntuario = null;
-      if (editId) {
-        const { data: old } = await supabase.from('prontuarios').select('*').eq('id', editId).maybeSingle();
+      if (finalId) {
+        const { data: old } = await supabase.from('prontuarios').select('*').eq('id', finalId).maybeSingle();
         currentProntuario = old;
       }
 
       const dbPayload: any = {
-        ...form,
-        id: editId || form.id || undefined,
+        paciente_id: form.paciente_id,
+        paciente_nome: form.paciente_nome,
         profissional_id: user?.id,
         profissional_nome: user?.nome,
         unidade_id: user?.unidadeId || '',
+        setor: user?.setor || '',
+        agendamento_id: form.agendamento_id || null,
+        data_atendimento: form.data_atendimento,
+        hora_atendimento: form.hora_atendimento,
+        queixa_principal: form.queixa_principal || '',
+        anamnese: form.anamnese || '',
+        sinais_sintomas: form.sinais_sintomas || '',
+        exame_fisico: form.exame_fisico || '',
+        hipotese: form.hipotese || '',
+        conduta: form.conduta || '',
         prescricao: listaPrescricao.length > 0 ? JSON.stringify({ medicamentos: listaPrescricao }) : form.prescricao,
         solicitacao_exames: listaExames.length > 0 ? JSON.stringify({ exames: listaExames }) : form.solicitacao_exames,
+        evolucao: form.evolucao || '',
         observacoes: Object.keys(especialidadeFields).length > 0
           ? JSON.stringify({ especialidade_fields: especialidadeFields, texto: form.observacoes || '' })
-          : form.observacoes,
+          : form.observacoes || '',
+        indicacao_retorno: form.indicacao_retorno === 'no_indication' ? '' : (form.indicacao_retorno || ''),
+        motivo_alteracao: finalId ? (form.motivo_alteracao || 'Alteração via Workspace') : '',
+        procedimentos_texto: form.procedimentos_texto || '',
+        outro_procedimento: form.outro_procedimento || '',
+        tipo_registro: form.tipo_registro || 'consulta',
+        soap_subjetivo: form.soap_subjetivo || '',
+        soap_objetivo: form.soap_objetivo || '',
+        soap_avaliacao: form.soap_avaliacao || '',
+        soap_plano: form.soap_plano || '',
+        episodio_id: (form.episodio_id && form.episodio_id !== 'no_episode') ? form.episodio_id : null,
         custom_data: {
           ...form.custom_data,
           soap_enabled: soapEnabled
         }
       };
 
-      // Remove non-existent columns if they accidentally leaked from form
-      delete dbPayload.campos_especialidade;
+      let savedRecord;
+      if (finalId) {
+        // Explicit update to prevent duplication
+        const { data, error } = await supabase.from('prontuarios').update(dbPayload).eq('id', finalId).select().single();
+        if (error) throw error;
+        savedRecord = data;
+      } else {
+        // Explicit insert for new record
+        const { data, error } = await supabase.from('prontuarios').insert(dbPayload).select().single();
+        if (error) throw error;
+        savedRecord = data;
+      }
       
-      const { data, error } = await supabase.from('prontuarios').upsert(dbPayload).select().single();
-      if (error) throw error;
+      const data = savedRecord;
       
       // Audit
       await auditService.log({
-        acao: editId ? 'finalizar_alteracao_prontuario' : 'finalizar_prontuario',
+        acao: finalId ? 'finalizar_alteracao_prontuario' : 'finalizar_prontuario',
         entidade: 'prontuario',
         entidadeId: data.id,
         entidadeNome: pacienteData?.nome || pacienteNome || 'Paciente',
