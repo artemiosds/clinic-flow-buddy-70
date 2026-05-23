@@ -193,10 +193,11 @@ const WorkspaceProntuario: React.FC = () => {
         .limit(1)
         .maybeSingle();
       
-      if (data) {
-        setAcolhimentoData(data);
-        if (data.dados_acolhimento) {
-          setAcolhimentoDraft(data.dados_acolhimento);
+      const typedData = data as any;
+      if (typedData) {
+        setAcolhimentoData(typedData);
+        if (typedData.dados_acolhimento) {
+          setAcolhimentoDraft(typedData.dados_acolhimento);
         }
       }
     } catch (err) {
@@ -578,29 +579,31 @@ const WorkspaceProntuario: React.FC = () => {
                     </div>
                   </div>
 
-                  <TabsContent value="acolhimento" className="mt-0 animate-in fade-in duration-300">
+                  <TabsContent value="acolhimento" className="mt-0 animate-in fade-in duration-300" forceMount>
                     <Card className="border-none shadow-none bg-transparent">
                       <CardContent className="p-0">
                         {loadingAcolhimento ? (
                           <div className="flex items-center justify-center p-12 text-muted-foreground text-sm">Carregando acolhimento...</div>
                         ) : (
-                          <AcolhimentoForm 
-                            pacienteId={pacienteId || form.paciente_id}
-                            profissionalId={user?.id}
-                            agendamentoId={agendamentoId || undefined}
-                            initialData={acolhimentoData}
-                            formData={acolhimentoDraft}
-                            setFormData={setAcolhimentoDraft}
-                            onSave={handleSaveAcolhimento}
-                            saving={savingAcolhimento}
-                          />
+                          <div className={cn(form.tipo_registro !== 'acolhimento' && "hidden")}>
+                            <AcolhimentoForm 
+                              pacienteId={pacienteId || form.paciente_id}
+                              profissionalId={user?.id}
+                              agendamentoId={agendamentoId || undefined}
+                              initialData={acolhimentoData}
+                              formData={acolhimentoDraft}
+                              setFormData={setAcolhimentoDraft}
+                              onSave={handleSaveAcolhimento}
+                              saving={savingAcolhimento}
+                            />
+                          </div>
                         )}
                       </CardContent>
                     </Card>
                   </TabsContent>
 
-                  <TabsContent value="evolution" className="mt-0 space-y-6">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card p-4 rounded-xl border border-border/60 shadow-sm mb-6">
+                  <TabsContent value="evolution" className="mt-0 space-y-6" forceMount>
+                    <div className={cn(form.tipo_registro === 'acolhimento' && "hidden")}>
                       <div className="flex items-center gap-3">
                         <div className="p-2 rounded-lg bg-primary/10 text-primary">
                           <History className="w-5 h-5" />
