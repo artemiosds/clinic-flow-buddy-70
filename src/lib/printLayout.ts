@@ -139,27 +139,25 @@ export function buildInstitutionalCSS(
 ): string {
   const size = opts.pageSize || 'A4';
   const orientation = opts.orientation || 'portrait';
-  const margin = size === 'A5' ? '12mm' : '25mm';
   const cfg = config ?? DEFAULT_CONFIG;
   const fontFamily = `'${cfg.fonte.replace(/'/g, '')}', Arial, 'Helvetica Neue', Helvetica, sans-serif`;
-  // Painel salva em px; impressão usa pt → 1pt ≈ px * 0.75
-  // Limitamos o tamanho máximo na impressão para evitar o efeito "gigante" relatado.
-  const baseSize = Math.min(14, cfg.tamanhoFonte || 12); 
-  const bodyPt = Math.max(8, Math.round(baseSize * 0.75 * 10) / 10);
-  const titlePt = Math.round((bodyPt + 1.5) * 10) / 10;
-  const sectionPt = Math.round((bodyPt + 0.8) * 10) / 10;
-  const smallPt = Math.max(7, Math.round((bodyPt - 1.2) * 10) / 10);
-  const microPt = Math.max(6.5, Math.round((bodyPt - 2.2) * 10) / 10);
+  // Padrão ABNT / Documental: 12pt corpo, 10pt notas
+  const baseSize = cfg.tamanhoFonte || 12; 
+  const bodyPt = Math.max(9, Math.round(baseSize * 0.95 * 10) / 10); // Ligeiramente menor para compactação, mas legível
+  const titlePt = Math.round((bodyPt + 2) * 10) / 10;
+  const sectionPt = Math.round((bodyPt + 0.5) * 10) / 10;
+  const smallPt = Math.max(8, Math.round((bodyPt - 1.5) * 10) / 10);
+  const microPt = Math.max(7.5, Math.round((bodyPt - 2.5) * 10) / 10);
   const accent = cfg.corTitulo || '#0c4a6e';
   const headerAlign = cfg.alinhamento || 'center';
   return `
 <style>
   @page {
     size: ${size} ${orientation};
-    margin: 10mm 10mm 10mm 10mm;
+    margin: 20mm 15mm 20mm 15mm; /* Margens institucionais mais próximas da ABNT */
   }
   @page :first {
-    margin-top: 10mm;
+    margin-top: 15mm;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   html, body { 
@@ -173,7 +171,7 @@ export function buildInstitutionalCSS(
     padding: 0;
     color: #000;
     font-size: ${bodyPt}pt;
-    line-height: 1.25;
+    line-height: 1.3; /* Espaçamento ABNT 1.5 é muito longo, 1.3 é o equilíbrio documental */
     background: #fff;
   }
 
@@ -182,9 +180,9 @@ export function buildInstitutionalCSS(
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 0 3px 0;
-    margin-bottom: 5px;
-    border-bottom: 1.2px solid ${accent};
+    padding: 0 0 5px 0;
+    margin-bottom: 8px;
+    border-bottom: 1.5px solid ${accent};
     position: relative;
   }
   .doc-header .logo-left,
@@ -265,12 +263,13 @@ export function buildInstitutionalCSS(
   h2 {
     font-size: ${sectionPt}pt;
     color: ${accent};
-    margin: 10px 0 4px;
-    padding-bottom: 2px;
+    margin: 12px 0 6px;
+    padding-bottom: 3px;
     border-bottom: 1px solid #bae6fd;
     text-transform: uppercase;
     letter-spacing: 0.2px;
     font-weight: 700;
+    break-after: avoid;
   }
 
   /* TABLES */
@@ -288,14 +287,14 @@ export function buildInstitutionalCSS(
   .field-value { font-size: ${bodyPt}pt; margin-top: 0; color: #000; line-height: 1.15; }
 
   /* SECTIONS (prontuário) */
-  .section { margin-bottom: 6px; page-break-inside: auto; break-inside: auto; }
-  .section-title { font-weight: 700; font-size: ${sectionPt}pt; text-transform: uppercase; color: ${accent}; border-bottom: 1px solid #bae6fd; padding-bottom: 1px; margin-bottom: 3px; }
-  .section-content { font-size: ${bodyPt}pt; line-height: 1.35; white-space: pre-wrap; min-height: 10px; text-align: justify; color: #000; overflow-wrap: break-word; }
+  .section { margin-bottom: 10px; page-break-inside: avoid; break-inside: avoid; }
+  .section-title { font-weight: 700; font-size: ${sectionPt - 0.5}pt; text-transform: uppercase; color: #334155; border-bottom: 0.5px solid #e2e8f0; padding-bottom: 2px; margin-bottom: 4px; }
+  .section-content { font-size: ${bodyPt}pt; line-height: 1.4; white-space: pre-wrap; min-height: 10px; text-align: justify; color: #000; overflow-wrap: break-word; }
 
   /* INFO GRID */
-  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 8px; padding: 6px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; }
-  .info-label { font-weight: 700; font-size: ${microPt}pt; text-transform: uppercase; color: #64748b; line-height: 1; }
-  .info-value { font-size: ${bodyPt}pt; color: #000; line-height: 1.05; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 15px; margin-bottom: 12px; padding: 10px; background: #fff; border: 1px solid #000; border-radius: 0; }
+  .info-label { font-weight: 700; font-size: ${microPt}pt; text-transform: uppercase; color: #444; line-height: 1.1; }
+  .info-value { font-size: ${bodyPt}pt; color: #000; line-height: 1.2; font-weight: 500; }
 
   /* QR AREA */
   .qr-area { text-align: center; margin-top: 10px; padding: 8px; border: 1px dashed #cbd5e1; border-radius: 4px; background: #fafafa; }
