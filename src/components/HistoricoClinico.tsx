@@ -387,39 +387,45 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
       const row = (label: string, val?: any) => {
         if (!val || val === 'false' || val === '[]' || val === '{}') return "";
         let displayVal = val;
-        if (typeof val === 'string' && val.startsWith('[') && val.endsWith(']')) {
+        
+        // Handle JSON strings (like prescriptions, exams, specialty fields)
+        if (typeof val === 'string' && val.trim().startsWith('{')) {
+          try {
+            const parsed = JSON.parse(val);
+            if (parsed.especialidade_fields) {
+               let fieldsHtml = "";
+               Object.entries(parsed.especialidade_fields).forEach(([k, v]) => {
+                 if (v && v !== 'false') {
+                   const cleanLabel = k.replace('esp_', '').replace(/_/g, ' ').toUpperCase();
+                   fieldsHtml += `<div style="margin-bottom: 4px;"><span style="font-weight:700; font-size:9pt;">${cleanLabel}:</span> ${v === 'true' ? 'Sim' : v}</div>`;
+                 }
+               });
+               return fieldsHtml ? `<div class="section"><div class="section-title">${label}</div><div class="section-content">${fieldsHtml}</div></div>` : "";
+            }
+            if (parsed.medicamentos) {
+               displayVal = parsed.medicamentos.map((m: any) => `• ${m.medicamento}: ${m.posologia} (${m.duracao || 'contínuo'})`).join('<br/>');
+            } else if (parsed.exames) {
+               displayVal = parsed.exames.map((e: any) => `• ${e.nome}${e.indicacao ? ` (Ind: ${e.indicacao})` : ''}`).join('<br/>');
+            } else if (parsed.especialidade_fields === undefined && parsed.texto !== undefined) {
+               displayVal = parsed.texto;
+            } else {
+               displayVal = JSON.stringify(parsed);
+            }
+          } catch (e) { /* keep as is */ }
+        } else if (typeof val === 'string' && val.trim().startsWith('[')) {
           try {
             const parsed = JSON.parse(val);
             if (Array.isArray(parsed)) {
               if (parsed.length === 0) return "";
-              if (typeof parsed[0] === 'string') displayVal = parsed.join(', ');
-              else if (parsed[0].medicamento) displayVal = parsed.map((p: any) => `• ${p.medicamento}: ${p.posologia}`).join('<br/>');
-              else if (parsed[0].nome) displayVal = parsed.map((e: any) => `• ${e.nome}`).join('<br/>');
+              displayVal = parsed.map(p => typeof p === 'string' ? `• ${p}` : `• ${p.nome || p.medicamento || JSON.stringify(p)}`).join('<br/>');
             }
-          } catch (e) { /* use raw */ }
+          } catch (e) {}
         }
+        
         return `<div class="section"><div class="section-title">${label}</div><div class="section-content">${String(displayVal).replace(/\n/g, "<br/>")}</div></div>`;
       };
       
-      let evolucaoContent = item.evolucao || "";
-      let observacoesExtra = "";
-      
-      // Try to parse structured data if evolution is empty or looks like JSON
-      if (item.observacoes && item.observacoes.startsWith('{')) {
-        try {
-          const obs = JSON.parse(item.observacoes);
-          if (obs.especialidade_fields) {
-            Object.entries(obs.especialidade_fields).forEach(([key, val]) => {
-              if (val && val !== 'false') {
-                const label = key.replace('esp_', '').replace(/_/g, ' ').toUpperCase();
-                observacoesExtra += `<div style="margin-bottom: 4px;"><span style="font-weight:700; font-size:9pt;">${label}:</span> ${val === 'true' ? 'Sim' : val}</div>`;
-              }
-            });
-          }
-        } catch (e) {}
-      }
-
-      // Handle acolhimento specifically
+      // Load extra data for the print if available
       let acolhimentoBody = "";
       if (item.tipo_registro === 'acolhimento_mental') {
         try {
@@ -439,13 +445,13 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
           }
         } catch (e) {}
       }
-      
+
       body = `
         <div class="doc-content">
           ${acolhimentoBody}
           ${row("Queixa principal", item.queixa_principal)}
-          ${row("Evolução / SOAP", evolucaoContent)}
-          ${observacoesExtra ? `<div class="section"><div class="section-title">Campos Complementares</div><div class="section-content">${observacoesExtra}</div></div>` : ""}
+          ${row("Evolução / SOAP", item.evolucao)}
+          ${row("Informações Complementares", item.observacoes)}
           ${row("Conduta", item.conduta)}
           ${row("Procedimentos", item.procedimentos_texto)}
           ${row("Outro procedimento", item.outro_procedimento)}
