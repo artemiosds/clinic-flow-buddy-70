@@ -34,6 +34,7 @@ interface ProntuarioLike {
   tipo_registro?: string;
   indicacao_retorno?: string;
   custom_data?: Record<string, any>;
+  dados_acolhimento?: any;
   unidade_id?: string;
   especialidade?: string;
   tipo_prontuario?: string;
