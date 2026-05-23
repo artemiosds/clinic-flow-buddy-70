@@ -98,8 +98,10 @@ const WorkspaceProntuario: React.FC = () => {
   const [createPtsOpen, setCreatePtsOpen] = useState(false);
   const [createCycleOpen, setCreateCycleOpen] = useState(false);
   const [acolhimentoData, setAcolhimentoData] = useState<any>(null);
+  const [acolhimentoDraft, setAcolhimentoDraft] = useState<any>({});
   const [loadingAcolhimento, setLoadingAcolhimento] = useState(false);
   const [savingAcolhimento, setSavingAcolhimento] = useState(false);
+  const [hasModifiedForm, setHasModifiedForm] = useState(false);
 
   const [form, setForm] = useState<any>({
     tipo_registro: searchParams.get('tipo') === 'Retorno' ? 'retorno' : (searchParams.get('tipo') === 'Consulta' ? 'avaliacao_inicial' : (searchParams.get('tipo') || 'avaliacao_inicial')),
@@ -115,6 +117,11 @@ const WorkspaceProntuario: React.FC = () => {
     custom_data: {},
     agendamento_id: agendamentoId || '',
   });
+
+  const handleFormChange = (updates: any) => {
+    setForm((prev: any) => ({ ...prev, ...updates }));
+    setHasModifiedForm(true);
+  };
 
   const [soapEnabled, setSoapEnabled] = useState(true);
 
@@ -188,6 +195,9 @@ const WorkspaceProntuario: React.FC = () => {
       
       if (data) {
         setAcolhimentoData(data);
+        if (data.dados_acolhimento) {
+          setAcolhimentoDraft(data.dados_acolhimento);
+        }
       }
     } catch (err) {
       console.error("Error loading acolhimento:", err);
@@ -220,7 +230,11 @@ const WorkspaceProntuario: React.FC = () => {
 
           const processProntuario = (p: any) => {
             if (p) {
-              setForm(prev => ({ ...prev, ...p }));
+              // Only overwrite if not modified or if it's a forced refresh
+              setForm(prev => {
+                if (hasModifiedForm) return prev;
+                return { ...prev, ...p };
+              });
               
               // Load specialty fields from observations if they were stored there (standard pattern)
               if (p.observacoes && p.observacoes.startsWith('{')) {
@@ -575,6 +589,8 @@ const WorkspaceProntuario: React.FC = () => {
                             profissionalId={user?.id}
                             agendamentoId={agendamentoId || undefined}
                             initialData={acolhimentoData}
+                            formData={acolhimentoDraft}
+                            setFormData={setAcolhimentoDraft}
                             onSave={handleSaveAcolhimento}
                             saving={savingAcolhimento}
                           />
@@ -599,7 +615,7 @@ const WorkspaceProntuario: React.FC = () => {
                         <Label className="text-[10px] font-bold uppercase text-muted-foreground whitespace-nowrap">Tipo de Registro:</Label>
                         <Select 
                           value={form.tipo_registro} 
-                          onValueChange={(val) => setForm(p => ({...p, tipo_registro: val}))}
+                          onValueChange={(val) => handleFormChange({ tipo_registro: val })}
                         >
                           <SelectTrigger className="w-[180px] h-9 text-xs font-bold bg-background border-border/50">
                             <SelectValue />
@@ -631,7 +647,7 @@ const WorkspaceProntuario: React.FC = () => {
                         soap_avaliacao: form.soap_avaliacao || '',
                         soap_plano: form.soap_plano || '',
                       }}
-                      onChange={(field, value) => setForm(prev => ({ ...prev, [field]: value }))}
+                      onChange={(field, value) => handleFormChange({ [field]: value })}
                       soapErrors={false}
                       onClearErrors={() => {}}
                       soapEnabled={soapEnabled}
@@ -652,7 +668,7 @@ const WorkspaceProntuario: React.FC = () => {
                         <DebouncedTextarea
                           rows={8}
                           value={form.evolucao || ''}
-                          onChange={(e) => setForm(prev => ({ ...prev, evolucao: e.target.value }))}
+                          onChange={(e) => handleFormChange({ evolucao: e.target.value })}
                           placeholder="Descreva a evolução clínica do paciente detalhadamente..."
                           className="bg-card border-border/60 shadow-sm focus-visible:ring-primary/30"
                         />
@@ -662,8 +678,8 @@ const WorkspaceProntuario: React.FC = () => {
                       campos={getCamposForTipo(form.tipo_registro)}
                       formValues={form}
                       customValues={form.custom_data || {}}
-                      onFormChange={(k, v) => setForm(p => ({...p, [k]: v}))}
-                      onCustomChange={(k, v) => setForm(p => ({...p, custom_data: {...p.custom_data, [k]: v}}))}
+                      onFormChange={(k, v) => handleFormChange({ [k]: v })}
+                      onCustomChange={(k, v) => handleFormChange({ custom_data: { ...form.custom_data, [k]: v } })}
                       especialidadeFields={especialidadeFields}
                       onEspecialidadeChange={(k, v) => setEspecialidadeFields(p => ({...p, [k]: v}))}
                       profissao={user?.profissao}
