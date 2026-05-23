@@ -1873,7 +1873,7 @@ const Agenda: React.FC = () => {
                 const isPendenteRevisao = agendamentosPendentesRevisao.some(p => p.id === ag.id);
                 const anexoUrl = (ag as any).attachment_url || ag.attachmentUrl;
                 const typeColorBar: Record<string, string> = {
-                  Consulta: "border-l-[#3B82F6]",
+                  "Avaliação/TR": "border-l-[#3B82F6]",
                   Retorno: "border-l-[#10B981]",
                   Procedimento: "border-l-[#8B5CF6]",
                   Exame: "border-l-[#F59E0B]",
