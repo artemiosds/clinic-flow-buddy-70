@@ -205,10 +205,11 @@ function transformProntuarios(
     time: p.hora_atendimento || undefined,
     professional: p.profissional_nome || "",
     specialtyOrType: "Consulta",
-    summary: p.queixa_principal || p.evolucao || "",
+    summary: p.queixa_principal || p.evolucao || (p.dados_acolhimento ? `Acolhimento: ${p.dados_acolhimento.secao3?.queixa || 'Ver detalhes'}` : ""),
     procedimentos: p.procedimentos_texto || undefined,
     unidade: unidadeMap.get(p.unidade_id)?.nome,
     episodioTitle: p.episodio_id ? episodioMap.get(p.episodio_id) || "" : "",
+    dadosAcolhimento: p.dados_acolhimento,
   }));
 }
 
