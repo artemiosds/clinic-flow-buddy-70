@@ -319,6 +319,24 @@ const WorkspaceProntuario: React.FC = () => {
       }
     }
 
+    // 1. Acolhimento section if data exists
+    if (acolhimentoData || acolhimentoDraft) {
+      const data = acolhimentoDraft && Object.keys(acolhimentoDraft).length > 0 ? acolhimentoDraft : acolhimentoData?.dados_acolhimento;
+      if (data && Object.keys(data).length > 0) {
+        body += `
+          <div class="section">
+            <div class="section-title">Acolhimento de Saúde Mental</div>
+            <div class="section-content" style="font-size: 10pt;">
+              ${data.secao3?.queixa ? `<div style="margin-bottom: 8px;"><strong>Queixa Principal (Acolhimento):</strong> ${data.secao3.queixa}</div>` : ''}
+              ${data.secao4?.sintomas?.length > 0 ? `<div style="margin-bottom: 8px;"><strong>Sintomas nos últimos 30 dias:</strong> ${data.secao4.sintomas.join(', ')}</div>` : ''}
+              ${data.secao15?.parecer ? `<div style="margin-bottom: 8px;"><strong>Parecer do Acolhedor:</strong> ${data.secao15.parecer}</div>` : ''}
+              <div style="font-style: italic; font-size: 9pt; color: #64748b; margin-top: 4px;">* Ver registro completo de acolhimento em anexo ou histórico.</div>
+            </div>
+          </div>
+        `;
+      }
+    }
+
     // 2. Clinical Evolution / SOAP
     body += `
       <div class="section">
