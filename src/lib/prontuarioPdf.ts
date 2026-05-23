@@ -32,6 +32,7 @@ interface ProntuarioLike {
   soap_avaliacao?: string;
   soap_plano?: string;
   tipo_registro?: string;
+  indicacao_retorno?: string;
   custom_data?: Record<string, any>;
   unidade_id?: string;
   especialidade?: string;
