@@ -40,6 +40,7 @@ interface ProntuarioItem {
   tipo_registro: string;
   observacoes: string;
   dados_acolhimento?: any;
+  custom_data?: any;
 }
 
 interface EpisodioItem {
