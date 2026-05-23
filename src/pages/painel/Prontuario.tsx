@@ -3298,9 +3298,31 @@ const ProntuarioPage: React.FC = () => {
           {viewerProntuario && (
             <>
               <SheetHeader>
-                <SheetTitle className="flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-primary" />
-                  Prontuário — {viewerProntuario.paciente_nome}
+                <SheetTitle className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-primary" />
+                    Prontuário — {viewerProntuario.paciente_nome}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button 
+                      size="icon" 
+                      variant="ghost" 
+                      className="h-8 w-8"
+                      onClick={() => { downloadProntuarioPdf(viewerProntuario); toast.success("PDF gerado"); }}
+                      title="Baixar PDF"
+                    >
+                      <FileDown className="w-4 h-4 text-primary" />
+                    </Button>
+                    <Button 
+                      size="icon" 
+                      variant="ghost" 
+                      className="h-8 w-8"
+                      onClick={() => handlePrint(viewerProntuario)}
+                      title="Imprimir"
+                    >
+                      <Printer className="w-4 h-4 text-primary" />
+                    </Button>
+                  </div>
                 </SheetTitle>
                 <SheetDescription>
                   {new Date(viewerProntuario.data_atendimento + "T12:00:00").toLocaleDateString("pt-BR")}
