@@ -146,6 +146,24 @@ const renderContent = (item: ProntuarioItem) => {
       {item.procedimentos_texto && <Section label="Procedimentos" value={item.procedimentos_texto} />}
       {item.outro_procedimento && <Section label="Outro procedimento" value={item.outro_procedimento} />}
       {item.indicacao_retorno && <Section label="Indicação de retorno" value={item.indicacao_retorno} />}
+      
+      {/* Campos dinâmicos em custom_data */}
+      {(item as any).custom_data && Object.keys((item as any).custom_data).length > 0 && (
+        <div className="mt-4 p-3 rounded-lg bg-muted/30 border border-border/50">
+          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Campos Adicionais</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {Object.entries((item as any).custom_data).map(([k, v]) => {
+              if (!v || k === 'soap_enabled' || k === 'acolhimento_mental') return null;
+              return (
+                <div key={k} className="flex flex-col gap-0.5">
+                  <span className="text-[10px] text-muted-foreground uppercase font-semibold">{k.replace(/_/g, " ")}</span>
+                  <span className="text-sm font-medium">{String(v === true ? 'Sim' : v === false ? 'Não' : v)}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
