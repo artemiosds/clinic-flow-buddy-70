@@ -38,6 +38,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { AcolhimentoView } from "./prontuario/AcolhimentoView";
 
 // ============================================================
 // TIPOS E CONSTANTES
