@@ -73,6 +73,8 @@ function safe(str: string | undefined | null): string {
   if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
     try {
       const parsed = JSON.parse(trimmed);
+      
+      // Handle prescriptions
       if (parsed?.medicamentos && Array.isArray(parsed.medicamentos)) {
         return parsed.medicamentos
           .map(
@@ -81,6 +83,8 @@ function safe(str: string | undefined | null): string {
           )
           .join("\n");
       }
+      
+      // Handle exams
       if (parsed?.exames && Array.isArray(parsed.exames)) {
         return parsed.exames
           .map(
@@ -88,6 +92,16 @@ function safe(str: string | undefined | null): string {
               `• ${e.nome ?? ""}${e.codigo_sus ? ` (${e.codigo_sus})` : ""}${e.indicacao ? ` — ${e.indicacao}` : ""}`,
           )
           .join("\n");
+      }
+
+      // Handle specialty fields (if they ended up here raw)
+      if (parsed?.especialidade_fields && parsed?.texto !== undefined) {
+        return parsed.texto || "";
+      }
+      
+      // If it's just a general object with a 'texto' field
+      if (parsed?.texto && typeof parsed.texto === 'string') {
+        return parsed.texto;
       }
     } catch { /* não é JSON */ }
   }
