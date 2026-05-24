@@ -1103,10 +1103,16 @@ const ProntuarioPage: React.FC = () => {
       const parsed = p.observacoes ? JSON.parse(p.observacoes) : null;
       if (parsed?.especialidade_fields && typeof parsed.especialidade_fields === 'object') {
         setEspecialidadeFields(parsed.especialidade_fields);
+        // Clean the observation text to avoid double-encoding when saving
+        if (parsed.texto !== undefined) {
+          setForm(prev => ({ ...prev, observacoes: parsed.texto || '' }));
+        }
       } else {
         setEspecialidadeFields({});
       }
-    } catch { setEspecialidadeFields({}); }
+    } catch { 
+      setEspecialidadeFields({}); 
+    }
     setDialogOpen(true);
     const pac = pacientes.find((px) => px.id === p.paciente_id);
     logAction({
@@ -3453,6 +3459,22 @@ const ProntuarioPage: React.FC = () => {
                     }
                   } catch (e) {}
                   return null;
+                })()}
+                {(() => {
+                  let obsText = viewerProntuario.observacoes || "";
+                  if (obsText.startsWith("{")) {
+                    try {
+                      const parsed = JSON.parse(obsText);
+                      obsText = parsed.texto || "";
+                    } catch (e) {}
+                  }
+                  if (!obsText.trim()) return null;
+                  return (
+                    <div>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Observações Gerais</p>
+                      <p className="text-foreground whitespace-pre-wrap">{obsText}</p>
+                    </div>
+                  );
                 })()}
 
                 {viewerProntuario.evolucao && (
