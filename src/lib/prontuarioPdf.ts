@@ -399,6 +399,7 @@ export function downloadProntuarioPdf(p: ProntuarioLike): void {
       }).catch(() => '');
       
       const body = await buildProntuarioBody(p, extraHtml);
+
       
       await openPrintDocument(
         `PRONTUÁRIO CLÍNICO — ${p.paciente_nome}`,
@@ -466,9 +467,13 @@ function buildHistoryBody(pacienteNome: string, entries: TimelineEntry[]): strin
 export function downloadFullHistoryPdf(pacienteNome: string, entries: TimelineEntry[]): void {
   void (async () => {
     try {
+      const config = await loadDocumentConfig();
+      const carimbo = await fetchProfessionalCarimbo(supabase, entries[0]?.professional ? '' : ''); // Fallback for list
+      const body = buildHistoryBody(pacienteNome, entries);
+      
       await openPrintDocument(
         `HISTÓRICO CLÍNICO — ${pacienteNome}`,
-        buildHistoryBody(pacienteNome, entries),
+        body,
         { Paciente: pacienteNome, Eventos: String(entries.length) },
       );
     } catch (err: any) {
