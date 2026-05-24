@@ -249,12 +249,16 @@ const WorkspaceProntuario: React.FC = () => {
                 return { ...prev, ...p, custom_data: { ...(prev.custom_data || {}), ...(p.custom_data || {}) } };
               });
               
-              // Load specialty fields from observations if they were stored there (standard pattern)
+              // Load specialty fields and clean observations if they were stored as JSON
               if (p.observacoes && p.observacoes.startsWith('{')) {
                 try {
                   const parsedObs = JSON.parse(p.observacoes);
                   if (parsedObs.especialidade_fields) {
                     setEspecialidadeFields(parsedObs.especialidade_fields);
+                  }
+                  // Clean the observation text to avoid double-encoding when saving
+                  if (parsedObs.texto !== undefined) {
+                    setForm(prev => ({ ...prev, observacoes: parsedObs.texto || '' }));
                   }
                 } catch (e) {
                   console.error("Error parsing observations for specialty fields", e);
