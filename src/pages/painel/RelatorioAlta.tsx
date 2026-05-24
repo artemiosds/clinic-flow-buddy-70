@@ -462,11 +462,14 @@ const RelatorioAlta: React.FC = () => {
         ${indEncaminhamento ? `<div class="field"><span class="field-label">Encaminhamentos:</span><div class="field-value">${indEncaminhamento}</div></div>` : ""}
       </div>
 
-      <div style="margin-top: 60px; display: flex; justify-content: center; page-break-inside: avoid;">
-        <div class="signature">
-          <div class="signature-line" style="width: 300px;"></div>
-          <div class="name">${profNome}</div>
+      <div class="doc-sign-footer" style="margin-top: 60px; display: flex; justify-content: space-between; align-items: flex-end;">
+        <div class="signature" style="flex: 1;">
+          <div class="signature-line" style="width: 280px; border-top: 1px solid #000; margin-bottom: 5px;"></div>
+          <div class="name" style="font-weight: 700;">${profNome}</div>
           <div class="role">${profissao} — ${conselho}</div>
+        </div>
+        <div class="carimbo-block" style="flex: 0 0 auto; text-align: right;">
+          ${carimboHtml}
         </div>
       </div>
     `;
