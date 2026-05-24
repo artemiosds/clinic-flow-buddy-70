@@ -19,6 +19,7 @@ import {
   Save, Send, ClipboardList, Stethoscope, Heart, Activity, Search
 } from "lucide-react";
 import { openPrintDocument } from "@/lib/printLayout";
+import { fetchProfessionalCarimbo, formatCarimboBlock } from "@/lib/documentSignature";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 
@@ -299,7 +300,7 @@ const RelatorioAlta: React.FC = () => {
   };
 
   /* ── PRINT ─── */
-  const buildMultiPrintBody = (): string => {
+  const buildMultiPrintBody = async (): Promise<string> => {
     const p = paciente;
     if (!p) return "";
 
@@ -328,7 +329,13 @@ const RelatorioAlta: React.FC = () => {
       <div class="section-title">2. Evolução por Área / Especialidade</div>
     `;
 
-    profSections.forEach(s => {
+    const sectionsWithStamps = await Promise.all(profSections.map(async (s) => {
+      const carimbo = await fetchProfessionalCarimbo(supabase, s.profissional_id);
+      const carimboHtml = formatCarimboBlock(carimbo);
+      return { ...s, carimboHtml };
+    }));
+
+    sectionsWithStamps.forEach(s => {
       html += `
         <div style="margin-bottom: 20px; border: 1px solid #e2e8f0; padding: 12px; border-radius: 4px; page-break-inside: avoid;">
           <h3 style="color: #0369a1; font-size: 11pt; margin-top: 0; border-bottom: 1px solid #bae6fd; padding-bottom: 4px;">
@@ -352,10 +359,15 @@ const RelatorioAlta: React.FC = () => {
           </div>
           ${s.tecnologia_assistiva ? `<div class="field"><span class="field-label">Tecnologia Assistiva Concedida:</span><div class="field-value">${s.tecnologia_assistiva}</div></div>` : ""}
           
-          <div class="signature" style="margin-top:15px; text-align: right;">
-            <div class="signature-line" style="margin-left: auto; margin-right: 0; width: 220px;"></div>
-            <div class="name" style="font-size: 9pt;">${s.profissional_nome}</div>
-            <div class="role" style="font-size: 8pt;">${s.profissao} — ${s.conselho}</div>
+          <div class="doc-sign-footer" style="margin-top: 15px; display: flex; justify-content: space-between; align-items: flex-end;">
+            <div class="signature" style="flex: 1; text-align: left;">
+              <div class="signature-line" style="width: 200px; border-top: 1px solid #000; margin-bottom: 3px;"></div>
+              <div class="name" style="font-size: 9pt; font-weight: 700;">${s.profissional_nome}</div>
+              <div class="role" style="font-size: 8pt;">${s.profissao} — ${s.conselho}</div>
+            </div>
+            <div class="carimbo-block" style="flex: 0 0 auto; text-align: right;">
+              ${s.carimboHtml}
+            </div>
           </div>
         </div>
       `;
@@ -399,11 +411,14 @@ const RelatorioAlta: React.FC = () => {
     return html;
   };
 
-  const buildIndPrintBody = (): string => {
+  const buildIndPrintBody = async (): Promise<string> => {
     const p = paciente;
     if (!p) return "";
     const func = funcionarios.find(f => f.id === user?.id);
+    const profId = user?.id || "";
     const profNome = user?.nome || "";
+    const carimbo = await fetchProfessionalCarimbo(supabase, profId);
+    const carimboHtml = formatCarimboBlock(carimbo);
     const profissao = func?.profissao || user?.cargo || "";
     const conselho = func ? `${func.tipoConselho} ${func.numeroConselho}/${func.ufConselho}` : "";
     const motivoLabel = MOTIVOS_ALTA.find(m => m.value === indMotivo)?.label || indMotivo;
@@ -458,21 +473,25 @@ const RelatorioAlta: React.FC = () => {
         ${indEncaminhamento ? `<div class="field"><span class="field-label">Encaminhamentos:</span><div class="field-value">${indEncaminhamento}</div></div>` : ""}
       </div>
 
-      <div style="margin-top: 60px; display: flex; justify-content: center; page-break-inside: avoid;">
-        <div class="signature">
-          <div class="signature-line" style="width: 300px;"></div>
-          <div class="name">${profNome}</div>
+      <div class="doc-sign-footer" style="margin-top: 60px; display: flex; justify-content: space-between; align-items: flex-end;">
+        <div class="signature" style="flex: 1;">
+          <div class="signature-line" style="width: 280px; border-top: 1px solid #000; margin-bottom: 5px;"></div>
+          <div class="name" style="font-weight: 700;">${profNome}</div>
           <div class="role">${profissao} — ${conselho}</div>
+        </div>
+        <div class="carimbo-block" style="flex: 0 0 auto; text-align: right;">
+          ${carimboHtml}
         </div>
       </div>
     `;
   };
 
-  const handlePrint = (type: "multi" | "individual") => {
+  const handlePrint = async (type: "multi" | "individual") => {
     if (type === "multi") {
       const errs = validateMulti();
       if (errs.length > 0) { toast.error(errs[0]); return; }
-      openPrintDocument("Relatório de Alta Multiprofissional", buildMultiPrintBody(), {
+      const body = await buildMultiPrintBody();
+      openPrintDocument("Relatório de Alta Multiprofissional", body, {
         "Paciente": paciente?.nome || "",
         "Data de Alta": fmt(dataAlta)
       });
@@ -480,9 +499,10 @@ const RelatorioAlta: React.FC = () => {
       const errs = validateInd();
       if (errs.length > 0) { toast.error(errs[0]); return; }
       const func = funcionarios.find(f => f.id === user?.id);
+      const body = await buildIndPrintBody();
       openPrintDocument(
         `Relatório de Alta — ${func?.profissao || "Individual"}`,
-        buildIndPrintBody(),
+        body,
         {
           "Paciente": paciente?.nome || "",
           "Data de Alta": fmt(indDataAlta)

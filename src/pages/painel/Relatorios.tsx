@@ -13,6 +13,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Download, FileText, Filter, Clock, Users, CalendarDays, TrendingUp, AlertTriangle, UserCheck, ListOrdered, Printer, BarChart3, HeartPulse, MapPin, Search, RefreshCw, Stethoscope, Brain, Ear, Dumbbell, Hand, Apple, Heart, Users2, Activity, PieChart as PieChartIcon, type LucideIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { openPrintDocument } from '@/lib/printLayout';
+import { fetchProfessionalCarimbo, formatCarimboBlock } from "@/lib/documentSignature";
 import { toast } from 'sonner';
 import { useUnidadeFilter } from '@/hooks/useUnidadeFilter';
 import { ChartCard } from '@/components/ChartCard';
@@ -1151,9 +1152,22 @@ ${dataRows}
     setPrinting(type);
     const toastId = toast.loading('Gerando documento…');
     try {
+      const carimbo = await fetchProfessionalCarimbo(supabase, user?.id || "");
+      const carimboHtml = formatCarimboBlock(carimbo);
+      const footerHtml = `
+        <div class="doc-sign-footer" style="margin-top: 30px; display: flex; justify-content: space-between; align-items: flex-end;">
+          <div class="signature" style="flex: 1;">
+            <div class="signature-line" style="width: 250px; border-top: 1px solid #000; margin-bottom: 5px;"></div>
+            <div class="name" style="font-weight: 700;">${user?.nome || "Responsável"}</div>
+          </div>
+          <div class="carimbo-block" style="flex: 0 0 auto; text-align: right;">
+            ${carimboHtml}
+          </div>
+        </div>`;
+
       await openPrintDocument(
         titleMap[type] || 'Relatório',
-        body,
+        body + footerHtml,
         { 'Período': periodo, 'Unidade': un || 'Todas', 'Profissional': prof || 'Todos' }
       );
       toast.success('Documento pronto. Use a janela aberta para imprimir ou salvar em PDF.', { id: toastId });
@@ -1313,7 +1327,19 @@ ${dataRows}
       ${body}
       <div style="margin-top:20px;font-size:9px;color:#64748b;">Gerado por: ${user?.nome || ''} — ${now}</div>`;
     try {
-      await openPrintDocument('MAPA DE ATENDIMENTOS CONCLUÍDOS', tableHtml, undefined, { pageSize: 'A4', orientation: 'landscape' });
+      const carimbo = await fetchProfessionalCarimbo(supabase, user?.id || "");
+      const carimboHtml = formatCarimboBlock(carimbo);
+      const footerHtml = `
+        <div class="doc-sign-footer" style="margin-top: 30px; display: flex; justify-content: space-between; align-items: flex-end;">
+          <div class="signature" style="flex: 1;">
+            <div class="signature-line" style="width: 250px; border-top: 1px solid #000; margin-bottom: 5px;"></div>
+            <div class="name" style="font-weight: 700;">${user?.nome || "Responsável"}</div>
+          </div>
+          <div class="carimbo-block" style="flex: 0 0 auto; text-align: right;">
+            ${carimboHtml}
+          </div>
+        </div>`;
+      await openPrintDocument('MAPA DE ATENDIMENTOS CONCLUÍDOS', tableHtml + footerHtml, undefined, { pageSize: 'A4', orientation: 'landscape' });
     } catch (err: any) {
       if (err?.message === 'POPUP_BLOCKED') toast.error('Pop-up bloqueado pelo navegador', { description: 'Permita pop-ups deste site e tente novamente.' });
       else toast.error('Erro ao gerar mapa', { description: err?.message ?? String(err) });
@@ -1713,7 +1739,19 @@ ${dataRows}
                     const body = `
                       <table><thead><tr><th>Profissional</th><th>Perfil</th><th>Unidade</th><th>Total</th><th>Concluídos</th><th>Faltas</th><th>Cancelados</th><th>Remarcados</th><th>Retornos</th><th>Tempo Médio</th><th>Taxa Conclusão</th><th>Taxa Retorno</th></tr></thead><tbody>${prodRows}${totalRow}</tbody></table>`;
                     try {
-                      await openPrintDocument('RELATÓRIO DE PRODUTIVIDADE POR PROFISSIONAL', body, { Período: periodo }, { pageSize: 'A4', orientation: 'landscape' });
+                      const carimbo = await fetchProfessionalCarimbo(supabase, user?.id || "");
+                      const carimboHtml = formatCarimboBlock(carimbo);
+                      const footerHtml = `
+                        <div class="doc-sign-footer" style="margin-top: 30px; display: flex; justify-content: space-between; align-items: flex-end;">
+                          <div class="signature" style="flex: 1;">
+                            <div class="signature-line" style="width: 250px; border-top: 1px solid #000; margin-bottom: 5px;"></div>
+                            <div class="name" style="font-weight: 700;">${user?.nome || "Responsável"}</div>
+                          </div>
+                          <div class="carimbo-block" style="flex: 0 0 auto; text-align: right;">
+                            ${carimboHtml}
+                          </div>
+                        </div>`;
+                      await openPrintDocument('RELATÓRIO DE PRODUTIVIDADE POR PROFISSIONAL', body + footerHtml, { Período: periodo }, { pageSize: 'A4', orientation: 'landscape' });
                     } catch (err: any) {
                       if (err?.message === 'POPUP_BLOCKED') toast.error('Pop-up bloqueado pelo navegador', { description: 'Permita pop-ups deste site e tente novamente.' });
                     }
@@ -2688,7 +2726,19 @@ ${dataRows}
                     <table><thead><tr><th style="width:30px;text-align:center">Nº</th><th>Paciente</th><th>Dt Nasc</th><th>CPF</th><th>Endereço</th><th>CNS</th><th>Telefone</th><th>Profissional</th><th>Especialidade</th><th>Proc. SIGTAP</th><th>CID</th></tr></thead><tbody>${tableRows}</tbody>
                     <tfoot><tr><td colspan="11" style="text-align:right;font-weight:600;padding:8px;">Total: ${mapaData.length} atendimentos</td></tr></tfoot></table>`;
                   try {
-                    await openPrintDocument('MAPA DE ATENDIMENTOS CONCLUÍDOS', body, { Período: periodo, Total: String(mapaData.length) }, { pageSize: 'A4', orientation: 'landscape' });
+                    const carimbo = await fetchProfessionalCarimbo(supabase, user?.id || "");
+                    const carimboHtml = formatCarimboBlock(carimbo);
+                    const footerHtml = `
+                      <div class="doc-sign-footer" style="margin-top: 30px; display: flex; justify-content: space-between; align-items: flex-end;">
+                        <div class="signature" style="flex: 1;">
+                          <div class="signature-line" style="width: 250px; border-top: 1px solid #000; margin-bottom: 5px;"></div>
+                          <div class="name" style="font-weight: 700;">${user?.nome || "Responsável"}</div>
+                        </div>
+                        <div class="carimbo-block" style="flex: 0 0 auto; text-align: right;">
+                          ${carimboHtml}
+                        </div>
+                      </div>`;
+                    await openPrintDocument('MAPA DE ATENDIMENTOS CONCLUÍDOS', body + footerHtml, { Período: periodo, Total: String(mapaData.length) }, { pageSize: 'A4', orientation: 'landscape' });
                   } catch (err: any) {
                     if (err?.message === 'POPUP_BLOCKED') toast.error('Pop-up bloqueado pelo navegador', { description: 'Permita pop-ups deste site e tente novamente.' });
                   }

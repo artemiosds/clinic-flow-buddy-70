@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { openPrintDocument } from "@/lib/printLayout";
+import { fetchProfessionalCarimbo, formatCarimboBlock } from "@/lib/documentSignature";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -52,6 +53,7 @@ interface TimelineEvent {
   date: string;
   time?: string;
   professional: string;
+  professionalId?: string;
   specialtyOrType: string;
   summary: string;
   procedimentos?: string;
@@ -132,7 +134,7 @@ async function fetchProntuarios(pacienteId: string) {
     .select(
       `
       id, data_atendimento, hora_atendimento,
-      profissional_nome, queixa_principal, evolucao,
+      profissional_id, profissional_nome, queixa_principal, evolucao,
       procedimentos_texto, outro_procedimento,
       indicacao_retorno, unidade_id, episodio_id,
       dados_acolhimento, soap_subjetivo, soap_objetivo,
@@ -210,6 +212,7 @@ function transformProntuarios(
     date: p.data_atendimento,
     time: p.hora_atendimento || undefined,
     professional: p.profissional_nome || "",
+    professionalId: p.profissional_id,
     specialtyOrType: "Consulta",
     summary: p.queixa_principal || p.evolucao || (p.dados_acolhimento ? `Acolhimento: ${p.dados_acolhimento.secao3?.queixa || 'Ver detalhes'}` : ""),
     procedimentos: p.procedimentos_texto || undefined,
@@ -577,11 +580,23 @@ export const HistoricoClinicoTimeline: React.FC<Props> = ({ pacienteId, unidades
     if (e.specialtyOrType) meta['Especialidade/Tipo'] = e.specialtyOrType;
     if (e.unidade) meta['Unidade'] = e.unidade;
 
+    const carimbo = e.professionalId ? await fetchProfessionalCarimbo(supabase, e.professionalId) : null;
+    const carimboHtml = formatCarimboBlock(carimbo);
+
     const body = `
       ${e.procedimentos ? `<div class="section"><div class="section-title">Procedimentos</div><div class="section-content">${safe(e.procedimentos)}</div></div>` : ''}
       <div class="section">
         <div class="section-title">Evolução</div>
         <div class="section-content">${safe(e.summary || 'Sem registro de evolução')}</div>
+      </div>
+      <div class="doc-sign-footer" style="margin-top: 30px; display: flex; justify-content: space-between; align-items: flex-end;">
+        <div class="signature" style="flex: 1;">
+          <div class="signature-line" style="width: 250px; border-top: 1px solid #000; margin-bottom: 5px;"></div>
+          <div class="name" style="font-weight: 700;">${e.professional || "Profissional responsável"}</div>
+        </div>
+        <div class="carimbo-block" style="flex: 0 0 auto; text-align: right;">
+          ${carimboHtml}
+        </div>
       </div>`;
 
     try {

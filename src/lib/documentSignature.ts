@@ -81,19 +81,44 @@ export function formatCarimboBlock(carimbo: CarimboData | null): string {
   if (!carimbo) return '';
 
   if (carimbo.tipo === 'imagem' && carimbo.imagem_url) {
-    return `<img src="${carimbo.imagem_url}" alt="Carimbo" style="max-width:250px;max-height:120px;" />`;
+    return `<div class="carimbo-block-wrapper" style="text-align:center;display:inline-block;">
+      <img src="${carimbo.imagem_url}" alt="Carimbo" style="max-width:240px;max-height:110px;object-fit:contain;" />
+    </div>`;
   }
 
   if (carimbo.tipo === 'digital') {
     return `
-      <div class="carimbo-digital">
-        <div class="carimbo-nome">${carimbo.nome}</div>
-        <div class="carimbo-info">${carimbo.conselho} / ${carimbo.numero_registro}-${carimbo.uf}</div>
-        <div class="carimbo-info">${carimbo.especialidade}</div>
-        ${carimbo.cargo ? `<div class="carimbo-info">${carimbo.cargo}</div>` : ''}
-        <div style="font-size:9px;color:#64748b;">CAPS II — Oriximiná/PA</div>
+      <div class="carimbo-digital" style="border: 1.5px solid #000; border-radius: 4px; padding: 6px 12px; text-align: center; display: inline-block; background: #fff; min-width: 200px;">
+        <div class="carimbo-nome" style="font-weight: 700; font-size: 11pt; color: #000; text-transform: uppercase;">${carimbo.nome}</div>
+        <div class="carimbo-info" style="font-size: 8.5pt; color: #334155; font-weight: 600;">${carimbo.conselho} / ${carimbo.numero_registro}${carimbo.uf ? '-' + carimbo.uf : ''}</div>
+        ${carimbo.especialidade ? `<div class="carimbo-info" style="font-size: 8pt; color: #475569;">${carimbo.especialidade}</div>` : ''}
+        ${carimbo.cargo ? `<div class="carimbo-info" style="font-size: 8pt; color: #475569;">${carimbo.cargo}</div>` : ''}
+        <div style="font-size: 7pt; color: #94a3b8; margin-top: 2px; border-top: 0.5px solid #e2e8f0; padding-top: 2px;">CAPS II — ORIXIMINÁ/PA</div>
       </div>`;
   }
 
   return '';
+}
+
+/**
+ * Fetch professional stamp data from the database.
+ */
+export async function fetchProfessionalCarimbo(
+  supabase: any,
+  professionalId: string
+): Promise<CarimboData | null> {
+  if (!professionalId) return null;
+  try {
+    const { data, error } = await supabase
+      .from('profissionais_carimbo')
+      .select('*')
+      .eq('profissional_id', professionalId)
+      .maybeSingle();
+
+    if (error || !data) return null;
+    return data as CarimboData;
+  } catch (err) {
+    console.error('Error fetching professional stamp:', err);
+    return null;
+  }
 }

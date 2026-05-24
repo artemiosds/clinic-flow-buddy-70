@@ -3,15 +3,17 @@
  * passando 100% pelo shell institucional global (openPrintDocument).
  */
 
-import { openPrintDocument } from "@/lib/printLayout";
+import { openPrintDocument, loadDocumentConfig } from "@/lib/printLayout";
 import { renderCustomFieldsHtml } from "@/lib/customFieldsPrint";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchProfessionalCarimbo, formatCarimboBlock } from "@/lib/documentSignature";
 
 interface ProntuarioLike {
   id: string;
   paciente_id?: string;
   paciente_nome: string;
+  profissional_id?: string;
   profissional_nome: string;
   data_atendimento: string;
   hora_atendimento?: string;
@@ -336,11 +338,19 @@ async function buildProntuarioBody(p: ProntuarioLike, extraHtml = ""): Promise<s
     triagemHtml = await fetchTriagemHtml(p.paciente_id, p.data_atendimento);
   }
 
+  const carimbo = p.profissional_id ? await fetchProfessionalCarimbo(supabase, p.profissional_id) : null;
+  const carimboHtml = formatCarimboBlock(carimbo);
+
   const signature = `
-    <div class="signature" style="margin-top: 30px;">
-      <div class="signature-line" style="width: 280px;"></div>
-      <div class="name">${escapeHtml(p.profissional_nome || "Profissional responsável")}</div>
-      ${p.setor ? `<div class="role">${escapeHtml(p.setor)}</div>` : ""}
+    <div class="doc-sign-footer" style="margin-top: 30px; display: flex; justify-content: space-between; align-items: flex-end;">
+      <div class="signature" style="flex: 1;">
+        <div class="signature-line" style="width: 250px; border-top: 1px solid #000; margin-bottom: 5px;"></div>
+        <div class="name" style="font-weight: 700;">${escapeHtml(p.profissional_nome || "Profissional responsável")}</div>
+        ${p.setor ? `<div class="role">${escapeHtml(p.setor)}</div>` : ""}
+      </div>
+      <div class="carimbo-block" style="flex: 0 0 auto; text-align: right;">
+        ${carimboHtml}
+      </div>
     </div>`;
 
   const tipoLabel = TIPO_LABELS[p.tipo_registro || ""] || p.tipo_registro || "Atendimento Clínico";
@@ -389,6 +399,7 @@ export function downloadProntuarioPdf(p: ProntuarioLike): void {
       }).catch(() => '');
       
       const body = await buildProntuarioBody(p, extraHtml);
+
       
       await openPrintDocument(
         `PRONTUÁRIO CLÍNICO — ${p.paciente_nome}`,
@@ -456,9 +467,13 @@ function buildHistoryBody(pacienteNome: string, entries: TimelineEntry[]): strin
 export function downloadFullHistoryPdf(pacienteNome: string, entries: TimelineEntry[]): void {
   void (async () => {
     try {
+      const config = await loadDocumentConfig();
+      const carimbo = await fetchProfessionalCarimbo(supabase, entries[0]?.professional ? '' : ''); // Fallback for list
+      const body = buildHistoryBody(pacienteNome, entries);
+      
       await openPrintDocument(
         `HISTÓRICO CLÍNICO — ${pacienteNome}`,
-        buildHistoryBody(pacienteNome, entries),
+        body,
         { Paciente: pacienteNome, Eventos: String(entries.length) },
       );
     } catch (err: any) {

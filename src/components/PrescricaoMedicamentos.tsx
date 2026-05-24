@@ -11,6 +11,7 @@ import { Search, Plus, X, Printer, Ban, Pill } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { openPrintDocument } from "@/lib/printLayout";
+import { fetchProfessionalCarimbo, formatCarimboBlock } from "@/lib/documentSignature";
 
 interface MedicationType {
   id: string;
@@ -194,12 +195,20 @@ const PrescricaoMedicamentos: React.FC<PrescricaoMedicamentosProps> = ({
       Convênio: 'SUS',
     };
 
+    const carimbo = await fetchProfessionalCarimbo(supabase, profissionalId);
+    const carimboHtml = formatCarimboBlock(carimbo);
+
     const body = `
       <div class="prescricoes">${rows}</div>
-      <div class="signature">
-        <div class="signature-line"></div>
-        <div class="name">${profissionalNome || ''}</div>
-        <div class="role">${conselhoStr}</div>
+      <div class="doc-sign-footer" style="margin-top: 30px; display: flex; justify-content: space-between; align-items: flex-end;">
+        <div class="signature" style="flex: 1;">
+          <div class="signature-line" style="width: 250px; border-top: 1px solid #000; margin-bottom: 5px;"></div>
+          <div class="name" style="font-weight: 700;">${profissionalNome || ''}</div>
+          <div class="role">${conselhoStr}</div>
+        </div>
+        <div class="carimbo-block" style="flex: 0 0 auto; text-align: right;">
+          ${carimboHtml}
+        </div>
       </div>`;
 
     try {
