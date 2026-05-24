@@ -11,6 +11,7 @@ import { Search, Plus, X, Printer, Ban, FlaskConical } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { openPrintDocument } from "@/lib/printLayout";
+import { fetchProfessionalCarimbo, formatCarimboBlock } from "@/lib/documentSignature";
 
 interface ExamType {
   id: string;
