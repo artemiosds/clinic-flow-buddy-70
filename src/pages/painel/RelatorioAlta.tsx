@@ -300,7 +300,7 @@ const RelatorioAlta: React.FC = () => {
   };
 
   /* ── PRINT ─── */
-  const buildMultiPrintBody = (): string => {
+  const buildMultiPrintBody = async (): Promise<string> => {
     const p = paciente;
     if (!p) return "";
 
