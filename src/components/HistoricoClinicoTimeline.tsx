@@ -53,6 +53,7 @@ interface TimelineEvent {
   date: string;
   time?: string;
   professional: string;
+  professionalId?: string;
   specialtyOrType: string;
   summary: string;
   procedimentos?: string;
