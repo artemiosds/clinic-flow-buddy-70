@@ -1103,10 +1103,16 @@ const ProntuarioPage: React.FC = () => {
       const parsed = p.observacoes ? JSON.parse(p.observacoes) : null;
       if (parsed?.especialidade_fields && typeof parsed.especialidade_fields === 'object') {
         setEspecialidadeFields(parsed.especialidade_fields);
+        // Clean the observation text to avoid double-encoding when saving
+        if (parsed.texto !== undefined) {
+          setForm(prev => ({ ...prev, observacoes: parsed.texto || '' }));
+        }
       } else {
         setEspecialidadeFields({});
       }
-    } catch { setEspecialidadeFields({}); }
+    } catch { 
+      setEspecialidadeFields({}); 
+    }
     setDialogOpen(true);
     const pac = pacientes.find((px) => px.id === p.paciente_id);
     logAction({
