@@ -329,7 +329,13 @@ const RelatorioAlta: React.FC = () => {
       <div class="section-title">2. Evolução por Área / Especialidade</div>
     `;
 
-    profSections.forEach(s => {
+    const sectionsWithStamps = await Promise.all(profSections.map(async (s) => {
+      const carimbo = await fetchProfessionalCarimbo(supabase, s.profissional_id);
+      const carimboHtml = formatCarimboBlock(carimbo);
+      return { ...s, carimboHtml };
+    }));
+
+    sectionsWithStamps.forEach(s => {
       html += `
         <div style="margin-bottom: 20px; border: 1px solid #e2e8f0; padding: 12px; border-radius: 4px; page-break-inside: avoid;">
           <h3 style="color: #0369a1; font-size: 11pt; margin-top: 0; border-bottom: 1px solid #bae6fd; padding-bottom: 4px;">
@@ -353,10 +359,15 @@ const RelatorioAlta: React.FC = () => {
           </div>
           ${s.tecnologia_assistiva ? `<div class="field"><span class="field-label">Tecnologia Assistiva Concedida:</span><div class="field-value">${s.tecnologia_assistiva}</div></div>` : ""}
           
-          <div class="signature" style="margin-top:15px; text-align: right;">
-            <div class="signature-line" style="margin-left: auto; margin-right: 0; width: 220px;"></div>
-            <div class="name" style="font-size: 9pt;">${s.profissional_nome}</div>
-            <div class="role" style="font-size: 8pt;">${s.profissao} — ${s.conselho}</div>
+          <div class="doc-sign-footer" style="margin-top: 15px; display: flex; justify-content: space-between; align-items: flex-end;">
+            <div class="signature" style="flex: 1; text-align: left;">
+              <div class="signature-line" style="width: 200px; border-top: 1px solid #000; margin-bottom: 3px;"></div>
+              <div class="name" style="font-size: 9pt; font-weight: 700;">${s.profissional_nome}</div>
+              <div class="role" style="font-size: 8pt;">${s.profissao} — ${s.conselho}</div>
+            </div>
+            <div class="carimbo-block" style="flex: 0 0 auto; text-align: right;">
+              ${s.carimboHtml}
+            </div>
           </div>
         </div>
       `;
