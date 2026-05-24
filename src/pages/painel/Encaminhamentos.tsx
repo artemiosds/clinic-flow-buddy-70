@@ -19,6 +19,7 @@ import { listarEncaminhamentos, type EncaminhamentoData } from '@/services/encam
 import { openPrintDocument } from '@/lib/printLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { fetchProfessionalCarimbo, formatCarimboBlock } from "@/lib/documentSignature";
 
 const ITEMS_PER_PAGE = 20;
 
