@@ -7,6 +7,7 @@ import { openPrintDocument } from "@/lib/printLayout";
 import { renderCustomFieldsHtml } from "@/lib/customFieldsPrint";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchProfessionalCarimbo, formatCarimboBlock } from "@/lib/documentSignature";
 
 interface ProntuarioLike {
   id: string;
