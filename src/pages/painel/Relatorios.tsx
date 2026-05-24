@@ -1152,9 +1152,22 @@ ${dataRows}
     setPrinting(type);
     const toastId = toast.loading('Gerando documento…');
     try {
+      const carimbo = await fetchProfessionalCarimbo(supabase, user?.id || "");
+      const carimboHtml = formatCarimboBlock(carimbo);
+      const footerHtml = `
+        <div class="doc-sign-footer" style="margin-top: 30px; display: flex; justify-content: space-between; align-items: flex-end;">
+          <div class="signature" style="flex: 1;">
+            <div class="signature-line" style="width: 250px; border-top: 1px solid #000; margin-bottom: 5px;"></div>
+            <div class="name" style="font-weight: 700;">${user?.nome || "Responsável"}</div>
+          </div>
+          <div class="carimbo-block" style="flex: 0 0 auto; text-align: right;">
+            ${carimboHtml}
+          </div>
+        </div>`;
+
       await openPrintDocument(
         titleMap[type] || 'Relatório',
-        body,
+        body + footerHtml,
         { 'Período': periodo, 'Unidade': un || 'Todas', 'Profissional': prof || 'Todos' }
       );
       toast.success('Documento pronto. Use a janela aberta para imprimir ou salvar em PDF.', { id: toastId });
