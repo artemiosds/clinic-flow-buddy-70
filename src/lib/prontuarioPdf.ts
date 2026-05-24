@@ -12,6 +12,7 @@ interface ProntuarioLike {
   id: string;
   paciente_id?: string;
   paciente_nome: string;
+  profissional_id?: string;
   profissional_nome: string;
   data_atendimento: string;
   hora_atendimento?: string;
