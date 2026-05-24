@@ -212,6 +212,7 @@ function transformProntuarios(
     date: p.data_atendimento,
     time: p.hora_atendimento || undefined,
     professional: p.profissional_nome || "",
+    professionalId: p.profissional_id,
     specialtyOrType: "Consulta",
     summary: p.queixa_principal || p.evolucao || (p.dados_acolhimento ? `Acolhimento: ${p.dados_acolhimento.secao3?.queixa || 'Ver detalhes'}` : ""),
     procedimentos: p.procedimentos_texto || undefined,
@@ -579,11 +580,23 @@ export const HistoricoClinicoTimeline: React.FC<Props> = ({ pacienteId, unidades
     if (e.specialtyOrType) meta['Especialidade/Tipo'] = e.specialtyOrType;
     if (e.unidade) meta['Unidade'] = e.unidade;
 
+    const carimbo = e.professionalId ? await fetchProfessionalCarimbo(supabase, e.professionalId) : null;
+    const carimboHtml = formatCarimboBlock(carimbo);
+
     const body = `
       ${e.procedimentos ? `<div class="section"><div class="section-title">Procedimentos</div><div class="section-content">${safe(e.procedimentos)}</div></div>` : ''}
       <div class="section">
         <div class="section-title">Evolução</div>
         <div class="section-content">${safe(e.summary || 'Sem registro de evolução')}</div>
+      </div>
+      <div class="doc-sign-footer" style="margin-top: 30px; display: flex; justify-content: space-between; align-items: flex-end;">
+        <div class="signature" style="flex: 1;">
+          <div class="signature-line" style="width: 250px; border-top: 1px solid #000; margin-bottom: 5px;"></div>
+          <div class="name" style="font-weight: 700;">${e.professional || "Profissional responsável"}</div>
+        </div>
+        <div class="carimbo-block" style="flex: 0 0 auto; text-align: right;">
+          ${carimboHtml}
+        </div>
       </div>`;
 
     try {
