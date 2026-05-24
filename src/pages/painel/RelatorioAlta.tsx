@@ -486,11 +486,12 @@ const RelatorioAlta: React.FC = () => {
     `;
   };
 
-  const handlePrint = (type: "multi" | "individual") => {
+  const handlePrint = async (type: "multi" | "individual") => {
     if (type === "multi") {
       const errs = validateMulti();
       if (errs.length > 0) { toast.error(errs[0]); return; }
-      openPrintDocument("Relatório de Alta Multiprofissional", buildMultiPrintBody(), {
+      const body = await buildMultiPrintBody();
+      openPrintDocument("Relatório de Alta Multiprofissional", body, {
         "Paciente": paciente?.nome || "",
         "Data de Alta": fmt(dataAlta)
       });
@@ -498,9 +499,10 @@ const RelatorioAlta: React.FC = () => {
       const errs = validateInd();
       if (errs.length > 0) { toast.error(errs[0]); return; }
       const func = funcionarios.find(f => f.id === user?.id);
+      const body = await buildIndPrintBody();
       openPrintDocument(
         `Relatório de Alta — ${func?.profissao || "Individual"}`,
-        buildIndPrintBody(),
+        body,
         {
           "Paciente": paciente?.nome || "",
           "Data de Alta": fmt(indDataAlta)
