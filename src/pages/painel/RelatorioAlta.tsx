@@ -400,11 +400,14 @@ const RelatorioAlta: React.FC = () => {
     return html;
   };
 
-  const buildIndPrintBody = (): string => {
+  const buildIndPrintBody = async (): Promise<string> => {
     const p = paciente;
     if (!p) return "";
     const func = funcionarios.find(f => f.id === user?.id);
+    const profId = user?.id || "";
     const profNome = user?.nome || "";
+    const carimbo = await fetchProfessionalCarimbo(supabase, profId);
+    const carimboHtml = formatCarimboBlock(carimbo);
     const profissao = func?.profissao || user?.cargo || "";
     const conselho = func ? `${func.tipoConselho} ${func.numeroConselho}/${func.ufConselho}` : "";
     const motivoLabel = MOTIVOS_ALTA.find(m => m.value === indMotivo)?.label || indMotivo;
