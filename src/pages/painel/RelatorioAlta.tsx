@@ -19,6 +19,7 @@ import {
   Save, Send, ClipboardList, Stethoscope, Heart, Activity, Search
 } from "lucide-react";
 import { openPrintDocument } from "@/lib/printLayout";
+import { fetchProfessionalCarimbo, formatCarimboBlock } from "@/lib/documentSignature";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 
