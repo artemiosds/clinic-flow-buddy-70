@@ -3,7 +3,7 @@
  * passando 100% pelo shell institucional global (openPrintDocument).
  */
 
-import { openPrintDocument } from "@/lib/printLayout";
+import { openPrintDocument, loadDocumentConfig } from "@/lib/printLayout";
 import { renderCustomFieldsHtml } from "@/lib/customFieldsPrint";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
