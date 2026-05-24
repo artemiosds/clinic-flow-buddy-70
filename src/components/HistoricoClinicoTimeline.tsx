@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { openPrintDocument } from "@/lib/printLayout";
+import { fetchProfessionalCarimbo, formatCarimboBlock } from "@/lib/documentSignature";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
