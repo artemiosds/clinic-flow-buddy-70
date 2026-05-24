@@ -3460,8 +3460,23 @@ const ProntuarioPage: React.FC = () => {
                   } catch (e) {}
                   return null;
                 })()}
+                {(() => {
+                  let obsText = viewerProntuario.observacoes || "";
+                  if (obsText.startsWith("{")) {
+                    try {
+                      const parsed = JSON.parse(obsText);
+                      obsText = parsed.texto || "";
+                    } catch (e) {}
+                  }
+                  if (!obsText.trim()) return null;
+                  return (
+                    <div>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Observações Gerais</p>
+                      <p className="text-foreground whitespace-pre-wrap">{obsText}</p>
+                    </div>
+                  );
+                })()}
 
-                {viewerProntuario.evolucao && (
                   <div>
                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Evolução Clínica</p>
                     <p className="text-foreground whitespace-pre-wrap">{viewerProntuario.evolucao}</p>
