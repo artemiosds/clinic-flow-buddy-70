@@ -1314,7 +1314,19 @@ ${dataRows}
       ${body}
       <div style="margin-top:20px;font-size:9px;color:#64748b;">Gerado por: ${user?.nome || ''} — ${now}</div>`;
     try {
-      await openPrintDocument('MAPA DE ATENDIMENTOS CONCLUÍDOS', tableHtml, undefined, { pageSize: 'A4', orientation: 'landscape' });
+      const carimbo = await fetchProfessionalCarimbo(supabase, user?.id || "");
+      const carimboHtml = formatCarimboBlock(carimbo);
+      const footerHtml = `
+        <div class="doc-sign-footer" style="margin-top: 30px; display: flex; justify-content: space-between; align-items: flex-end;">
+          <div class="signature" style="flex: 1;">
+            <div class="signature-line" style="width: 250px; border-top: 1px solid #000; margin-bottom: 5px;"></div>
+            <div class="name" style="font-weight: 700;">${user?.nome || "Responsável"}</div>
+          </div>
+          <div class="carimbo-block" style="flex: 0 0 auto; text-align: right;">
+            ${carimboHtml}
+          </div>
+        </div>`;
+      await openPrintDocument('MAPA DE ATENDIMENTOS CONCLUÍDOS', tableHtml + footerHtml, undefined, { pageSize: 'A4', orientation: 'landscape' });
     } catch (err: any) {
       if (err?.message === 'POPUP_BLOCKED') toast.error('Pop-up bloqueado pelo navegador', { description: 'Permita pop-ups deste site e tente novamente.' });
       else toast.error('Erro ao gerar mapa', { description: err?.message ?? String(err) });
