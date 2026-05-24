@@ -3477,6 +3477,7 @@ const ProntuarioPage: React.FC = () => {
                   );
                 })()}
 
+                {viewerProntuario.evolucao && (
                   <div>
                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Evolução Clínica</p>
                     <p className="text-foreground whitespace-pre-wrap">{viewerProntuario.evolucao}</p>
