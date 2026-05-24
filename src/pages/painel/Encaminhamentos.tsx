@@ -158,10 +158,26 @@ const Encaminhamentos: React.FC = () => {
 
   const handleVer = (enc: EncaminhamentoData) => { setSelectedEnc(enc); setModalOpen(true); };
 
-  const handlePrintRecebido = (enc: EncaminhamentoData) => {
+  const handlePrintRecebido = async (enc: EncaminhamentoData) => {
     const html = enc.conteudo_documento.replace(/\n/g, '<br/>');
-    const body = `<div class="content-block" style="margin-top:20px;"><div style="font-size:14px;line-height:1.8;white-space:pre-wrap;">${html}</div></div>
-      <div class="signature"><div class="signature-line"></div><div class="name">${enc.profissional_origem_nome}</div><div class="role">${enc.profissional_origem_profissao} — ${enc.profissional_origem_conselho}</div></div>`;
+    const carimbo = await fetchProfessionalCarimbo(supabase, enc.profissional_origem_id);
+    const carimboHtml = formatCarimboBlock(carimbo);
+    
+    const body = `
+      <div class="content-block" style="margin-top:20px;">
+        <div style="font-size:14px;line-height:1.8;white-space:pre-wrap;">${html}</div>
+      </div>
+      <div class="doc-sign-footer" style="margin-top: 30px; display: flex; justify-content: space-between; align-items: flex-end;">
+        <div class="signature" style="flex: 1;">
+          <div class="signature-line" style="width: 250px; border-top: 1px solid #000; margin-bottom: 5px;"></div>
+          <div class="name" style="font-weight: 700;">${enc.profissional_origem_nome}</div>
+          <div class="role">${enc.profissional_origem_profissao} — ${enc.profissional_origem_conselho}</div>
+        </div>
+        <div class="carimbo-block" style="flex: 0 0 auto; text-align: right;">
+          ${carimboHtml}
+        </div>
+      </div>`;
+
     openPrintDocument(enc.tipo_documento || 'Encaminhamento', body, {
       'Paciente': enc.paciente_nome, 'CPF': enc.paciente_cpf, 'Data': new Date(enc.data_geracao).toLocaleDateString('pt-BR'),
     });
