@@ -379,6 +379,31 @@ async function buildProntuarioBody(p: ProntuarioLike, extraHtml = ""): Promise<s
     <div class="doc-content">
       ${triagemHtml}
       ${acolhimentoHtml}
+      ${(() => {
+        const cycle = p.custom_data?.cycle_info;
+        const pts = p.custom_data?.pts_info;
+        if (!cycle && !pts) return "";
+        return `
+          <div class="section" style="page-break-inside: avoid;">
+            <div class="section-title">Plano Terapêutico Ativo</div>
+            <div class="section-content">
+              ${cycle ? `
+                <div style="margin-bottom: 8px;">
+                  <span style="font-weight: 700; color: #475569; font-size: 8pt; text-transform: uppercase;">Ciclo de Tratamento:</span>
+                  <div style="margin-top: 2px;">${escapeHtml(cycle.type)} (${escapeHtml(cycle.sessions)} sessões)</div>
+                </div>` : ''}
+              ${pts ? `
+                <div style="margin-bottom: 8px;">
+                  <span style="font-weight: 700; color: #475569; font-size: 8pt; text-transform: uppercase;">PTS - Diagnóstico Funcional:</span>
+                  <div style="margin-top: 2px;">${escapeHtml(pts.diagnostic)}</div>
+                </div>
+                <div>
+                  <span style="font-weight: 700; color: #475569; font-size: 8pt; text-transform: uppercase;">PTS - Objetivos Terapêuticos:</span>
+                  <div style="margin-top: 2px;">${escapeHtml(pts.goals)}</div>
+                </div>` : ''}
+            </div>
+          </div>`;
+      })()}
       ${sectionsHtml}
       ${obsHtml}
       ${extraHtml}
