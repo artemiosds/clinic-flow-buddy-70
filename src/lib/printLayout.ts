@@ -290,9 +290,10 @@ export function buildInstitutionalCSS(
   .field-value { font-size: ${bodyPt}pt; margin-top: 0; color: #000; line-height: 1.1; }
 
   /* SECTIONS (prontuário) */
-  .section { margin-bottom: 4px; page-break-inside: avoid; break-inside: avoid; }
-  .section-title { font-weight: 700; font-size: ${sectionPt - 0.8}pt; text-transform: uppercase; color: #334155; border-bottom: 0.5px solid #e2e8f0; padding-bottom: 0.5px; margin-bottom: 1.5px; }
-  .section-content { font-size: ${bodyPt}pt; line-height: 1.2; white-space: pre-wrap; min-height: 3px; text-align: justify; color: #000; overflow-wrap: break-word; }
+  .section { margin-bottom: 2px; page-break-inside: avoid; break-inside: avoid; }
+  .section-title { font-weight: 700; font-size: ${sectionPt - 1}pt; text-transform: uppercase; color: #334155; border-bottom: 0.5px solid #e2e8f0; padding-bottom: 0px; margin-bottom: 1px; line-height: 1; }
+  .section-content { font-size: ${bodyPt}pt; line-height: 1.1; white-space: pre-wrap; min-height: 1px; text-align: justify; color: #000; overflow-wrap: break-word; }
+
 
   /* INFO GRID */
   .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 8px; margin-bottom: 6px; padding: 6px; background: #fff; border: 0.8px solid #000; border-radius: 0; }
