@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
@@ -77,6 +78,7 @@ const sessionStatusLabels: Record<string, string> = {
 };
 
 export const TreatmentTab: React.FC<Props> = ({ pacienteId, pacienteNome, onCycleCreated, onPtsCreated }) => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { funcionarios, unidades, salas, addAgendamento, deleteAgendamento, logAction, getAvailableSlots, getAvailableDates } = useData();
   const { can } = usePermissions();
@@ -325,11 +327,14 @@ export const TreatmentTab: React.FC<Props> = ({ pacienteId, pacienteNome, onCycl
               <h3 className="font-bold text-foreground flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-primary" /> Sessões do Ciclo
               </h3>
-              {canAgendarSessao && (
-                <Button variant="ghost" size="sm" className="h-8 text-xs font-bold uppercase text-primary hover:bg-primary/5" onClick={() => toast.info("Funcionalidade disponível na Gestão de Tratamentos")}>
-                  Ver Grade Completa
-                </Button>
-              )}
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-8 text-xs font-bold uppercase text-primary hover:bg-primary/5" 
+                onClick={() => navigate('/painel/tratamentos')}
+              >
+                Ver Grade Completa
+              </Button>
             </div>
             
             <div className="max-h-[400px] overflow-y-auto space-y-2 pr-2 custom-scrollbar">
