@@ -372,7 +372,7 @@ export function buildInstitutionalCSS(
   }
   @page {
     size: ${size} ${orientation};
-    margin: 8mm 10mm 8mm 10mm !important;
+    margin: 8mm 12mm 8mm 12mm !important;
   }
   @page :first {
     margin-top: 6mm !important;
