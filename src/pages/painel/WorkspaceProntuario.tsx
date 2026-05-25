@@ -349,19 +349,19 @@ const WorkspaceProntuario: React.FC = () => {
     const acolhimentoRaw = acolhimentoDraft && Object.keys(acolhimentoDraft).length > 0 ? acolhimentoDraft : acolhimentoData?.dados_acolhimento;
     if (acolhimentoRaw && Object.keys(acolhimentoRaw).length > 0) {
       const data = acolhimentoRaw;
-      const s3 = data.secao3?.queixa ? `<div style="margin-bottom: 4px;"><strong>Queixa Principal:</strong> ${data.secao3.queixa}</div>` : '';
-      const s4 = data.secao4?.sintomas?.length > 0 ? `<div style="margin-bottom: 4px;"><strong>Sintomas (30 dias):</strong> ${data.secao4.sintomas.join(', ')}</div>` : '';
-      const s15 = data.secao15?.parecer ? `<div style="margin-bottom: 4px;"><strong>Parecer Profissional:</strong> ${data.secao15.parecer}</div>` : '';
+      const s3 = data.secao3?.queixa ? `<div style="margin-bottom: 2px;"><strong>Queixa Principal:</strong> ${data.secao3.queixa}</div>` : '';
+      const s4 = data.secao4?.sintomas?.length > 0 ? `<div style="margin-bottom: 2px;"><strong>Sintomas (30 dias):</strong> ${data.secao4.sintomas.join(', ')}</div>` : '';
+      const s15 = data.secao15?.parecer ? `<div style="margin-bottom: 2px;"><strong>Parecer Profissional:</strong> ${data.secao15.parecer}</div>` : '';
       
       body += `
-        <div style="border: 0.8px solid #000; padding: 4px; margin-bottom: 4px; page-break-inside: avoid;">
-          <div style="font-size: 8.5pt; font-weight: 800; text-transform: uppercase; border-bottom: 0.5px solid #000; padding-bottom: 0.5px; margin-bottom: 3px;">Acolhimento em Saúde Mental</div>
-          <div style="font-size: 9pt; line-height: 1.15;">
+        <div style="border: 0.5px solid #000; padding: 2px 4px; margin-bottom: 2px; page-break-inside: avoid;">
+          <div style="font-size: 8pt; font-weight: 800; text-transform: uppercase; border-bottom: 0.5px solid #000; padding-bottom: 0px; margin-bottom: 1px;">Acolhimento em Saúde Mental</div>
+          <div style="font-size: 9pt; line-height: 1.1;">
             ${s3}${s4}${s15}
           </div>
-          <div style="font-style: italic; font-size: 7.5pt; color: #64748b; margin-top: 2px;">* Registro clínico estruturado.</div>
         </div>
       `;
+
     }
 
     // 2.5 Treatment Plan section
