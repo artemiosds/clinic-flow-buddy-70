@@ -390,14 +390,14 @@ const WorkspaceProntuario: React.FC = () => {
 
     // 2. Clinical Evolution / SOAP
     body += `
-      <div class="section">
+      <div class="section" style="margin-bottom: 8px;">
         <div class="section-title">Evolução Clínica / SOAP</div>
-        <div class="section-content">
+        <div class="section-content" style="font-size: 10pt; line-height: 1.3;">
           ${soapEnabled ? `
-            <div style="margin-bottom: 10px;"><strong>S — Subjetivo:</strong><br/>${form.soap_subjetivo ? form.soap_subjetivo.replace(/\n/g, '<br/>') : '—'}</div>
-            <div style="margin-bottom: 10px;"><strong>O — Objetivo:</strong><br/>${form.soap_objetivo ? form.soap_objetivo.replace(/\n/g, '<br/>') : '—'}</div>
-            <div style="margin-bottom: 10px;"><strong>A — Avaliação:</strong><br/>${form.soap_avaliacao ? form.soap_avaliacao.replace(/\n/g, '<br/>') : '—'}</div>
-            <div style="margin-bottom: 10px;"><strong>P — Plano:</strong><br/>${form.soap_plano ? form.soap_plano.replace(/\n/g, '<br/>') : '—'}</div>
+            <div style="margin-bottom: 6px;"><strong>S — Subjetivo:</strong><br/>${form.soap_subjetivo ? form.soap_subjetivo.replace(/\n/g, '<br/>') : '—'}</div>
+            <div style="margin-bottom: 6px;"><strong>O — Objetivo:</strong><br/>${form.soap_objetivo ? form.soap_objetivo.replace(/\n/g, '<br/>') : '—'}</div>
+            <div style="margin-bottom: 6px;"><strong>A — Avaliação:</strong><br/>${form.soap_avaliacao ? form.soap_avaliacao.replace(/\n/g, '<br/>') : '—'}</div>
+            <div style="margin-bottom: 6px;"><strong>P — Plano:</strong><br/>${form.soap_plano ? form.soap_plano.replace(/\n/g, '<br/>') : '—'}</div>
           ` : `<div style="white-space: pre-wrap; text-align: justify;">${form.evolucao || '—'}</div>`}
         </div>
       </div>
