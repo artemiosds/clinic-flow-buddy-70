@@ -154,11 +154,12 @@ export function buildInstitutionalCSS(
 <style>
   @page {
     size: ${size} ${orientation};
-    margin: 10mm 15mm 10mm 15mm; /* Margens ABNT mais compactas */
+    margin: 6mm 10mm 6mm 10mm; /* Margens mínimas para aproveitar espaço A4 */
   }
   @page :first {
-    margin-top: 8mm;
+    margin-top: 6mm;
   }
+
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   html, body { 
     font-family: ${fontFamily};
