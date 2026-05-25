@@ -308,9 +308,9 @@ export function buildInstitutionalCSS(
   .signature .role { font-size: ${smallPt}pt; color: #475569; line-height: 1; }
 
   /* DOCUMENT FOOTER: carimbo + assinatura */
-  .doc-sign-footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 24px; gap: 16px; page-break-inside: avoid; }
-  .doc-sign-footer .sign-block { flex: 1; }
-  .doc-sign-footer .carimbo-block { text-align: right; }
+  .doc-sign-footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 20px; gap: 16px; page-break-inside: avoid; flex-wrap: wrap; }
+  .doc-sign-footer .sign-block { flex: 1; min-width: 250px; }
+  .doc-sign-footer .carimbo-block { text-align: right; min-width: 200px; }
 
   /* E-SIGNATURE */
   .e-signature-box {
