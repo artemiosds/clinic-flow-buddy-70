@@ -324,24 +324,25 @@ const WorkspaceProntuario: React.FC = () => {
 
     // 1. Identification Header
     body += `
-      <div class="info-grid" style="margin-bottom: 4px; grid-template-columns: 2fr 1fr; border-color: #000; border-width: 0.8px; padding: 4px;">
-        <div>
-          <span class="info-label">Paciente</span>
-          <div class="info-value" style="font-weight: 700; font-size: 11pt; line-height: 1.1;">${meta.Paciente}</div>
+      <div class="info-grid" style="margin-bottom: 2px; grid-template-columns: 2fr 1fr; border: 0.5px solid #000; padding: 2px 4px; gap: 2px;">
+        <div style="line-height: 1;">
+          <span class="info-label" style="font-size: 7pt; margin: 0;">Paciente</span>
+          <div class="info-value" style="font-weight: 700; font-size: 9pt;">${meta.Paciente}</div>
         </div>
-        <div>
-          <span class="info-label">Tipo de Registro</span>
-          <div class="info-value" style="font-weight: 700; line-height: 1.1;">${meta.Tipo}</div>
+        <div style="line-height: 1;">
+          <span class="info-label" style="font-size: 7pt; margin: 0;">Tipo de Registro</span>
+          <div class="info-value" style="font-weight: 700; font-size: 9pt;">${meta.Tipo}</div>
         </div>
-        <div>
-          <span class="info-label">Dados do Paciente</span>
-          <div class="info-value" style="line-height: 1.1;">Idade: ${meta.Idade} | CPF: ${meta.CPF} | CNS: ${meta.CNS}</div>
+        <div style="line-height: 1;">
+          <span class="info-label" style="font-size: 7pt; margin: 0;">Dados do Paciente</span>
+          <div class="info-value" style="font-size: 8.5pt;">Idade: ${meta.Idade} | CPF: ${meta.CPF} | CNS: ${meta.CNS}</div>
         </div>
-        <div>
-          <span class="info-label">Data e Hora</span>
-          <div class="info-value" style="line-height: 1.1;">${meta.Data} às ${meta.Hora}</div>
+        <div style="line-height: 1;">
+          <span class="info-label" style="font-size: 7pt; margin: 0;">Data e Hora</span>
+          <div class="info-value" style="font-size: 8.5pt;">${meta.Data} às ${meta.Hora}</div>
         </div>
       </div>
+
     `;
 
     // 2. Acolhimento section if data exists
