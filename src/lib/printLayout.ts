@@ -265,14 +265,15 @@ export function buildInstitutionalCSS(
   h2 {
     font-size: ${sectionPt}pt;
     color: ${accent};
-    margin: 6px 0 2px;
-    padding-bottom: 1px;
+    margin: 4px 0 1px;
+    padding-bottom: 0.5px;
     border-bottom: 0.8px solid #bae6fd;
     text-transform: uppercase;
     letter-spacing: 0.1px;
     font-weight: 700;
     break-after: avoid;
   }
+
 
   /* TABLES */
   table { width: 100%; border-collapse: collapse; margin-bottom: 4px; page-break-inside: auto; font-size: ${smallPt}pt; }
