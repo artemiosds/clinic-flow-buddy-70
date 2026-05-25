@@ -461,27 +461,28 @@ const WorkspaceProntuario: React.FC = () => {
     // 5. Prescriptions & Exams
     if (listaPrescricao.length > 0 || listaExames.length > 0) {
       body += `
-        <div class="section" style="page-break-inside: avoid; margin-bottom: 4px;">
-          <div class="section-title">Prescrições e Solicitações</div>
-          <div class="section-content" style="font-size: 9.5pt;">
+        <div class="section" style="page-break-inside: avoid; margin-bottom: 2px;">
+          <div class="section-title" style="margin-bottom: 1px;">Prescrições e Solicitações</div>
+          <div class="section-content" style="font-size: 9pt;">
             ${listaPrescricao.length > 0 ? `
-              <div style="margin-bottom: 4px;">
-                <strong style="color: #475569; font-size: 8pt; text-transform: uppercase;">Medicamentos:</strong>
-                <ul style="padding-left: 15px; margin-top: 2px;">
-                  ${listaPrescricao.map((p: any) => `<li style="margin-bottom: 2px; line-height: 1.1;"><strong>${p.medicamento}</strong> - ${p.posologia}</li>`).join('')}
+              <div style="margin-bottom: 2px;">
+                <span style="font-weight: 700; color: #475569; font-size: 7.5pt; text-transform: uppercase;">Medicamentos:</span>
+                <ul style="padding-left: 15px; margin-top: 1px; margin-bottom: 0;">
+                  ${listaPrescricao.map((p: any) => `<li style="margin-bottom: 1px; line-height: 1.1;"><strong>${p.medicamento}</strong> - ${p.posologia}</li>`).join('')}
                 </ul>
               </div>
             ` : ''}
             ${listaExames.length > 0 ? `
-              <div>
-                <strong style="color: #475569; font-size: 8pt; text-transform: uppercase;">Exames Solicitados:</strong>
-                <ul style="padding-left: 15px; margin-top: 2px;">
-                  ${listaExames.map((e: any) => `<li style="margin-bottom: 2px; line-height: 1.1;">${e.nome || e}</li>`).join('')}
+              <div style="margin-bottom: 0;">
+                <span style="font-weight: 700; color: #475569; font-size: 7.5pt; text-transform: uppercase;">Exames:</span>
+                <ul style="padding-left: 15px; margin-top: 1px; margin-bottom: 0;">
+                  ${listaExames.map((e: any) => `<li style="margin-bottom: 1px; line-height: 1.1;">${e.nome || e}</li>`).join('')}
                 </ul>
               </div>
             ` : ''}
           </div>
         </div>
+
       `;
     }
 
