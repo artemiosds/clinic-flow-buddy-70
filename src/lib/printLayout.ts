@@ -154,11 +154,12 @@ export function buildInstitutionalCSS(
 <style>
   @page {
     size: ${size} ${orientation};
-    margin: 10mm 15mm 10mm 15mm; /* Margens ABNT mais compactas */
+    margin: 6mm 10mm 6mm 10mm; /* Margens mínimas para aproveitar espaço A4 */
   }
   @page :first {
-    margin-top: 8mm;
+    margin-top: 6mm;
   }
+
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   html, body { 
     font-family: ${fontFamily};
@@ -179,11 +180,12 @@ export function buildInstitutionalCSS(
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 0 4px 0;
-    margin-bottom: 6px;
-    border-bottom: 1.2px solid ${accent};
+    padding: 0 0 2px 0;
+    margin-bottom: 4px;
+    border-bottom: 1px solid ${accent};
     position: relative;
   }
+
   .doc-header .logo-left,
   .doc-header .logo-right { flex-shrink: 0; }
   .doc-header .header-center {
@@ -263,14 +265,15 @@ export function buildInstitutionalCSS(
   h2 {
     font-size: ${sectionPt}pt;
     color: ${accent};
-    margin: 6px 0 2px;
-    padding-bottom: 1px;
+    margin: 4px 0 1px;
+    padding-bottom: 0.5px;
     border-bottom: 0.8px solid #bae6fd;
     text-transform: uppercase;
     letter-spacing: 0.1px;
     font-weight: 700;
     break-after: avoid;
   }
+
 
   /* TABLES */
   table { width: 100%; border-collapse: collapse; margin-bottom: 4px; page-break-inside: auto; font-size: ${smallPt}pt; }
@@ -287,9 +290,10 @@ export function buildInstitutionalCSS(
   .field-value { font-size: ${bodyPt}pt; margin-top: 0; color: #000; line-height: 1.1; }
 
   /* SECTIONS (prontuário) */
-  .section { margin-bottom: 4px; page-break-inside: avoid; break-inside: avoid; }
-  .section-title { font-weight: 700; font-size: ${sectionPt - 0.8}pt; text-transform: uppercase; color: #334155; border-bottom: 0.5px solid #e2e8f0; padding-bottom: 0.5px; margin-bottom: 1.5px; }
-  .section-content { font-size: ${bodyPt}pt; line-height: 1.2; white-space: pre-wrap; min-height: 3px; text-align: justify; color: #000; overflow-wrap: break-word; }
+  .section { margin-bottom: 2px; page-break-inside: avoid; break-inside: avoid; }
+  .section-title { font-weight: 700; font-size: ${sectionPt - 1}pt; text-transform: uppercase; color: #334155; border-bottom: 0.5px solid #e2e8f0; padding-bottom: 0px; margin-bottom: 1px; line-height: 1; }
+  .section-content { font-size: ${bodyPt}pt; line-height: 1.1; white-space: pre-wrap; min-height: 1px; text-align: justify; color: #000; overflow-wrap: break-word; }
+
 
   /* INFO GRID */
   .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 8px; margin-bottom: 6px; padding: 6px; background: #fff; border: 0.8px solid #000; border-radius: 0; }
@@ -372,11 +376,12 @@ export function buildInstitutionalCSS(
   }
   @page {
     size: ${size} ${orientation};
-    margin: 8mm 12mm 8mm 12mm !important;
+    margin: 6mm 10mm 6mm 10mm !important;
   }
   @page :first {
-    margin-top: 6mm !important;
+    margin-top: 5mm !important;
   }
+
   ${opts.extraCSS || ''}
 </style>`;
 }
