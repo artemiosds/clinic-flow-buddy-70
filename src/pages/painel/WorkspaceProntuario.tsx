@@ -508,6 +508,8 @@ const WorkspaceProntuario: React.FC = () => {
         const { data: old } = await supabase.from('prontuarios').select('*').eq('id', finalId).maybeSingle();
         currentProntuario = old;
       }
+      
+      const targetPacienteId = pacienteId || form.paciente_id;
 
       const dbPayload: any = {
         paciente_id: form.paciente_id,
@@ -545,7 +547,9 @@ const WorkspaceProntuario: React.FC = () => {
         custom_data: {
           ...form.custom_data,
           especialidade_fields: especialidadeFields,
-          soap_enabled: soapEnabled
+          soap_enabled: soapEnabled,
+          cycle_info: sessaoCycle ? { id: sessaoCycle.id, type: sessaoCycle.treatment_type, sessions: `${sessaoCycle.sessions_done}/${sessaoCycle.total_sessions}` } : null,
+          pts_info: sessaoPts ? { id: sessaoPts.id, diagnostic: sessaoPts.diagnostico_funcional, goals: sessaoPts.objetivos_terapeuticos } : null
         }
       };
 
