@@ -357,22 +357,22 @@ async function buildProntuarioBody(p: ProntuarioLike, extraHtml = ""): Promise<s
   const acolhimentoHtml = p.dados_acolhimento ? renderAcolhimentoHtml(p.dados_acolhimento) : "";
 
   return `
-    <div class="info-grid" style="margin-bottom: 8px; grid-template-columns: 2fr 1fr; padding: 8px; border-width: 0.8px; border-color: #000;">
-      <div>
+    <div class="info-grid" style="margin-bottom: 6px; grid-template-columns: 2fr 1fr; padding: 6px; border-width: 0.8px; border-color: #000;">
+      <div style="margin-bottom: 2px;">
         <span class="info-label">Paciente</span>
-        <div class="info-value" style="font-weight: 700; font-size: 11pt;">${escapeHtml(p.paciente_nome || "—")}</div>
+        <div class="info-value" style="font-weight: 700; font-size: 11pt; line-height: 1.0;">${escapeHtml(p.paciente_nome || "—")}</div>
       </div>
-      <div>
+      <div style="margin-bottom: 2px;">
         <span class="info-label">Tipo de Registro</span>
-        <div class="info-value" style="font-weight: 700;">${escapeHtml(tipoLabel)}</div>
+        <div class="info-value" style="font-weight: 700; line-height: 1.0;">${escapeHtml(tipoLabel)}</div>
       </div>
       <div>
         <span class="info-label">Profissional / Setor</span>
-        <div class="info-value">${escapeHtml(p.profissional_nome || "—")} ${p.setor ? `— ${escapeHtml(p.setor)}` : ""}</div>
+        <div class="info-value" style="line-height: 1.0;">${escapeHtml(p.profissional_nome || "—")} ${p.setor ? `— ${escapeHtml(p.setor)}` : ""}</div>
       </div>
       <div>
         <span class="info-label">Data e Hora</span>
-        <div class="info-value">${escapeHtml(fmtDate(p.data_atendimento))} ${p.hora_atendimento ? `às ${escapeHtml(p.hora_atendimento)}` : ""}</div>
+        <div class="info-value" style="line-height: 1.0;">${escapeHtml(fmtDate(p.data_atendimento))} ${p.hora_atendimento ? `às ${escapeHtml(p.hora_atendimento)}` : ""}</div>
       </div>
     </div>
     
