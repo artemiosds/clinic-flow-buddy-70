@@ -154,16 +154,15 @@ export function buildInstitutionalCSS(
 <style>
   @page {
     size: ${size} ${orientation};
-    margin: 20mm 15mm 20mm 15mm; /* Margens institucionais mais próximas da ABNT */
+    margin: 15mm 15mm 15mm 15mm; /* Margens ABNT compactas */
   }
   @page :first {
-    margin-top: 15mm;
+    margin-top: 10mm;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   html, body { 
     font-family: ${fontFamily};
     width: 100%;
-    height: 100%;
     background: #fff;
   }
   body {
@@ -171,7 +170,7 @@ export function buildInstitutionalCSS(
     padding: 0;
     color: #000;
     font-size: ${bodyPt}pt;
-    line-height: 1.3; /* Espaçamento ABNT 1.5 é muito longo, 1.3 é o equilíbrio documental */
+    line-height: 1.25; /* Mais compacto que o 1.3/1.5 */
     background: #fff;
   }
 
@@ -180,9 +179,9 @@ export function buildInstitutionalCSS(
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 0 5px 0;
-    margin-bottom: 8px;
-    border-bottom: 1.5px solid ${accent};
+    padding: 0 0 4px 0;
+    margin-bottom: 6px;
+    border-bottom: 1.2px solid ${accent};
     position: relative;
   }
   .doc-header .logo-left,
@@ -193,38 +192,39 @@ export function buildInstitutionalCSS(
     padding: 0 8px;
   }
   .doc-header h1 {
-    font-size: ${titlePt - 1}pt;
+    font-size: ${titlePt - 1.5}pt;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.2px;
     color: ${accent};
     margin: 0;
-    line-height: 1.1;
+    line-height: 1.0;
   }
   .doc-header .subtitle {
-    font-size: ${bodyPt - 1}pt;
+    font-size: ${bodyPt - 2}pt;
     color: #475569;
-    margin-top: 1px;
+    margin-top: 0px;
     font-weight: 600;
   }
   .doc-header .doc-title {
-    font-size: ${titlePt}pt;
+    font-size: ${titlePt - 0.5}pt;
     font-weight: 700;
-    margin-top: 4px;
+    margin-top: 3px;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.4px;
     color: #000;
-    border-top: 1px solid #e2e8f0;
-    padding-top: 3px;
+    border-top: 0.5px solid #e2e8f0;
+    padding-top: 2px;
+    line-height: 1.1;
   }
   .doc-header .emit-date {
-    font-size: ${microPt}pt;
+    font-size: ${microPt - 0.5}pt;
     color: #64748b;
     text-align: right;
     white-space: nowrap;
     position: absolute;
     right: 0;
-    bottom: 2px;
+    bottom: 1px;
   }
 
   /* META INFO BAR */
