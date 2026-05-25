@@ -324,22 +324,22 @@ const WorkspaceProntuario: React.FC = () => {
 
     // 1. Identification Header
     body += `
-      <div class="info-grid" style="margin-bottom: 8px; grid-template-columns: 2fr 1fr; border-color: #000; border-width: 0.8px;">
+      <div class="info-grid" style="margin-bottom: 6px; grid-template-columns: 2fr 1fr; border-color: #000; border-width: 0.8px; padding: 6px;">
         <div>
           <span class="info-label">Paciente</span>
-          <div class="info-value" style="font-weight: 700; font-size: 11pt;">${meta.Paciente}</div>
+          <div class="info-value" style="font-weight: 700; font-size: 11pt; line-height: 1.1;">${meta.Paciente}</div>
         </div>
         <div>
           <span class="info-label">Tipo de Registro</span>
-          <div class="info-value" style="font-weight: 700;">${meta.Tipo}</div>
+          <div class="info-value" style="font-weight: 700; line-height: 1.1;">${meta.Tipo}</div>
         </div>
         <div>
           <span class="info-label">Dados do Paciente</span>
-          <div class="info-value">Idade: ${meta.Idade} | CPF: ${meta.CPF} | CNS: ${meta.CNS}</div>
+          <div class="info-value" style="line-height: 1.1;">Idade: ${meta.Idade} | CPF: ${meta.CPF} | CNS: ${meta.CNS}</div>
         </div>
         <div>
           <span class="info-label">Data e Hora</span>
-          <div class="info-value">${meta.Data} às ${meta.Hora}</div>
+          <div class="info-value" style="line-height: 1.1;">${meta.Data} às ${meta.Hora}</div>
         </div>
       </div>
     `;
