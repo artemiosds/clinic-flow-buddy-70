@@ -342,11 +342,11 @@ async function buildProntuarioBody(p: ProntuarioLike, extraHtml = ""): Promise<s
   const carimboHtml = formatCarimboBlock(carimbo);
 
   const signature = `
-    <div class="doc-sign-footer" style="margin-top: 30px; display: flex; justify-content: space-between; align-items: flex-end;">
-      <div class="signature" style="flex: 1;">
-        <div class="signature-line" style="width: 250px; border-top: 1px solid #000; margin-bottom: 5px;"></div>
-        <div class="name" style="font-weight: 700;">${escapeHtml(p.profissional_nome || "Profissional responsável")}</div>
-        ${p.setor ? `<div class="role">${escapeHtml(p.setor)}</div>` : ""}
+    <div class="doc-sign-footer" style="margin-top: 20px; display: flex; justify-content: space-between; align-items: flex-end;">
+      <div class="sign-block" style="flex: 1; text-align: center;">
+        <div style="width: 250px; border-top: 1px solid #000; margin: 0 auto 5px;"></div>
+        <div style="font-weight: 700; font-size: 11pt;">${escapeHtml(p.profissional_nome || "Profissional responsável")}</div>
+        ${p.setor ? `<div style="font-size: 9pt; color: #475569;">${escapeHtml(p.setor)}</div>` : ""}
       </div>
       <div class="carimbo-block" style="flex: 0 0 auto; text-align: right;">
         ${carimboHtml}
