@@ -273,38 +273,38 @@ export function buildInstitutionalCSS(
   }
 
   /* TABLES */
-  table { width: 100%; border-collapse: collapse; margin-bottom: 10px; page-break-inside: auto; font-size: ${smallPt}pt; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 8px; page-break-inside: auto; font-size: ${smallPt}pt; }
   thead { display: table-header-group; }
   tr { page-break-inside: avoid; page-break-after: auto; }
-  th, td { border: 1px solid #cbd5e1; padding: 4px 6px; text-align: left; font-size: ${smallPt}pt; }
+  th, td { border: 0.8px solid #cbd5e1; padding: 3px 5px; text-align: left; font-size: ${smallPt}pt; }
   th { background: #f8fafc; font-weight: 700; color: #000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   tr:nth-child(even) { background: #fdfdfd; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 
   /* FIELDS */
   .content-block { text-align: justify; text-justify: inter-word; font-size: ${bodyPt}pt; }
-  .field { margin-bottom: 3px; }
-  .field-label { font-size: ${microPt}pt; text-transform: uppercase; color: #475569; font-weight: 700; letter-spacing: 0.2px; line-height: 1; }
-  .field-value { font-size: ${bodyPt}pt; margin-top: 0; color: #000; line-height: 1.15; }
+  .field { margin-bottom: 2px; }
+  .field-label { font-size: ${microPt - 0.5}pt; text-transform: uppercase; color: #475569; font-weight: 700; letter-spacing: 0.1px; line-height: 1; }
+  .field-value { font-size: ${bodyPt}pt; margin-top: 0; color: #000; line-height: 1.1; }
 
   /* SECTIONS (prontuário) */
-  .section { margin-bottom: 10px; page-break-inside: avoid; break-inside: avoid; }
-  .section-title { font-weight: 700; font-size: ${sectionPt - 0.5}pt; text-transform: uppercase; color: #334155; border-bottom: 0.5px solid #e2e8f0; padding-bottom: 2px; margin-bottom: 4px; }
-  .section-content { font-size: ${bodyPt}pt; line-height: 1.4; white-space: pre-wrap; min-height: 10px; text-align: justify; color: #000; overflow-wrap: break-word; }
+  .section { margin-bottom: 8px; page-break-inside: avoid; break-inside: avoid; }
+  .section-title { font-weight: 700; font-size: ${sectionPt - 0.8}pt; text-transform: uppercase; color: #334155; border-bottom: 0.5px solid #e2e8f0; padding-bottom: 1px; margin-bottom: 3px; }
+  .section-content { font-size: ${bodyPt}pt; line-height: 1.3; white-space: pre-wrap; min-height: 5px; text-align: justify; color: #000; overflow-wrap: break-word; }
 
   /* INFO GRID */
-  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 15px; margin-bottom: 12px; padding: 10px; background: #fff; border: 1px solid #000; border-radius: 0; }
-  .info-label { font-weight: 700; font-size: ${microPt}pt; text-transform: uppercase; color: #444; line-height: 1.1; }
-  .info-value { font-size: ${bodyPt}pt; color: #000; line-height: 1.2; font-weight: 500; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; margin-bottom: 10px; padding: 8px; background: #fff; border: 0.8px solid #000; border-radius: 0; }
+  .info-label { font-weight: 700; font-size: ${microPt}pt; text-transform: uppercase; color: #444; line-height: 1.0; }
+  .info-value { font-size: ${bodyPt}pt; color: #000; line-height: 1.1; font-weight: 500; }
 
   /* QR AREA */
-  .qr-area { text-align: center; margin-top: 10px; padding: 8px; border: 1px dashed #cbd5e1; border-radius: 4px; background: #fafafa; }
+  .qr-area { text-align: center; margin-top: 8px; padding: 6px; border: 0.8px dashed #cbd5e1; border-radius: 4px; background: #fafafa; }
   .qr-area p { font-size: ${smallPt}pt; color: #64748b; }
   .qr-area .code { font-size: ${microPt}pt; color: #94a3b8; margin-top: 1px; font-family: monospace; }
 
   /* SIGNATURE */
-  .signature { margin-top: 20px; text-align: center; page-break-inside: avoid; break-inside: avoid; }
-  .signature-line { width: 220px; border-top: 1px solid #000; margin: 0 auto 3px; }
-  .signature .name { font-size: ${bodyPt}pt; font-weight: 700; color: #000; line-height: 1.1; }
+  .signature { margin-top: 15px; text-align: center; page-break-inside: avoid; break-inside: avoid; }
+  .signature-line { width: 220px; border-top: 0.8px solid #000; margin: 0 auto 2px; }
+  .signature .name { font-size: ${bodyPt}pt; font-weight: 700; color: #000; line-height: 1.05; }
   .signature .role { font-size: ${smallPt}pt; color: #475569; line-height: 1; }
 
   /* DOCUMENT FOOTER: carimbo + assinatura */
