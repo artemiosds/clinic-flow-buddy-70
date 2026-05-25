@@ -421,20 +421,20 @@ export async function openPrintDocument(title: string, body: string, meta: Recor
     ? `<div class="doc-meta">${Object.entries(meta).map(([k, v]) => `<span><strong>${k}:</strong> ${v}</span>`).join('')}</div>`
     : '';
 
-  const fullHtml = \`
+  const fullHtml = `
     <!DOCTYPE html>
     <html lang="pt-BR">
     <head>
       <meta charset="UTF-8">
-      <title>\${title}</title>
-      \${css}
+      <title>${title}</title>
+      ${css}
     </head>
     <body>
       <div class="document-container">
-        \${header}
-        \${metaHtml}
-        <div class="doc-content">\${body}</div>
-        \${footer}
+        ${header}
+        ${metaHtml}
+        <div class="doc-content">${body}</div>
+        ${footer}
       </div>
       <script>
         window.onload = () => {
@@ -446,7 +446,7 @@ export async function openPrintDocument(title: string, body: string, meta: Recor
       </script>
     </body>
     </html>
-  \`;
+  `;
 
   const win = window.open('', '_blank');
   if (win) {
