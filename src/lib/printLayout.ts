@@ -4,7 +4,7 @@
  * to ensure consistent branding across screen, PDF, and print.
  * 
  * Supports dual logos (SMS + CAPS II), justified text, proper
- * margins (2.5cm), 1.5 line spacing, Arial font.
+ * margins (A4), Arial font.
  */
 
 import { supabase } from '@/integrations/supabase/client';
@@ -21,20 +21,15 @@ export interface DocumentConfig {
   logoEsquerdaAtiva: boolean;
   logoCentroAtiva: boolean;
   logoDireitaAtiva: boolean;
-  /** Renderiza a logo como círculo (border-radius 9999px + object-fit cover). */
   logoEsquerdaRedonda: boolean;
   logoCentroRedonda: boolean;
   logoDireitaRedonda: boolean;
   linha1: string;
   linha2: string;
   rodapeTexto: string;
-  /** Fonte base de todos os documentos (configurável). */
   fonte: string;
-  /** Tamanho de fonte do corpo, em px (convertido para pt no CSS). */
   tamanhoFonte: number;
-  /** Alinhamento do título institucional no cabeçalho. */
   alinhamento: 'left' | 'center' | 'right';
-  /** Cor do título e das bordas institucionais (hex). */
   corTitulo: string;
 }
 
@@ -59,7 +54,6 @@ const DEFAULT_CONFIG: DocumentConfig = {
   alinhamento: 'center',
   corTitulo: '#0c4a6e',
 };
-
 
 let _cachedConfig: DocumentConfig | null = null;
 let _cacheTimestamp = 0;
@@ -107,7 +101,6 @@ export async function loadDocumentConfig(): Promise<DocumentConfig> {
   return _cachedConfig!;
 }
 
-/** Invalidate cached config (call after saving new config) */
 export function invalidateDocumentConfigCache(): void {
   _cachedConfig = null;
   _cacheTimestamp = 0;
@@ -116,23 +109,15 @@ export function invalidateDocumentConfigCache(): void {
 function resolveLogoUrl(configUrl: string, fallback: string): string {
   if (configUrl && configUrl.startsWith('http')) return configUrl;
   if (configUrl && configUrl.startsWith('/')) return configUrl;
-  // Use bundled fallback
-  if (fallback.startsWith('http') || fallback.startsWith('/')) return fallback;
   return fallback;
 }
 
-/** Options for institutional layout (page size, orientation, extra CSS). */
 export interface InstitutionalLayoutOptions {
   pageSize?: 'A4' | 'A5';
   orientation?: 'portrait' | 'landscape';
-  /** Extra CSS appended after institutional rules (for document-specific styles). */
   extraCSS?: string;
 }
 
-/** Standard institutional CSS shared across all documents.
- *  When a `config` is provided, the user-customized font, font-size, alignment
- *  and accent color flow into the CSS so that every document reflects the
- *  values saved in "Configurações > Impressão e Documentos". */
 export function buildInstitutionalCSS(
   opts: InstitutionalLayoutOptions = {},
   config?: DocumentConfig,
@@ -141,9 +126,8 @@ export function buildInstitutionalCSS(
   const orientation = opts.orientation || 'portrait';
   const cfg = config ?? DEFAULT_CONFIG;
   const fontFamily = `'${cfg.fonte.replace(/'/g, '')}', Arial, 'Helvetica Neue', Helvetica, sans-serif`;
-  // Padrão ABNT / Documental: 12pt corpo, 10pt notas
   const baseSize = cfg.tamanhoFonte || 12; 
-  const bodyPt = Math.max(9, Math.round(baseSize * 0.95 * 10) / 10); // Ligeiramente menor para compactação, mas legível
+  const bodyPt = Math.max(9, Math.round(baseSize * 0.95 * 10) / 10); 
   const titlePt = Math.round((bodyPt + 2) * 10) / 10;
   const sectionPt = Math.round((bodyPt + 0.5) * 10) / 10;
   const smallPt = Math.max(8, Math.round((bodyPt - 1.5) * 10) / 10);
@@ -154,10 +138,10 @@ export function buildInstitutionalCSS(
 <style>
   @page {
     size: ${size} ${orientation};
-    margin: 6mm 10mm 6mm 10mm; /* Margens mínimas para aproveitar espaço A4 */
+    margin: 4mm 8mm 4mm 8mm;
   }
   @page :first {
-    margin-top: 6mm;
+    margin-top: 4mm;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -171,7 +155,7 @@ export function buildInstitutionalCSS(
     padding: 0;
     color: #000;
     font-size: ${bodyPt}pt;
-    line-height: 1.15; /* Mais compacto que o 1.25 */
+    line-height: 1.1;
     background: #fff;
   }
 
@@ -180,9 +164,9 @@ export function buildInstitutionalCSS(
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 0 2px 0;
-    margin-bottom: 4px;
-    border-bottom: 1px solid ${accent};
+    padding: 0 0 1px 0;
+    margin-bottom: 2px;
+    border-bottom: 0.8px solid ${accent};
     position: relative;
   }
 
@@ -191,160 +175,136 @@ export function buildInstitutionalCSS(
   .doc-header .header-center {
     flex: 1;
     text-align: ${headerAlign};
-    padding: 0 8px;
+    padding: 0 4px;
   }
   .doc-header h1 {
-    font-size: ${titlePt - 1.5}pt;
+    font-size: ${titlePt - 2}pt;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.2px;
+    letter-spacing: 0.1px;
     color: ${accent};
     margin: 0;
     line-height: 1.0;
   }
   .doc-header .subtitle {
-    font-size: ${bodyPt - 2}pt;
+    font-size: ${bodyPt - 2.5}pt;
     color: #475569;
-    margin-top: 0px;
+    margin-top: -1px;
     font-weight: 600;
   }
   .doc-header .doc-title {
-    font-size: ${titlePt - 0.5}pt;
+    font-size: ${titlePt - 1}pt;
     font-weight: 700;
-    margin-top: 3px;
+    margin-top: 1px;
     text-transform: uppercase;
-    letter-spacing: 0.4px;
+    letter-spacing: 0.2px;
     color: #000;
     border-top: 0.5px solid #e2e8f0;
-    padding-top: 2px;
-    line-height: 1.1;
+    padding-top: 1px;
+    line-height: 1.0;
   }
   .doc-header .emit-date {
-    font-size: ${microPt - 0.5}pt;
+    font-size: ${microPt - 1}pt;
     color: #64748b;
     text-align: right;
     white-space: nowrap;
     position: absolute;
     right: 0;
-    bottom: 1px;
+    bottom: 0px;
   }
 
   /* META INFO BAR */
   .doc-meta {
-    font-size: ${smallPt}pt;
+    font-size: ${smallPt - 0.5}pt;
     color: #334155;
-    padding: 3px 6px;
+    padding: 2px 4px;
     background: #f8fafc;
-    border: 0.8px solid #e2e8f0;
-    border-radius: 4px;
-    margin-bottom: 8px;
+    border: 0.5px solid #e2e8f0;
+    border-radius: 2px;
+    margin-bottom: 4px;
     display: flex;
-    gap: 10px;
+    gap: 8px;
     flex-wrap: wrap;
-    line-height: 1.1;
+    line-height: 1.0;
   }
+  .doc-meta span { display: inline-block; }
   .doc-meta strong { color: #000; }
 
-  /* CONTENT — justified; honor user font size */
+  /* CONTENT — justified */
   .doc-content {
     text-align: justify;
     text-justify: inter-word;
     font-size: ${bodyPt}pt;
-    line-height: 1.2; /* Reduzido de 1.4 para maior compactação */
+    line-height: 1.15;
     word-break: break-word;
-    hyphens: auto;
   }
 
   /* SUMMARY CARDS */
-  .summary { display: flex; gap: 4px; margin-bottom: 6px; flex-wrap: wrap; }
-  .stat { background: #f0f9ff; border: 1px solid #bae6fd; padding: 4px 10px; border-radius: 4px; text-align: center; min-width: 70px; }
-  .stat strong { display: block; font-size: ${titlePt}pt; color: ${accent}; }
-  .stat small { font-size: ${microPt}pt; color: #64748b; }
+  .summary { display: flex; gap: 2px; margin-bottom: 4px; flex-wrap: wrap; }
+  .stat { background: #f0f9ff; border: 0.5px solid #bae6fd; padding: 2px 6px; border-radius: 2px; text-align: center; min-width: 60px; }
+  .stat strong { display: block; font-size: ${titlePt - 1}pt; color: ${accent}; }
+  .stat small { font-size: ${microPt - 0.5}pt; color: #64748b; }
 
   /* SECTION TITLES */
   h2 {
-    font-size: ${sectionPt}pt;
+    font-size: ${sectionPt - 0.5}pt;
     color: ${accent};
-    margin: 4px 0 1px;
-    padding-bottom: 0.5px;
-    border-bottom: 0.8px solid #bae6fd;
+    margin: 3px 0 1px;
+    padding-bottom: 0.2px;
+    border-bottom: 0.5px solid #bae6fd;
     text-transform: uppercase;
     letter-spacing: 0.1px;
     font-weight: 700;
     break-after: avoid;
   }
 
-
   /* TABLES */
-  table { width: 100%; border-collapse: collapse; margin-bottom: 4px; page-break-inside: auto; font-size: ${smallPt}pt; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 2px; page-break-inside: auto; font-size: ${smallPt - 0.5}pt; }
   thead { display: table-header-group; }
   tr { page-break-inside: avoid; page-break-after: auto; }
-  th, td { border: 0.8px solid #cbd5e1; padding: 3px 5px; text-align: left; font-size: ${smallPt}pt; }
+  th, td { border: 0.5px solid #cbd5e1; padding: 2px 4px; text-align: left; font-size: ${smallPt - 0.5}pt; line-height: 1.05; }
   th { background: #f8fafc; font-weight: 700; color: #000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  tr:nth-child(even) { background: #fdfdfd; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 
   /* FIELDS */
   .content-block { text-align: justify; text-justify: inter-word; font-size: ${bodyPt}pt; }
   .field { margin-bottom: 1px; }
   .field-label { font-size: ${microPt - 0.5}pt; text-transform: uppercase; color: #475569; font-weight: 700; letter-spacing: 0.1px; line-height: 1; }
-  .field-value { font-size: ${bodyPt}pt; margin-top: 0; color: #000; line-height: 1.1; }
+  .field-value { font-size: ${bodyPt}pt; margin-top: 0; color: #000; line-height: 1.05; }
 
   /* SECTIONS (prontuário) */
-  .section { margin-bottom: 2px; page-break-inside: avoid; break-inside: avoid; }
-  .section-title { font-weight: 700; font-size: ${sectionPt - 1}pt; text-transform: uppercase; color: #334155; border-bottom: 0.5px solid #e2e8f0; padding-bottom: 0px; margin-bottom: 1px; line-height: 1; }
-  .section-content { font-size: ${bodyPt}pt; line-height: 1.1; white-space: pre-wrap; min-height: 1px; text-align: justify; color: #000; overflow-wrap: break-word; }
-
+  .section { margin-bottom: 1.5px; page-break-inside: avoid; break-inside: avoid; }
+  .section-title { font-weight: 800; font-size: ${sectionPt - 1.5}pt; text-transform: uppercase; color: #1e293b; border-bottom: 0.4px solid #cbd5e1; padding-bottom: 0px; margin-bottom: 1px; line-height: 1; }
+  .section-content { font-size: ${bodyPt}pt; line-height: 1.05; white-space: pre-wrap; min-height: 1px; text-align: justify; color: #000; overflow-wrap: break-word; }
 
   /* INFO GRID */
-  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 8px; margin-bottom: 6px; padding: 6px; background: #fff; border: 0.8px solid #000; border-radius: 0; }
-  .info-label { font-weight: 700; font-size: ${microPt}pt; text-transform: uppercase; color: #444; line-height: 1.0; }
-  .info-value { font-size: ${bodyPt}pt; color: #000; line-height: 1.1; font-weight: 500; }
-
-  /* QR AREA */
-  .qr-area { text-align: center; margin-top: 8px; padding: 6px; border: 0.8px dashed #cbd5e1; border-radius: 4px; background: #fafafa; }
-  .qr-area p { font-size: ${smallPt}pt; color: #64748b; }
-  .qr-area .code { font-size: ${microPt}pt; color: #94a3b8; margin-top: 1px; font-family: monospace; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 6px; margin-bottom: 3px; padding: 3px; background: #fff; border: 0.5px solid #000; border-radius: 0; }
+  .info-label { font-weight: 700; font-size: ${microPt - 0.5}pt; text-transform: uppercase; color: #444; line-height: 1.0; }
+  .info-value { font-size: ${bodyPt - 0.5}pt; color: #000; line-height: 1.0; font-weight: 500; }
 
   /* SIGNATURE */
-  .signature { margin-top: 20px; text-align: center; page-break-inside: avoid; break-inside: avoid; }
-  .signature-line { width: 220px; border-top: 0.8px solid #000; margin: 0 auto 2px; }
-  .signature .name { font-size: ${bodyPt}pt; font-weight: 700; color: #000; line-height: 1.05; }
-  .signature .role { font-size: ${smallPt}pt; color: #475569; line-height: 1; }
-  .signature .carimbo-container { margin-top: 10px; padding-top: 5px; }
-
-  /* DOCUMENT FOOTER: carimbo + assinatura */
-  .doc-sign-footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 20px; gap: 16px; page-break-inside: avoid; flex-wrap: wrap; }
-  .doc-sign-footer .sign-block { flex: 1; min-width: 250px; }
-  .doc-sign-footer .carimbo-block { text-align: right; min-width: 200px; }
-
-  /* E-SIGNATURE */
-  .e-signature-box {
-    border: 1px solid #94a3b8; border-radius: 4px; padding: 6px 10px;
-    font-size: ${microPt}pt; line-height: 1.3; color: #475569; max-width: 350px;
-    background: #fff;
-  }
-  .e-signature-box .sig-title { font-weight: 700; font-size: ${smallPt}pt; color: ${accent}; margin-bottom: 2px; text-align: center; }
-  .e-signature-box .sig-legal { font-size: ${Math.max(6, microPt - 1)}pt; color: #94a3b8; margin-top: 4px; font-style: italic; }
+  .signature { margin-top: 6px; text-align: center; page-break-inside: avoid; break-inside: avoid; width: 100%; display: flex; flex-direction: column; align-items: center; }
+  .signature-line { width: 180px; border-top: 0.5px solid #000; margin: 0 auto 1px; }
+  .signature .name { font-size: ${bodyPt - 0.5}pt; font-weight: 700; color: #000; line-height: 1.0; }
+  .signature .role { font-size: ${smallPt - 1}pt; color: #475569; line-height: 1; }
+  .signature .carimbo-container { margin-top: 4px; padding-top: 2px; }
 
   /* CARIMBO */
-  .carimbo-digital { border: 1.5px solid #000; border-radius: 4px; padding: 6px 12px; text-align: center; font-size: ${smallPt}pt; display: inline-block; background: #fff; }
-  .carimbo-digital .carimbo-nome { font-weight: 700; font-size: ${bodyPt}pt; color: #000; }
-  .carimbo-digital .carimbo-info { font-size: ${microPt}pt; color: #475569; }
+  .carimbo-digital { border: 1px solid #000; border-radius: 3px; padding: 4px 8px; text-align: center; font-size: ${smallPt - 1}pt; display: inline-block; background: #fff; line-height: 1.0; }
+  .carimbo-digital .carimbo-nome { font-weight: 800; font-size: ${bodyPt - 1}pt; color: #000; text-transform: uppercase; }
+  .carimbo-digital .carimbo-info { font-size: ${microPt - 1}pt; color: #334155; }
 
   /* FOOTER */
   .doc-footer {
-    margin-top: 10px;
-    padding-top: 4px;
-    border-top: 1px solid ${accent};
-    font-size: ${microPt}pt;
+    margin-top: 4px;
+    padding-top: 1px;
+    border-top: 0.5px solid ${accent};
+    font-size: ${microPt - 1}pt;
     color: #64748b;
     display: flex;
     justify-content: space-between;
     align-items: center;
   }
-  .doc-footer .institution { font-weight: 700; color: #334155; }
 
-  /* PRINT MEDIA ENFORCEMENT */
   @media print {
     body { 
       padding: 0 !important; 
@@ -352,49 +312,34 @@ export function buildInstitutionalCSS(
       width: 100% !important; 
       color: #000 !important;
       background: transparent !important;
-      -webkit-print-color-adjust: exact !important; 
-      print-color-adjust: exact !important;
     }
-    .doc-header { border-bottom-width: 1px !important; margin-bottom: 4px !important; padding-bottom: 2px !important; border-bottom: 1px solid ${accent} !important; }
-    .doc-header h1 { font-size: ${titlePt - 1.8}pt !important; line-height: 1.1 !important; }
-    .doc-header .doc-title { font-size: ${titlePt - 0.5}pt !important; margin-top: 1px !important; padding-top: 1px !important; }
-    .doc-header .subtitle { font-size: ${bodyPt - 1.8}pt !important; margin-top: 0 !important; }
-    .doc-header img { max-height: 42px !important; width: auto !important; }
-    .doc-meta { margin-bottom: 6px !important; padding: 2px 5px !important; font-size: ${smallPt - 1.2}pt !important; line-height: 1.1 !important; gap: 6px !important; }
-    .section { margin-bottom: 4px !important; page-break-inside: avoid !important; }
-    .section-title { font-size: ${sectionPt - 0.8}pt !important; padding-bottom: 0.5px !important; margin-bottom: 1.5px !important; }
-    .info-grid { gap: 3px !important; padding: 4px !important; margin-bottom: 4px !important; grid-template-columns: repeat(2, 1fr) !important; border-width: 0.5px !important; }
+    .doc-header { border-bottom-width: 0.5px !important; margin-bottom: 2px !important; padding-bottom: 1px !important; }
+    .doc-header h1 { font-size: ${titlePt - 2.5}pt !important; line-height: 1.0 !important; }
+    .doc-header .doc-title { font-size: ${titlePt - 1}pt !important; margin-top: 1px !important; padding-top: 1px !important; }
+    .doc-header .subtitle { font-size: ${bodyPt - 2.5}pt !important; margin-top: -1px !important; }
+    .doc-header img { max-height: 36px !important; width: auto !important; }
+    .doc-meta { margin-bottom: 4px !important; padding: 2px 4px !important; font-size: ${smallPt - 1.5}pt !important; line-height: 1.0 !important; gap: 4px !important; }
+    .section { margin-bottom: 2px !important; page-break-inside: avoid !important; }
+    .section-title { font-size: ${sectionPt - 1.5}pt !important; padding-bottom: 0px !important; margin-bottom: 1px !important; }
+    .info-grid { gap: 1.5px !important; padding: 2px !important; margin-bottom: 2px !important; border-width: 0.4px !important; }
     .no-print { display: none !important; }
-    nav, .sidebar, button, .toaster, [data-sonner-toaster], .no-print { display: none !important; }
-    .doc-sign-footer { page-break-inside: avoid !important; margin-top: 8px !important; }
-    .signature { margin-top: 10px !important; page-break-inside: avoid !important; }
-    .e-signature-box { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; border-color: #cbd5e1 !important; padding: 4px !important; }
-    h2 { font-size: ${sectionPt - 0.8}pt !important; margin: 4px 0 1.5px !important; padding-bottom: 0.5px !important; }
-    table { margin-bottom: 4px !important; border-width: 0.5px !important; }
-    th, td { padding: 1px 3px !important; font-size: ${smallPt - 1.2}pt !important; line-height: 1.1 !important; border-width: 0.5px !important; }
-    .doc-footer { margin-top: 8px !important; padding-top: 1px !important; font-size: ${microPt - 0.5}pt !important; }
+    .signature { margin-top: 6px !important; }
+    .doc-footer { margin-top: 4px !important; padding-top: 1px !important; font-size: ${microPt - 1.5}pt !important; }
   }
   @page {
     size: ${size} ${orientation};
-    margin: 6mm 10mm 6mm 10mm !important;
+    margin: 4mm 8mm 4mm 8mm !important;
   }
   @page :first {
-    margin-top: 5mm !important;
+    margin-top: 4mm !important;
   }
 
   ${opts.extraCSS || ''}
 </style>`;
 }
 
-/** For backward compatibility */
 export const institutionalCSS = buildInstitutionalCSS();
 
-/**
- * Generate the standard document header HTML.
- * Supports up to three logos (left/center/right), each with independent size
- * (max-height in px) and enabled flag. Layout reorganizes automatically when
- * a logo is missing so there are no awkward gaps.
- */
 export function docHeader(title: string, config: DocumentConfig, extraRight?: string): string {
   const clamp = (n: number, min = 28, max = 100) => Math.max(min, Math.min(max, n || 64));
 
@@ -402,7 +347,6 @@ export function docHeader(title: string, config: DocumentConfig, extraRight?: st
   const showCenter = config.logoCentroAtiva !== false && !!(config.logoCentro && config.logoCentro.trim());
   const showRight = config.logoDireitaAtiva !== false;
 
-  // Apply fallback ONLY when the slot is active and no URL is set.
   const leftUrl = showLeft ? resolveLogoUrl(config.logoEsquerda, logoSmsFallback) : '';
   const rightUrl = showRight ? resolveLogoUrl(config.logoDireita, logoCapsFallback) : '';
   const centerUrl = showCenter ? config.logoCentro : '';
@@ -428,109 +372,91 @@ export function docHeader(title: string, config: DocumentConfig, extraRight?: st
     ? `<div class="logo-right" style="flex:0 0 auto;min-width:${hR * 1.6}px;display:flex;justify-content:flex-end;">
          <img src="${rightUrl}" alt="Logo institucional direita" style="${roundStyle(hR, config.logoDireitaRedonda)}" onerror="this.style.display='none'" />
        </div>`
-    : `<div class="logo-right" style="flex:0 0 auto;"></div>`;
+    : (extraRight ? `<div class="logo-right" style="font-size:8pt;color:#64748b;">${extraRight}</div>` : `<div class="logo-right" style="flex:0 0 auto;"></div>`);
 
-  const centerLogoHtml = centerUrl
-    ? `<div class="logo-center" style="display:flex;justify-content:center;margin-bottom:6px;">
-         <img src="${centerUrl}" alt="Logo institucional central" style="${roundStyle(hC, config.logoCentroRedonda)}" onerror="this.style.display='none'" />
-       </div>`
-    : '';
-
-  const align = config.alinhamento || 'center';
-  return `
-    <div class="doc-header" style="position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;">
-      ${leftSlot}
-      <div class="header-center" style="flex:1;text-align:${align};">
-        ${centerLogoHtml}
-        <h1>${config.linha1}</h1>
-        <div class="subtitle">${config.linha2}</div>
-        <div class="doc-title">${title}</div>
-      </div>
-      ${rightSlot}
-      <div class="emit-date">
-        ${extraRight || ''}
-        <div>Emitido em: ${now}</div>
-      </div>
-    </div>`;
-}
-
-/** Generate metadata bar */
-export function docMeta(items: Record<string, string>): string {
-  const entries = Object.entries(items).map(([k, v]) => `<strong>${k}:</strong> ${v}`).join(' &nbsp;|&nbsp; ');
-  return `<div class="doc-meta">${entries}</div>`;
-}
-
-/** Generate the standard footer */
-export function docFooter(config: DocumentConfig, extraInfo?: string): string {
-  const now = new Date().toLocaleString('pt-BR');
-  const rodape = config.rodapeTexto || '';
-  return `
-    <div class="doc-footer">
-      <div class="institution">${config.linha1} — ${config.linha2}</div>
-      <div>${rodape} ${extraInfo || ''}</div>
-      <div>${now}</div>
+  const centerSlot = `
+    <div class="header-center">
+      <h1>${config.linha1}</h1>
+      <div class="subtitle">${config.linha2}</div>
+      ${centerUrl ? `<img src="${centerUrl}" style="${roundStyle(hC, config.logoCentroRedonda)};margin:2px auto;" />` : ''}
+      <div class="doc-title">${title}</div>
     </div>
-    <div style="text-align:center;font-size:7.5pt;color:#94a3b8;margin-top:4px;">
-      Rua Barão do Rio Branco, S/N, Santa Terezinha, Oriximiná-PA, 68270-000
-    </div>`;
+  `;
+
+  return `
+    <header class="doc-header">
+      ${leftSlot}
+      ${centerSlot}
+      ${rightSlot}
+      <div class="emit-date">Emitido em: ${now}</div>
+    </header>
+  `;
 }
 
-/**
- * Open a print window with full institutional layout.
- * IMPORTANT: window.open MUST be called synchronously inside the user click
- * handler — otherwise the browser popup blocker silently kills the window.
- * We open the window first with a loading placeholder, then fetch the config
- * asynchronously and rewrite the document with the real content.
- * Throws if the popup is blocked so callers can show a toast.
- */
+export function docMeta(meta: Record<string, string>): string {
+  if (!meta || Object.keys(meta).length === 0) return '';
+  return `
+    <div class="doc-meta">
+      ${Object.entries(meta).map(([label, value]) => `
+        <span><strong>${label}:</strong> ${value}</span>
+      `).join('')}
+    </div>
+  `;
+}
+
+export function docFooter(config: DocumentConfig): string {
+  const text = config.rodapeTexto || `© ${new Date().getFullYear()} ${config.linha1}`;
+  return `
+    <footer class="doc-footer">
+      <div class="institution">${config.linha1}</div>
+      <div class="footer-text">${text}</div>
+      <div class="page-number"></div>
+    </footer>
+  `;
+}
+
 export async function openPrintDocument(
-  title: string,
-  body: string,
-  meta?: Record<string, string>,
-  options?: InstitutionalLayoutOptions,
-): Promise<void> {
-  // 1. Open window SYNCHRONOUSLY (preserves user-gesture trust)
-  const printWindow = window.open('', '_blank');
-  if (!printWindow) {
-    throw new Error('POPUP_BLOCKED');
-  }
-
-  // 2. Write a friendly loading placeholder immediately
-  try {
-    printWindow.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>${title}…</title>
-<style>body{font-family:Arial,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;color:#0369a1;font-size:14px;}</style>
-</head><body>Gerando documento…</body></html>`);
-  } catch { /* ignore */ }
-
-  // 3. Now fetch config (async) and rewrite the doc
+  title: string, 
+  body: string, 
+  meta: Record<string, string> = {}, 
+  options: InstitutionalLayoutOptions = {}
+) {
   const config = await loadDocumentConfig();
-  const metaHtml = meta ? docMeta(meta) : '';
   const css = buildInstitutionalCSS(options, config);
+  const header = docHeader(title, config);
+  const footer = docFooter(config);
+  const metaHtml = docMeta(meta);
 
-  try {
-    printWindow.document.open();
-    printWindow.document.write(`<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <title>${title} — ${config.linha1}</title>
-  ${css}
-</head>
-<body>
-  ${docHeader(title, config)}
-  ${metaHtml}
-  <div class="doc-content">
-    ${body}
-  </div>
-  ${docFooter(config)}
-</body>
-</html>`);
-    printWindow.document.close();
-    setTimeout(() => {
-      try { printWindow.focus(); printWindow.print(); } catch { /* ignore */ }
-    }, 400);
-  } catch (err) {
-    try { printWindow.close(); } catch { /* ignore */ }
-    throw err;
+  const fullHtml = `
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+      <meta charset="UTF-8">
+      <title>${title}</title>
+      ${css}
+    </head>
+    <body>
+      <div class="document-container">
+        ${header}
+        ${metaHtml}
+        <div class="doc-content">${body}</div>
+        ${footer}
+      </div>
+      <script>
+        window.onload = () => {
+          setTimeout(() => {
+            window.print();
+            window.onafterprint = () => window.close();
+          }, 300);
+        };
+      </script>
+    </body>
+    </html>
+  `;
+
+  const win = window.open('', '_blank');
+  if (win) {
+    win.document.write(fullHtml);
+    win.document.close();
   }
 }
