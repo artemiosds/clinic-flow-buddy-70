@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -299,13 +300,24 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
     }
   }, [pacienteId]);
 
+  // Realtime subscription for automatic updates
+  useRealtimeSubscription({
+    tables: ["prontuarios", "episodios_clinicos"],
+    filter: pacienteId ? `paciente_id=eq.${pacienteId}` : undefined,
+    enabled: !!pacienteId,
+    onchange: () => {
+      console.log("[HistoricoClinico] Realtime change detected, refreshing...");
+      loadData(0, false);
+    }
+  });
+
   useEffect(() => {
     setPage(0);
     loadData(0, false);
     return () => {
       cancelledRef.current = true;
     };
-  }, [pacienteId]);
+  }, [pacienteId, loadData]);
 
   const handleLoadMore = () => {
     const nextPage = page + 1;

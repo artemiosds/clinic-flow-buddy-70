@@ -11,7 +11,9 @@ type TableName =
   | 'treatment_cycles'
   | 'treatment_sessions'
   | 'permissoes'
-  | 'pacientes';
+  | 'pacientes'
+  | 'episodios_clinicos'
+  | 'pts';
 
 interface UseRealtimeOptions {
   tables: TableName[];
@@ -37,7 +39,7 @@ export function useRealtimeSubscription({
   invalidateKeys,
   filter,
   enabled = true,
-  debounceMs = 400,
+  debounceMs = 300,
 }: UseRealtimeOptions) {
   const queryClient = useQueryClient();
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
