@@ -460,22 +460,22 @@ const WorkspaceProntuario: React.FC = () => {
     // 5. Prescriptions & Exams
     if (listaPrescricao.length > 0 || listaExames.length > 0) {
       body += `
-        <div class="section" style="page-break-inside: avoid;">
+        <div class="section" style="page-break-inside: avoid; margin-bottom: 8px;">
           <div class="section-title">Prescrições e Solicitações</div>
-          <div class="section-content">
+          <div class="section-content" style="font-size: 9.5pt;">
             ${listaPrescricao.length > 0 ? `
-              <div style="margin-bottom: 12px;">
-                <strong style="color: #475569; font-size: 9pt; text-transform: uppercase;">Medicamentos:</strong>
-                <ul style="padding-left: 20px; margin-top: 4px;">
-                  ${listaPrescricao.map((p: any) => `<li style="margin-bottom: 4px;"><strong>${p.medicamento}</strong> - ${p.posologia}</li>`).join('')}
+              <div style="margin-bottom: 6px;">
+                <strong style="color: #475569; font-size: 8pt; text-transform: uppercase;">Medicamentos:</strong>
+                <ul style="padding-left: 15px; margin-top: 2px;">
+                  ${listaPrescricao.map((p: any) => `<li style="margin-bottom: 2px; line-height: 1.1;"><strong>${p.medicamento}</strong> - ${p.posologia}</li>`).join('')}
                 </ul>
               </div>
             ` : ''}
             ${listaExames.length > 0 ? `
               <div>
-                <strong style="color: #475569; font-size: 9pt; text-transform: uppercase;">Exames Solicitados:</strong>
-                <ul style="padding-left: 20px; margin-top: 4px;">
-                  ${listaExames.map((e: any) => `<li style="margin-bottom: 4px;">${e.nome || e}</li>`).join('')}
+                <strong style="color: #475569; font-size: 8pt; text-transform: uppercase;">Exames Solicitados:</strong>
+                <ul style="padding-left: 15px; margin-top: 2px;">
+                  ${listaExames.map((e: any) => `<li style="margin-bottom: 2px; line-height: 1.1;">${e.nome || e}</li>`).join('')}
                 </ul>
               </div>
             ` : ''}
