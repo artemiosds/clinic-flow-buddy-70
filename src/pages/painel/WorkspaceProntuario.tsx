@@ -425,13 +425,13 @@ const WorkspaceProntuario: React.FC = () => {
 
     if (dynamicFields.length > 0) {
       body += `
-        <div class="section">
+        <div class="section" style="margin-bottom: 8px;">
           <div class="section-title">Informações Complementares</div>
-          <div class="section-content">
+          <div class="section-content" style="font-size: 9.5pt;">
             ${dynamicFields.map(f => `
-              <div style="margin-bottom: 8px;">
-                <span style="font-weight: 700; color: #475569; font-size: 9pt; text-transform: uppercase;">${f.label}:</span>
-                <div style="margin-top: 2px; text-align: justify;">${String(f.value).replace(/\n/g, '<br/>')}</div>
+              <div style="margin-bottom: 4px;">
+                <span style="font-weight: 700; color: #475569; font-size: 8pt; text-transform: uppercase;">${f.label}:</span>
+                <div style="margin-top: 1px; text-align: justify; line-height: 1.2;">${String(f.value).replace(/\n/g, '<br/>')}</div>
               </div>
             `).join('')}
           </div>
