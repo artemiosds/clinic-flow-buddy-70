@@ -170,7 +170,7 @@ export function buildInstitutionalCSS(
     padding: 0;
     color: #000;
     font-size: ${bodyPt}pt;
-    line-height: 1.25; /* Mais compacto que o 1.3/1.5 */
+    line-height: 1.15; /* Mais compacto que o 1.25 */
     background: #fff;
   }
 
@@ -248,13 +248,13 @@ export function buildInstitutionalCSS(
     text-align: justify;
     text-justify: inter-word;
     font-size: ${bodyPt}pt;
-    line-height: 1.4; /* Reduzido de 1.5 para maior compactação */
+    line-height: 1.2; /* Reduzido de 1.4 para maior compactação */
     word-break: break-word;
     hyphens: auto;
   }
 
   /* SUMMARY CARDS */
-  .summary { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+  .summary { display: flex; gap: 4px; margin-bottom: 6px; flex-wrap: wrap; }
   .stat { background: #f0f9ff; border: 1px solid #bae6fd; padding: 4px 10px; border-radius: 4px; text-align: center; min-width: 70px; }
   .stat strong { display: block; font-size: ${titlePt}pt; color: ${accent}; }
   .stat small { font-size: ${microPt}pt; color: #64748b; }
@@ -263,8 +263,8 @@ export function buildInstitutionalCSS(
   h2 {
     font-size: ${sectionPt}pt;
     color: ${accent};
-    margin: 10px 0 4px;
-    padding-bottom: 2px;
+    margin: 6px 0 2px;
+    padding-bottom: 1px;
     border-bottom: 0.8px solid #bae6fd;
     text-transform: uppercase;
     letter-spacing: 0.1px;
@@ -273,7 +273,7 @@ export function buildInstitutionalCSS(
   }
 
   /* TABLES */
-  table { width: 100%; border-collapse: collapse; margin-bottom: 8px; page-break-inside: auto; font-size: ${smallPt}pt; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 4px; page-break-inside: auto; font-size: ${smallPt}pt; }
   thead { display: table-header-group; }
   tr { page-break-inside: avoid; page-break-after: auto; }
   th, td { border: 0.8px solid #cbd5e1; padding: 3px 5px; text-align: left; font-size: ${smallPt}pt; }
@@ -282,17 +282,17 @@ export function buildInstitutionalCSS(
 
   /* FIELDS */
   .content-block { text-align: justify; text-justify: inter-word; font-size: ${bodyPt}pt; }
-  .field { margin-bottom: 2px; }
+  .field { margin-bottom: 1px; }
   .field-label { font-size: ${microPt - 0.5}pt; text-transform: uppercase; color: #475569; font-weight: 700; letter-spacing: 0.1px; line-height: 1; }
   .field-value { font-size: ${bodyPt}pt; margin-top: 0; color: #000; line-height: 1.1; }
 
   /* SECTIONS (prontuário) */
-  .section { margin-bottom: 8px; page-break-inside: avoid; break-inside: avoid; }
-  .section-title { font-weight: 700; font-size: ${sectionPt - 0.8}pt; text-transform: uppercase; color: #334155; border-bottom: 0.5px solid #e2e8f0; padding-bottom: 1px; margin-bottom: 3px; }
-  .section-content { font-size: ${bodyPt}pt; line-height: 1.3; white-space: pre-wrap; min-height: 5px; text-align: justify; color: #000; overflow-wrap: break-word; }
+  .section { margin-bottom: 4px; page-break-inside: avoid; break-inside: avoid; }
+  .section-title { font-weight: 700; font-size: ${sectionPt - 0.8}pt; text-transform: uppercase; color: #334155; border-bottom: 0.5px solid #e2e8f0; padding-bottom: 0.5px; margin-bottom: 1.5px; }
+  .section-content { font-size: ${bodyPt}pt; line-height: 1.2; white-space: pre-wrap; min-height: 3px; text-align: justify; color: #000; overflow-wrap: break-word; }
 
   /* INFO GRID */
-  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; margin-bottom: 10px; padding: 8px; background: #fff; border: 0.8px solid #000; border-radius: 0; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 8px; margin-bottom: 6px; padding: 6px; background: #fff; border: 0.8px solid #000; border-radius: 0; }
   .info-label { font-weight: 700; font-size: ${microPt}pt; text-transform: uppercase; color: #444; line-height: 1.0; }
   .info-value { font-size: ${bodyPt}pt; color: #000; line-height: 1.1; font-weight: 500; }
 
@@ -329,7 +329,7 @@ export function buildInstitutionalCSS(
 
   /* FOOTER */
   .doc-footer {
-    margin-top: 20px;
+    margin-top: 10px;
     padding-top: 4px;
     border-top: 1px solid ${accent};
     font-size: ${microPt}pt;
@@ -357,18 +357,18 @@ export function buildInstitutionalCSS(
     .doc-header .subtitle { font-size: ${bodyPt - 1.8}pt !important; margin-top: 0 !important; }
     .doc-header img { max-height: 42px !important; width: auto !important; }
     .doc-meta { margin-bottom: 6px !important; padding: 2px 5px !important; font-size: ${smallPt - 1.2}pt !important; line-height: 1.1 !important; gap: 6px !important; }
-    .section { margin-bottom: 6px !important; page-break-inside: avoid !important; }
-    .section-title { font-size: ${sectionPt - 0.8}pt !important; padding-bottom: 1px !important; margin-bottom: 2px !important; }
-    .info-grid { gap: 4px !important; padding: 5px !important; margin-bottom: 6px !important; grid-template-columns: repeat(2, 1fr) !important; border-width: 0.5px !important; }
+    .section { margin-bottom: 4px !important; page-break-inside: avoid !important; }
+    .section-title { font-size: ${sectionPt - 0.8}pt !important; padding-bottom: 0.5px !important; margin-bottom: 1.5px !important; }
+    .info-grid { gap: 3px !important; padding: 4px !important; margin-bottom: 4px !important; grid-template-columns: repeat(2, 1fr) !important; border-width: 0.5px !important; }
     .no-print { display: none !important; }
     nav, .sidebar, button, .toaster, [data-sonner-toaster], .no-print { display: none !important; }
-    .doc-sign-footer { page-break-inside: avoid !important; margin-top: 12px !important; }
-    .signature { margin-top: 15px !important; page-break-inside: avoid !important; }
+    .doc-sign-footer { page-break-inside: avoid !important; margin-top: 8px !important; }
+    .signature { margin-top: 10px !important; page-break-inside: avoid !important; }
     .e-signature-box { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; border-color: #cbd5e1 !important; padding: 4px !important; }
-    h2 { font-size: ${sectionPt - 0.8}pt !important; margin: 6px 0 2px !important; padding-bottom: 1px !important; }
-    table { margin-bottom: 6px !important; border-width: 0.5px !important; }
-    th, td { padding: 2px 4px !important; font-size: ${smallPt - 1.2}pt !important; line-height: 1.1 !important; border-width: 0.5px !important; }
-    .doc-footer { margin-top: 12px !important; padding-top: 1px !important; font-size: ${microPt - 0.5}pt !important; }
+    h2 { font-size: ${sectionPt - 0.8}pt !important; margin: 4px 0 1.5px !important; padding-bottom: 0.5px !important; }
+    table { margin-bottom: 4px !important; border-width: 0.5px !important; }
+    th, td { padding: 1px 3px !important; font-size: ${smallPt - 1.2}pt !important; line-height: 1.1 !important; border-width: 0.5px !important; }
+    .doc-footer { margin-top: 8px !important; padding-top: 1px !important; font-size: ${microPt - 0.5}pt !important; }
   }
   @page {
     size: ${size} ${orientation};

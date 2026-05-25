@@ -324,7 +324,7 @@ const WorkspaceProntuario: React.FC = () => {
 
     // 1. Identification Header
     body += `
-      <div class="info-grid" style="margin-bottom: 6px; grid-template-columns: 2fr 1fr; border-color: #000; border-width: 0.8px; padding: 6px;">
+      <div class="info-grid" style="margin-bottom: 4px; grid-template-columns: 2fr 1fr; border-color: #000; border-width: 0.8px; padding: 4px;">
         <div>
           <span class="info-label">Paciente</span>
           <div class="info-value" style="font-weight: 700; font-size: 11pt; line-height: 1.1;">${meta.Paciente}</div>
@@ -353,9 +353,9 @@ const WorkspaceProntuario: React.FC = () => {
       const s15 = data.secao15?.parecer ? `<div style="margin-bottom: 4px;"><strong>Parecer Profissional:</strong> ${data.secao15.parecer}</div>` : '';
       
       body += `
-        <div style="border: 0.8px solid #000; padding: 6px; margin-bottom: 6px; page-break-inside: avoid;">
-          <div style="font-size: 8.5pt; font-weight: 800; text-transform: uppercase; border-bottom: 0.5px solid #000; padding-bottom: 1px; margin-bottom: 4px;">Acolhimento em Saúde Mental</div>
-          <div style="font-size: 9pt; line-height: 1.2;">
+        <div style="border: 0.8px solid #000; padding: 4px; margin-bottom: 4px; page-break-inside: avoid;">
+          <div style="font-size: 8.5pt; font-weight: 800; text-transform: uppercase; border-bottom: 0.5px solid #000; padding-bottom: 0.5px; margin-bottom: 3px;">Acolhimento em Saúde Mental</div>
+          <div style="font-size: 9pt; line-height: 1.15;">
             ${s3}${s4}${s15}
           </div>
           <div style="font-style: italic; font-size: 7.5pt; color: #64748b; margin-top: 2px;">* Registro clínico estruturado.</div>
@@ -366,9 +366,9 @@ const WorkspaceProntuario: React.FC = () => {
     // 2.5 Treatment Plan section
     if (sessaoCycle || sessaoPts) {
       body += `
-        <div class="section" style="page-break-inside: avoid; margin-bottom: 6px;">
+        <div class="section" style="page-break-inside: avoid; margin-bottom: 4px;">
           <div class="section-title">Plano Terapêutico Ativo</div>
-          <div class="section-content" style="font-size: 9.5pt; line-height: 1.2;">
+          <div class="section-content" style="font-size: 9.5pt; line-height: 1.15;">
             ${sessaoCycle ? `
               <div style="margin-bottom: 4px;">
                 <span style="font-weight: 700; color: #475569; font-size: 7.5pt; text-transform: uppercase;">Ciclo de Tratamento:</span>
@@ -390,14 +390,14 @@ const WorkspaceProntuario: React.FC = () => {
 
     // 2. Clinical Evolution / SOAP
     body += `
-      <div class="section" style="margin-bottom: 8px;">
+      <div class="section" style="margin-bottom: 4px;">
         <div class="section-title">Evolução Clínica / SOAP</div>
-        <div class="section-content" style="font-size: 10pt; line-height: 1.3;">
+        <div class="section-content" style="font-size: 10pt; line-height: 1.2;">
           ${soapEnabled ? `
-            <div style="margin-bottom: 6px;"><strong>S — Subjetivo:</strong><br/>${form.soap_subjetivo ? form.soap_subjetivo.replace(/\n/g, '<br/>') : '—'}</div>
-            <div style="margin-bottom: 6px;"><strong>O — Objetivo:</strong><br/>${form.soap_objetivo ? form.soap_objetivo.replace(/\n/g, '<br/>') : '—'}</div>
-            <div style="margin-bottom: 6px;"><strong>A — Avaliação:</strong><br/>${form.soap_avaliacao ? form.soap_avaliacao.replace(/\n/g, '<br/>') : '—'}</div>
-            <div style="margin-bottom: 6px;"><strong>P — Plano:</strong><br/>${form.soap_plano ? form.soap_plano.replace(/\n/g, '<br/>') : '—'}</div>
+            <div style="margin-bottom: 3px;"><strong>S — Subjetivo:</strong><br/>${form.soap_subjetivo ? form.soap_subjetivo.replace(/\n/g, '<br/>') : '—'}</div>
+            <div style="margin-bottom: 3px;"><strong>O — Objetivo:</strong><br/>${form.soap_objetivo ? form.soap_objetivo.replace(/\n/g, '<br/>') : '—'}</div>
+            <div style="margin-bottom: 3px;"><strong>A — Avaliação:</strong><br/>${form.soap_avaliacao ? form.soap_avaliacao.replace(/\n/g, '<br/>') : '—'}</div>
+            <div style="margin-bottom: 3px;"><strong>P — Plano:</strong><br/>${form.soap_plano ? form.soap_plano.replace(/\n/g, '<br/>') : '—'}</div>
           ` : `<div style="white-space: pre-wrap; text-align: justify;">${form.evolucao || '—'}</div>`}
         </div>
       </div>
@@ -425,13 +425,13 @@ const WorkspaceProntuario: React.FC = () => {
 
     if (dynamicFields.length > 0) {
       body += `
-        <div class="section" style="margin-bottom: 8px;">
+        <div class="section" style="margin-bottom: 4px;">
           <div class="section-title">Informações Complementares</div>
           <div class="section-content" style="font-size: 9.5pt;">
             ${dynamicFields.map(f => `
-              <div style="margin-bottom: 4px;">
+              <div style="margin-bottom: 2px;">
                 <span style="font-weight: 700; color: #475569; font-size: 8pt; text-transform: uppercase;">${f.label}:</span>
-                <div style="margin-top: 1px; text-align: justify; line-height: 1.2;">${String(f.value).replace(/\n/g, '<br/>')}</div>
+                <div style="margin-top: 0.5px; text-align: justify; line-height: 1.15;">${String(f.value).replace(/\n/g, '<br/>')}</div>
               </div>
             `).join('')}
           </div>
@@ -442,14 +442,14 @@ const WorkspaceProntuario: React.FC = () => {
     // 4. Procedures & CIDs
     if (selectedProcIds.length > 0) {
       body += `
-        <div class="section" style="margin-bottom: 8px;">
+        <div class="section" style="margin-bottom: 4px;">
           <div class="section-title">Procedimentos / CID</div>
           <div class="section-content">
             <ul style="padding-left: 15px; margin: 0; font-size: 9.5pt;">
               ${selectedProcIds.map(pid => {
                 const proc = procedimentos.find(p => p.id === pid);
                 const cids = selectedCidsByProc[pid] || [];
-                return `<li style="margin-bottom: 3px; line-height: 1.2;"><strong>${proc?.nome || pid}</strong> (Cód: ${proc?.id || pid}) ${cids.length > 0 ? `<br/><span style="font-size: 8.5pt; color: #475569;">CIDs: ${cids.join(', ')}</span>` : ''}</li>`;
+                return `<li style="margin-bottom: 2px; line-height: 1.15;"><strong>${proc?.nome || pid}</strong> (Cód: ${proc?.id || pid}) ${cids.length > 0 ? `<br/><span style="font-size: 8.5pt; color: #475569;">CIDs: ${cids.join(', ')}</span>` : ''}</li>`;
               }).join('')}
             </ul>
           </div>
@@ -460,11 +460,11 @@ const WorkspaceProntuario: React.FC = () => {
     // 5. Prescriptions & Exams
     if (listaPrescricao.length > 0 || listaExames.length > 0) {
       body += `
-        <div class="section" style="page-break-inside: avoid; margin-bottom: 8px;">
+        <div class="section" style="page-break-inside: avoid; margin-bottom: 4px;">
           <div class="section-title">Prescrições e Solicitações</div>
           <div class="section-content" style="font-size: 9.5pt;">
             ${listaPrescricao.length > 0 ? `
-              <div style="margin-bottom: 6px;">
+              <div style="margin-bottom: 4px;">
                 <strong style="color: #475569; font-size: 8pt; text-transform: uppercase;">Medicamentos:</strong>
                 <ul style="padding-left: 15px; margin-top: 2px;">
                   ${listaPrescricao.map((p: any) => `<li style="margin-bottom: 2px; line-height: 1.1;"><strong>${p.medicamento}</strong> - ${p.posologia}</li>`).join('')}
@@ -486,7 +486,7 @@ const WorkspaceProntuario: React.FC = () => {
 
     // 6. Signature area
     body += `
-      <div class="signature" style="margin-top: 25px; page-break-inside: avoid;">
+      <div class="signature" style="margin-top: 15px; page-break-inside: avoid;">
         <div class="signature-line" style="width: 250px; border-top: 0.8px solid #000; margin: 0 auto 3px;"></div>
         <div class="name" style="font-weight: 700; font-size: 11pt;">${user?.nome || '—'}</div>
         <div class="role" style="font-size: 9pt; color: #475569;">${user?.profissao || '—'}</div>
