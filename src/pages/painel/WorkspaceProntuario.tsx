@@ -50,6 +50,7 @@ import CamposEspecialidade from '@/components/CamposEspecialidade';
 import ProntuarioAnexos from '@/components/ProntuarioAnexos';
 import ResultadosExames from '@/components/ResultadosExames';
 import HistoricoCompletoModal from '@/components/HistoricoCompletoModal';
+import { TreatmentTab } from '@/components/prontuario/TreatmentTab';
 import { openPrintDocument } from '@/lib/printLayout';
 import { DebouncedTextarea } from '@/components/ui/debounced-textarea';
 
@@ -354,6 +355,31 @@ const WorkspaceProntuario: React.FC = () => {
       `;
     }
 
+    // 2.5 Treatment Plan section
+    if (sessaoCycle || sessaoPts) {
+      body += `
+        <div class="section" style="page-break-inside: avoid;">
+          <div class="section-title">Plano Terapêutico Ativo</div>
+          <div class="section-content">
+            ${sessaoCycle ? `
+              <div style="margin-bottom: 8px;">
+                <span style="font-weight: 700; color: #475569; font-size: 8pt; text-transform: uppercase;">Ciclo de Tratamento:</span>
+                <div style="margin-top: 2px;">${sessaoCycle.treatment_type} (${sessaoCycle.sessions_done}/${sessaoCycle.total_sessions} sessões)</div>
+              </div>` : ''}
+            ${sessaoPts ? `
+              <div style="margin-bottom: 8px;">
+                <span style="font-weight: 700; color: #475569; font-size: 8pt; text-transform: uppercase;">PTS - Diagnóstico Funcional:</span>
+                <div style="margin-top: 2px; text-align: justify;">${sessaoPts.diagnostico_funcional}</div>
+              </div>
+              <div>
+                <span style="font-weight: 700; color: #475569; font-size: 8pt; text-transform: uppercase;">PTS - Objetivos Terapêuticos:</span>
+                <div style="margin-top: 2px; text-align: justify;">${sessaoPts.objetivos_terapeuticos}</div>
+              </div>` : ''}
+          </div>
+        </div>
+      `;
+    }
+
     // 2. Clinical Evolution / SOAP
     body += `
       <div class="section">
@@ -450,25 +476,7 @@ const WorkspaceProntuario: React.FC = () => {
       `;
     }
 
-    // 6. Treatment Cycles & PTS
-    if (sessaoCycle || sessaoPts) {
-      body += `
-        <div class="section" style="page-break-inside: avoid;">
-          <div class="section-title">Plano Terapêutico Ativo</div>
-          <div class="section-content">
-            ${sessaoCycle ? `
-              <div style="margin-bottom: 8px;"><strong>Ciclo:</strong> ${sessaoCycle.treatment_type} (${sessaoCycle.sessions_done}/${sessaoCycle.total_sessions} sessões)</div>
-            ` : ''}
-            ${sessaoPts ? `
-              <div style="margin-bottom: 8px;"><strong>PTS - Diagnóstico:</strong> ${sessaoPts.diagnostico_funcional || '—'}</div>
-              <div><strong>PTS - Objetivos:</strong> ${sessaoPts.objetivos_terapeuticos || '—'}</div>
-            ` : ''}
-          </div>
-        </div>
-      `;
-    }
-
-    // 7. Signature area
+    // 6. Signature area
     body += `
       <div class="signature" style="margin-top: 30px; page-break-inside: avoid;">
         <div class="signature-line" style="width: 280px; border-top: 1px solid #000; margin: 0 auto 5px;"></div>
@@ -507,6 +515,8 @@ const WorkspaceProntuario: React.FC = () => {
         const { data: old } = await supabase.from('prontuarios').select('*').eq('id', finalId).maybeSingle();
         currentProntuario = old;
       }
+      
+      const targetPacienteId = pacienteId || form.paciente_id;
 
       const dbPayload: any = {
         paciente_id: form.paciente_id,
@@ -544,7 +554,9 @@ const WorkspaceProntuario: React.FC = () => {
         custom_data: {
           ...form.custom_data,
           especialidade_fields: especialidadeFields,
-          soap_enabled: soapEnabled
+          soap_enabled: soapEnabled,
+          cycle_info: sessaoCycle ? { id: sessaoCycle.id, type: sessaoCycle.treatment_type, sessions: `${sessaoCycle.sessions_done}/${sessaoCycle.total_sessions}` } : null,
+          pts_info: sessaoPts ? { id: sessaoPts.id, diagnostic: sessaoPts.diagnostico_funcional, goals: sessaoPts.objetivos_terapeuticos } : null
         }
       };
 
@@ -969,58 +981,12 @@ const WorkspaceProntuario: React.FC = () => {
                   </TabsContent>
 
                   <TabsContent value="treatments" className="mt-0 space-y-6">
-                    {sessaoCycle && (sessaoCycle.status === 'em_andamento' || sessaoCycle.status === 'ativo') ? (
-                      <Card className="border-primary/20 bg-primary/5">
-                        <CardContent className="p-4">
-                          <div className="flex items-center gap-3">
-                            <Activity className="w-5 h-5 text-primary" />
-                            <div className="flex-1 min-w-0">
-                              <p className="font-bold text-sm truncate">Tratamento Ativo: {sessaoCycle.treatment_type}</p>
-                              <p className="text-xs text-muted-foreground">Início: {new Date(sessaoCycle.start_date + 'T12:00:00').toLocaleDateString('pt-BR')} | Sessões: {sessaoCycle.sessions_done}/{sessaoCycle.total_sessions}</p>
-                            </div>
-                            <Badge className="bg-primary text-primary-foreground">Ativo</Badge>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ) : (
-                      <div className="p-6 text-center border border-dashed rounded-xl bg-muted/20">
-                        <p className="text-xs text-muted-foreground mb-3">Nenhum ciclo de tratamento ativo.</p>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="h-8 text-xs" 
-                          onClick={() => setCreateCycleOpen(true)}
-                        >
-                          Iniciar Ciclo
-                        </Button>
-                      </div>
-                    )}
-                    
-                    {sessaoPts ? (
-                      <Card>
-                        <CardContent className="p-4">
-                          <h4 className="font-bold text-sm mb-2 flex items-center gap-2">
-                            <ClipboardList className="w-4 h-4" /> Projeto Terapêutico Singular (PTS)
-                          </h4>
-                          <div className="space-y-2">
-                            <div className="text-xs bg-muted p-2 rounded"><strong>Diagnóstico:</strong> {sessaoPts.diagnostico_funcional}</div>
-                            <div className="text-xs bg-muted p-2 rounded"><strong>Objetivos:</strong> {sessaoPts.objetivos_terapeuticos}</div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ) : (
-                      <div className="p-6 text-center border border-dashed rounded-xl bg-muted/20">
-                        <p className="text-xs text-muted-foreground mb-3">Nenhum PTS ativo para este paciente.</p>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="h-8 text-xs" 
-                          onClick={() => setCreatePtsOpen(true)}
-                        >
-                          Criar Projeto Terapêutico (PTS)
-                        </Button>
-                      </div>
-                    )}
+                    <TreatmentTab 
+                      pacienteId={pacienteId || form.paciente_id} 
+                      pacienteNome={pacienteData?.nome || pacienteNome || 'Paciente'}
+                      onCycleCreated={() => setCreateCycleOpen(true)}
+                      onPtsCreated={() => setCreatePtsOpen(true)}
+                    />
                   </TabsContent>
 
                   <TabsContent value="antecedents" className="mt-0 space-y-6">
@@ -1097,7 +1063,7 @@ const WorkspaceProntuario: React.FC = () => {
         onOpenChange={setCreatePtsOpen}
         pacienteId={pacienteId || form.paciente_id}
         pacienteNome={pacienteData?.nome || pacienteNome || 'Paciente'}
-        onSuccess={() => loadSessaoData(pacienteId || form.paciente_id)}
+        onSuccess={() => setRefreshTrigger(r => r + 1)}
       />
 
       <CreateCycleModal
@@ -1105,7 +1071,7 @@ const WorkspaceProntuario: React.FC = () => {
         onOpenChange={setCreateCycleOpen}
         pacienteId={pacienteId || form.paciente_id}
         pacienteNome={pacienteData?.nome || pacienteNome || 'Paciente'}
-        onSuccess={() => loadSessaoData(pacienteId || form.paciente_id)}
+        onSuccess={() => setRefreshTrigger(r => r + 1)}
       />
     </div>
   );
