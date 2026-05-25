@@ -486,10 +486,24 @@ const WorkspaceProntuario: React.FC = () => {
 
     // 6. Signature area
     body += `
-      <div class="signature" style="margin-top: 30px; page-break-inside: avoid;">
-        <div class="signature-line" style="width: 280px; border-top: 1px solid #000; margin: 0 auto 5px;"></div>
-        <div class="name" style="font-weight: 700;">${user?.nome || '—'}</div>
+      <div class="signature" style="margin-top: 25px; page-break-inside: avoid;">
+        <div class="signature-line" style="width: 250px; border-top: 0.8px solid #000; margin: 0 auto 3px;"></div>
+        <div class="name" style="font-weight: 700; font-size: 11pt;">${user?.nome || '—'}</div>
         <div class="role" style="font-size: 9pt; color: #475569;">${user?.profissao || '—'}</div>
+        ${carimbo ? `
+          <div class="carimbo-container">
+            ${carimbo.tipo === 'imagem' && carimbo.imagem_url ? `
+              <img src="${carimbo.imagem_url}" alt="Carimbo" style="max-height: 80px; max-width: 220px; margin: 5px auto;" />
+            ` : `
+              <div class="carimbo-digital" style="margin-top: 5px; border: 1.2px solid #000; padding: 4px 10px; border-radius: 4px; display: inline-block;">
+                <div class="carimbo-nome" style="font-weight: 800; text-transform: uppercase; font-size: 10pt;">${carimbo.nome || user?.nome}</div>
+                <div class="carimbo-info" style="font-size: 7.5pt;">${carimbo.conselho} ${carimbo.numero_registro}-${carimbo.uf}</div>
+                <div class="carimbo-info" style="font-size: 7.5pt; font-weight: 600;">${carimbo.especialidade || user?.profissao}</div>
+                ${carimbo.cargo ? `<div class="carimbo-info" style="font-size: 7pt;">${carimbo.cargo}</div>` : ''}
+              </div>
+            `}
+          </div>
+        ` : ''}
       </div>
     `;
 
