@@ -353,10 +353,12 @@ const WorkspaceProntuario: React.FC = () => {
       const s15 = data.secao15?.parecer ? `<div style="margin-bottom: 4px;"><strong>Parecer Profissional:</strong> ${data.secao15.parecer}</div>` : '';
       
       body += `
-        <div style="border: 0.8px solid #000; padding: 10px; margin-bottom: 10px; page-break-inside: avoid;">
-          <div style="font-size: 9pt; font-weight: 800; text-transform: uppercase; border-bottom: 0.8px solid #000; padding-bottom: 2px; margin-bottom: 6px;">Acolhimento em Saúde Mental</div>
-          ${s3}${s4}${s15}
-          <div style="font-style: italic; font-size: 8pt; color: #64748b; margin-top: 4px;">* Registro clínico estruturado.</div>
+        <div style="border: 0.8px solid #000; padding: 6px; margin-bottom: 6px; page-break-inside: avoid;">
+          <div style="font-size: 8.5pt; font-weight: 800; text-transform: uppercase; border-bottom: 0.5px solid #000; padding-bottom: 1px; margin-bottom: 4px;">Acolhimento em Saúde Mental</div>
+          <div style="font-size: 9pt; line-height: 1.2;">
+            ${s3}${s4}${s15}
+          </div>
+          <div style="font-style: italic; font-size: 7.5pt; color: #64748b; margin-top: 2px;">* Registro clínico estruturado.</div>
         </div>
       `;
     }
