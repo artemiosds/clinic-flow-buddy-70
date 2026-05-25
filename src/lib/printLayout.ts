@@ -227,6 +227,7 @@ export function buildInstitutionalCSS(
     flex-wrap: wrap;
     line-height: 1.0;
   }
+  .doc-meta span { display: inline-block; }
   .doc-meta strong { color: #000; }
 
   /* CONTENT — justified */
@@ -392,6 +393,17 @@ export function docHeader(title: string, config: DocumentConfig, extraRight?: st
   `;
 }
 
+export function docMeta(meta: Record<string, string>): string {
+  if (!meta || Object.keys(meta).length === 0) return '';
+  return `
+    <div class="doc-meta">
+      ${Object.entries(meta).map(([label, value]) => `
+        <span><strong>${label}:</strong> ${value}</span>
+      `).join('')}
+    </div>
+  `;
+}
+
 export function docFooter(config: DocumentConfig): string {
   const text = config.rodapeTexto || `© ${new Date().getFullYear()} ${config.linha1}`;
   return `
@@ -403,15 +415,17 @@ export function docFooter(config: DocumentConfig): string {
   `;
 }
 
-export async function openPrintDocument(title: string, body: string, meta: Record<string, string> = {}) {
+export async function openPrintDocument(
+  title: string, 
+  body: string, 
+  meta: Record<string, string> = {}, 
+  options: InstitutionalLayoutOptions = {}
+) {
   const config = await loadDocumentConfig();
-  const css = buildInstitutionalCSS({}, config);
+  const css = buildInstitutionalCSS(options, config);
   const header = docHeader(title, config);
   const footer = docFooter(config);
-
-  const metaHtml = Object.keys(meta).length > 0 
-    ? `<div class="doc-meta">${Object.entries(meta).map(([k, v]) => `<span><strong>${k}:</strong> ${v}</span>`).join('')}</div>`
-    : '';
+  const metaHtml = docMeta(meta);
 
   const fullHtml = `
     <!DOCTYPE html>
