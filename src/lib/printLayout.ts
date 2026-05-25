@@ -231,15 +231,15 @@ export function buildInstitutionalCSS(
   .doc-meta {
     font-size: ${smallPt}pt;
     color: #334155;
-    padding: 4px 8px;
+    padding: 3px 6px;
     background: #f8fafc;
-    border: 1px solid #e2e8f0;
+    border: 0.8px solid #e2e8f0;
     border-radius: 4px;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
     display: flex;
-    gap: 12px;
+    gap: 10px;
     flex-wrap: wrap;
-    line-height: 1.2;
+    line-height: 1.1;
   }
   .doc-meta strong { color: #000; }
 
@@ -248,26 +248,26 @@ export function buildInstitutionalCSS(
     text-align: justify;
     text-justify: inter-word;
     font-size: ${bodyPt}pt;
-    line-height: 1.5;
+    line-height: 1.4; /* Reduzido de 1.5 para maior compactação */
     word-break: break-word;
     hyphens: auto;
   }
 
   /* SUMMARY CARDS */
-  .summary { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
-  .stat { background: #f0f9ff; border: 1px solid #bae6fd; padding: 6px 12px; border-radius: 4px; text-align: center; min-width: 80px; }
-  .stat strong { display: block; font-size: ${titlePt + 2}pt; color: ${accent}; }
+  .summary { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+  .stat { background: #f0f9ff; border: 1px solid #bae6fd; padding: 4px 10px; border-radius: 4px; text-align: center; min-width: 70px; }
+  .stat strong { display: block; font-size: ${titlePt}pt; color: ${accent}; }
   .stat small { font-size: ${microPt}pt; color: #64748b; }
 
   /* SECTION TITLES */
   h2 {
     font-size: ${sectionPt}pt;
     color: ${accent};
-    margin: 12px 0 6px;
-    padding-bottom: 3px;
-    border-bottom: 1px solid #bae6fd;
+    margin: 10px 0 4px;
+    padding-bottom: 2px;
+    border-bottom: 0.8px solid #bae6fd;
     text-transform: uppercase;
-    letter-spacing: 0.2px;
+    letter-spacing: 0.1px;
     font-weight: 700;
     break-after: avoid;
   }
