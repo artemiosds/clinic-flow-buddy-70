@@ -323,85 +323,25 @@ const WorkspaceProntuario: React.FC = () => {
     let body = '';
 
     // 1. Identification Header
-    body += `
-      <div class="info-grid" style="margin-bottom: 2px; grid-template-columns: 2fr 1fr; border: 0.5px solid #000; padding: 2px 4px; gap: 2px;">
-        <div style="line-height: 1;">
-          <span class="info-label" style="font-size: 7pt; margin: 0;">Paciente</span>
-          <div class="info-value" style="font-weight: 700; font-size: 9pt;">${meta.Paciente}</div>
-        </div>
-        <div style="line-height: 1;">
-          <span class="info-label" style="font-size: 7pt; margin: 0;">Tipo de Registro</span>
-          <div class="info-value" style="font-weight: 700; font-size: 9pt;">${meta.Tipo}</div>
-        </div>
-        <div style="line-height: 1;">
-          <span class="info-label" style="font-size: 7pt; margin: 0;">Dados do Paciente</span>
-          <div class="info-value" style="font-size: 8.5pt;">Idade: ${meta.Idade} | CPF: ${meta.CPF} | CNS: ${meta.CNS}</div>
-        </div>
-        <div style="line-height: 1;">
-          <span class="info-label" style="font-size: 7pt; margin: 0;">Data e Hora</span>
-          <div class="info-value" style="font-size: 8.5pt;">${meta.Data} às ${meta.Hora}</div>
-        </div>
-      </div>
-
-    `;
+    body += `<div class="info-grid" style="margin-bottom: 2px; grid-template-columns: 2fr 1fr; border: 0.5px solid #000; padding: 2px 4px; gap: 2px;"><div style="line-height: 1;"><span class="info-label" style="font-size: 7pt; margin: 0;">Paciente</span><div class="info-value" style="font-weight: 700; font-size: 9pt;">${meta.Paciente}</div></div><div style="line-height: 1;"><span class="info-label" style="font-size: 7pt; margin: 0;">Tipo de Registro</span><div class="info-value" style="font-weight: 700; font-size: 9pt;">${meta.Tipo}</div></div><div style="line-height: 1;"><span class="info-label" style="font-size: 7pt; margin: 0;">Dados do Paciente</span><div class="info-value" style="font-size: 8.5pt;">Idade: ${meta.Idade} | CPF: ${meta.CPF} | CNS: ${meta.CNS}</div></div><div style="line-height: 1;"><span class="info-label" style="font-size: 7pt; margin: 0;">Data e Hora</span><div class="info-value" style="font-size: 8.5pt;">${meta.Data} às ${meta.Hora}</div></div></div>`;
 
     // 2. Acolhimento section if data exists
     const acolhimentoRaw = acolhimentoDraft && Object.keys(acolhimentoDraft).length > 0 ? acolhimentoDraft : acolhimentoData?.dados_acolhimento;
     if (acolhimentoRaw && Object.keys(acolhimentoRaw).length > 0) {
       const data = acolhimentoRaw;
-      const s3 = data.secao3?.queixa ? `<div style="margin-bottom: 2px;"><strong>Queixa Principal:</strong> ${data.secao3.queixa}</div>` : '';
-      const s4 = data.secao4?.sintomas?.length > 0 ? `<div style="margin-bottom: 2px;"><strong>Sintomas (30 dias):</strong> ${data.secao4.sintomas.join(', ')}</div>` : '';
-      const s15 = data.secao15?.parecer ? `<div style="margin-bottom: 2px;"><strong>Parecer Profissional:</strong> ${data.secao15.parecer}</div>` : '';
-      
-      body += `
-        <div style="border: 0.5px solid #000; padding: 2px 4px; margin-bottom: 2px; page-break-inside: avoid;">
-          <div style="font-size: 8pt; font-weight: 800; text-transform: uppercase; border-bottom: 0.5px solid #000; padding-bottom: 0px; margin-bottom: 1px;">Acolhimento em Saúde Mental</div>
-          <div style="font-size: 9pt; line-height: 1.1;">
-            ${s3}${s4}${s15}
-          </div>
-        </div>
-      `;
-
+      const s3 = data.secao3?.queixa ? `<div style="margin-bottom: 1px;"><strong>Queixa Principal:</strong> ${data.secao3.queixa}</div>` : '';
+      const s4 = data.secao4?.sintomas?.length > 0 ? `<div style="margin-bottom: 1px;"><strong>Sintomas (30 dias):</strong> ${data.secao4.sintomas.join(', ')}</div>` : '';
+      const s15 = data.secao15?.parecer ? `<div style="margin-bottom: 1px;"><strong>Parecer Profissional:</strong> ${data.secao15.parecer}</div>` : '';
+      body += `<div style="border: 0.5px solid #000; padding: 2px 4px; margin-bottom: 2px; page-break-inside: avoid;"><div style="font-size: 8pt; font-weight: 800; text-transform: uppercase; border-bottom: 0.5px solid #000; padding-bottom: 0px; margin-bottom: 1px;">Acolhimento em Saúde Mental</div><div style="font-size: 9pt; line-height: 1.05;">${s3}${s4}${s15}</div></div>`;
     }
 
     // 2.5 Treatment Plan section
     if (sessaoCycle || sessaoPts) {
-      body += `
-        <div class="section" style="page-break-inside: avoid; margin-bottom: 2px;">
-          <div class="section-title" style="margin-bottom: 1px;">Plano Terapêutico Ativo</div>
-          <div class="section-content" style="font-size: 9pt; line-height: 1.1;">
-            ${sessaoCycle ? `
-              <div style="margin-bottom: 1px;">
-                <span style="font-weight: 700; color: #475569; font-size: 7.5pt; text-transform: uppercase;">Ciclo:</span> ${sessaoCycle.treatment_type} (${sessaoCycle.sessions_done}/${sessaoCycle.total_sessions} sessões)
-              </div>` : ''}
-            ${sessaoPts ? `
-              <div style="margin-bottom: 1px;">
-                <span style="font-weight: 700; color: #475569; font-size: 7.5pt; text-transform: uppercase;">Diagnóstico:</span> ${sessaoPts.diagnostico_funcional}
-              </div>
-              <div style="margin-bottom: 1px;">
-                <span style="font-weight: 700; color: #475569; font-size: 7.5pt; text-transform: uppercase;">Objetivos:</span> ${sessaoPts.objetivos_terapeuticos}
-              </div>` : ''}
-          </div>
-        </div>
-
-      `;
+      body += `<div class="section" style="page-break-inside: avoid; margin-bottom: 2px;"><div class="section-title" style="margin-bottom: 1px;">Plano Terapêutico Ativo</div><div class="section-content" style="font-size: 9pt; line-height: 1.05;">${sessaoCycle ? `<div style="margin-bottom: 1px;"><span style="font-weight: 700; color: #475569; font-size: 7.5pt; text-transform: uppercase;">Ciclo:</span> ${sessaoCycle.treatment_type} (${sessaoCycle.sessions_done}/${sessaoCycle.total_sessions} sessões)</div>` : ''}${sessaoPts ? `<div style="margin-bottom: 1px;"><span style="font-weight: 700; color: #475569; font-size: 7.5pt; text-transform: uppercase;">Diagnóstico:</span> ${sessaoPts.diagnostico_funcional}</div><div style="margin-bottom: 1px;"><span style="font-weight: 700; color: #475569; font-size: 7.5pt; text-transform: uppercase;">Objetivos:</span> ${sessaoPts.objetivos_terapeuticos}</div>` : ''}</div></div>`;
     }
 
     // 2. Clinical Evolution / SOAP
-    body += `
-      <div class="section" style="margin-bottom: 2px;">
-        <div class="section-title" style="margin-bottom: 1px;">Evolução Clínica / SOAP</div>
-        <div class="section-content" style="font-size: 9.5pt; line-height: 1.1;">
-          ${soapEnabled ? `
-            <div style="margin-bottom: 1px;"><strong>S — Subjetivo:</strong> ${form.soap_subjetivo ? form.soap_subjetivo.replace(/\n/g, '<br/>') : '—'}</div>
-            <div style="margin-bottom: 1px;"><strong>O — Objetivo:</strong> ${form.soap_objetivo ? form.soap_objetivo.replace(/\n/g, '<br/>') : '—'}</div>
-            <div style="margin-bottom: 1px;"><strong>A — Avaliação:</strong> ${form.soap_avaliacao ? form.soap_avaliacao.replace(/\n/g, '<br/>') : '—'}</div>
-            <div style="margin-bottom: 1px;"><strong>P — Plano:</strong> ${form.soap_plano ? form.soap_plano.replace(/\n/g, '<br/>') : '—'}</div>
-          ` : `<div style="white-space: pre-wrap; text-align: justify;">${form.evolucao || '—'}</div>`}
-        </div>
-      </div>
-
-    `;
+    body += `<div class="section" style="margin-bottom: 2px;"><div class="section-title" style="margin-bottom: 1px;">Evolução Clínica / SOAP</div><div class="section-content" style="font-size: 9.5pt; line-height: 1.05;">${soapEnabled ? `<div style="margin-bottom: 1px;"><strong>S — Subjetivo:</strong> ${form.soap_subjetivo ? form.soap_subjetivo.replace(/\n/g, '<br/>') : '—'}</div><div style="margin-bottom: 1px;"><strong>O — Objetivo:</strong> ${form.soap_objetivo ? form.soap_objetivo.replace(/\n/g, '<br/>') : '—'}</div><div style="margin-bottom: 1px;"><strong>A — Avaliação:</strong> ${form.soap_avaliacao ? form.soap_avaliacao.replace(/\n/g, '<br/>') : '—'}</div><div style="margin-bottom: 1px;"><strong>P — Plano:</strong> ${form.soap_plano ? form.soap_plano.replace(/\n/g, '<br/>') : '—'}</div>` : `<div style="white-space: pre-wrap; text-align: justify;">${form.evolucao || '—'}</div>`}</div></div>`;
 
     // 3. Dynamic Fields & Specialty Fields
     const dynamicFields = [];
@@ -413,7 +353,6 @@ const WorkspaceProntuario: React.FC = () => {
     if (form.conduta) dynamicFields.push({ label: 'Conduta', value: form.conduta });
     if (form.indicacao_retorno) dynamicFields.push({ label: 'Indicação de Retorno', value: form.indicacao_retorno });
 
-    // Specialty fields
     if (Object.keys(especialidadeFields).length > 0) {
       Object.entries(especialidadeFields).forEach(([key, val]) => {
         if (val && val !== 'false') {
@@ -424,91 +363,25 @@ const WorkspaceProntuario: React.FC = () => {
     }
 
     if (dynamicFields.length > 0) {
-      body += `
-        <div class="section" style="margin-bottom: 2px;">
-          <div class="section-title" style="margin-bottom: 1px;">Informações Complementares</div>
-          <div class="section-content" style="font-size: 9pt; line-height: 1.1;">
-            ${dynamicFields.map(f => `
-              <div style="margin-bottom: 1px;">
-                <span style="font-weight: 700; color: #475569; font-size: 7.5pt; text-transform: uppercase;">${f.label}:</span> ${String(f.value).replace(/\n/g, '<br/>')}
-              </div>
-            `).join('')}
-          </div>
-        </div>
-
-      `;
+      body += `<div class="section" style="margin-bottom: 2px;"><div class="section-title" style="margin-bottom: 1px;">Informações Complementares</div><div class="section-content" style="font-size: 9pt; line-height: 1.05;">${dynamicFields.map(f => `<div style="margin-bottom: 1px;"><span style="font-weight: 700; color: #475569; font-size: 7.5pt; text-transform: uppercase;">${f.label}:</span> ${String(f.value).replace(/\n/g, '<br/>')}</div>`).join('')}</div></div>`;
     }
 
     // 4. Procedures & CIDs
     if (selectedProcIds.length > 0) {
-      body += `
-        <div class="section" style="margin-bottom: 2px;">
-          <div class="section-title" style="margin-bottom: 1px;">Procedimentos / CID</div>
-          <div class="section-content">
-            <ul style="padding-left: 15px; margin: 0; font-size: 9pt;">
-              ${selectedProcIds.map(pid => {
-                const proc = procedimentos.find(p => p.id === pid);
-                const cids = selectedCidsByProc[pid] || [];
-                return `<li style="margin-bottom: 1px; line-height: 1.1;"><strong>${proc?.nome || pid}</strong> ${cids.length > 0 ? `<br/><span style="font-size: 8pt; color: #475569;">CIDs: ${cids.join(', ')}</span>` : ''}</li>`;
-              }).join('')}
-            </ul>
-          </div>
-        </div>
-
-      `;
+      body += `<div class="section" style="margin-bottom: 2px;"><div class="section-title" style="margin-bottom: 1px;">Procedimentos / CID</div><div class="section-content"><ul style="padding-left: 15px; margin: 0; font-size: 9pt;">${selectedProcIds.map(pid => {
+        const proc = procedimentos.find(p => p.id === pid);
+        const cids = selectedCidsByProc[pid] || [];
+        return `<li style="margin-bottom: 1px; line-height: 1.05;"><strong>${proc?.nome || pid}</strong> ${cids.length > 0 ? `<br/><span style="font-size: 8pt; color: #475569;">CIDs: ${cids.join(', ')}</span>` : ''}</li>`;
+      }).join('')}</ul></div></div>`;
     }
 
     // 5. Prescriptions & Exams
     if (listaPrescricao.length > 0 || listaExames.length > 0) {
-      body += `
-        <div class="section" style="page-break-inside: avoid; margin-bottom: 2px;">
-          <div class="section-title" style="margin-bottom: 1px;">Prescrições e Solicitações</div>
-          <div class="section-content" style="font-size: 9pt;">
-            ${listaPrescricao.length > 0 ? `
-              <div style="margin-bottom: 2px;">
-                <span style="font-weight: 700; color: #475569; font-size: 7.5pt; text-transform: uppercase;">Medicamentos:</span>
-                <ul style="padding-left: 15px; margin-top: 1px; margin-bottom: 0;">
-                  ${listaPrescricao.map((p: any) => `<li style="margin-bottom: 1px; line-height: 1.1;"><strong>${p.medicamento}</strong> - ${p.posologia}</li>`).join('')}
-                </ul>
-              </div>
-            ` : ''}
-            ${listaExames.length > 0 ? `
-              <div style="margin-bottom: 0;">
-                <span style="font-weight: 700; color: #475569; font-size: 7.5pt; text-transform: uppercase;">Exames:</span>
-                <ul style="padding-left: 15px; margin-top: 1px; margin-bottom: 0;">
-                  ${listaExames.map((e: any) => `<li style="margin-bottom: 1px; line-height: 1.1;">${e.nome || e}</li>`).join('')}
-                </ul>
-              </div>
-            ` : ''}
-          </div>
-        </div>
-
-      `;
+      body += `<div class="section" style="page-break-inside: avoid; margin-bottom: 2px;"><div class="section-title" style="margin-bottom: 1px;">Prescrições e Solicitações</div><div class="section-content" style="font-size: 9pt;">${listaPrescricao.length > 0 ? `<div style="margin-bottom: 1px;"><span style="font-weight: 700; color: #475569; font-size: 7.5pt; text-transform: uppercase;">Medicamentos:</span><ul style="padding-left: 15px; margin-top: 1px; margin-bottom: 0;">${listaPrescricao.map((p: any) => `<li style="margin-bottom: 1px; line-height: 1.05;"><strong>${p.medicamento}</strong> - ${p.posologia}</li>`).join('')}</ul></div>` : ''}${listaExames.length > 0 ? `<div style="margin-bottom: 0;"><span style="font-weight: 700; color: #475569; font-size: 7.5pt; text-transform: uppercase;">Exames:</span><ul style="padding-left: 15px; margin-top: 1px; margin-bottom: 0;">${listaExames.map((e: any) => `<li style="margin-bottom: 1px; line-height: 1.05;">${e.nome || e}</li>`).join('')}</ul></div>` : ''}</div></div>`;
     }
 
     // 6. Signature area
-    body += `
-      <div class="signature" style="margin-top: 10px; page-break-inside: avoid;">
-        <div class="signature-line" style="width: 250px; border-top: 0.8px solid #000; margin: 0 auto 2px;"></div>
-        <div class="name" style="font-weight: 700; font-size: 10pt; line-height: 1;">${user?.nome || '—'}</div>
-        <div class="role" style="font-size: 8pt; color: #475569; line-height: 1;">${user?.profissao || '—'}</div>
-        ${carimbo ? `
-          <div class="carimbo-container" style="margin-top: 5px;">
-            ${carimbo.tipo === 'imagem' && carimbo.imagem_url ? `
-              <img src="${carimbo.imagem_url}" alt="Carimbo" style="max-height: 70px; max-width: 200px; margin: 2px auto;" />
-            ` : `
-              <div class="carimbo-digital" style="margin-top: 2px; border: 1px solid #000; padding: 2px 8px; border-radius: 4px; display: inline-block; line-height: 1;">
-                <div class="carimbo-nome" style="font-weight: 800; text-transform: uppercase; font-size: 9pt;">${carimbo.nome || user?.nome}</div>
-                <div class="carimbo-info" style="font-size: 7pt;">${carimbo.conselho} ${carimbo.numero_registro}-${carimbo.uf}</div>
-                <div class="carimbo-info" style="font-size: 7pt; font-weight: 600;">${carimbo.especialidade || user?.profissao}</div>
-                ${carimbo.cargo ? `<div class="carimbo-info" style="font-size: 6.5pt;">${carimbo.cargo}</div>` : ''}
-              </div>
-            `}
-          </div>
-        ` : ''}
-      </div>
-
-    `;
+    body += `<div class="signature" style="margin-top: 8px; page-break-inside: avoid;"><div class="signature-line" style="width: 200px; border-top: 0.5px solid #000; margin: 0 auto 1px;"></div><div class="name" style="font-weight: 700; font-size: 9.5pt; line-height: 1;">${user?.nome || '—'}</div><div class="role" style="font-size: 7.5pt; color: #475569; line-height: 1;">${user?.profissao || '—'}</div>${carimbo ? `<div class="carimbo-container" style="margin-top: 4px;">${carimbo.tipo === 'imagem' && carimbo.imagem_url ? `<img src="${carimbo.imagem_url}" alt="Carimbo" style="max-height: 60px; max-width: 180px; margin: 1px auto;" />` : `<div class="carimbo-digital" style="margin-top: 1px; border: 0.8px solid #000; padding: 3px 10px; border-radius: 3px; display: inline-block; line-height: 1;"><div class="carimbo-nome" style="font-weight: 800; text-transform: uppercase; font-size: 8.5pt;">${carimbo.nome || user?.nome}</div><div class="carimbo-info" style="font-size: 6.5pt;">${carimbo.conselho} ${carimbo.numero_registro}-${carimbo.uf}</div><div class="carimbo-info" style="font-size: 6.5pt; font-weight: 600;">${carimbo.especialidade || user?.profissao}</div>${carimbo.cargo ? `<div class="carimbo-info" style="font-size: 6pt;">${carimbo.cargo}</div>` : ''}</div>`}</div>` : ''}</div>`;
 
     await openPrintDocument("Prontuário Clínico", body, meta);
   };
