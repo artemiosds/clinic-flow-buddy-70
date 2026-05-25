@@ -303,6 +303,12 @@ const WorkspaceProntuario: React.FC = () => {
   }, [pacienteId, agendamentoId, editId, refreshTrigger]);
 
   const handlePrint = async () => {
+    const { data: carimbo } = await supabase
+      .from('profissionais_carimbo')
+      .select('*')
+      .eq('profissional_id', user?.id)
+      .maybeSingle();
+
     const meta = {
       'Paciente': pacienteData?.nome || pacienteNome || '—',
       'Idade': pacienteData?.data_nascimento ? calcularIdade(pacienteData.data_nascimento) : '—',
