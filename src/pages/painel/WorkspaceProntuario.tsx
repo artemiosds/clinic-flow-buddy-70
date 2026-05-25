@@ -366,22 +366,22 @@ const WorkspaceProntuario: React.FC = () => {
     // 2.5 Treatment Plan section
     if (sessaoCycle || sessaoPts) {
       body += `
-        <div class="section" style="page-break-inside: avoid;">
+        <div class="section" style="page-break-inside: avoid; margin-bottom: 6px;">
           <div class="section-title">Plano Terapêutico Ativo</div>
-          <div class="section-content">
+          <div class="section-content" style="font-size: 9.5pt; line-height: 1.2;">
             ${sessaoCycle ? `
-              <div style="margin-bottom: 8px;">
-                <span style="font-weight: 700; color: #475569; font-size: 8pt; text-transform: uppercase;">Ciclo de Tratamento:</span>
-                <div style="margin-top: 2px;">${sessaoCycle.treatment_type} (${sessaoCycle.sessions_done}/${sessaoCycle.total_sessions} sessões)</div>
+              <div style="margin-bottom: 4px;">
+                <span style="font-weight: 700; color: #475569; font-size: 7.5pt; text-transform: uppercase;">Ciclo de Tratamento:</span>
+                <div style="margin-top: 1px;">${sessaoCycle.treatment_type} (${sessaoCycle.sessions_done}/${sessaoCycle.total_sessions} sessões)</div>
               </div>` : ''}
             ${sessaoPts ? `
-              <div style="margin-bottom: 8px;">
-                <span style="font-weight: 700; color: #475569; font-size: 8pt; text-transform: uppercase;">PTS - Diagnóstico Funcional:</span>
-                <div style="margin-top: 2px; text-align: justify;">${sessaoPts.diagnostico_funcional}</div>
+              <div style="margin-bottom: 4px;">
+                <span style="font-weight: 700; color: #475569; font-size: 7.5pt; text-transform: uppercase;">PTS - Diagnóstico Funcional:</span>
+                <div style="margin-top: 1px; text-align: justify;">${sessaoPts.diagnostico_funcional}</div>
               </div>
-              <div>
-                <span style="font-weight: 700; color: #475569; font-size: 8pt; text-transform: uppercase;">PTS - Objetivos Terapêuticos:</span>
-                <div style="margin-top: 2px; text-align: justify;">${sessaoPts.objetivos_terapeuticos}</div>
+              <div style="margin-bottom: 4px;">
+                <span style="font-weight: 700; color: #475569; font-size: 7.5pt; text-transform: uppercase;">PTS - Objetivos Terapêuticos:</span>
+                <div style="margin-top: 1px; text-align: justify;">${sessaoPts.objetivos_terapeuticos}</div>
               </div>` : ''}
           </div>
         </div>
