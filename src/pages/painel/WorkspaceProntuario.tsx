@@ -50,6 +50,7 @@ import CamposEspecialidade from '@/components/CamposEspecialidade';
 import ProntuarioAnexos from '@/components/ProntuarioAnexos';
 import ResultadosExames from '@/components/ResultadosExames';
 import HistoricoCompletoModal from '@/components/HistoricoCompletoModal';
+import { TreatmentTab } from '@/components/prontuario/TreatmentTab';
 import { openPrintDocument } from '@/lib/printLayout';
 import { DebouncedTextarea } from '@/components/ui/debounced-textarea';
 
@@ -969,58 +970,12 @@ const WorkspaceProntuario: React.FC = () => {
                   </TabsContent>
 
                   <TabsContent value="treatments" className="mt-0 space-y-6">
-                    {sessaoCycle && (sessaoCycle.status === 'em_andamento' || sessaoCycle.status === 'ativo') ? (
-                      <Card className="border-primary/20 bg-primary/5">
-                        <CardContent className="p-4">
-                          <div className="flex items-center gap-3">
-                            <Activity className="w-5 h-5 text-primary" />
-                            <div className="flex-1 min-w-0">
-                              <p className="font-bold text-sm truncate">Tratamento Ativo: {sessaoCycle.treatment_type}</p>
-                              <p className="text-xs text-muted-foreground">Início: {new Date(sessaoCycle.start_date + 'T12:00:00').toLocaleDateString('pt-BR')} | Sessões: {sessaoCycle.sessions_done}/{sessaoCycle.total_sessions}</p>
-                            </div>
-                            <Badge className="bg-primary text-primary-foreground">Ativo</Badge>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ) : (
-                      <div className="p-6 text-center border border-dashed rounded-xl bg-muted/20">
-                        <p className="text-xs text-muted-foreground mb-3">Nenhum ciclo de tratamento ativo.</p>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="h-8 text-xs" 
-                          onClick={() => setCreateCycleOpen(true)}
-                        >
-                          Iniciar Ciclo
-                        </Button>
-                      </div>
-                    )}
-                    
-                    {sessaoPts ? (
-                      <Card>
-                        <CardContent className="p-4">
-                          <h4 className="font-bold text-sm mb-2 flex items-center gap-2">
-                            <ClipboardList className="w-4 h-4" /> Projeto Terapêutico Singular (PTS)
-                          </h4>
-                          <div className="space-y-2">
-                            <div className="text-xs bg-muted p-2 rounded"><strong>Diagnóstico:</strong> {sessaoPts.diagnostico_funcional}</div>
-                            <div className="text-xs bg-muted p-2 rounded"><strong>Objetivos:</strong> {sessaoPts.objetivos_terapeuticos}</div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ) : (
-                      <div className="p-6 text-center border border-dashed rounded-xl bg-muted/20">
-                        <p className="text-xs text-muted-foreground mb-3">Nenhum PTS ativo para este paciente.</p>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="h-8 text-xs" 
-                          onClick={() => setCreatePtsOpen(true)}
-                        >
-                          Criar Projeto Terapêutico (PTS)
-                        </Button>
-                      </div>
-                    )}
+                    <TreatmentTab 
+                      pacienteId={pacienteId || form.paciente_id} 
+                      pacienteNome={pacienteData?.nome || pacienteNome || 'Paciente'}
+                      onCycleCreated={() => setCreateCycleOpen(true)}
+                      onPtsCreated={() => setCreatePtsOpen(true)}
+                    />
                   </TabsContent>
 
                   <TabsContent value="antecedents" className="mt-0 space-y-6">
@@ -1097,7 +1052,7 @@ const WorkspaceProntuario: React.FC = () => {
         onOpenChange={setCreatePtsOpen}
         pacienteId={pacienteId || form.paciente_id}
         pacienteNome={pacienteData?.nome || pacienteNome || 'Paciente'}
-        onSuccess={() => loadSessaoData(pacienteId || form.paciente_id)}
+        onSuccess={() => setRefreshTrigger(r => r + 1)}
       />
 
       <CreateCycleModal
@@ -1105,7 +1060,7 @@ const WorkspaceProntuario: React.FC = () => {
         onOpenChange={setCreateCycleOpen}
         pacienteId={pacienteId || form.paciente_id}
         pacienteNome={pacienteData?.nome || pacienteNome || 'Paciente'}
-        onSuccess={() => loadSessaoData(pacienteId || form.paciente_id)}
+        onSuccess={() => setRefreshTrigger(r => r + 1)}
       />
     </div>
   );
