@@ -418,7 +418,7 @@ export async function openPrintDocument(title: string, body: string, meta: Recor
   const footer = docFooter(config);
 
   const metaHtml = Object.keys(meta).length > 0 
-    ? \`<div class="doc-meta">\${Object.entries(meta).map(([k, v]) => \`<span><strong>\${k}:</strong> \${v}</span>\`).join('')}</div>\`
+    ? `<div class="doc-meta">${Object.entries(meta).map(([k, v]) => `<span><strong>${k}:</strong> ${v}</span>`).join('')}</div>`
     : '';
 
   const fullHtml = \`
