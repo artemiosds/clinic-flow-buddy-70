@@ -355,6 +355,31 @@ const WorkspaceProntuario: React.FC = () => {
       `;
     }
 
+    // 2.5 Treatment Plan section
+    if (sessaoCycle || sessaoPts) {
+      body += `
+        <div class="section" style="page-break-inside: avoid;">
+          <div class="section-title">Plano Terapêutico Ativo</div>
+          <div class="section-content">
+            ${sessaoCycle ? `
+              <div style="margin-bottom: 8px;">
+                <span style="font-weight: 700; color: #475569; font-size: 8pt; text-transform: uppercase;">Ciclo de Tratamento:</span>
+                <div style="margin-top: 2px;">${sessaoCycle.treatment_type} (${sessaoCycle.sessions_done}/${sessaoCycle.total_sessions} sessões)</div>
+              </div>` : ''}
+            ${sessaoPts ? `
+              <div style="margin-bottom: 8px;">
+                <span style="font-weight: 700; color: #475569; font-size: 8pt; text-transform: uppercase;">PTS - Diagnóstico Funcional:</span>
+                <div style="margin-top: 2px; text-align: justify;">${sessaoPts.diagnostico_funcional}</div>
+              </div>
+              <div>
+                <span style="font-weight: 700; color: #475569; font-size: 8pt; text-transform: uppercase;">PTS - Objetivos Terapêuticos:</span>
+                <div style="margin-top: 2px; text-align: justify;">${sessaoPts.objetivos_terapeuticos}</div>
+              </div>` : ''}
+          </div>
+        </div>
+      `;
+    }
+
     // 2. Clinical Evolution / SOAP
     body += `
       <div class="section">
@@ -451,25 +476,7 @@ const WorkspaceProntuario: React.FC = () => {
       `;
     }
 
-    // 6. Treatment Cycles & PTS
-    if (sessaoCycle || sessaoPts) {
-      body += `
-        <div class="section" style="page-break-inside: avoid;">
-          <div class="section-title">Plano Terapêutico Ativo</div>
-          <div class="section-content">
-            ${sessaoCycle ? `
-              <div style="margin-bottom: 8px;"><strong>Ciclo:</strong> ${sessaoCycle.treatment_type} (${sessaoCycle.sessions_done}/${sessaoCycle.total_sessions} sessões)</div>
-            ` : ''}
-            ${sessaoPts ? `
-              <div style="margin-bottom: 8px;"><strong>PTS - Diagnóstico:</strong> ${sessaoPts.diagnostico_funcional || '—'}</div>
-              <div><strong>PTS - Objetivos:</strong> ${sessaoPts.objetivos_terapeuticos || '—'}</div>
-            ` : ''}
-          </div>
-        </div>
-      `;
-    }
-
-    // 7. Signature area
+    // 6. Signature area
     body += `
       <div class="signature" style="margin-top: 30px; page-break-inside: avoid;">
         <div class="signature-line" style="width: 280px; border-top: 1px solid #000; margin: 0 auto 5px;"></div>
