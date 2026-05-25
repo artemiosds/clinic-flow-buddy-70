@@ -468,23 +468,23 @@ function buildHistoryBody(pacienteNome: string, entries: TimelineEntry[]): strin
     .join("");
 
   return `
-    <div class="info-grid" style="margin-bottom: 15px; grid-template-columns: 3fr 1fr; border-width: 0.5px;">
-      <div><span class="info-label">Paciente</span><div class="info-value" style="font-weight: 700; font-size: 11pt;">${escapeHtml(pacienteNome)}</div></div>
-      <div><span class="info-label">Total de Registros</span><div class="info-value" style="font-weight: 700;">${entries.length}</div></div>
+    <div class="info-grid" style="margin-bottom: 8px; grid-template-columns: 3fr 1fr; border-width: 0.8px; padding: 6px;">
+      <div><span class="info-label">Paciente</span><div class="info-value" style="font-weight: 700; font-size: 11pt; line-height: 1.0;">${escapeHtml(pacienteNome)}</div></div>
+      <div><span class="info-label">Total de Registros</span><div class="info-value" style="font-weight: 700; line-height: 1.0;">${entries.length}</div></div>
     </div>
 
-    <h2 style="margin-top: 15px; margin-bottom: 8px; font-size: 11pt;">Linha do Tempo Clínica</h2>
-    <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
+    <h2 style="margin-top: 10px; margin-bottom: 4px; font-size: 10.5pt; border-bottom: 1px solid #bae6fd;">Linha do Tempo Clínica</h2>
+    <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt; margin-bottom: 8px;">
       <thead>
         <tr style="background-color: #f8fafc;">
-          <th style="width:12%; border: 0.5px solid #e2e8f0; padding: 4px;">Data</th>
-          <th style="width:18%; border: 0.5px solid #e2e8f0; padding: 4px;">Tipo</th>
-          <th style="width:20%; border: 0.5px solid #e2e8f0; padding: 4px;">Profissional</th>
-          <th style="width:15%; border: 0.5px solid #e2e8f0; padding: 4px;">Especialidade</th>
-          <th style="border: 0.5px solid #e2e8f0; padding: 4px;">Resumo Clínico</th>
+          <th style="width:10%; border: 0.8px solid #cbd5e1; padding: 3px;">Data</th>
+          <th style="width:15%; border: 0.8px solid #cbd5e1; padding: 3px;">Tipo</th>
+          <th style="width:20%; border: 0.8px solid #cbd5e1; padding: 3px;">Profissional</th>
+          <th style="width:15%; border: 0.8px solid #cbd5e1; padding: 3px;">Especialidade</th>
+          <th style="border: 0.8px solid #cbd5e1; padding: 3px;">Resumo Clínico</th>
         </tr>
       </thead>
-      <tbody>${rows || '<tr><td colspan="5" style="text-align:center; padding: 20px; color:#64748b;">Nenhum registro encontrado no histórico.</td></tr>'}</tbody>
+      <tbody>${rows || '<tr><td colspan="5" style="text-align:center; padding: 15px; color:#64748b;">Nenhum registro encontrado no histórico.</td></tr>'}</tbody>
     </table>
   `;
 }
