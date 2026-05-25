@@ -287,14 +287,6 @@ export function buildInstitutionalCSS(
   .signature .role { font-size: ${smallPt - 1}pt; color: #475569; line-height: 1; }
   .signature .carimbo-container { margin-top: 4px; padding-top: 2px; }
 
-  /* E-SIGNATURE */
-  .e-signature-box {
-    border: 0.5px solid #94a3b8; border-radius: 2px; padding: 3px 6px;
-    font-size: ${microPt - 1}pt; line-height: 1.1; color: #475569; max-width: 300px;
-    background: #fff; margin: 0 auto;
-  }
-  .e-signature-box .sig-title { font-weight: 700; font-size: ${smallPt - 1}pt; color: ${accent}; margin-bottom: 1px; text-align: center; }
-
   /* CARIMBO */
   .carimbo-digital { border: 1px solid #000; border-radius: 3px; padding: 4px 8px; text-align: center; font-size: ${smallPt - 1}pt; display: inline-block; background: #fff; line-height: 1.0; }
   .carimbo-digital .carimbo-nome { font-weight: 800; font-size: ${bodyPt - 1}pt; color: #000; text-transform: uppercase; }
@@ -342,7 +334,7 @@ export function buildInstitutionalCSS(
   }
 
   ${opts.extraCSS || ''}
-</style>\`;
+</style>`;
 }
 
 export const institutionalCSS = buildInstitutionalCSS();
@@ -366,49 +358,49 @@ export function docHeader(title: string, config: DocumentConfig, extraRight?: st
 
   const roundStyle = (size: number, rounded: boolean) =>
     rounded
-      ? \`width:\${size}px;height:\${size}px;border-radius:9999px;object-fit:cover;background:#fff;\`
-      : \`max-height:\${size}px;max-width:\${size * 2}px;width:auto;height:auto;object-fit:contain;\`;
+      ? `width:${size}px;height:${size}px;border-radius:9999px;object-fit:cover;background:#fff;`
+      : `max-height:${size}px;max-width:${size * 2}px;width:auto;height:auto;object-fit:contain;`;
 
   const leftSlot = leftUrl
-    ? \`<div class="logo-left" style="flex:0 0 auto;min-width:\${hL * 1.6}px;display:flex;justify-content:flex-start;">
-         <img src="\${leftUrl}" alt="Logo institucional esquerda" style="\${roundStyle(hL, config.logoEsquerdaRedonda)}" onerror="this.style.display='none'" />
-       </div>\`
-    : \`<div class="logo-left" style="flex:0 0 auto;"></div>\`;
+    ? `<div class="logo-left" style="flex:0 0 auto;min-width:${hL * 1.6}px;display:flex;justify-content:flex-start;">
+         <img src="${leftUrl}" alt="Logo institucional esquerda" style="${roundStyle(hL, config.logoEsquerdaRedonda)}" onerror="this.style.display='none'" />
+       </div>`
+    : `<div class="logo-left" style="flex:0 0 auto;"></div>`;
 
   const rightSlot = rightUrl
-    ? \`<div class="logo-right" style="flex:0 0 auto;min-width:\${hR * 1.6}px;display:flex;justify-content:flex-end;">
-         <img src="\${rightUrl}" alt="Logo institucional direita" style="\${roundStyle(hR, config.logoDireitaRedonda)}" onerror="this.style.display='none'" />
-       </div>\`
-    : (extraRight ? \`<div class="logo-right" style="font-size:8pt;color:#64748b;">\${extraRight}</div>\` : \`<div class="logo-right" style="flex:0 0 auto;"></div>\`);
+    ? `<div class="logo-right" style="flex:0 0 auto;min-width:${hR * 1.6}px;display:flex;justify-content:flex-end;">
+         <img src="${rightUrl}" alt="Logo institucional direita" style="${roundStyle(hR, config.logoDireitaRedonda)}" onerror="this.style.display='none'" />
+       </div>`
+    : (extraRight ? `<div class="logo-right" style="font-size:8pt;color:#64748b;">${extraRight}</div>` : `<div class="logo-right" style="flex:0 0 auto;"></div>`);
 
-  const centerSlot = \`
+  const centerSlot = `
     <div class="header-center">
-      <h1>\${config.linha1}</h1>
-      <div class="subtitle">\${config.linha2}</div>
-      \${centerUrl ? \`<img src="\${centerUrl}" style="\${roundStyle(hC, config.logoCentroRedonda)};margin:2px auto;" />\` : ''}
-      <div class="doc-title">\${title}</div>
+      <h1>${config.linha1}</h1>
+      <div class="subtitle">${config.linha2}</div>
+      ${centerUrl ? `<img src="${centerUrl}" style="${roundStyle(hC, config.logoCentroRedonda)};margin:2px auto;" />` : ''}
+      <div class="doc-title">${title}</div>
     </div>
-  \`;
+  `;
 
-  return \`
+  return `
     <header class="doc-header">
-      \${leftSlot}
-      \${centerSlot}
-      \${rightSlot}
-      <div class="emit-date">Emitido em: \${now}</div>
+      ${leftSlot}
+      ${centerSlot}
+      ${rightSlot}
+      <div class="emit-date">Emitido em: ${now}</div>
     </header>
-  \`;
+  `;
 }
 
 export function docFooter(config: DocumentConfig): string {
-  const text = config.rodapeTexto || \`© \${new Date().getFullYear()} \${config.linha1}\`;
-  return \`
+  const text = config.rodapeTexto || `© ${new Date().getFullYear()} ${config.linha1}`;
+  return `
     <footer class="doc-footer">
-      <div class="institution">\${config.linha1}</div>
-      <div class="footer-text">\${text}</div>
+      <div class="institution">${config.linha1}</div>
+      <div class="footer-text">${text}</div>
       <div class="page-number"></div>
     </footer>
-  \`;
+  `;
 }
 
 export async function openPrintDocument(title: string, body: string, meta: Record<string, string> = {}) {
