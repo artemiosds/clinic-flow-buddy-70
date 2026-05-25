@@ -376,11 +376,12 @@ export function buildInstitutionalCSS(
   }
   @page {
     size: ${size} ${orientation};
-    margin: 8mm 12mm 8mm 12mm !important;
+    margin: 6mm 10mm 6mm 10mm !important;
   }
   @page :first {
-    margin-top: 6mm !important;
+    margin-top: 5mm !important;
   }
+
   ${opts.extraCSS || ''}
 </style>`;
 }
