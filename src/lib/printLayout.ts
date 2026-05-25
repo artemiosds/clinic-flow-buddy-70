@@ -180,11 +180,12 @@ export function buildInstitutionalCSS(
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 0 4px 0;
-    margin-bottom: 6px;
-    border-bottom: 1.2px solid ${accent};
+    padding: 0 0 2px 0;
+    margin-bottom: 4px;
+    border-bottom: 1px solid ${accent};
     position: relative;
   }
+
   .doc-header .logo-left,
   .doc-header .logo-right { flex-shrink: 0; }
   .doc-header .header-center {
