@@ -11,7 +11,9 @@ type TableName =
   | 'treatment_cycles'
   | 'treatment_sessions'
   | 'permissoes'
-  | 'pacientes';
+  | 'pacientes'
+  | 'episodios_clinicos'
+  | 'pts';
 
 interface UseRealtimeOptions {
   tables: TableName[];
