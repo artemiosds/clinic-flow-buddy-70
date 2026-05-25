@@ -283,14 +283,14 @@ export function buildFichaBody(
       <div class="ficha-signature-block">
         <div class="ficha-signature-date">Oriximiná — PA, ____ / ____ / ________</div>
         
-        <div style="display: flex; justify-content: space-around; gap: 40px; margin-top: 20px;">
+        <div style="display: flex; justify-content: space-around; gap: 30px; margin-top: 15px;">
           <div style="flex: 1;">
-            <div class="ficha-signature-line" style="margin: 0 auto; width: 300px;"></div>
+            <div class="ficha-signature-line" style="margin: 0 auto; width: 250px;"></div>
             <div class="ficha-signature-name">${esc(txt(data.profissional.nome, 'PROFISSIONAL RESPONSÁVEL'))}</div>
           </div>
           
           <div style="flex: 1;">
-            <div class="ficha-signature-line" style="margin: 0 auto; width: 300px;"></div>
+            <div class="ficha-signature-line" style="margin: 0 auto; width: 250px;"></div>
             <div class="ficha-signature-name">REGISTRO PROFISSIONAL</div>
             <div class="ficha-signature-meta">${esc(txt(data.profissional.registro))}</div>
           </div>
