@@ -7,9 +7,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   Activity, ClipboardList, Plus, Play, CheckCircle, 
-  Loader2, Copy, ChevronRight, Calendar
+  Loader2, Copy, ChevronRight, Calendar, Info, 
+  AlertTriangle, RotateCcw, X, Pencil, Eraser, ListOrdered, Link2, Unlink
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
