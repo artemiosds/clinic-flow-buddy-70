@@ -342,11 +342,11 @@ async function buildProntuarioBody(p: ProntuarioLike, extraHtml = ""): Promise<s
   const carimboHtml = formatCarimboBlock(carimbo);
 
   const signature = `
-    <div class="doc-sign-footer" style="margin-top: 30px; display: flex; justify-content: space-between; align-items: flex-end;">
-      <div class="signature" style="flex: 1;">
-        <div class="signature-line" style="width: 250px; border-top: 1px solid #000; margin-bottom: 5px;"></div>
-        <div class="name" style="font-weight: 700;">${escapeHtml(p.profissional_nome || "Profissional responsável")}</div>
-        ${p.setor ? `<div class="role">${escapeHtml(p.setor)}</div>` : ""}
+    <div class="doc-sign-footer" style="margin-top: 20px; display: flex; justify-content: space-between; align-items: flex-end;">
+      <div class="sign-block" style="flex: 1; text-align: center;">
+        <div style="width: 250px; border-top: 1px solid #000; margin: 0 auto 5px;"></div>
+        <div style="font-weight: 700; font-size: 11pt;">${escapeHtml(p.profissional_nome || "Profissional responsável")}</div>
+        ${p.setor ? `<div style="font-size: 9pt; color: #475569;">${escapeHtml(p.setor)}</div>` : ""}
       </div>
       <div class="carimbo-block" style="flex: 0 0 auto; text-align: right;">
         ${carimboHtml}
@@ -357,22 +357,22 @@ async function buildProntuarioBody(p: ProntuarioLike, extraHtml = ""): Promise<s
   const acolhimentoHtml = p.dados_acolhimento ? renderAcolhimentoHtml(p.dados_acolhimento) : "";
 
   return `
-    <div class="info-grid" style="margin-bottom: 8px; grid-template-columns: 2fr 1fr; padding: 8px; border-width: 0.8px; border-color: #000;">
-      <div>
+    <div class="info-grid" style="margin-bottom: 6px; grid-template-columns: 2fr 1fr; padding: 6px; border-width: 0.8px; border-color: #000;">
+      <div style="margin-bottom: 2px;">
         <span class="info-label">Paciente</span>
-        <div class="info-value" style="font-weight: 700; font-size: 11pt;">${escapeHtml(p.paciente_nome || "—")}</div>
+        <div class="info-value" style="font-weight: 700; font-size: 11pt; line-height: 1.0;">${escapeHtml(p.paciente_nome || "—")}</div>
       </div>
-      <div>
+      <div style="margin-bottom: 2px;">
         <span class="info-label">Tipo de Registro</span>
-        <div class="info-value" style="font-weight: 700;">${escapeHtml(tipoLabel)}</div>
+        <div class="info-value" style="font-weight: 700; line-height: 1.0;">${escapeHtml(tipoLabel)}</div>
       </div>
       <div>
         <span class="info-label">Profissional / Setor</span>
-        <div class="info-value">${escapeHtml(p.profissional_nome || "—")} ${p.setor ? `— ${escapeHtml(p.setor)}` : ""}</div>
+        <div class="info-value" style="line-height: 1.0;">${escapeHtml(p.profissional_nome || "—")} ${p.setor ? `— ${escapeHtml(p.setor)}` : ""}</div>
       </div>
       <div>
         <span class="info-label">Data e Hora</span>
-        <div class="info-value">${escapeHtml(fmtDate(p.data_atendimento))} ${p.hora_atendimento ? `às ${escapeHtml(p.hora_atendimento)}` : ""}</div>
+        <div class="info-value" style="line-height: 1.0;">${escapeHtml(fmtDate(p.data_atendimento))} ${p.hora_atendimento ? `às ${escapeHtml(p.hora_atendimento)}` : ""}</div>
       </div>
     </div>
     
@@ -384,22 +384,22 @@ async function buildProntuarioBody(p: ProntuarioLike, extraHtml = ""): Promise<s
         const pts = p.custom_data?.pts_info;
         if (!cycle && !pts) return "";
         return `
-          <div class="section" style="page-break-inside: avoid;">
+          <div class="section" style="page-break-inside: avoid; margin-bottom: 6px;">
             <div class="section-title">Plano Terapêutico Ativo</div>
-            <div class="section-content">
+            <div class="section-content" style="font-size: 9.5pt; line-height: 1.25;">
               ${cycle ? `
-                <div style="margin-bottom: 8px;">
-                  <span style="font-weight: 700; color: #475569; font-size: 8pt; text-transform: uppercase;">Ciclo de Tratamento:</span>
-                  <div style="margin-top: 2px;">${escapeHtml(cycle.type)} (${escapeHtml(cycle.sessions)} sessões)</div>
+                <div style="margin-bottom: 4px;">
+                  <span style="font-weight: 700; color: #475569; font-size: 7.5pt; text-transform: uppercase;">Ciclo de Tratamento:</span>
+                  <div style="margin-top: 1px;">${escapeHtml(cycle.type)} (${escapeHtml(cycle.sessions)} sessões)</div>
                 </div>` : ''}
               ${pts ? `
-                <div style="margin-bottom: 8px;">
-                  <span style="font-weight: 700; color: #475569; font-size: 8pt; text-transform: uppercase;">PTS - Diagnóstico Funcional:</span>
-                  <div style="margin-top: 2px;">${escapeHtml(pts.diagnostic)}</div>
+                <div style="margin-bottom: 4px;">
+                  <span style="font-weight: 700; color: #475569; font-size: 7.5pt; text-transform: uppercase;">PTS - Diagnóstico Funcional:</span>
+                  <div style="margin-top: 1px;">${escapeHtml(pts.diagnostic)}</div>
                 </div>
                 <div>
-                  <span style="font-weight: 700; color: #475569; font-size: 8pt; text-transform: uppercase;">PTS - Objetivos Terapêuticos:</span>
-                  <div style="margin-top: 2px;">${escapeHtml(pts.goals)}</div>
+                  <span style="font-weight: 700; color: #475569; font-size: 7.5pt; text-transform: uppercase;">PTS - Objetivos Terapêuticos:</span>
+                  <div style="margin-top: 1px;">${escapeHtml(pts.goals)}</div>
                 </div>` : ''}
             </div>
           </div>`;
@@ -468,23 +468,23 @@ function buildHistoryBody(pacienteNome: string, entries: TimelineEntry[]): strin
     .join("");
 
   return `
-    <div class="info-grid" style="margin-bottom: 15px; grid-template-columns: 3fr 1fr; border-width: 0.5px;">
-      <div><span class="info-label">Paciente</span><div class="info-value" style="font-weight: 700; font-size: 11pt;">${escapeHtml(pacienteNome)}</div></div>
-      <div><span class="info-label">Total de Registros</span><div class="info-value" style="font-weight: 700;">${entries.length}</div></div>
+    <div class="info-grid" style="margin-bottom: 8px; grid-template-columns: 3fr 1fr; border-width: 0.8px; padding: 6px;">
+      <div><span class="info-label">Paciente</span><div class="info-value" style="font-weight: 700; font-size: 11pt; line-height: 1.0;">${escapeHtml(pacienteNome)}</div></div>
+      <div><span class="info-label">Total de Registros</span><div class="info-value" style="font-weight: 700; line-height: 1.0;">${entries.length}</div></div>
     </div>
 
-    <h2 style="margin-top: 15px; margin-bottom: 8px; font-size: 11pt;">Linha do Tempo Clínica</h2>
-    <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
+    <h2 style="margin-top: 10px; margin-bottom: 4px; font-size: 10.5pt; border-bottom: 1px solid #bae6fd;">Linha do Tempo Clínica</h2>
+    <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt; margin-bottom: 8px;">
       <thead>
         <tr style="background-color: #f8fafc;">
-          <th style="width:12%; border: 0.5px solid #e2e8f0; padding: 4px;">Data</th>
-          <th style="width:18%; border: 0.5px solid #e2e8f0; padding: 4px;">Tipo</th>
-          <th style="width:20%; border: 0.5px solid #e2e8f0; padding: 4px;">Profissional</th>
-          <th style="width:15%; border: 0.5px solid #e2e8f0; padding: 4px;">Especialidade</th>
-          <th style="border: 0.5px solid #e2e8f0; padding: 4px;">Resumo Clínico</th>
+          <th style="width:10%; border: 0.8px solid #cbd5e1; padding: 3px;">Data</th>
+          <th style="width:15%; border: 0.8px solid #cbd5e1; padding: 3px;">Tipo</th>
+          <th style="width:20%; border: 0.8px solid #cbd5e1; padding: 3px;">Profissional</th>
+          <th style="width:15%; border: 0.8px solid #cbd5e1; padding: 3px;">Especialidade</th>
+          <th style="border: 0.8px solid #cbd5e1; padding: 3px;">Resumo Clínico</th>
         </tr>
       </thead>
-      <tbody>${rows || '<tr><td colspan="5" style="text-align:center; padding: 20px; color:#64748b;">Nenhum registro encontrado no histórico.</td></tr>'}</tbody>
+      <tbody>${rows || '<tr><td colspan="5" style="text-align:center; padding: 15px; color:#64748b;">Nenhum registro encontrado no histórico.</td></tr>'}</tbody>
     </table>
   `;
 }

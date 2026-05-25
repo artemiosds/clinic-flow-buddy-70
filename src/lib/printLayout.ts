@@ -154,16 +154,15 @@ export function buildInstitutionalCSS(
 <style>
   @page {
     size: ${size} ${orientation};
-    margin: 20mm 15mm 20mm 15mm; /* Margens institucionais mais próximas da ABNT */
+    margin: 15mm 15mm 15mm 15mm; /* Margens ABNT compactas */
   }
   @page :first {
-    margin-top: 15mm;
+    margin-top: 10mm;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   html, body { 
     font-family: ${fontFamily};
     width: 100%;
-    height: 100%;
     background: #fff;
   }
   body {
@@ -171,7 +170,7 @@ export function buildInstitutionalCSS(
     padding: 0;
     color: #000;
     font-size: ${bodyPt}pt;
-    line-height: 1.3; /* Espaçamento ABNT 1.5 é muito longo, 1.3 é o equilíbrio documental */
+    line-height: 1.25; /* Mais compacto que o 1.3/1.5 */
     background: #fff;
   }
 
@@ -180,9 +179,9 @@ export function buildInstitutionalCSS(
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 0 5px 0;
-    margin-bottom: 8px;
-    border-bottom: 1.5px solid ${accent};
+    padding: 0 0 4px 0;
+    margin-bottom: 6px;
+    border-bottom: 1.2px solid ${accent};
     position: relative;
   }
   .doc-header .logo-left,
@@ -193,53 +192,54 @@ export function buildInstitutionalCSS(
     padding: 0 8px;
   }
   .doc-header h1 {
-    font-size: ${titlePt - 1}pt;
+    font-size: ${titlePt - 1.5}pt;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.2px;
     color: ${accent};
     margin: 0;
-    line-height: 1.1;
+    line-height: 1.0;
   }
   .doc-header .subtitle {
-    font-size: ${bodyPt - 1}pt;
+    font-size: ${bodyPt - 2}pt;
     color: #475569;
-    margin-top: 1px;
+    margin-top: 0px;
     font-weight: 600;
   }
   .doc-header .doc-title {
-    font-size: ${titlePt}pt;
+    font-size: ${titlePt - 0.5}pt;
     font-weight: 700;
-    margin-top: 4px;
+    margin-top: 3px;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.4px;
     color: #000;
-    border-top: 1px solid #e2e8f0;
-    padding-top: 3px;
+    border-top: 0.5px solid #e2e8f0;
+    padding-top: 2px;
+    line-height: 1.1;
   }
   .doc-header .emit-date {
-    font-size: ${microPt}pt;
+    font-size: ${microPt - 0.5}pt;
     color: #64748b;
     text-align: right;
     white-space: nowrap;
     position: absolute;
     right: 0;
-    bottom: 2px;
+    bottom: 1px;
   }
 
   /* META INFO BAR */
   .doc-meta {
     font-size: ${smallPt}pt;
     color: #334155;
-    padding: 4px 8px;
+    padding: 3px 6px;
     background: #f8fafc;
-    border: 1px solid #e2e8f0;
+    border: 0.8px solid #e2e8f0;
     border-radius: 4px;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
     display: flex;
-    gap: 12px;
+    gap: 10px;
     flex-wrap: wrap;
-    line-height: 1.2;
+    line-height: 1.1;
   }
   .doc-meta strong { color: #000; }
 
@@ -248,69 +248,69 @@ export function buildInstitutionalCSS(
     text-align: justify;
     text-justify: inter-word;
     font-size: ${bodyPt}pt;
-    line-height: 1.5;
+    line-height: 1.4; /* Reduzido de 1.5 para maior compactação */
     word-break: break-word;
     hyphens: auto;
   }
 
   /* SUMMARY CARDS */
-  .summary { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
-  .stat { background: #f0f9ff; border: 1px solid #bae6fd; padding: 6px 12px; border-radius: 4px; text-align: center; min-width: 80px; }
-  .stat strong { display: block; font-size: ${titlePt + 2}pt; color: ${accent}; }
+  .summary { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+  .stat { background: #f0f9ff; border: 1px solid #bae6fd; padding: 4px 10px; border-radius: 4px; text-align: center; min-width: 70px; }
+  .stat strong { display: block; font-size: ${titlePt}pt; color: ${accent}; }
   .stat small { font-size: ${microPt}pt; color: #64748b; }
 
   /* SECTION TITLES */
   h2 {
     font-size: ${sectionPt}pt;
     color: ${accent};
-    margin: 12px 0 6px;
-    padding-bottom: 3px;
-    border-bottom: 1px solid #bae6fd;
+    margin: 10px 0 4px;
+    padding-bottom: 2px;
+    border-bottom: 0.8px solid #bae6fd;
     text-transform: uppercase;
-    letter-spacing: 0.2px;
+    letter-spacing: 0.1px;
     font-weight: 700;
     break-after: avoid;
   }
 
   /* TABLES */
-  table { width: 100%; border-collapse: collapse; margin-bottom: 10px; page-break-inside: auto; font-size: ${smallPt}pt; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 8px; page-break-inside: auto; font-size: ${smallPt}pt; }
   thead { display: table-header-group; }
   tr { page-break-inside: avoid; page-break-after: auto; }
-  th, td { border: 1px solid #cbd5e1; padding: 4px 6px; text-align: left; font-size: ${smallPt}pt; }
+  th, td { border: 0.8px solid #cbd5e1; padding: 3px 5px; text-align: left; font-size: ${smallPt}pt; }
   th { background: #f8fafc; font-weight: 700; color: #000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   tr:nth-child(even) { background: #fdfdfd; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 
   /* FIELDS */
   .content-block { text-align: justify; text-justify: inter-word; font-size: ${bodyPt}pt; }
-  .field { margin-bottom: 3px; }
-  .field-label { font-size: ${microPt}pt; text-transform: uppercase; color: #475569; font-weight: 700; letter-spacing: 0.2px; line-height: 1; }
-  .field-value { font-size: ${bodyPt}pt; margin-top: 0; color: #000; line-height: 1.15; }
+  .field { margin-bottom: 2px; }
+  .field-label { font-size: ${microPt - 0.5}pt; text-transform: uppercase; color: #475569; font-weight: 700; letter-spacing: 0.1px; line-height: 1; }
+  .field-value { font-size: ${bodyPt}pt; margin-top: 0; color: #000; line-height: 1.1; }
 
   /* SECTIONS (prontuário) */
-  .section { margin-bottom: 10px; page-break-inside: avoid; break-inside: avoid; }
-  .section-title { font-weight: 700; font-size: ${sectionPt - 0.5}pt; text-transform: uppercase; color: #334155; border-bottom: 0.5px solid #e2e8f0; padding-bottom: 2px; margin-bottom: 4px; }
-  .section-content { font-size: ${bodyPt}pt; line-height: 1.4; white-space: pre-wrap; min-height: 10px; text-align: justify; color: #000; overflow-wrap: break-word; }
+  .section { margin-bottom: 8px; page-break-inside: avoid; break-inside: avoid; }
+  .section-title { font-weight: 700; font-size: ${sectionPt - 0.8}pt; text-transform: uppercase; color: #334155; border-bottom: 0.5px solid #e2e8f0; padding-bottom: 1px; margin-bottom: 3px; }
+  .section-content { font-size: ${bodyPt}pt; line-height: 1.3; white-space: pre-wrap; min-height: 5px; text-align: justify; color: #000; overflow-wrap: break-word; }
 
   /* INFO GRID */
-  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 15px; margin-bottom: 12px; padding: 10px; background: #fff; border: 1px solid #000; border-radius: 0; }
-  .info-label { font-weight: 700; font-size: ${microPt}pt; text-transform: uppercase; color: #444; line-height: 1.1; }
-  .info-value { font-size: ${bodyPt}pt; color: #000; line-height: 1.2; font-weight: 500; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; margin-bottom: 10px; padding: 8px; background: #fff; border: 0.8px solid #000; border-radius: 0; }
+  .info-label { font-weight: 700; font-size: ${microPt}pt; text-transform: uppercase; color: #444; line-height: 1.0; }
+  .info-value { font-size: ${bodyPt}pt; color: #000; line-height: 1.1; font-weight: 500; }
 
   /* QR AREA */
-  .qr-area { text-align: center; margin-top: 10px; padding: 8px; border: 1px dashed #cbd5e1; border-radius: 4px; background: #fafafa; }
+  .qr-area { text-align: center; margin-top: 8px; padding: 6px; border: 0.8px dashed #cbd5e1; border-radius: 4px; background: #fafafa; }
   .qr-area p { font-size: ${smallPt}pt; color: #64748b; }
   .qr-area .code { font-size: ${microPt}pt; color: #94a3b8; margin-top: 1px; font-family: monospace; }
 
   /* SIGNATURE */
-  .signature { margin-top: 20px; text-align: center; page-break-inside: avoid; break-inside: avoid; }
-  .signature-line { width: 220px; border-top: 1px solid #000; margin: 0 auto 3px; }
-  .signature .name { font-size: ${bodyPt}pt; font-weight: 700; color: #000; line-height: 1.1; }
+  .signature { margin-top: 15px; text-align: center; page-break-inside: avoid; break-inside: avoid; }
+  .signature-line { width: 220px; border-top: 0.8px solid #000; margin: 0 auto 2px; }
+  .signature .name { font-size: ${bodyPt}pt; font-weight: 700; color: #000; line-height: 1.05; }
   .signature .role { font-size: ${smallPt}pt; color: #475569; line-height: 1; }
 
   /* DOCUMENT FOOTER: carimbo + assinatura */
-  .doc-sign-footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 24px; gap: 16px; page-break-inside: avoid; }
-  .doc-sign-footer .sign-block { flex: 1; }
-  .doc-sign-footer .carimbo-block { text-align: right; }
+  .doc-sign-footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 20px; gap: 16px; page-break-inside: avoid; flex-wrap: wrap; }
+  .doc-sign-footer .sign-block { flex: 1; min-width: 250px; }
+  .doc-sign-footer .carimbo-block { text-align: right; min-width: 200px; }
 
   /* E-SIGNATURE */
   .e-signature-box {
