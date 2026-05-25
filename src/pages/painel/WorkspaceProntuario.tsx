@@ -9,6 +9,7 @@ import { useProntuarioConfig } from '@/hooks/useProntuarioConfig';
 import { useSoapCustomOptions } from '@/hooks/useSoapCustomOptions';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useRealtimeSubscription } from '@/hooks/useRealtimeSubscription';
 
 // Components
 import { Button } from '@/components/ui/button';
@@ -78,6 +79,7 @@ const WorkspaceProntuario: React.FC = () => {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const saveAttemptedRef = useRef(false);
   const [triagem, setTriagem] = useState<any>(null);
   const [pacienteData, setPacienteData] = useState<any>(null);
   const [editPatientOpen, setEditPatientOpen] = useState(false);
@@ -302,6 +304,17 @@ const WorkspaceProntuario: React.FC = () => {
     loadData();
   }, [pacienteId, agendamentoId, editId, refreshTrigger]);
 
+  // Sync session data when treatments or cycles change
+  useRealtimeSubscription({
+    tables: ['treatment_cycles', 'treatment_sessions', 'pts'],
+    filter: (pacienteId || form.paciente_id) ? `patient_id=eq.${pacienteId || form.paciente_id}` : undefined,
+    enabled: !!(pacienteId || form.paciente_id),
+    onchange: () => {
+      const targetId = pacienteId || form.paciente_id;
+      if (targetId) loadSessaoData(targetId);
+    }
+  });
+
   const handlePrint = async () => {
     const { data: carimbo } = await supabase
       .from('profissionais_carimbo')
@@ -404,7 +417,9 @@ const WorkspaceProntuario: React.FC = () => {
   };
 
   const handleSave = async () => {
+    if (saving || saveAttemptedRef.current) return;
     setSaving(true);
+    saveAttemptedRef.current = true;
     try {
       const { auditService } = await import('@/services/auditService');
       const finalId = editId || form.id;
@@ -526,12 +541,14 @@ const WorkspaceProntuario: React.FC = () => {
     } catch (e: any) { 
       console.error('[Prontuário] Erro ao salvar:', e);
       toast.error(`Erro ao salvar prontuário: ${e?.message || 'desconhecido'}`); 
+      saveAttemptedRef.current = false;
     } finally { 
       setSaving(false); 
     }
   };
 
   const handleSaveAcolhimento = async (dados: any) => {
+    if (savingAcolhimento) return;
     if (!pacienteId && !form.paciente_id) {
       toast.error("Selecione um paciente primeiro.");
       return;

@@ -37,7 +37,7 @@ export function useRealtimeSubscription({
   invalidateKeys,
   filter,
   enabled = true,
-  debounceMs = 400,
+  debounceMs = 300,
 }: UseRealtimeOptions) {
   const queryClient = useQueryClient();
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
