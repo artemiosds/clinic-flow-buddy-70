@@ -451,7 +451,7 @@ export const TreatmentTab: React.FC<Props> = ({ pacienteId, pacienteNome, onCycl
         availableDates={activeCycle ? getAvailableDates(activeCycle.professional_id, activeCycle.unit_id) : []}
         getAvailableSlots={getAvailableSlots}
         onConfirm={async (data, hora, salaId) => {
-          const agId = \`ag\${Date.now()}\`;
+          const agId = `ag${Date.now()}`;
           await addAgendamento({
             id: agId,
             pacienteId,
@@ -459,16 +459,16 @@ export const TreatmentTab: React.FC<Props> = ({ pacienteId, pacienteNome, onCycl
             unidadeId: activeCycle.unit_id,
             salaId: salaId || "",
             profissionalId: activeCycle.professional_id,
-            profissionalNome: funcionarios.find(f => f.id === activeCycle.professional_id)?.nome || '',
+            profissionalNome: funcionarios.find((f: any) => f.id === activeCycle.professional_id)?.nome || '',
             data,
             hora,
             status: "confirmado",
             tipo: "Sessão de Tratamento",
-            observacoes: \`Sessão \${agendarSessaoTarget.session_number} — \${activeCycle.treatment_type}\`,
+            observacoes: `Sessão ${agendarSessaoTarget.session_number} — ${activeCycle.treatment_type}`,
             origem: "recepcao",
             criadoEm: new Date().toISOString(),
             criadoPor: user?.id || "",
-          });
+          } as any);
           await supabase.from("treatment_sessions").update({ appointment_id: agId, status: "agendada", scheduled_date: data }).eq("id", agendarSessaoTarget.id);
           toast.success("Sessão agendada!");
           loadData();
