@@ -442,14 +442,14 @@ const WorkspaceProntuario: React.FC = () => {
     // 4. Procedures & CIDs
     if (selectedProcIds.length > 0) {
       body += `
-        <div class="section">
+        <div class="section" style="margin-bottom: 8px;">
           <div class="section-title">Procedimentos / CID</div>
           <div class="section-content">
-            <ul style="padding-left: 20px; margin: 0;">
+            <ul style="padding-left: 15px; margin: 0; font-size: 9.5pt;">
               ${selectedProcIds.map(pid => {
                 const proc = procedimentos.find(p => p.id === pid);
                 const cids = selectedCidsByProc[pid] || [];
-                return `<li style="margin-bottom: 6px;"><strong>${proc?.nome || pid}</strong> (Código: ${proc?.id || pid}) ${cids.length > 0 ? `<br/><span style="font-size: 10pt; color: #475569;">CIDs: ${cids.join(', ')}</span>` : ''}</li>`;
+                return `<li style="margin-bottom: 3px; line-height: 1.2;"><strong>${proc?.nome || pid}</strong> (Cód: ${proc?.id || pid}) ${cids.length > 0 ? `<br/><span style="font-size: 8.5pt; color: #475569;">CIDs: ${cids.join(', ')}</span>` : ''}</li>`;
               }).join('')}
             </ul>
           </div>
