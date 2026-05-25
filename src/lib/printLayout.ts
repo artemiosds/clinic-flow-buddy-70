@@ -154,10 +154,10 @@ export function buildInstitutionalCSS(
 <style>
   @page {
     size: ${size} ${orientation};
-    margin: 15mm 15mm 15mm 15mm; /* Margens ABNT compactas */
+    margin: 10mm 15mm 10mm 15mm; /* Margens ABNT mais compactas */
   }
   @page :first {
-    margin-top: 10mm;
+    margin-top: 8mm;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   html, body { 
@@ -302,10 +302,11 @@ export function buildInstitutionalCSS(
   .qr-area .code { font-size: ${microPt}pt; color: #94a3b8; margin-top: 1px; font-family: monospace; }
 
   /* SIGNATURE */
-  .signature { margin-top: 15px; text-align: center; page-break-inside: avoid; break-inside: avoid; }
+  .signature { margin-top: 20px; text-align: center; page-break-inside: avoid; break-inside: avoid; }
   .signature-line { width: 220px; border-top: 0.8px solid #000; margin: 0 auto 2px; }
   .signature .name { font-size: ${bodyPt}pt; font-weight: 700; color: #000; line-height: 1.05; }
   .signature .role { font-size: ${smallPt}pt; color: #475569; line-height: 1; }
+  .signature .carimbo-container { margin-top: 10px; padding-top: 5px; }
 
   /* DOCUMENT FOOTER: carimbo + assinatura */
   .doc-sign-footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 20px; gap: 16px; page-break-inside: avoid; flex-wrap: wrap; }
@@ -371,7 +372,7 @@ export function buildInstitutionalCSS(
   }
   @page {
     size: ${size} ${orientation};
-    margin: 8mm 10mm 8mm 10mm !important;
+    margin: 8mm 12mm 8mm 12mm !important;
   }
   @page :first {
     margin-top: 6mm !important;

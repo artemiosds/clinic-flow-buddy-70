@@ -303,6 +303,12 @@ const WorkspaceProntuario: React.FC = () => {
   }, [pacienteId, agendamentoId, editId, refreshTrigger]);
 
   const handlePrint = async () => {
+    const { data: carimbo } = await supabase
+      .from('profissionais_carimbo')
+      .select('*')
+      .eq('profissional_id', user?.id)
+      .maybeSingle();
+
     const meta = {
       'Paciente': pacienteData?.nome || pacienteNome || '—',
       'Idade': pacienteData?.data_nascimento ? calcularIdade(pacienteData.data_nascimento) : '—',
@@ -318,22 +324,22 @@ const WorkspaceProntuario: React.FC = () => {
 
     // 1. Identification Header
     body += `
-      <div class="info-grid" style="margin-bottom: 8px; grid-template-columns: 2fr 1fr; border-color: #000; border-width: 0.8px;">
+      <div class="info-grid" style="margin-bottom: 6px; grid-template-columns: 2fr 1fr; border-color: #000; border-width: 0.8px; padding: 6px;">
         <div>
           <span class="info-label">Paciente</span>
-          <div class="info-value" style="font-weight: 700; font-size: 11pt;">${meta.Paciente}</div>
+          <div class="info-value" style="font-weight: 700; font-size: 11pt; line-height: 1.1;">${meta.Paciente}</div>
         </div>
         <div>
           <span class="info-label">Tipo de Registro</span>
-          <div class="info-value" style="font-weight: 700;">${meta.Tipo}</div>
+          <div class="info-value" style="font-weight: 700; line-height: 1.1;">${meta.Tipo}</div>
         </div>
         <div>
           <span class="info-label">Dados do Paciente</span>
-          <div class="info-value">Idade: ${meta.Idade} | CPF: ${meta.CPF} | CNS: ${meta.CNS}</div>
+          <div class="info-value" style="line-height: 1.1;">Idade: ${meta.Idade} | CPF: ${meta.CPF} | CNS: ${meta.CNS}</div>
         </div>
         <div>
           <span class="info-label">Data e Hora</span>
-          <div class="info-value">${meta.Data} às ${meta.Hora}</div>
+          <div class="info-value" style="line-height: 1.1;">${meta.Data} às ${meta.Hora}</div>
         </div>
       </div>
     `;
@@ -347,10 +353,12 @@ const WorkspaceProntuario: React.FC = () => {
       const s15 = data.secao15?.parecer ? `<div style="margin-bottom: 4px;"><strong>Parecer Profissional:</strong> ${data.secao15.parecer}</div>` : '';
       
       body += `
-        <div style="border: 0.8px solid #000; padding: 10px; margin-bottom: 10px; page-break-inside: avoid;">
-          <div style="font-size: 9pt; font-weight: 800; text-transform: uppercase; border-bottom: 0.8px solid #000; padding-bottom: 2px; margin-bottom: 6px;">Acolhimento em Saúde Mental</div>
-          ${s3}${s4}${s15}
-          <div style="font-style: italic; font-size: 8pt; color: #64748b; margin-top: 4px;">* Registro clínico estruturado.</div>
+        <div style="border: 0.8px solid #000; padding: 6px; margin-bottom: 6px; page-break-inside: avoid;">
+          <div style="font-size: 8.5pt; font-weight: 800; text-transform: uppercase; border-bottom: 0.5px solid #000; padding-bottom: 1px; margin-bottom: 4px;">Acolhimento em Saúde Mental</div>
+          <div style="font-size: 9pt; line-height: 1.2;">
+            ${s3}${s4}${s15}
+          </div>
+          <div style="font-style: italic; font-size: 7.5pt; color: #64748b; margin-top: 2px;">* Registro clínico estruturado.</div>
         </div>
       `;
     }
@@ -358,22 +366,22 @@ const WorkspaceProntuario: React.FC = () => {
     // 2.5 Treatment Plan section
     if (sessaoCycle || sessaoPts) {
       body += `
-        <div class="section" style="page-break-inside: avoid;">
+        <div class="section" style="page-break-inside: avoid; margin-bottom: 6px;">
           <div class="section-title">Plano Terapêutico Ativo</div>
-          <div class="section-content">
+          <div class="section-content" style="font-size: 9.5pt; line-height: 1.2;">
             ${sessaoCycle ? `
-              <div style="margin-bottom: 8px;">
-                <span style="font-weight: 700; color: #475569; font-size: 8pt; text-transform: uppercase;">Ciclo de Tratamento:</span>
-                <div style="margin-top: 2px;">${sessaoCycle.treatment_type} (${sessaoCycle.sessions_done}/${sessaoCycle.total_sessions} sessões)</div>
+              <div style="margin-bottom: 4px;">
+                <span style="font-weight: 700; color: #475569; font-size: 7.5pt; text-transform: uppercase;">Ciclo de Tratamento:</span>
+                <div style="margin-top: 1px;">${sessaoCycle.treatment_type} (${sessaoCycle.sessions_done}/${sessaoCycle.total_sessions} sessões)</div>
               </div>` : ''}
             ${sessaoPts ? `
-              <div style="margin-bottom: 8px;">
-                <span style="font-weight: 700; color: #475569; font-size: 8pt; text-transform: uppercase;">PTS - Diagnóstico Funcional:</span>
-                <div style="margin-top: 2px; text-align: justify;">${sessaoPts.diagnostico_funcional}</div>
+              <div style="margin-bottom: 4px;">
+                <span style="font-weight: 700; color: #475569; font-size: 7.5pt; text-transform: uppercase;">PTS - Diagnóstico Funcional:</span>
+                <div style="margin-top: 1px; text-align: justify;">${sessaoPts.diagnostico_funcional}</div>
               </div>
-              <div>
-                <span style="font-weight: 700; color: #475569; font-size: 8pt; text-transform: uppercase;">PTS - Objetivos Terapêuticos:</span>
-                <div style="margin-top: 2px; text-align: justify;">${sessaoPts.objetivos_terapeuticos}</div>
+              <div style="margin-bottom: 4px;">
+                <span style="font-weight: 700; color: #475569; font-size: 7.5pt; text-transform: uppercase;">PTS - Objetivos Terapêuticos:</span>
+                <div style="margin-top: 1px; text-align: justify;">${sessaoPts.objetivos_terapeuticos}</div>
               </div>` : ''}
           </div>
         </div>
@@ -382,14 +390,14 @@ const WorkspaceProntuario: React.FC = () => {
 
     // 2. Clinical Evolution / SOAP
     body += `
-      <div class="section">
+      <div class="section" style="margin-bottom: 8px;">
         <div class="section-title">Evolução Clínica / SOAP</div>
-        <div class="section-content">
+        <div class="section-content" style="font-size: 10pt; line-height: 1.3;">
           ${soapEnabled ? `
-            <div style="margin-bottom: 10px;"><strong>S — Subjetivo:</strong><br/>${form.soap_subjetivo ? form.soap_subjetivo.replace(/\n/g, '<br/>') : '—'}</div>
-            <div style="margin-bottom: 10px;"><strong>O — Objetivo:</strong><br/>${form.soap_objetivo ? form.soap_objetivo.replace(/\n/g, '<br/>') : '—'}</div>
-            <div style="margin-bottom: 10px;"><strong>A — Avaliação:</strong><br/>${form.soap_avaliacao ? form.soap_avaliacao.replace(/\n/g, '<br/>') : '—'}</div>
-            <div style="margin-bottom: 10px;"><strong>P — Plano:</strong><br/>${form.soap_plano ? form.soap_plano.replace(/\n/g, '<br/>') : '—'}</div>
+            <div style="margin-bottom: 6px;"><strong>S — Subjetivo:</strong><br/>${form.soap_subjetivo ? form.soap_subjetivo.replace(/\n/g, '<br/>') : '—'}</div>
+            <div style="margin-bottom: 6px;"><strong>O — Objetivo:</strong><br/>${form.soap_objetivo ? form.soap_objetivo.replace(/\n/g, '<br/>') : '—'}</div>
+            <div style="margin-bottom: 6px;"><strong>A — Avaliação:</strong><br/>${form.soap_avaliacao ? form.soap_avaliacao.replace(/\n/g, '<br/>') : '—'}</div>
+            <div style="margin-bottom: 6px;"><strong>P — Plano:</strong><br/>${form.soap_plano ? form.soap_plano.replace(/\n/g, '<br/>') : '—'}</div>
           ` : `<div style="white-space: pre-wrap; text-align: justify;">${form.evolucao || '—'}</div>`}
         </div>
       </div>
@@ -417,13 +425,13 @@ const WorkspaceProntuario: React.FC = () => {
 
     if (dynamicFields.length > 0) {
       body += `
-        <div class="section">
+        <div class="section" style="margin-bottom: 8px;">
           <div class="section-title">Informações Complementares</div>
-          <div class="section-content">
+          <div class="section-content" style="font-size: 9.5pt;">
             ${dynamicFields.map(f => `
-              <div style="margin-bottom: 8px;">
-                <span style="font-weight: 700; color: #475569; font-size: 9pt; text-transform: uppercase;">${f.label}:</span>
-                <div style="margin-top: 2px; text-align: justify;">${String(f.value).replace(/\n/g, '<br/>')}</div>
+              <div style="margin-bottom: 4px;">
+                <span style="font-weight: 700; color: #475569; font-size: 8pt; text-transform: uppercase;">${f.label}:</span>
+                <div style="margin-top: 1px; text-align: justify; line-height: 1.2;">${String(f.value).replace(/\n/g, '<br/>')}</div>
               </div>
             `).join('')}
           </div>
@@ -434,14 +442,14 @@ const WorkspaceProntuario: React.FC = () => {
     // 4. Procedures & CIDs
     if (selectedProcIds.length > 0) {
       body += `
-        <div class="section">
+        <div class="section" style="margin-bottom: 8px;">
           <div class="section-title">Procedimentos / CID</div>
           <div class="section-content">
-            <ul style="padding-left: 20px; margin: 0;">
+            <ul style="padding-left: 15px; margin: 0; font-size: 9.5pt;">
               ${selectedProcIds.map(pid => {
                 const proc = procedimentos.find(p => p.id === pid);
                 const cids = selectedCidsByProc[pid] || [];
-                return `<li style="margin-bottom: 6px;"><strong>${proc?.nome || pid}</strong> (Código: ${proc?.id || pid}) ${cids.length > 0 ? `<br/><span style="font-size: 10pt; color: #475569;">CIDs: ${cids.join(', ')}</span>` : ''}</li>`;
+                return `<li style="margin-bottom: 3px; line-height: 1.2;"><strong>${proc?.nome || pid}</strong> (Cód: ${proc?.id || pid}) ${cids.length > 0 ? `<br/><span style="font-size: 8.5pt; color: #475569;">CIDs: ${cids.join(', ')}</span>` : ''}</li>`;
               }).join('')}
             </ul>
           </div>
@@ -452,22 +460,22 @@ const WorkspaceProntuario: React.FC = () => {
     // 5. Prescriptions & Exams
     if (listaPrescricao.length > 0 || listaExames.length > 0) {
       body += `
-        <div class="section" style="page-break-inside: avoid;">
+        <div class="section" style="page-break-inside: avoid; margin-bottom: 8px;">
           <div class="section-title">Prescrições e Solicitações</div>
-          <div class="section-content">
+          <div class="section-content" style="font-size: 9.5pt;">
             ${listaPrescricao.length > 0 ? `
-              <div style="margin-bottom: 12px;">
-                <strong style="color: #475569; font-size: 9pt; text-transform: uppercase;">Medicamentos:</strong>
-                <ul style="padding-left: 20px; margin-top: 4px;">
-                  ${listaPrescricao.map((p: any) => `<li style="margin-bottom: 4px;"><strong>${p.medicamento}</strong> - ${p.posologia}</li>`).join('')}
+              <div style="margin-bottom: 6px;">
+                <strong style="color: #475569; font-size: 8pt; text-transform: uppercase;">Medicamentos:</strong>
+                <ul style="padding-left: 15px; margin-top: 2px;">
+                  ${listaPrescricao.map((p: any) => `<li style="margin-bottom: 2px; line-height: 1.1;"><strong>${p.medicamento}</strong> - ${p.posologia}</li>`).join('')}
                 </ul>
               </div>
             ` : ''}
             ${listaExames.length > 0 ? `
               <div>
-                <strong style="color: #475569; font-size: 9pt; text-transform: uppercase;">Exames Solicitados:</strong>
-                <ul style="padding-left: 20px; margin-top: 4px;">
-                  ${listaExames.map((e: any) => `<li style="margin-bottom: 4px;">${e.nome || e}</li>`).join('')}
+                <strong style="color: #475569; font-size: 8pt; text-transform: uppercase;">Exames Solicitados:</strong>
+                <ul style="padding-left: 15px; margin-top: 2px;">
+                  ${listaExames.map((e: any) => `<li style="margin-bottom: 2px; line-height: 1.1;">${e.nome || e}</li>`).join('')}
                 </ul>
               </div>
             ` : ''}
@@ -478,10 +486,24 @@ const WorkspaceProntuario: React.FC = () => {
 
     // 6. Signature area
     body += `
-      <div class="signature" style="margin-top: 30px; page-break-inside: avoid;">
-        <div class="signature-line" style="width: 280px; border-top: 1px solid #000; margin: 0 auto 5px;"></div>
-        <div class="name" style="font-weight: 700;">${user?.nome || '—'}</div>
+      <div class="signature" style="margin-top: 25px; page-break-inside: avoid;">
+        <div class="signature-line" style="width: 250px; border-top: 0.8px solid #000; margin: 0 auto 3px;"></div>
+        <div class="name" style="font-weight: 700; font-size: 11pt;">${user?.nome || '—'}</div>
         <div class="role" style="font-size: 9pt; color: #475569;">${user?.profissao || '—'}</div>
+        ${carimbo ? `
+          <div class="carimbo-container">
+            ${carimbo.tipo === 'imagem' && carimbo.imagem_url ? `
+              <img src="${carimbo.imagem_url}" alt="Carimbo" style="max-height: 80px; max-width: 220px; margin: 5px auto;" />
+            ` : `
+              <div class="carimbo-digital" style="margin-top: 5px; border: 1.2px solid #000; padding: 4px 10px; border-radius: 4px; display: inline-block;">
+                <div class="carimbo-nome" style="font-weight: 800; text-transform: uppercase; font-size: 10pt;">${carimbo.nome || user?.nome}</div>
+                <div class="carimbo-info" style="font-size: 7.5pt;">${carimbo.conselho} ${carimbo.numero_registro}-${carimbo.uf}</div>
+                <div class="carimbo-info" style="font-size: 7.5pt; font-weight: 600;">${carimbo.especialidade || user?.profissao}</div>
+                ${carimbo.cargo ? `<div class="carimbo-info" style="font-size: 7pt;">${carimbo.cargo}</div>` : ''}
+              </div>
+            `}
+          </div>
+        ` : ''}
       </div>
     `;
 
