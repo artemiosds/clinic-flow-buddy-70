@@ -227,8 +227,26 @@ export const TreatmentTab: React.FC<Props> = ({ pacienteId, pacienteNome, onCycl
             </div>
 
             <div className="flex gap-2">
-              <Button size="sm" className="h-8" onClick={() => setSelectSessionOpen(true)}>
+              <Button size="sm" className="h-8" onClick={() => setSelectSessionOpen(true)} disabled={activeCycle.status === 'concluido'}>
                 <Play className="w-3.5 h-3.5 mr-1.5" /> Registrar Sessão
+              </Button>
+              <Button size="sm" variant="outline" className="h-8" onClick={async () => {
+                const { data: sess } = await supabase.from('treatment_sessions').select('*').eq('cycle_id', activeCycle.id).order('session_number', { ascending: false }).limit(1).maybeSingle();
+                const nextNum = (sess?.session_number || 0) + 1;
+                const newTotal = (activeCycle.total_sessions || 0) + 1;
+                const today = new Date().toISOString().split('T')[0];
+                
+                await Promise.all([
+                  supabase.from('treatment_sessions').insert({
+                    cycle_id: activeCycle.id, patient_id: pacienteId, professional_id: activeCycle.professional_id,
+                    session_number: nextNum, total_sessions: newTotal, scheduled_date: today, status: 'pendente_agendamento'
+                  }),
+                  supabase.from('treatment_cycles').update({ total_sessions: newTotal }).eq('id', activeCycle.id)
+                ]);
+                toast.success("Sessão extra adicionada!");
+                loadData();
+              }}>
+                <Plus className="w-3.5 h-3.5 mr-1.5" /> Sessão Extra
               </Button>
               {canManageFull && (
                  <Button size="sm" variant="outline" className="h-8 border-destructive text-destructive hover:bg-destructive/5" onClick={async () => {
