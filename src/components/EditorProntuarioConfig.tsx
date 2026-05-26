@@ -542,7 +542,7 @@ const EditorProntuarioConfig: React.FC = () => {
                             </label>
                           </div>
                         </div>
-                        {newField.type === 'select' && (
+                        {(newField.type === 'select' || newField.type === 'checkbox') && (
                           <div>
                             <Label className="text-xs">Opções (separadas por vírgula)</Label>
                             <Input value={newField.options} onChange={e => setNewField(p => ({ ...p, options: e.target.value }))} placeholder="Opção 1, Opção 2, Opção 3" className="h-8 text-sm" />
@@ -598,10 +598,10 @@ const EditorProntuarioConfig: React.FC = () => {
                 </SelectContent>
               </Select>
             </div>
-            {editFieldData.type === 'select' && (
+            {(editFieldData.type === 'select' || editFieldData.type === 'checkbox') && (
               <div>
                 <Label>Opções (separadas por vírgula)</Label>
-                <Input value={editFieldData.options} onChange={e => setEditFieldData(p => ({ ...p, options: e.target.value }))} />
+                <Input value={editFieldData.options} onChange={e => setEditFieldData(p => ({ ...p, options: e.target.value }))} placeholder="Opção 1, Opção 2..." />
               </div>
             )}
             <label className="flex items-center gap-2 text-sm cursor-pointer">
