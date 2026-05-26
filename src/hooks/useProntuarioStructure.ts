@@ -31,28 +31,14 @@ export function useProntuarioStructure() {
   }, []);
 
   /**
-   * Returns enabled sections sorted by order, filtering by record type if provided.
-   */
-  const getEnabledSections = (tipoRegistro?: string) => {
-    if (!sections) return null;
-    return sections
-      .filter(s => {
-        if (!s.enabled) return false;
-        if (tipoRegistro && s.tiposProntuario && s.tiposProntuario.length > 0) {
-          return s.tiposProntuario.includes(tipoRegistro);
-        }
-        return true;
-      })
-      .sort((a, b) => a.order - b.order);
-  };
-
-  /**
-   * Mantido para retrocompatibilidade com componentes que usam getEnabledFields
+   * Returns enabled fields from enabled sections, sorted by order.
+   * Builtin fields map to form keys; custom fields use `custom_<id>`.
    */
   const getEnabledFields = () => {
-    const enabledSections = getEnabledSections();
-    if (!enabledSections) return null;
-    return enabledSections
+    if (!sections) return null;
+    return sections
+      .filter(s => s.enabled)
+      .sort((a, b) => a.order - b.order)
       .map(s => ({
         ...s,
         fields: (s.fields || []).filter(f => f.enabled).sort((a, b) => a.order - b.order),
@@ -60,5 +46,5 @@ export function useProntuarioStructure() {
       .filter(s => s.fields.length > 0);
   };
 
-  return { sections, loading, getEnabledSections, getEnabledFields };
+  return { sections, loading, getEnabledFields };
 }

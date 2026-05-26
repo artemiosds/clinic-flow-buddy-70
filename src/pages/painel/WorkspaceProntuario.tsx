@@ -103,11 +103,7 @@ const WorkspaceProntuario: React.FC = () => {
     solicitacao_exames: '',
   });
 
-  const { sections: prontuarioSections, loading: structureLoading, getEnabledSections } = useProntuarioStructure();
-  
-  const enabledSections = useMemo(() => {
-    return getEnabledSections(form.tipo_registro);
-  }, [getEnabledSections, form.tipo_registro]);
+  const { sections: prontuarioSections, loading: structureLoading } = useProntuarioStructure();
 
   // Expanded clinical state
   const [procedimentos, setProcedimentos] = useState<any[]>([]);
