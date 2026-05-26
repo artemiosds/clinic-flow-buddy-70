@@ -12,6 +12,8 @@ export const TIPO_REGISTRO_LABELS: Record<string, string> = {
   alta_individual: "Relatório de Alta Individual",
   alta_multiprofissional: "Relatório de Alta Multiprofissional",
   falta: "Falta",
+  acolhimento_mental: "Acolhimento Mental",
+  oficina_terapeutica: "Grupo/Oficinas Terapêuticas",
   consulta: "Avaliação/TR", // Legacy mapping
 };
 
