@@ -36,6 +36,7 @@ export interface ProntuarioSection {
   fields: ProntuarioField[];
   type?: 'standard' | 'custom';
   standardTabId?: string; // e.g., 'acolhimento', 'evolution', etc.
+  tiposProntuario?: string[]; // e.g., ['primeira_consulta', 'retorno']
 }
 
 export interface ProntuarioStructure {
