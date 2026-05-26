@@ -384,6 +384,15 @@ const WorkspaceProntuario: React.FC = () => {
       body += `<div style="border: 0.5px solid #000; padding: 2px 4px; margin-bottom: 2px; page-break-inside: avoid;"><div style="font-size: 8pt; font-weight: 800; text-transform: uppercase; border-bottom: 0.5px solid #000; padding-bottom: 0px; margin-bottom: 1px;">Acolhimento em Saúde Mental</div><div style="font-size: 9pt; line-height: 1.05;">${s3}${s4}${s15}</div></div>`;
     }
 
+    // 2.3 Group Activity section if data exists
+    if (groupActivityDraft.tema || groupActivityDraft.tipo_atividade || groupActivityDraft.evolucao) {
+      body += `<div class="section" style="margin-bottom: 2px; page-break-inside: avoid;"><div class="section-title" style="margin-bottom: 1px;">Grupo / Oficina Terapêutica</div><div class="section-content" style="font-size: 9pt; line-height: 1.05;">
+        ${groupActivityDraft.tema ? `<div style="margin-bottom: 1px;"><strong>Tema:</strong> ${groupActivityDraft.tema}</div>` : ''}
+        ${groupActivityDraft.tipo_atividade ? `<div style="margin-bottom: 1px;"><strong>Tipo de Atividade:</strong> ${groupActivityDraft.tipo_atividade}</div>` : ''}
+        ${groupActivityDraft.evolucao ? `<div style="margin-bottom: 1px;"><strong>Evolução no Grupo:</strong> ${groupActivityDraft.evolucao.replace(/\n/g, '<br/>')}</div>` : ''}
+      </div></div>`;
+    }
+
     // 2.5 Treatment Plan section
     if (sessaoCycle || sessaoPts) {
       body += `<div class="section" style="page-break-inside: avoid; margin-bottom: 2px;"><div class="section-title" style="margin-bottom: 1px;">Plano Terapêutico Ativo</div><div class="section-content" style="font-size: 9pt; line-height: 1.05;">${sessaoCycle ? `<div style="margin-bottom: 1px;"><span style="font-weight: 700; color: #475569; font-size: 7.5pt; text-transform: uppercase;">Ciclo:</span> ${sessaoCycle.treatment_type} (${sessaoCycle.sessions_done}/${sessaoCycle.total_sessions} sessões)</div>` : ''}${sessaoPts ? `<div style="margin-bottom: 1px;"><span style="font-weight: 700; color: #475569; font-size: 7.5pt; text-transform: uppercase;">Diagnóstico:</span> ${sessaoPts.diagnostico_funcional}</div><div style="margin-bottom: 1px;"><span style="font-weight: 700; color: #475569; font-size: 7.5pt; text-transform: uppercase;">Objetivos:</span> ${sessaoPts.objetivos_terapeuticos}</div>` : ''}</div></div>`;
