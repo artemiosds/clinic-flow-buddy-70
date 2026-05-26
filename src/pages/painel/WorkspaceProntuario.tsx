@@ -138,7 +138,6 @@ const WorkspaceProntuario: React.FC = () => {
   const [loadingGroupActivity, setLoadingGroupActivity] = useState(false);
   const [savingGroupActivity, setSavingGroupActivity] = useState(false);
 
-
   const handleFormChange = (updates: any) => {
     setForm((prev: any) => {
       const next = { ...prev, ...updates };
@@ -263,8 +262,8 @@ const WorkspaceProntuario: React.FC = () => {
     }
   };
 
-  const loadTriagem = async (agendamentoId: string) => {
-    const { data } = await supabase.from("triage_records").select("*").eq("agendamento_id", agendamentoId).not("confirmado_em", "is", null).maybeSingle();
+  const loadTriagem = async (agId: string) => {
+    const { data } = await supabase.from("triage_records").select("*").eq("agendamento_id", agId).not("confirmado_em", "is", null).maybeSingle();
     if (data) setTriagem(data);
   };
 
@@ -288,7 +287,7 @@ const WorkspaceProntuario: React.FC = () => {
 
           const processProntuario = (p: any) => {
             if (p) {
-              setForm(prev => {
+              setForm((prev: any) => {
                 return { ...prev, ...p, custom_data: { ...(prev.custom_data || {}), ...(p.custom_data || {}) } };
               });
               
@@ -299,7 +298,7 @@ const WorkspaceProntuario: React.FC = () => {
                     setEspecialidadeFields(parsedObs.especialidade_fields);
                   }
                   if (parsedObs.texto !== undefined) {
-                    setForm(prev => ({ ...prev, observacoes: parsedObs.texto || '' }));
+                    setForm((prev: any) => ({ ...prev, observacoes: parsedObs.texto || '' }));
                   }
                 } catch (e) {
                   console.error("Error parsing observations for specialty fields", e);
@@ -332,7 +331,7 @@ const WorkspaceProntuario: React.FC = () => {
           } else if (editId) {
             const { data: p } = await supabase.from('prontuarios').select('*').eq('id', editId).single();
             processProntuario(p);
-            if (p?.agendamento_id) loadTriagem(p.agendamento_id);
+            if ((p as any)?.agendamento_id) loadTriagem((p as any).agendamento_id);
           }
         }
       } finally { setLoading(false); }
@@ -379,7 +378,7 @@ const WorkspaceProntuario: React.FC = () => {
   
   const handleToggleSoap = (enabled: boolean) => {
     setSoapEnabled(enabled);
-    setForm(prev => ({
+    setForm((prev: any) => ({
       ...prev,
       custom_data: {
         ...prev.custom_data,
@@ -388,8 +387,75 @@ const WorkspaceProntuario: React.FC = () => {
     }));
   };
 
-  const handleSaveAcolhimento = async (dados: any) => { /* ... */ };
-  const handleSaveGroupActivity = async (dados: any) => { /* ... */ };
+  const handleSaveAcolhimento = async (dados: any) => {
+    setSavingAcolhimento(true);
+    try {
+      const record = {
+        paciente_id: pacienteId || form.paciente_id,
+        paciente_nome: pacienteData?.nome || pacienteNome || '',
+        profissional_id: user?.id || '',
+        profissional_nome: user?.nome || '',
+        unidade_id: user?.unidadeId || '',
+        data_atendimento: form.data_atendimento || new Date().toISOString().split('T')[0],
+        hora_atendimento: form.hora_atendimento || '',
+        tipo_registro: 'acolhimento_mental',
+        agendamento_id: agendamentoId || null,
+        dados_acolhimento: dados,
+        evolucao: dados?.secao15?.parecer || '',
+        queixa_principal: dados?.secao3?.queixa || '',
+      };
+
+      if (acolhimentoData?.id) {
+        const { error } = await (supabase as any).from('prontuarios').update(record).eq('id', acolhimentoData.id);
+        if (error) throw error;
+      } else {
+        const { data: inserted, error } = await (supabase as any).from('prontuarios').insert(record).select('id').single();
+        if (error) throw error;
+        setAcolhimentoData(inserted);
+      }
+      toast.success('Acolhimento salvo com sucesso!');
+    } catch (err: any) {
+      toast.error('Erro ao salvar acolhimento: ' + (err?.message || ''));
+    } finally {
+      setSavingAcolhimento(false);
+    }
+  };
+
+  const handleSaveGroupActivity = async (dados: any) => {
+    setSavingGroupActivity(true);
+    try {
+      const record = {
+        paciente_id: pacienteId || form.paciente_id,
+        paciente_nome: pacienteData?.nome || pacienteNome || '',
+        profissional_id: user?.id || '',
+        profissional_nome: user?.nome || '',
+        unidade_id: user?.unidadeId || '',
+        data_atendimento: form.data_atendimento || new Date().toISOString().split('T')[0],
+        hora_atendimento: form.hora_atendimento || '',
+        tipo_registro: 'oficina_terapeutica',
+        agendamento_id: agendamentoId || null,
+        evolucao: dados?.evolucao || '',
+        custom_data: {
+          tema: dados?.tema || '',
+          tipo_atividade: dados?.tipo_atividade || '',
+        },
+      };
+
+      if (groupActivityData?.id) {
+        const { error } = await (supabase as any).from('prontuarios').update(record).eq('id', groupActivityData.id);
+        if (error) throw error;
+      } else {
+        const { data: inserted, error } = await (supabase as any).from('prontuarios').insert(record).select('id').single();
+        if (error) throw error;
+        setGroupActivityData(inserted);
+      }
+      toast.success('Registro de grupo/oficina salvo com sucesso!');
+    } catch (err: any) {
+      toast.error('Erro ao salvar registro: ' + (err?.message || ''));
+    } finally {
+      setSavingGroupActivity(false);
+    }
+  };
 
   return (
     <div className="flex flex-col h-screen bg-background text-foreground">
@@ -482,7 +548,7 @@ const WorkspaceProntuario: React.FC = () => {
                                 {section.standardTabId === 'group_activity' && (
                                   <GroupActivityForm 
                                     data={groupActivityDraft}
-                                    onChange={(updates) => setGroupActivityDraft(prev => ({ ...prev, ...updates }))}
+                                    onChange={(updates) => setGroupActivityDraft((prev: any) => ({ ...prev, ...updates }))}
                                     onSave={handleSaveGroupActivity}
                                     saving={savingGroupActivity}
                                   />
@@ -520,6 +586,98 @@ const WorkspaceProntuario: React.FC = () => {
                                     />
                                   </div>
                                 )}
+                                {section.standardTabId === 'prescriptions' && (
+                                  <div className="space-y-6">
+                                    <PrescricaoMedicamentos
+                                      profissionalId={user?.id || ''}
+                                      value={listaPrescricao}
+                                      onChange={setListaPrescricao}
+                                      pacienteNome={pacienteData?.nome || pacienteNome || ''}
+                                      pacienteCpf={pacienteData?.cpf}
+                                      pacienteCns={pacienteData?.cns}
+                                      dataAtendimento={form.data_atendimento}
+                                      profissionalNome={user?.nome}
+                                      profissionalConselho={user?.numeroConselho}
+                                      profissionalTipoConselho={user?.tipoConselho}
+                                      profissionalUfConselho={user?.ufConselho}
+                                    />
+                                    <SolicitacaoExames
+                                      profissionalId={user?.id || ''}
+                                      value={listaExames}
+                                      onChange={setListaExames}
+                                      pacienteNome={pacienteData?.nome || pacienteNome || ''}
+                                      pacienteCpf={pacienteData?.cpf}
+                                      pacienteCns={pacienteData?.cns}
+                                      dataAtendimento={form.data_atendimento}
+                                      profissionalNome={user?.nome}
+                                      profissionalConselho={user?.numeroConselho}
+                                      profissionalTipoConselho={user?.tipoConselho}
+                                      profissionalUfConselho={user?.ufConselho}
+                                    />
+                                  </div>
+                                )}
+                                {section.standardTabId === 'procedures' && (
+                                  <div className="space-y-4">
+                                    {user?.profissao && (
+                                      <CamposEspecialidade
+                                        profissao={user.profissao}
+                                        profissionalId={user.id}
+                                        tipoProntuario={form.tipo_registro as any}
+                                        values={especialidadeFields}
+                                        onChange={(key, val) => setEspecialidadeFields(prev => ({ ...prev, [key]: val }))}
+                                      />
+                                    )}
+                                  </div>
+                                )}
+                                {section.standardTabId === 'treatments' && (
+                                  <TreatmentTab
+                                    pacienteId={pacienteId || form.paciente_id}
+                                    pacienteNome={pacienteData?.nome || pacienteNome || ''}
+                                    onCycleCreated={() => setCreateCycleOpen(true)}
+                                    onPtsCreated={() => setCreatePtsOpen(true)}
+                                  />
+                                )}
+                                {section.standardTabId === 'antecedents' && (
+                                  <div className="space-y-4">
+                                    <p className="text-sm text-muted-foreground">Histórico externo do paciente.</p>
+                                  </div>
+                                )}
+                                {section.standardTabId === 'annexes' && (
+                                  <div className="space-y-4">
+                                    <ProntuarioAnexos
+                                      prontuarioId={editId}
+                                      pacienteId={pacienteId || form.paciente_id || ''}
+                                      agendamentoId={agendamentoId || undefined}
+                                      tipoRegistro={form.tipo_registro}
+                                      unidadeId={user?.unidadeId || ''}
+                                      uploadedBy={user?.id || ''}
+                                      uploadedByNome={user?.nome || ''}
+                                      showResultadosAnteriores={form.tipo_registro === 'retorno'}
+                                      disabled={!(pacienteId || form.paciente_id)}
+                                    />
+                                    <ResultadosExames
+                                      prontuarioId={editId}
+                                      pacienteId={pacienteId || form.paciente_id || ''}
+                                      agendamentoId={agendamentoId || undefined}
+                                      tipoAtendimento={form.tipo_registro}
+                                      unidadeId={user?.unidadeId || ''}
+                                      uploadedBy={user?.id || ''}
+                                      uploadedByNome={user?.nome || ''}
+                                      disabled={!(pacienteId || form.paciente_id)}
+                                    />
+                                  </div>
+                                )}
+                                {/* Render custom fields for any standard section that has them */}
+                                {section.fields && section.fields.filter(f => f.enabled && !f.isBuiltin).length > 0 && 
+                                  !['evolution', 'acolhimento', 'group_activity', 'prescriptions', 'procedures', 'treatments', 'antecedents', 'annexes'].includes(section.standardTabId || '') && (
+                                  <DynamicProntuarioFields
+                                    campos={section.fields.filter(f => f.enabled && !f.isBuiltin)}
+                                    formValues={form}
+                                    customValues={form.custom_data || {}}
+                                    onFormChange={(k, v) => handleFormChange({ [k]: v })}
+                                    onCustomChange={(k, v) => handleFormChange({ custom_data: { [k]: v } })}
+                                  />
+                                )}
                               </div>
                             )}
                           </div>
@@ -555,6 +713,7 @@ const WorkspaceProntuario: React.FC = () => {
           </ResizablePanel>
         </ResizablePanelGroup>
       </div>
+
       <QuickEditPatientModal
         open={editPatientOpen}
         onOpenChange={setEditPatientOpen}
@@ -564,6 +723,28 @@ const WorkspaceProntuario: React.FC = () => {
           if (pData) setPacienteData(pData);
           setRefreshTrigger(r => r + 1); 
           setEditPatientOpen(false); 
+        }}
+      />
+
+      <CreatePTSModal
+        open={createPtsOpen}
+        onOpenChange={setCreatePtsOpen}
+        pacienteId={pacienteId || form.paciente_id}
+        pacienteNome={pacienteData?.nome || pacienteNome || ''}
+        onSuccess={() => {
+          const targetId = pacienteId || form.paciente_id;
+          if (targetId) loadSessaoData(targetId);
+        }}
+      />
+
+      <CreateCycleModal
+        open={createCycleOpen}
+        onOpenChange={setCreateCycleOpen}
+        pacienteId={pacienteId || form.paciente_id}
+        pacienteNome={pacienteData?.nome || pacienteNome || ''}
+        onSuccess={() => {
+          const targetId = pacienteId || form.paciente_id;
+          if (targetId) loadSessaoData(targetId);
         }}
       />
     </div>
