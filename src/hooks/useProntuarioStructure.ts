@@ -46,5 +46,5 @@ export function useProntuarioStructure() {
       .sort((a, b) => a.order - b.order);
   };
 
-  return { sections, loading, getEnabledFields };
+  return { sections, loading, getEnabledSections };
 }
