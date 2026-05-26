@@ -277,6 +277,7 @@ const WorkspaceProntuario: React.FC = () => {
           loadSessaoData(targetPacienteId);
           loadEpisodios(targetPacienteId);
           loadAcolhimento(targetPacienteId);
+          loadGroupActivity(targetPacienteId);
 
           const processProntuario = (p: any) => {
             if (p) {
