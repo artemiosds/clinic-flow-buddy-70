@@ -258,6 +258,25 @@ const EditorProntuarioConfig: React.FC = () => {
     });
   };
 
+  const startEditSection = (section: ProntuarioSection) => {
+    setEditingSection(section);
+    setEditSectionData({ 
+      title: section.title, 
+      tiposProntuario: section.tiposProntuario || ['primeira_consulta', 'retorno', 'sessao', 'urgencia', 'procedimento'] 
+    });
+  };
+
+  const saveEditSection = () => {
+    if (!editingSection || !editSectionData.title.trim()) return;
+    setSections(prev => prev.map(s => s.id === editingSection.id ? { 
+      ...s, 
+      title: editSectionData.title.trim(),
+      tiposProntuario: editSectionData.tiposProntuario
+    } : s));
+    setEditingSection(null);
+    toast.success('Aba atualizada.');
+  };
+
   const removeSection = (sectionId: string) => {
     const sec = sections.find(s => s.id === sectionId);
     if (sec?.fields.some(f => f.isBuiltin)) {
