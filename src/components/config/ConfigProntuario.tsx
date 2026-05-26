@@ -331,11 +331,6 @@ const ConfigProntuario: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <EditorProntuarioConfig />
-
-      <Separator />
-
-      {/* Modelos de Prontuário — abre o construtor visual em modal */}
       <Card className="shadow-card border-0">
         <CardContent className="p-5">
           <div className="flex items-center justify-between mb-4">
