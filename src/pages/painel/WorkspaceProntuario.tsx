@@ -818,16 +818,16 @@ const WorkspaceProntuario: React.FC = () => {
                     <div className="flex items-center justify-between mb-2">
                       <TabsList className="flex-1 justify-start h-12 bg-transparent gap-6 p-0 overflow-x-auto">
                         {(enabledSections || []).map(section => (
-                            <TabsTrigger 
-                              key={section.id} 
-                              value={section.standardTabId || section.id} 
-                              className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap"
-                            >
-                              {section.title}
-                              {section.standardTabId === 'acolhimento' && acolhimentoData && (
-                                <Badge variant="secondary" className="ml-2 bg-green-100 text-green-700 hover:bg-green-100 border-green-200 py-0 px-1 text-[10px]">✓</Badge>
-                              )}
-                            </TabsTrigger>
+                          <TabsTrigger 
+                            key={section.id} 
+                            value={section.standardTabId || section.id} 
+                            className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap"
+                          >
+                            {section.title}
+                            {section.standardTabId === 'acolhimento' && acolhimentoData && (
+                              <Badge variant="secondary" className="ml-2 bg-green-100 text-green-700 hover:bg-green-100 border-green-200 py-0 px-1 text-[10px]">✓</Badge>
+                            )}
+                          </TabsTrigger>
                         ))}
                       </TabsList>
                     </div>
@@ -864,12 +864,34 @@ const WorkspaceProntuario: React.FC = () => {
                           )}
 
                           {section.standardTabId === 'group_activity' && (
-                            <GroupActivityForm 
-                              data={groupActivityDraft}
-                              onChange={(updates) => setGroupActivityDraft(prev => ({ ...prev, ...updates }))}
-                              onSave={handleSaveGroupActivity}
-                              saving={savingGroupActivity}
-                            />
+                            <div className="space-y-6">
+                              <GroupActivityForm 
+                                data={{
+                                  tema: form.custom_data?.custom_tema_grupo || groupActivityDraft.tema,
+                                  tipo_atividade: form.custom_data?.custom_tipo_atividade || groupActivityDraft.tipo_atividade,
+                                  evolucao: form.custom_data?.custom_evolucao_grupo || groupActivityDraft.evolucao
+                                }}
+                                onChange={(updates) => {
+                                  if (updates.tema !== undefined) handleFormChange({ custom_data: { custom_tema_grupo: updates.tema } });
+                                  if (updates.tipo_atividade !== undefined) handleFormChange({ custom_data: { custom_tipo_atividade: updates.tipo_atividade } });
+                                  if (updates.evolucao !== undefined) handleFormChange({ custom_data: { custom_evolucao_grupo: updates.evolucao } });
+                                  setGroupActivityDraft(prev => ({ ...prev, ...updates }));
+                                }}
+                                onSave={handleSaveGroupActivity}
+                                saving={savingGroupActivity}
+                              />
+                              {section.fields.filter(f => f.enabled && !['custom_tema_grupo', 'custom_tipo_atividade', 'custom_evolucao_grupo'].includes(f.key)).length > 0 && (
+                                <div className="mt-6 pt-6 border-t">
+                                  <DynamicProntuarioFields
+                                    campos={section.fields.filter(f => !['custom_tema_grupo', 'custom_tipo_atividade', 'custom_evolucao_grupo'].includes(f.key)).map(f => ({ ...f, tipo: f.type, obrigatorio: f.required, habilitado: f.enabled })) as any}
+                                    formValues={form}
+                                    customValues={form.custom_data || {}}
+                                    onFormChange={(k, v) => handleFormChange({ [k]: v })}
+                                    onCustomChange={(k, v) => handleFormChange({ custom_data: { [k]: v } })}
+                                  />
+                                </div>
+                              )}
+                            </div>
                           )}
 
                           {section.standardTabId === 'evolution' && (
@@ -966,7 +988,7 @@ const WorkspaceProntuario: React.FC = () => {
                               )}
                               
                               <DynamicProntuarioFields
-                                campos={section.fields.map(f => ({ ...f, tipo: f.type, obrigatorio: f.required, habilitado: f.enabled })) as any}
+                                campos={section.fields.filter(f => f.isBuiltin).map(f => ({ ...f, tipo: f.type, obrigatorio: f.required, habilitado: f.enabled })) as any}
                                 formValues={form}
                                 customValues={form.custom_data || {}}
                                 onFormChange={(k, v) => handleFormChange({ [k]: v })}
@@ -980,6 +1002,18 @@ const WorkspaceProntuario: React.FC = () => {
                                 profissionalId={user?.id}
                                 tipoProntuario={form.tipo_registro === 'avaliacao_inicial' ? 'avaliacao' : (form.tipo_registro === 'retorno' ? 'retorno' : (form.tipo_registro === 'sessao' ? 'sessao' : (form.tipo_registro === 'urgencia' ? 'urgencia' : (form.tipo_registro === 'procedimento' ? 'procedimento' : 'avaliacao'))))}
                               />
+                              {section.fields.filter(f => f.enabled && f.isBuiltin === false).length > 0 && (
+                                <div className="mt-6 pt-6 border-t border-dashed">
+                                  <h4 className="text-xs font-bold uppercase text-muted-foreground mb-4">Campos Adicionais</h4>
+                                  <DynamicProntuarioFields
+                                    campos={section.fields.filter(f => f.enabled && f.isBuiltin === false).map(f => ({ ...f, tipo: f.type, obrigatorio: f.required, habilitado: f.enabled })) as any}
+                                    formValues={form}
+                                    customValues={form.custom_data || {}}
+                                    onFormChange={(k, v) => handleFormChange({ [k]: v })}
+                                    onCustomChange={(k, v) => handleFormChange({ custom_data: { [k]: v } })}
+                                  />
+                                </div>
+                              )}
                             </div>
                           )}
 
@@ -1125,7 +1159,7 @@ const WorkspaceProntuario: React.FC = () => {
                                   </div>
                                   <h3 className="text-lg font-bold">{section.title}</h3>
                                 </div>
-                                <Badge variant="outline" className="text-[10px] uppercase tracking-wider text-muted-foreground bg-muted/30 border-muted/50">
+                                <Badge variant="outline" className="text-[10px] uppercase tracking-wider text-primary bg-primary/5 border-primary/20">
                                   Aba Personalizada
                                 </Badge>
                               </div>
