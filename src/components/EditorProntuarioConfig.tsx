@@ -165,6 +165,9 @@ const EditorProntuarioConfig: React.FC = () => {
   const [newField, setNewField] = useState({ label: '', type: 'textarea' as string, required: false, options: '' });
   const [addSectionOpen, setAddSectionOpen] = useState(false);
   const [newSectionTitle, setNewSectionTitle] = useState('');
+  const [editingSection, setEditingSection] = useState<ProntuarioSection | null>(null);
+  const [editSectionData, setEditSectionData] = useState({ title: '', tiposProntuario: [] as string[] });
+  
   const [editingField, setEditingField] = useState<{ sectionId: string; fieldId: string } | null>(null);
   const [editFieldData, setEditFieldData] = useState({ label: '', type: 'textarea', required: false, options: '' });
 
