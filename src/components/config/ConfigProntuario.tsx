@@ -495,16 +495,6 @@ const ConfigProntuario: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-
-        <Card className="shadow-card border-0">
-          <CardContent className="p-5">
-            <h3 className="font-semibold font-display text-foreground mb-4 text-sm uppercase tracking-wider text-muted-foreground">Regras de Validação e Alertas</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Alertas section placeholder or content if needed */}
-              <p className="text-xs text-muted-foreground italic">Configure alertas automáticos baseados nos campos preenchidos.</p>
-            </div>
-          </CardContent>
-        </Card>
       </TabsContent>
     </Tabs>
 
