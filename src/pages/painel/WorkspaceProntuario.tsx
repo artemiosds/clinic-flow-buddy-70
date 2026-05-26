@@ -477,9 +477,15 @@ const WorkspaceProntuario: React.FC = () => {
       
       const targetPacienteId = pacienteId || form.paciente_id;
 
+      if (!targetPacienteId) {
+        toast.error("Paciente não identificado.");
+        setSaving(false);
+        return;
+      }
+
       const dbPayload: any = {
-        paciente_id: form.paciente_id,
-        paciente_nome: form.paciente_nome,
+        paciente_id: targetPacienteId,
+        paciente_nome: pacienteData?.nome || pacienteNome || form.paciente_nome || 'Paciente',
         profissional_id: user?.id,
         profissional_nome: user?.nome,
         unidade_id: user?.unidadeId || '',
@@ -600,8 +606,11 @@ const WorkspaceProntuario: React.FC = () => {
       toast.success(editId ? 'Alteração finalizada com sucesso!' : 'Prontuário finalizado com sucesso!');
       // Fecha o workspace após finalizar (novo ou alteração)
       setTimeout(() => {
-        if (window.history.length > 1) navigate(-1);
-        else navigate('/painel/agenda');
+        if (editId) {
+          navigate(-1);
+        } else {
+          navigate('/painel/agenda');
+        }
       }, 300);
     } catch (e: any) { 
       console.error('[Prontuário] Erro ao salvar:', e);
