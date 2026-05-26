@@ -495,8 +495,6 @@ const ConfigProntuario: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-      </TabsContent>
-    </Tabs>
 
       <Card className="shadow-card border-0">
         <CardContent className="p-5">
