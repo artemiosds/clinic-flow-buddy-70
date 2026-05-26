@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { TIPO_REGISTRO_LABELS } from '@/utils/labels';
+
 
 export interface ProntuarioField {
   id: string;
@@ -39,13 +41,22 @@ export interface ProntuarioSection {
   tiposProntuario?: string[]; // e.g., ['primeira_consulta', 'retorno']
 }
 
+export const PRONTUARIO_TYPES_LIST = [
+  { value: 'primeira_consulta', label: 'Avaliação/TR' },
+  { value: 'retorno', label: 'Retorno' },
+  { value: 'sessao', label: 'Sessão' },
+  { value: 'urgencia', label: 'Urgência' },
+  { value: 'procedimento', label: 'Procedimento' },
+];
+
+
 export interface ProntuarioStructure {
   sections: ProntuarioSection[];
   version: number;
   updatedAt: string;
 }
 
-const DEFAULT_SECTIONS: ProntuarioSection[] = [
+export const DEFAULT_SECTIONS: ProntuarioSection[] = [
   {
     id: 'tab_acolhimento',
     title: 'Acolhimento',
@@ -82,7 +93,7 @@ const DEFAULT_SECTIONS: ProntuarioSection[] = [
   },
   {
     id: 'tab_group_activity',
-    title: 'Atividades Coletivas',
+    title: 'Grupo/Oficinas Terapêuticas',
     enabled: true,
     order: 2,
     fields: [
@@ -299,8 +310,10 @@ const EditorProntuarioConfig: React.FC = () => {
       enabled: true, 
       order: prev.length, 
       fields: [],
-      type: 'custom'
+      type: 'custom',
+      tiposProntuario: ['primeira_consulta', 'retorno', 'sessao', 'urgencia', 'procedimento']
     }]);
+
     setNewSectionTitle('');
     setAddSectionOpen(false);
     toast.success('Aba personalizada adicionada.');
@@ -638,13 +651,8 @@ const EditorProntuarioConfig: React.FC = () => {
             <div className="space-y-2">
               <Label className="text-sm">Exibir nos tipos de prontuário:</Label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {[
-                  { value: 'primeira_consulta', label: 'Avaliação/TR' },
-                  { value: 'retorno', label: 'Retorno' },
-                  { value: 'sessao', label: 'Sessão' },
-                  { value: 'urgencia', label: 'Urgência' },
-                  { value: 'procedimento', label: 'Procedimento' },
-                ].map(type => (
+                {PRONTUARIO_TYPES_LIST.map(type => (
+
                   <label key={type.value} className="flex items-center gap-2 text-sm cursor-pointer">
                     <input 
                       type="checkbox" 

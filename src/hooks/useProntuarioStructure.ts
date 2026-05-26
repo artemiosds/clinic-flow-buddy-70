@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { ProntuarioSection } from '@/components/EditorProntuarioConfig';
+import { DEFAULT_SECTIONS } from '@/components/EditorProntuarioConfig';
 
 const CONFIG_KEY = 'estrutura_prontuario';
 
 export function useProntuarioStructure() {
-  const [sections, setSections] = useState<ProntuarioSection[] | null>(null);
+  const [sections, setSections] = useState<ProntuarioSection[]>(DEFAULT_SECTIONS);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -20,9 +21,11 @@ export function useProntuarioStructure() {
         const config = data?.configuracoes as any;
         if (config?.[CONFIG_KEY]?.sections) {
           setSections(config[CONFIG_KEY].sections);
+        } else {
+          setSections(JSON.parse(JSON.stringify(DEFAULT_SECTIONS)));
         }
       } catch {
-        // fallback: no custom structure
+        setSections(JSON.parse(JSON.stringify(DEFAULT_SECTIONS)));
       } finally {
         setLoading(false);
       }
@@ -35,7 +38,6 @@ export function useProntuarioStructure() {
    * Builtin fields map to form keys; custom fields use `custom_<id>`.
    */
   const getEnabledFields = () => {
-    if (!sections) return null;
     return sections
       .filter(s => s.enabled)
       .sort((a, b) => a.order - b.order)
