@@ -61,6 +61,7 @@ const DynamicProntuarioFields: React.FC<DynamicProntuarioFieldsProps> = ({
         const value = getValue(campo);
         const tipo = (campo as CampoConfig).tipo || (campo as ProntuarioField).type;
         const obrigatorio = (campo as CampoConfig).obrigatorio ?? (campo as ProntuarioField).required;
+        const opcoes = (campo as CampoConfig).opcoes || (campo as ProntuarioField).options;
 
         return (
           <div key={campo.id}>
@@ -121,7 +122,7 @@ const DynamicProntuarioFields: React.FC<DynamicProntuarioFieldsProps> = ({
                   <SelectValue placeholder={`Selecione ${campo.label}`} />
                 </SelectTrigger>
                 <SelectContent>
-                  {(campo.opcoes || []).map((opt) => (
+                  {(opcoes || []).map((opt) => (
                     <SelectItem key={opt} value={opt}>{opt}</SelectItem>
                   ))}
                 </SelectContent>
@@ -131,7 +132,7 @@ const DynamicProntuarioFields: React.FC<DynamicProntuarioFieldsProps> = ({
             {/* CHECKBOX (multiple choice) */}
             {tipo === 'checkbox' && (
               <div className="space-y-1.5 mt-1">
-                {(campo.opcoes || []).map((opt) => {
+                {(opcoes || []).map((opt) => {
                   const selected = value ? value.split('||') : [];
                   const checked = selected.includes(opt);
                   return (
