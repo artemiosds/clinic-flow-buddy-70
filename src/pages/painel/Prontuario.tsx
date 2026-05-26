@@ -1286,14 +1286,42 @@ const ProntuarioPage: React.FC = () => {
           },
         });
       } else {
-        const { data: inserted, error } = await (supabase as any)
-          .from("prontuarios")
-          .insert(record)
-          .select("id")
-          .single();
-        if (error) throw error;
-        prontuarioId = inserted?.id;
-        insertedNewProntuario = true;
+        // PREVENÇÃO DE DUPLICIDADE: Verifica se já existe um prontuário para este agendamento antes de inserir
+        if (form.agendamento_id) {
+          const { data: existingProntuario } = await (supabase as any)
+            .from("prontuarios")
+            .select("id")
+            .eq("agendamento_id", form.agendamento_id)
+            .maybeSingle();
+
+          if (existingProntuario) {
+            console.log("[handleSave] Prontuário já existe para este agendamento, convertendo para update:", existingProntuario.id);
+            prontuarioId = existingProntuario.id;
+            const { error } = await (supabase as any)
+              .from("prontuarios")
+              .update(record)
+              .eq("id", prontuarioId);
+            if (error) throw error;
+          } else {
+            const { data: inserted, error } = await (supabase as any)
+              .from("prontuarios")
+              .insert(record)
+              .select("id")
+              .single();
+            if (error) throw error;
+            prontuarioId = inserted?.id;
+            insertedNewProntuario = true;
+          }
+        } else {
+          const { data: inserted, error } = await (supabase as any)
+            .from("prontuarios")
+            .insert(record)
+            .select("id")
+            .single();
+          if (error) throw error;
+          prontuarioId = inserted?.id;
+          insertedNewProntuario = true;
+        }
       }
 
       if (prontuarioId) {
@@ -1462,18 +1490,46 @@ const ProntuarioPage: React.FC = () => {
         // Sincroniza procedimentos no autosave de forma segura
         await saveProntuarioProcedimentos(editIdRef.current, profIdAuto);
       } else {
-        const { data: inserted, error } = await (supabase as any)
-          .from('prontuarios')
-          .insert(record)
-          .select('id')
-          .single();
-        if (error) throw error;
-        if (inserted?.id) {
-          setEditId(inserted.id);
-          editIdRef.current = inserted.id;
-          
-          // Sincroniza procedimentos para novo prontuário no autosave
-          await saveProntuarioProcedimentos(inserted.id, profIdAuto);
+        // PREVENÇÃO DE DUPLICIDADE NO AUTOSAVE
+        if (f.agendamento_id) {
+          const { data: existing } = await (supabase as any)
+            .from('prontuarios')
+            .select('id')
+            .eq('agendamento_id', f.agendamento_id)
+            .maybeSingle();
+            
+          if (existing) {
+            console.log("[autosave] Prontuário já existe, atualizando:", existing.id);
+            const { error } = await (supabase as any).from('prontuarios').update(record).eq('id', existing.id);
+            if (error) throw error;
+            setEditId(existing.id);
+            editIdRef.current = existing.id;
+            await saveProntuarioProcedimentos(existing.id, profIdAuto);
+          } else {
+            const { data: inserted, error } = await (supabase as any)
+              .from('prontuarios')
+              .insert(record)
+              .select('id')
+              .single();
+            if (error) throw error;
+            if (inserted?.id) {
+              setEditId(inserted.id);
+              editIdRef.current = inserted.id;
+              await saveProntuarioProcedimentos(inserted.id, profIdAuto);
+            }
+          }
+        } else {
+          const { data: inserted, error } = await (supabase as any)
+            .from('prontuarios')
+            .insert(record)
+            .select('id')
+            .single();
+          if (error) throw error;
+          if (inserted?.id) {
+            setEditId(inserted.id);
+            editIdRef.current = inserted.id;
+            await saveProntuarioProcedimentos(inserted.id, profIdAuto);
+          }
         }
       }
       setAutosaveStatus('saved');
