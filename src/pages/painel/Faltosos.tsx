@@ -102,6 +102,16 @@ const Faltosos: React.FC = () => {
 
   useEffect(() => {
     if (canAccess) load();
+    
+    // Escutar eventos globais de atualização de status de paciente
+    const handleStatusRefresh = (e: any) => {
+      const detail = e.detail;
+      console.log("[Faltosos] Evento de atualização recebido:", detail);
+      load();
+    };
+
+    window.addEventListener("refresh-patient-status", handleStatusRefresh);
+    return () => window.removeEventListener("refresh-patient-status", handleStatusRefresh);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [unidadeId]);
 
