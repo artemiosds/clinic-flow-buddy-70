@@ -108,6 +108,10 @@ const WorkspaceProntuario: React.FC = () => {
   const [loadingAcolhimento, setLoadingAcolhimento] = useState(false);
   const [savingAcolhimento, setSavingAcolhimento] = useState(false);
   const [hasModifiedForm, setHasModifiedForm] = useState(false);
+  const [groupActivityData, setGroupActivityData] = useState<any>(null);
+  const [groupActivityDraft, setGroupActivityDraft] = useState<any>({ tema: '', tipo_atividade: '', evolucao: '' });
+  const [loadingGroupActivity, setLoadingGroupActivity] = useState(false);
+  const [savingGroupActivity, setSavingGroupActivity] = useState(false);
 
   const [form, setForm] = useState<any>({
     tipo_registro: searchParams.get('tipo') === 'Retorno' ? 'retorno' : (searchParams.get('tipo') === 'Consulta' || searchParams.get('tipo') === 'Avaliação/TR' ? 'avaliacao_inicial' : (searchParams.get('tipo') || 'avaliacao_inicial')),
