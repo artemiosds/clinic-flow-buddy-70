@@ -473,6 +473,9 @@ const EditorProntuarioConfig: React.FC = () => {
                   </div>
                   <h4 className="font-semibold text-sm flex-1">{section.title}</h4>
                   <Badge variant="outline" className="text-[10px]">{section.fields.filter(f => f.enabled).length} campos</Badge>
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => startEditSection(section)}>
+                    <Pencil className="w-3 h-3" />
+                  </Button>
                   <Switch checked={section.enabled} onCheckedChange={() => toggleSection(section.id)} />
                   {!section.fields.some(f => f.isBuiltin) && (
                     <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeSection(section.id)}>
