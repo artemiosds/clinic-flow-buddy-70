@@ -226,6 +226,36 @@ const WorkspaceProntuario: React.FC = () => {
     }
   };
 
+  const loadGroupActivity = async (patientId: string) => {
+    setLoadingGroupActivity(true);
+    try {
+      const { data } = await supabase
+        .from('prontuarios')
+        .select('*')
+        .eq('paciente_id', patientId)
+        .eq('tipo_registro', 'oficina_terapeutica')
+        .order('criado_em', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      const typedData = data as any;
+      if (typedData) {
+        setGroupActivityData(typedData);
+        if (typedData.custom_data) {
+          setGroupActivityDraft({
+            tema: typedData.custom_data.tema || '',
+            tipo_atividade: typedData.custom_data.tipo_atividade || '',
+            evolucao: typedData.evolucao || ''
+          });
+        }
+      }
+    } catch (err) {
+      console.error("Error loading group activity:", err);
+    } finally {
+      setLoadingGroupActivity(false);
+    }
+  };
+
   const loadTriagem = async (agendamentoId: string) => {
     const { data } = await supabase.from("triage_records").select("*").eq("agendamento_id", agendamentoId).not("confirmado_em", "is", null).maybeSingle();
     if (data) setTriagem(data);
