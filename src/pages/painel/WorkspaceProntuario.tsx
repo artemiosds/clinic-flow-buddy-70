@@ -80,6 +80,7 @@ const WorkspaceProntuario: React.FC = () => {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const isSavingRef = useRef(false);
   const saveAttemptedRef = useRef(false);
   const [triagem, setTriagem] = useState<any>(null);
   const [pacienteData, setPacienteData] = useState<any>(null);
@@ -125,11 +126,13 @@ const WorkspaceProntuario: React.FC = () => {
   const [acolhimentoDraft, setAcolhimentoDraft] = useState<any>({});
   const [loadingAcolhimento, setLoadingAcolhimento] = useState(false);
   const [savingAcolhimento, setSavingAcolhimento] = useState(false);
+  const isSavingAcolhimentoRef = useRef(false);
   const [hasModifiedForm, setHasModifiedForm] = useState(false);
   const [groupActivityData, setGroupActivityData] = useState<any>(null);
   const [groupActivityDraft, setGroupActivityDraft] = useState<any>({ tema: '', tipo_atividade: '', evolucao: '' });
   const [loadingGroupActivity, setLoadingGroupActivity] = useState(false);
   const [savingGroupActivity, setSavingGroupActivity] = useState(false);
+  const isSavingGroupActivityRef = useRef(false);
 
 
   const handleFormChange = (updates: any) => {
@@ -329,8 +332,11 @@ const WorkspaceProntuario: React.FC = () => {
 
           if (agendamentoId) {
             loadTriagem(agendamentoId);
-            const { data: p } = await supabase.from('prontuarios').select('*').eq('agendamento_id', agendamentoId).maybeSingle();
-            processProntuario(p);
+            const { data: pList } = await supabase.from('prontuarios').select('*').eq('agendamento_id', agendamentoId).order('criado_em', { ascending: false });
+            if (pList && pList.length > 0) {
+              // Se houver mais de um, pegamos o primeiro (mais recente) para editar, mas idealmente não deveria haver
+              processProntuario(pList[0]);
+            }
           } else if (editId) {
             const { data: p } = await supabase.from('prontuarios').select('*').eq('id', editId).single();
             processProntuario(p);
@@ -480,7 +486,8 @@ const WorkspaceProntuario: React.FC = () => {
   };
 
   const handleSave = async () => {
-    if (saving) return;
+    if (isSavingRef.current) return;
+    isSavingRef.current = true;
     setSaving(true);
     try {
       const { auditService } = await import('@/services/auditService');
@@ -635,15 +642,17 @@ const WorkspaceProntuario: React.FC = () => {
       saveAttemptedRef.current = false;
     } finally { 
       setSaving(false); 
+      isSavingRef.current = false;
     }
   };
 
   const handleSaveAcolhimento = async (dados: any) => {
-    if (savingAcolhimento) return;
+    if (isSavingAcolhimentoRef.current) return;
     if (!pacienteId && !form.paciente_id) {
       toast.error("Selecione um paciente primeiro.");
       return;
     }
+    isSavingAcolhimentoRef.current = true;
     setSavingAcolhimento(true);
     try {
       const payload: any = {
@@ -710,16 +719,18 @@ const WorkspaceProntuario: React.FC = () => {
       toast.error("Erro ao salvar acolhimento.");
     } finally {
       setSavingAcolhimento(false);
+      isSavingAcolhimentoRef.current = false;
     }
   };
 
   const handleSaveGroupActivity = async () => {
-    if (savingGroupActivity) return;
+    if (isSavingGroupActivityRef.current) return;
     const targetPacienteId = pacienteId || form.paciente_id;
     if (!targetPacienteId) {
       toast.error("Selecione um paciente primeiro.");
       return;
     }
+    isSavingGroupActivityRef.current = true;
     setSavingGroupActivity(true);
     try {
       const payload: any = {
@@ -784,6 +795,7 @@ const WorkspaceProntuario: React.FC = () => {
       toast.error("Erro ao salvar registro de grupo.");
     } finally {
       setSavingGroupActivity(false);
+      isSavingGroupActivityRef.current = false;
     }
   };
 

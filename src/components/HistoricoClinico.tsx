@@ -312,7 +312,12 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
       if (pError) throw pError;
 
       if (append) {
-        setProntuarios(prev => [...prev, ...(pData || [])]);
+        setProntuarios(prev => {
+          const newItems = pData || [];
+          const existingIds = new Set(prev.map(p => p.id));
+          const filteredNew = newItems.filter(p => !existingIds.has(p.id));
+          return [...prev, ...filteredNew];
+        });
       } else {
         setProntuarios(pData || []);
         setEpisodios(eData);
