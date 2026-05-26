@@ -330,21 +330,32 @@ const ConfigProntuario: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <EditorProntuarioConfig />
+      <Tabs defaultValue="fluxo" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 mb-4 bg-muted/50 p-1">
+          <TabsTrigger value="fluxo" className="flex items-center gap-2">
+            <Layers className="w-4 h-4" /> Fluxo e Abas
+          </TabsTrigger>
+          <TabsTrigger value="modelos" className="flex items-center gap-2">
+            <FileText className="w-4 h-4" /> Modelos de Prontuário
+          </TabsTrigger>
+        </TabsList>
 
-      <Separator />
+        <TabsContent value="fluxo" className="mt-0">
+          <EditorProntuarioConfig />
+        </TabsContent>
 
-      {/* Modelos de Prontuário — abre o construtor visual em modal */}
-      <Card className="shadow-card border-0">
-        <CardContent className="p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="font-semibold font-display text-foreground">Modelos de Prontuário</h3>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Edite o formulário de cada tipo. As alterações ficam ativas imediatamente para todos os profissionais.
-              </p>
-            </div>
-          </div>
+        <TabsContent value="modelos" className="mt-0 space-y-6">
+          {/* Modelos de Prontuário — abre o construtor visual em modal */}
+          <Card className="shadow-card border-0">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="font-semibold font-display text-foreground">Modelos de Prontuário</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Edite o formulário de cada tipo. As alterações ficam ativas imediatamente para todos os profissionais.
+                  </p>
+                </div>
+              </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {TIPOS_PRONTUARIO.map(t => (
               <div
@@ -491,9 +502,21 @@ const ConfigProntuario: React.FC = () => {
                 />
               </div>
             ))}
-          </div>
-        </CardContent>
-      </Card>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-card border-0">
+          <CardContent className="p-5">
+            <h3 className="font-semibold font-display text-foreground mb-4 text-sm uppercase tracking-wider text-muted-foreground">Regras de Validação e Alertas</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Alertas section placeholder or content if needed */}
+              <p className="text-xs text-muted-foreground italic">Configure alertas automáticos baseados nos campos preenchidos.</p>
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
+    </Tabs>
 
       <Card className="shadow-card border-0">
         <CardContent className="p-5">
