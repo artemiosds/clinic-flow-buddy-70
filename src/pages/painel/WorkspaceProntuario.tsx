@@ -1159,7 +1159,7 @@ const WorkspaceProntuario: React.FC = () => {
                                   </div>
                                   <h3 className="text-lg font-bold">{section.title}</h3>
                                 </div>
-                                <Badge variant="outline" className="text-[10px] uppercase tracking-wider text-muted-foreground bg-muted/30 border-muted/50">
+                                <Badge variant="outline" className="text-[10px] uppercase tracking-wider text-primary bg-primary/5 border-primary/20">
                                   Aba Personalizada
                                 </Badge>
                               </div>
