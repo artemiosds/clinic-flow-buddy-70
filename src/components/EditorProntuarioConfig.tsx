@@ -80,7 +80,6 @@ const DEFAULT_SECTIONS: ProntuarioSection[] = [
     standardTabId: 'evolution',
     tiposProntuario: ['primeira_consulta', 'retorno', 'sessao', 'urgencia', 'procedimento']
   },
-  {
     id: 'tab_group_activity',
     title: 'Atividades Coletivas',
     enabled: true,
