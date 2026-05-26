@@ -616,6 +616,57 @@ const EditorProntuarioConfig: React.FC = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Edit section dialog */}
+      <Dialog open={!!editingSection} onOpenChange={(o) => !o && setEditingSection(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Configurar Aba</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Nome da Aba</Label>
+              <Input 
+                value={editSectionData.title} 
+                onChange={e => setEditSectionData(p => ({ ...p, title: e.target.value }))} 
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-sm">Exibir nos tipos de prontuário:</Label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {[
+                  { value: 'primeira_consulta', label: 'Avaliação/TR' },
+                  { value: 'retorno', label: 'Retorno' },
+                  { value: 'sessao', label: 'Sessão' },
+                  { value: 'urgencia', label: 'Urgência' },
+                  { value: 'procedimento', label: 'Procedimento' },
+                ].map(type => (
+                  <label key={type.value} className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={editSectionData.tiposProntuario.includes(type.value)} 
+                      onChange={e => {
+                        const next = e.target.checked 
+                          ? [...editSectionData.tiposProntuario, type.value]
+                          : editSectionData.tiposProntuario.filter(t => t !== type.value);
+                        setEditSectionData(p => ({ ...p, tiposProntuario: next }));
+                      }} 
+                      className="rounded border-border text-primary focus:ring-primary" 
+                    />
+                    {type.label}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex gap-2 justify-end pt-4">
+              <Button variant="ghost" onClick={() => setEditingSection(null)}>Cancelar</Button>
+              <Button onClick={saveEditSection}>Salvar Alterações</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Add section dialog */}
       <Dialog open={addSectionOpen} onOpenChange={setAddSectionOpen}>
         <DialogContent className="max-w-md">
