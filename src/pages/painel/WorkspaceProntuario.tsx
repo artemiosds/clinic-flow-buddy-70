@@ -641,6 +641,62 @@ const WorkspaceProntuario: React.FC = () => {
     }
   };
 
+  const handleSaveGroupActivity = async () => {
+    if (savingGroupActivity) return;
+    const targetPacienteId = pacienteId || form.paciente_id;
+    if (!targetPacienteId) {
+      toast.error("Selecione um paciente primeiro.");
+      return;
+    }
+    setSavingGroupActivity(true);
+    try {
+      const payload: any = {
+        paciente_id: targetPacienteId,
+        paciente_nome: pacienteData?.nome || pacienteNome || form.paciente_nome || 'Paciente',
+        profissional_id: user?.id || '',
+        profissional_nome: user?.nome || 'Profissional',
+        unidade_id: user?.unidadeId || '',
+        tipo_registro: 'oficina_terapeutica',
+        data_atendimento: new Date().toISOString().split('T')[0],
+        hora_atendimento: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        evolucao: groupActivityDraft.evolucao,
+        custom_data: {
+          tema: groupActivityDraft.tema,
+          tipo_atividade: groupActivityDraft.tipo_atividade
+        },
+        agendamento_id: agendamentoId || null
+      };
+
+      let result;
+      if (groupActivityData?.id) {
+        const { data, error } = await supabase
+          .from('prontuarios')
+          .update(payload)
+          .eq('id', groupActivityData.id)
+          .select()
+          .single();
+        if (error) throw error;
+        result = data;
+      } else {
+        const { data, error } = await supabase
+          .from('prontuarios')
+          .insert(payload)
+          .select()
+          .single();
+        if (error) throw error;
+        result = data;
+      }
+      
+      setGroupActivityData(result as any);
+      toast.success("Registro de grupo salvo com sucesso!");
+    } catch (e: any) {
+      console.error("Erro ao salvar atividade de grupo:", e);
+      toast.error("Erro ao salvar registro de grupo.");
+    } finally {
+      setSavingGroupActivity(false);
+    }
+  };
+
   if (loading) return <div className="flex items-center justify-center h-screen">Carregando...</div>;
 
   return (
