@@ -864,12 +864,34 @@ const WorkspaceProntuario: React.FC = () => {
                           )}
 
                           {section.standardTabId === 'group_activity' && (
-                            <GroupActivityForm 
-                              data={groupActivityDraft}
-                              onChange={(updates) => setGroupActivityDraft(prev => ({ ...prev, ...updates }))}
-                              onSave={handleSaveGroupActivity}
-                              saving={savingGroupActivity}
-                            />
+                            <div className="space-y-6">
+                              <GroupActivityForm 
+                                data={{
+                                  tema: form.custom_data?.custom_tema_grupo || groupActivityDraft.tema,
+                                  tipo_atividade: form.custom_data?.custom_tipo_atividade || groupActivityDraft.tipo_atividade,
+                                  evolucao: form.custom_data?.custom_evolucao_grupo || groupActivityDraft.evolucao
+                                }}
+                                onChange={(updates) => {
+                                  if (updates.tema !== undefined) handleFormChange({ custom_data: { custom_tema_grupo: updates.tema } });
+                                  if (updates.tipo_atividade !== undefined) handleFormChange({ custom_data: { custom_tipo_atividade: updates.tipo_atividade } });
+                                  if (updates.evolucao !== undefined) handleFormChange({ custom_data: { custom_evolucao_grupo: updates.evolucao } });
+                                  setGroupActivityDraft(prev => ({ ...prev, ...updates }));
+                                }}
+                                onSave={handleSaveGroupActivity}
+                                saving={savingGroupActivity}
+                              />
+                              {section.fields.filter(f => f.enabled && !['custom_tema_grupo', 'custom_tipo_atividade', 'custom_evolucao_grupo'].includes(f.key)).length > 0 && (
+                                <div className="mt-6 pt-6 border-t">
+                                  <DynamicProntuarioFields
+                                    campos={section.fields.filter(f => !['custom_tema_grupo', 'custom_tipo_atividade', 'custom_evolucao_grupo'].includes(f.key)).map(f => ({ ...f, tipo: f.type, obrigatorio: f.required, habilitado: f.enabled })) as any}
+                                    formValues={form}
+                                    customValues={form.custom_data || {}}
+                                    onFormChange={(k, v) => handleFormChange({ [k]: v })}
+                                    onCustomChange={(k, v) => handleFormChange({ custom_data: { [k]: v } })}
+                                  />
+                                </div>
+                              )}
+                            </div>
                           )}
 
                           {section.standardTabId === 'evolution' && (
