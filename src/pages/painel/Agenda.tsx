@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { patientAbsenceService } from "@/services/patientAbsenceService";
 import { usePacienteNomeResolver } from "@/hooks/usePacienteNomeResolver";
 import { isSameDay } from "date-fns";
 import { useData } from "@/contexts/DataContext";
@@ -983,6 +984,10 @@ const Agenda: React.FC = () => {
     const paciente = pacientes.find((p) => p.id === ag.pacienteId);
     const unidade = unidades.find((u) => u.id === ag.unidadeId);
     await notify({ evento: "nao_compareceu" as any, paciente_nome: ag.pacienteNome, telefone: paciente?.telefone || "", email: paciente?.email || "", data_consulta: ag.data, hora_consulta: ag.hora, unidade: unidade?.nome || "", profissional: ag.profissionalNome, tipo_atendimento: ag.tipo, status_agendamento: "falta", id_agendamento: ag.id, observacoes: dados.descricao || "" });
+    
+    // Recalcular status de falta na origem unificada
+    await patientAbsenceService.recalculateStatus(ag.pacienteId);
+    patientAbsenceService.notifyStatusChange(ag.pacienteId);
     whatsappService.sendByAgendamento(ag.id, "falta").catch(() => {});
     await handleVagaLiberada({ id: ag.id, data: ag.data, hora: ag.hora, profissionalId: ag.profissionalId, profissionalNome: ag.profissionalNome, unidadeId: ag.unidadeId, salaId: ag.salaId, tipo: ag.tipo }, "falta", user);
     await Promise.all([refreshAgendamentos(), refreshFila()]);

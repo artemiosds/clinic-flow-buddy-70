@@ -8,6 +8,7 @@ import { procedureService, ProcedimentoDB } from "@/services/procedureService";
 import { normalizeSoapPayload, treatmentService } from "@/services/treatmentService";
 import { getSoapOptions, hasDropdownSoap, isMedico, normalizeProfissaoForSoap } from "@/data/soapOptionsByProfession";
 import { useSoapCustomOptions } from "@/hooks/useSoapCustomOptions";
+import { patientAbsenceService } from "@/services/patientAbsenceService";
 
 import { BuscaPaciente } from "@/components/BuscaPaciente";
 import { Card, CardContent } from "@/components/ui/card";
@@ -896,7 +897,8 @@ const Tratamentos: React.FC = () => {
 
       // Recalcular status de falta após registro de falta
       if (needsStatusRefresh) {
-        await supabase.rpc('recalcular_status_falta_paciente', { p_paciente_id: nextSession.patient_id });
+        await patientAbsenceService.recalculateStatus(nextSession.patient_id);
+        patientAbsenceService.notifyStatusChange(nextSession.patient_id);
       }
 
       // Optimistic refresh: reload only this cycle's sessions + silent cycle stats refresh
