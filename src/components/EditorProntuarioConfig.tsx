@@ -258,10 +258,17 @@ const EditorProntuarioConfig: React.FC = () => {
   const addSection = () => {
     if (!newSectionTitle.trim()) return;
     const id = `sec_custom_${Date.now()}`;
-    setSections(prev => [...prev, { id, title: newSectionTitle.trim(), enabled: true, order: prev.length, fields: [] }]);
+    setSections(prev => [...prev, { 
+      id, 
+      title: newSectionTitle.trim(), 
+      enabled: true, 
+      order: prev.length, 
+      fields: [],
+      type: 'custom'
+    }]);
     setNewSectionTitle('');
     setAddSectionOpen(false);
-    toast.success('Seção adicionada.');
+    toast.success('Aba personalizada adicionada.');
   };
 
   // Field operations
