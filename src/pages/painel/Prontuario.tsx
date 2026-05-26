@@ -561,6 +561,7 @@ const ProntuarioPage: React.FC = () => {
       let query = (supabase as any)
         .from("prontuarios")
         .select("*")
+        .eq("status", "finalizado")
         .order("data_atendimento", { ascending: false })
         .order("hora_atendimento", { ascending: false })
         .limit(100);
@@ -1223,6 +1224,7 @@ const ProntuarioPage: React.FC = () => {
         soap_objetivo: soapPayload.objetivo,
         soap_avaliacao: soapPayload.avaliacao,
         soap_plano: soapPayload.plano,
+        status: 'finalizado',
         custom_data: {
           ...form.custom_data,
           soap_enabled: soapEnabled
@@ -1480,6 +1482,7 @@ const ProntuarioPage: React.FC = () => {
         procedimentos_texto: procTexto || f.procedimentos_texto || '',
         outro_procedimento: f.outro_procedimento || '',
         tipo_registro: f.tipo_registro || 'consulta',
+        status: 'rascunho',
       };
       if (f.episodio_id && f.episodio_id !== 'no_episode') record.episodio_id = f.episodio_id;
 

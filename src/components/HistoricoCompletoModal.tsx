@@ -100,7 +100,7 @@ function useFullHistory(pacienteId: string, unidades: { id: string; nome: string
       const unidadeMap = new Map(unidades.map(u => [u.id, u.nome]));
 
       const [prontuariosRes, faltasRes, sessionsRes, dischargesRes, triageRes, funcionariosRes] = await Promise.all([
-        (supabase as any).from("prontuarios").select("*").eq("paciente_id", pacienteId).order("data_atendimento", { ascending: false }),
+        (supabase as any).from("prontuarios").select("*").eq("paciente_id", pacienteId).eq("status", "finalizado").order("data_atendimento", { ascending: false }),
         supabase.from("agendamentos").select("id, data, hora, profissional_nome, profissional_id, tipo, status, unidade_id, custom_data").eq("paciente_id", pacienteId).eq("status", "falta").order("data", { ascending: false }),
         (supabase as any).from("treatment_sessions").select("id, cycle_id, session_number, total_sessions, scheduled_date, status, clinical_notes, procedure_done, professional_id").eq("patient_id", pacienteId).neq("status", "agendada").order("scheduled_date", { ascending: false }),
         (supabase as any).from("patient_discharges").select("id, cycle_id, professional_id, discharge_date, reason, final_notes").eq("patient_id", pacienteId),

@@ -532,6 +532,7 @@ const WorkspaceProntuario: React.FC = () => {
         soap_plano: form.soap_plano || '',
         dados_acolhimento: (acolhimentoDraft && Object.keys(acolhimentoDraft).length > 0) ? acolhimentoDraft : (form.dados_acolhimento || null),
         episodio_id: (form.episodio_id && form.episodio_id !== 'no_episode') ? form.episodio_id : null,
+        status: 'finalizado',
         custom_data: {
           ...form.custom_data,
           especialidade_fields: especialidadeFields,
@@ -656,6 +657,7 @@ const WorkspaceProntuario: React.FC = () => {
         hora_atendimento: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
         dados_acolhimento: dados,
         agendamento_id: agendamentoId || null,
+        status: 'rascunho',
         custom_data: {}
       };
 
@@ -734,7 +736,8 @@ const WorkspaceProntuario: React.FC = () => {
           tema: groupActivityDraft.tema,
           tipo_atividade: groupActivityDraft.tipo_atividade
         },
-        agendamento_id: agendamentoId || null
+        agendamento_id: agendamentoId || null,
+        status: 'rascunho'
       };
 
       let result;
