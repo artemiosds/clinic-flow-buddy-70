@@ -86,7 +86,11 @@ const WorkspaceProntuario: React.FC = () => {
   const [editPatientOpen, setEditPatientOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [activeTab, setActiveTab] = useState('evolution');
-  const { sections: prontuarioSections, loading: structureLoading } = useProntuarioStructure();
+  const { sections: prontuarioSections, loading: structureLoading, getEnabledSections } = useProntuarioStructure();
+  
+  const enabledSections = useMemo(() => {
+    return getEnabledSections(form.tipo_registro);
+  }, [getEnabledSections, form.tipo_registro]);
 
   // Expanded clinical state
   const [procedimentos, setProcedimentos] = useState<any[]>([]);
@@ -812,10 +816,7 @@ const WorkspaceProntuario: React.FC = () => {
                   <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pb-2 border-b mb-4">
                     <div className="flex items-center justify-between mb-2">
                       <TabsList className="flex-1 justify-start h-12 bg-transparent gap-6 p-0 overflow-x-auto">
-                        {(prontuarioSections || [])
-                          .filter(s => s.enabled && (!s.tiposProntuario || s.tiposProntuario.includes(form.tipo_registro)))
-                          .sort((a, b) => a.order - b.order)
-                          .map(section => (
+                        {(enabledSections || []).map(section => (
                             <TabsTrigger 
                               key={section.id} 
                               value={section.standardTabId || section.id} 
@@ -831,9 +832,7 @@ const WorkspaceProntuario: React.FC = () => {
                     </div>
                   </div>
 
-                  {(prontuarioSections || [])
-                    .filter(s => s.enabled)
-                    .sort((a, b) => a.order - b.order)
+                  {(enabledSections || [])
                     .map(section => (
                       <TabsContent 
                         key={section.id} 

@@ -31,19 +31,19 @@ export function useProntuarioStructure() {
   }, []);
 
   /**
-   * Returns enabled fields from enabled sections, sorted by order.
-   * Builtin fields map to form keys; custom fields use `custom_<id>`.
+   * Returns enabled sections sorted by order, filtering by record type if provided.
    */
-  const getEnabledFields = () => {
+  const getEnabledSections = (tipoRegistro?: string) => {
     if (!sections) return null;
     return sections
-      .filter(s => s.enabled)
-      .sort((a, b) => a.order - b.order)
-      .map(s => ({
-        ...s,
-        fields: s.fields.filter(f => f.enabled).sort((a, b) => a.order - b.order),
-      }))
-      .filter(s => s.fields.length > 0);
+      .filter(s => {
+        if (!s.enabled) return false;
+        if (tipoRegistro && s.tiposProntuario && s.tiposProntuario.length > 0) {
+          return s.tiposProntuario.includes(tipoRegistro);
+        }
+        return true;
+      })
+      .sort((a, b) => a.order - b.order);
   };
 
   return { sections, loading, getEnabledFields };
