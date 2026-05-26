@@ -790,6 +790,17 @@ const WorkspaceProntuario: React.FC = () => {
                     </Card>
                   </TabsContent>
 
+                  <TabsContent value="group_activity" className="mt-0 animate-in fade-in duration-300" forceMount>
+                    <div className={cn(activeTab !== 'group_activity' && "hidden")}>
+                      <GroupActivityForm 
+                        data={groupActivityDraft}
+                        onChange={(updates) => setGroupActivityDraft(prev => ({ ...prev, ...updates }))}
+                        onSave={handleSaveGroupActivity}
+                        saving={savingGroupActivity}
+                      />
+                    </div>
+                  </TabsContent>
+
                   <TabsContent value="evolution" className="mt-0 space-y-6" forceMount>
                     <div className={cn("space-y-6", activeTab !== 'evolution' && "hidden")}>
                       {/* View-only Acolhimento if exists and in Evolution tab */}
