@@ -3106,6 +3106,7 @@ export type Database = {
           soap_plano: string | null
           soap_subjetivo: string | null
           solicitacao_exames: string | null
+          status: string | null
           tipo_registro: string
           unidade_id: string
         }
@@ -3143,6 +3144,7 @@ export type Database = {
           soap_plano?: string | null
           soap_subjetivo?: string | null
           solicitacao_exames?: string | null
+          status?: string | null
           tipo_registro?: string
           unidade_id: string
         }
@@ -3180,6 +3182,7 @@ export type Database = {
           soap_plano?: string | null
           soap_subjetivo?: string | null
           solicitacao_exames?: string | null
+          status?: string | null
           tipo_registro?: string
           unidade_id?: string
         }
