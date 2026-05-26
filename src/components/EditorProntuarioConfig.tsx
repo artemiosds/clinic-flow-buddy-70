@@ -34,6 +34,9 @@ export interface ProntuarioSection {
   enabled: boolean;
   order: number;
   fields: ProntuarioField[];
+  type?: 'standard' | 'custom';
+  standardTabId?: string; // e.g., 'acolhimento', 'evolution', etc.
+  tiposProntuario?: string[]; // e.g., ['primeira_consulta', 'retorno']
 }
 
 export interface ProntuarioStructure {
@@ -44,67 +47,101 @@ export interface ProntuarioStructure {
 
 const DEFAULT_SECTIONS: ProntuarioSection[] = [
   {
-    id: 'sec_queixa',
-    title: 'Queixa e Anamnese',
+    id: 'tab_acolhimento',
+    title: 'Acolhimento',
     enabled: true,
     order: 0,
+    fields: [],
+    type: 'standard',
+    standardTabId: 'acolhimento',
+    tiposProntuario: ['primeira_consulta', 'retorno', 'sessao', 'urgencia', 'procedimento']
+  },
+  {
+    id: 'tab_evolution',
+    title: 'Evolução',
+    enabled: true,
+    order: 1,
     fields: [
       { id: 'f_queixa', key: 'queixa_principal', label: 'Queixa Principal', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 0 },
       { id: 'f_anamnese', key: 'anamnese', label: 'Anamnese', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 1 },
       { id: 'f_sinais', key: 'sinais_sintomas', label: 'Sinais e Sintomas', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 2 },
+      { id: 'f_exame', key: 'exame_fisico', label: 'Exame Físico', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 3 },
+      { id: 'f_hipotese', key: 'hipotese', label: 'Hipótese / Avaliação', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 4 },
+      { id: 'f_conduta', key: 'conduta', label: 'Conduta', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 5 },
+      { id: 'f_soap_s', key: 'soap_subjetivo', label: 'S — Subjetivo', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 6 },
+      { id: 'f_soap_o', key: 'soap_objetivo', label: 'O — Objetivo', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 7 },
+      { id: 'f_soap_a', key: 'soap_avaliacao', label: 'A — Avaliação', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 8 },
+      { id: 'f_soap_p', key: 'soap_plano', label: 'P — Plano', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 9 },
+      { id: 'f_evolucao', key: 'evolucao', label: 'Evolução', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 10 },
+      { id: 'f_obs', key: 'observacoes', label: 'Observações Gerais', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 11 },
+      { id: 'f_retorno', key: 'indicacao_retorno', label: 'Indicação de Retorno', type: 'select', required: false, enabled: true, isBuiltin: true, order: 12 },
     ],
+    type: 'standard',
+    standardTabId: 'evolution',
+    tiposProntuario: ['primeira_consulta', 'retorno', 'sessao', 'urgencia', 'procedimento']
   },
   {
-    id: 'sec_exame',
-    title: 'Exame e Avaliação',
-    enabled: true,
-    order: 1,
-    fields: [
-      { id: 'f_exame', key: 'exame_fisico', label: 'Exame Físico', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 0 },
-      { id: 'f_hipotese', key: 'hipotese', label: 'Hipótese / Avaliação', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 1 },
-    ],
-  },
-  {
-    id: 'sec_conduta',
-    title: 'Conduta e Prescrição',
+    id: 'tab_group_activity',
+    title: 'Grupo/Oficinas Terapêuticas',
     enabled: true,
     order: 2,
-    fields: [
-      { id: 'f_conduta', key: 'conduta', label: 'Conduta', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 0 },
-      { id: 'f_prescricao', key: 'prescricao', label: 'Prescrição / Orientações', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 1 },
-    ],
+    fields: [],
+    type: 'standard',
+    standardTabId: 'group_activity',
+    tiposProntuario: ['primeira_consulta', 'retorno', 'sessao', 'urgencia', 'procedimento']
   },
   {
-    id: 'sec_exames_solicitacao',
-    title: 'Solicitação de Exames',
+    id: 'tab_prescriptions',
+    title: 'Prescrições/Exames',
     enabled: true,
     order: 3,
     fields: [
-      { id: 'f_exames_solicitacao', key: 'solicitacao_exames', label: 'Exames Solicitados', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 0 },
+      { id: 'f_prescricao', key: 'prescricao', label: 'Prescrição / Orientações', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 0 },
+      { id: 'f_exames_solicitacao', key: 'solicitacao_exames', label: 'Exames Solicitados', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 1 },
     ],
+    type: 'standard',
+    standardTabId: 'prescriptions',
+    tiposProntuario: ['primeira_consulta', 'retorno', 'sessao', 'urgencia', 'procedimento']
   },
   {
-    id: 'sec_evolucao',
-    title: 'Evolução e Observações',
+    id: 'tab_procedures',
+    title: 'Procedimentos/CID',
     enabled: true,
     order: 4,
-    fields: [
-      { id: 'f_evolucao', key: 'evolucao', label: 'Evolução', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 0 },
-      { id: 'f_obs', key: 'observacoes', label: 'Observações Gerais', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 1 },
-      { id: 'f_retorno', key: 'indicacao_retorno', label: 'Indicação de Retorno', type: 'select', required: false, enabled: true, isBuiltin: true, order: 2 },
-    ],
+    fields: [],
+    type: 'standard',
+    standardTabId: 'procedures',
+    tiposProntuario: ['primeira_consulta', 'retorno', 'sessao', 'urgencia', 'procedimento']
   },
   {
-    id: 'sec_soap',
-    title: 'SOAP (Sessão)',
+    id: 'tab_treatments',
+    title: 'Tratamentos/PTS',
     enabled: true,
     order: 5,
-    fields: [
-      { id: 'f_soap_s', key: 'soap_subjetivo', label: 'S — Subjetivo', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 0 },
-      { id: 'f_soap_o', key: 'soap_objetivo', label: 'O — Objetivo', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 1 },
-      { id: 'f_soap_a', key: 'soap_avaliacao', label: 'A — Avaliação', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 2 },
-      { id: 'f_soap_p', key: 'soap_plano', label: 'P — Plano', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 3 },
-    ],
+    fields: [],
+    type: 'standard',
+    standardTabId: 'treatments',
+    tiposProntuario: ['primeira_consulta', 'retorno', 'sessao', 'urgencia', 'procedimento']
+  },
+  {
+    id: 'tab_history',
+    title: 'Histórico Externo',
+    enabled: true,
+    order: 6,
+    fields: [],
+    type: 'standard',
+    standardTabId: 'antecedents',
+    tiposProntuario: ['primeira_consulta', 'retorno', 'sessao', 'urgencia', 'procedimento']
+  },
+  {
+    id: 'tab_annexes',
+    title: 'Anexos',
+    enabled: true,
+    order: 7,
+    fields: [],
+    type: 'standard',
+    standardTabId: 'annexes',
+    tiposProntuario: ['primeira_consulta', 'retorno', 'sessao', 'urgencia', 'procedimento']
   },
 ];
 
@@ -128,6 +165,9 @@ const EditorProntuarioConfig: React.FC = () => {
   const [newField, setNewField] = useState({ label: '', type: 'textarea' as string, required: false, options: '' });
   const [addSectionOpen, setAddSectionOpen] = useState(false);
   const [newSectionTitle, setNewSectionTitle] = useState('');
+  const [editingSection, setEditingSection] = useState<ProntuarioSection | null>(null);
+  const [editSectionData, setEditSectionData] = useState({ title: '', tiposProntuario: [] as string[] });
+  
   const [editingField, setEditingField] = useState<{ sectionId: string; fieldId: string } | null>(null);
   const [editFieldData, setEditFieldData] = useState({ label: '', type: 'textarea', required: false, options: '' });
 
@@ -218,6 +258,25 @@ const EditorProntuarioConfig: React.FC = () => {
     });
   };
 
+  const startEditSection = (section: ProntuarioSection) => {
+    setEditingSection(section);
+    setEditSectionData({ 
+      title: section.title, 
+      tiposProntuario: section.tiposProntuario || ['primeira_consulta', 'retorno', 'sessao', 'urgencia', 'procedimento'] 
+    });
+  };
+
+  const saveEditSection = () => {
+    if (!editingSection || !editSectionData.title.trim()) return;
+    setSections(prev => prev.map(s => s.id === editingSection.id ? { 
+      ...s, 
+      title: editSectionData.title.trim(),
+      tiposProntuario: editSectionData.tiposProntuario
+    } : s));
+    setEditingSection(null);
+    toast.success('Aba atualizada.');
+  };
+
   const removeSection = (sectionId: string) => {
     const sec = sections.find(s => s.id === sectionId);
     if (sec?.fields.some(f => f.isBuiltin)) {
@@ -230,10 +289,17 @@ const EditorProntuarioConfig: React.FC = () => {
   const addSection = () => {
     if (!newSectionTitle.trim()) return;
     const id = `sec_custom_${Date.now()}`;
-    setSections(prev => [...prev, { id, title: newSectionTitle.trim(), enabled: true, order: prev.length, fields: [] }]);
+    setSections(prev => [...prev, { 
+      id, 
+      title: newSectionTitle.trim(), 
+      enabled: true, 
+      order: prev.length, 
+      fields: [],
+      type: 'custom'
+    }]);
     setNewSectionTitle('');
     setAddSectionOpen(false);
-    toast.success('Seção adicionada.');
+    toast.success('Aba personalizada adicionada.');
   };
 
   // Field operations
@@ -407,6 +473,9 @@ const EditorProntuarioConfig: React.FC = () => {
                   </div>
                   <h4 className="font-semibold text-sm flex-1">{section.title}</h4>
                   <Badge variant="outline" className="text-[10px]">{section.fields.filter(f => f.enabled).length} campos</Badge>
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => startEditSection(section)}>
+                    <Pencil className="w-3 h-3" />
+                  </Button>
                   <Switch checked={section.enabled} onCheckedChange={() => toggleSection(section.id)} />
                   {!section.fields.some(f => f.isBuiltin) && (
                     <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeSection(section.id)}>
@@ -542,6 +611,57 @@ const EditorProntuarioConfig: React.FC = () => {
             <div className="flex gap-2 justify-end">
               <Button variant="ghost" onClick={() => setEditingField(null)}>Cancelar</Button>
               <Button onClick={saveEditField}>Salvar</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit section dialog */}
+      <Dialog open={!!editingSection} onOpenChange={(o) => !o && setEditingSection(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Configurar Aba</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Nome da Aba</Label>
+              <Input 
+                value={editSectionData.title} 
+                onChange={e => setEditSectionData(p => ({ ...p, title: e.target.value }))} 
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-sm">Exibir nos tipos de prontuário:</Label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {[
+                  { value: 'primeira_consulta', label: 'Avaliação/TR' },
+                  { value: 'retorno', label: 'Retorno' },
+                  { value: 'sessao', label: 'Sessão' },
+                  { value: 'urgencia', label: 'Urgência' },
+                  { value: 'procedimento', label: 'Procedimento' },
+                ].map(type => (
+                  <label key={type.value} className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={editSectionData.tiposProntuario.includes(type.value)} 
+                      onChange={e => {
+                        const next = e.target.checked 
+                          ? [...editSectionData.tiposProntuario, type.value]
+                          : editSectionData.tiposProntuario.filter(t => t !== type.value);
+                        setEditSectionData(p => ({ ...p, tiposProntuario: next }));
+                      }} 
+                      className="rounded border-border text-primary focus:ring-primary" 
+                    />
+                    {type.label}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex gap-2 justify-end pt-4">
+              <Button variant="ghost" onClick={() => setEditingSection(null)}>Cancelar</Button>
+              <Button onClick={saveEditSection}>Salvar Alterações</Button>
             </div>
           </div>
         </DialogContent>
