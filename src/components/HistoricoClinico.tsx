@@ -291,6 +291,7 @@ export const HistoricoClinico: React.FC<Props> = ({ pacienteId, pacienteNome, cu
           "id,data_atendimento,hora_atendimento,profissional_nome,profissional_id,queixa_principal,evolucao,conduta,indicacao_retorno,procedimentos_texto,outro_procedimento,unidade_id,episodio_id,tipo_registro,observacoes,dados_acolhimento,custom_data,soap_subjetivo,soap_objetivo,soap_avaliacao,soap_plano,prescricao,solicitacao_exames",
         )
         .eq("paciente_id", pacienteId)
+        .eq("status", "finalizado")
         .order("data_atendimento", { ascending: false })
         .order("hora_atendimento", { ascending: false })
         .range(from, to);
