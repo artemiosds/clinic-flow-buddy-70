@@ -1002,6 +1002,18 @@ const WorkspaceProntuario: React.FC = () => {
                                 profissionalId={user?.id}
                                 tipoProntuario={form.tipo_registro === 'avaliacao_inicial' ? 'avaliacao' : (form.tipo_registro === 'retorno' ? 'retorno' : (form.tipo_registro === 'sessao' ? 'sessao' : (form.tipo_registro === 'urgencia' ? 'urgencia' : (form.tipo_registro === 'procedimento' ? 'procedimento' : 'avaliacao'))))}
                               />
+                              {section.fields.filter(f => f.enabled && f.isBuiltin === false).length > 0 && (
+                                <div className="mt-6 pt-6 border-t border-dashed">
+                                  <h4 className="text-xs font-bold uppercase text-muted-foreground mb-4">Campos Personalizados</h4>
+                                  <DynamicProntuarioFields
+                                    campos={section.fields.filter(f => f.enabled && f.isBuiltin === false).map(f => ({ ...f, tipo: f.type, obrigatorio: f.required, habilitado: f.enabled })) as any}
+                                    formValues={form}
+                                    customValues={form.custom_data || {}}
+                                    onFormChange={(k, v) => handleFormChange({ [k]: v })}
+                                    onCustomChange={(k, v) => handleFormChange({ custom_data: { [k]: v } })}
+                                  />
+                                </div>
+                              )}
                             </div>
                           )}
 
