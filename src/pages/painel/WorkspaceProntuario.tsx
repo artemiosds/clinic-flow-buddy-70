@@ -525,10 +525,29 @@ const WorkspaceProntuario: React.FC = () => {
         if (error) throw error;
         savedRecord = data;
       } else {
-        // Explicit insert for new record
-        const { data, error } = await supabase.from('prontuarios').insert(dbPayload).select().single();
-        if (error) throw error;
-        savedRecord = data;
+        // PREVENÇÃO DE DUPLICIDADE: Verifica se já existe um prontuário para este agendamento antes de inserir
+        if (dbPayload.agendamento_id) {
+          const { data: existing } = await supabase
+            .from('prontuarios')
+            .select('id')
+            .eq('agendamento_id', dbPayload.agendamento_id)
+            .maybeSingle();
+
+          if (existing) {
+            console.log("[Workspace handleSave] Prontuário já existe, atualizando:", existing.id);
+            const { data, error } = await supabase.from('prontuarios').update(dbPayload).eq('id', existing.id).select().single();
+            if (error) throw error;
+            savedRecord = data;
+          } else {
+            const { data, error } = await supabase.from('prontuarios').insert(dbPayload).select().single();
+            if (error) throw error;
+            savedRecord = data;
+          }
+        } else {
+          const { data, error } = await supabase.from('prontuarios').insert(dbPayload).select().single();
+          if (error) throw error;
+          savedRecord = data;
+        }
       }
       
       const data = savedRecord;
@@ -626,14 +645,30 @@ const WorkspaceProntuario: React.FC = () => {
         if (error) throw error;
         result = data;
       } else {
-        // Explicit insert for new record
-        const { data, error } = await supabase
-          .from('prontuarios')
-          .insert(payload)
-          .select()
-          .single();
-        if (error) throw error;
-        result = data;
+        // PREVENÇÃO DE DUPLICIDADE PARA ACOLHIMENTO
+        if (payload.agendamento_id) {
+          const { data: existing } = await supabase
+            .from('prontuarios')
+            .select('id')
+            .eq('agendamento_id', payload.agendamento_id)
+            .eq('tipo_registro', 'acolhimento_mental')
+            .maybeSingle();
+          
+          if (existing) {
+            console.log("[Workspace Acolhimento] Já existe, atualizando:", existing.id);
+            const { data, error } = await supabase.from('prontuarios').update(payload).eq('id', existing.id).select().single();
+            if (error) throw error;
+            result = data;
+          } else {
+            const { data, error } = await supabase.from('prontuarios').insert(payload).select().single();
+            if (error) throw error;
+            result = data;
+          }
+        } else {
+          const { data, error } = await supabase.from('prontuarios').insert(payload).select().single();
+          if (error) throw error;
+          result = data;
+        }
       }
       
       const typedResult = result as any;
@@ -687,13 +722,30 @@ const WorkspaceProntuario: React.FC = () => {
         if (error) throw error;
         result = data;
       } else {
-        const { data, error } = await supabase
-          .from('prontuarios')
-          .insert(payload)
-          .select()
-          .single();
-        if (error) throw error;
-        result = data;
+        // PREVENÇÃO DE DUPLICIDADE PARA OFICINA/GRUPO
+        if (payload.agendamento_id) {
+          const { data: existing } = await supabase
+            .from('prontuarios')
+            .select('id')
+            .eq('agendamento_id', payload.agendamento_id)
+            .eq('tipo_registro', 'oficina_terapeutica')
+            .maybeSingle();
+            
+          if (existing) {
+            console.log("[Workspace Oficina] Já existe, atualizando:", existing.id);
+            const { data, error } = await supabase.from('prontuarios').update(payload).eq('id', existing.id).select().single();
+            if (error) throw error;
+            result = data;
+          } else {
+            const { data, error } = await supabase.from('prontuarios').insert(payload).select().single();
+            if (error) throw error;
+            result = data;
+          }
+        } else {
+          const { data, error } = await supabase.from('prontuarios').insert(payload).select().single();
+          if (error) throw error;
+          result = data;
+        }
       }
       
       setGroupActivityData(result as any);
