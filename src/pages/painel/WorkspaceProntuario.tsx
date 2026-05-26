@@ -812,17 +812,20 @@ const WorkspaceProntuario: React.FC = () => {
                   <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pb-2 border-b mb-4">
                     <div className="flex items-center justify-between mb-2">
                       <TabsList className="flex-1 justify-start h-12 bg-transparent gap-6 p-0 overflow-x-auto">
-                        {(prontuarioSections || []).filter(s => s.enabled).sort((a, b) => a.order - b.order).map(section => (
-                          <TabsTrigger 
-                            key={section.id} 
-                            value={section.standardTabId || section.id} 
-                            className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap"
-                          >
-                            {section.title}
-                            {section.standardTabId === 'acolhimento' && acolhimentoData && (
-                              <Badge variant="secondary" className="ml-2 bg-green-100 text-green-700 hover:bg-green-100 border-green-200 py-0 px-1 text-[10px]">✓</Badge>
-                            )}
-                          </TabsTrigger>
+                        {(prontuarioSections || [])
+                          .filter(s => s.enabled && (!s.tiposProntuario || s.tiposProntuario.includes(form.tipo_registro)))
+                          .sort((a, b) => a.order - b.order)
+                          .map(section => (
+                            <TabsTrigger 
+                              key={section.id} 
+                              value={section.standardTabId || section.id} 
+                              className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap"
+                            >
+                              {section.title}
+                              {section.standardTabId === 'acolhimento' && acolhimentoData && (
+                                <Badge variant="secondary" className="ml-2 bg-green-100 text-green-700 hover:bg-green-100 border-green-200 py-0 px-1 text-[10px]">✓</Badge>
+                              )}
+                            </TabsTrigger>
                         ))}
                       </TabsList>
                     </div>
