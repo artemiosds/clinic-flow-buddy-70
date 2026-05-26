@@ -46,5 +46,19 @@ export function useProntuarioStructure() {
       .sort((a, b) => a.order - b.order);
   };
 
-  return { sections, loading, getEnabledSections };
+  /**
+   * Mantido para retrocompatibilidade com componentes que usam getEnabledFields
+   */
+  const getEnabledFields = () => {
+    const enabledSections = getEnabledSections();
+    if (!enabledSections) return null;
+    return enabledSections
+      .map(s => ({
+        ...s,
+        fields: (s.fields || []).filter(f => f.enabled).sort((a, b) => a.order - b.order),
+      }))
+      .filter(s => s.fields.length > 0);
+  };
+
+  return { sections, loading, getEnabledSections, getEnabledFields };
 }

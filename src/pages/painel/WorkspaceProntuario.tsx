@@ -86,6 +86,23 @@ const WorkspaceProntuario: React.FC = () => {
   const [editPatientOpen, setEditPatientOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [activeTab, setActiveTab] = useState('evolution');
+  const [form, setForm] = useState<any>({
+    tipo_registro: searchParams.get('tipo') === 'Retorno' ? 'retorno' : (searchParams.get('tipo') === 'Consulta' || searchParams.get('tipo') === 'Avaliação/TR' ? 'avaliacao_inicial' : (searchParams.get('tipo') || 'avaliacao_inicial')),
+    data_atendimento: searchParams.get('data') || new Date().toISOString().split('T')[0],
+    hora_atendimento: searchParams.get('horaInicio') || new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+    soap_subjetivo: '', soap_objetivo: '', soap_avaliacao: '', soap_plano: '',
+    evolucao: '', queixa_principal: '', conduta: '',
+    anamnese: '', sinais_sintomas: '', exame_fisico: '', hipotese: '',
+    observacoes: '', indicacao_retorno: '', motivo_alteracao: '',
+    procedimentos_texto: '', outro_procedimento: '', episodio_id: '',
+    paciente_id: pacienteId || '',
+    paciente_nome: pacienteNome || '',
+    custom_data: {},
+    agendamento_id: agendamentoId || '',
+    prescricao: '',
+    solicitacao_exames: '',
+  });
+
   const { sections: prontuarioSections, loading: structureLoading, getEnabledSections } = useProntuarioStructure();
   
   const enabledSections = useMemo(() => {
@@ -118,22 +135,6 @@ const WorkspaceProntuario: React.FC = () => {
   const [loadingGroupActivity, setLoadingGroupActivity] = useState(false);
   const [savingGroupActivity, setSavingGroupActivity] = useState(false);
 
-  const [form, setForm] = useState<any>({
-    tipo_registro: searchParams.get('tipo') === 'Retorno' ? 'retorno' : (searchParams.get('tipo') === 'Consulta' || searchParams.get('tipo') === 'Avaliação/TR' ? 'avaliacao_inicial' : (searchParams.get('tipo') || 'avaliacao_inicial')),
-    data_atendimento: searchParams.get('data') || new Date().toISOString().split('T')[0],
-    hora_atendimento: searchParams.get('horaInicio') || new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-    soap_subjetivo: '', soap_objetivo: '', soap_avaliacao: '', soap_plano: '',
-    evolucao: '', queixa_principal: '', conduta: '',
-    anamnese: '', sinais_sintomas: '', exame_fisico: '', hipotese: '',
-    observacoes: '', indicacao_retorno: '', motivo_alteracao: '',
-    procedimentos_texto: '', outro_procedimento: '', episodio_id: '',
-    paciente_id: pacienteId || '',
-    paciente_nome: pacienteNome || '',
-    custom_data: {},
-    agendamento_id: agendamentoId || '',
-    prescricao: '',
-    solicitacao_exames: '',
-  });
 
   const handleFormChange = (updates: any) => {
     setForm((prev: any) => {
