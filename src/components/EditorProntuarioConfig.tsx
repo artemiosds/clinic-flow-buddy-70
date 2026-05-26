@@ -46,67 +46,93 @@ export interface ProntuarioStructure {
 
 const DEFAULT_SECTIONS: ProntuarioSection[] = [
   {
-    id: 'sec_queixa',
-    title: 'Queixa e Anamnese',
+    id: 'tab_acolhimento',
+    title: 'Acolhimento',
     enabled: true,
     order: 0,
+    fields: [],
+    type: 'standard',
+    standardTabId: 'acolhimento'
+  },
+  {
+    id: 'tab_evolution',
+    title: 'Evolução',
+    enabled: true,
+    order: 1,
     fields: [
       { id: 'f_queixa', key: 'queixa_principal', label: 'Queixa Principal', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 0 },
       { id: 'f_anamnese', key: 'anamnese', label: 'Anamnese', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 1 },
       { id: 'f_sinais', key: 'sinais_sintomas', label: 'Sinais e Sintomas', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 2 },
+      { id: 'f_exame', key: 'exame_fisico', label: 'Exame Físico', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 3 },
+      { id: 'f_hipotese', key: 'hipotese', label: 'Hipótese / Avaliação', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 4 },
+      { id: 'f_conduta', key: 'conduta', label: 'Conduta', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 5 },
+      { id: 'f_soap_s', key: 'soap_subjetivo', label: 'S — Subjetivo', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 6 },
+      { id: 'f_soap_o', key: 'soap_objetivo', label: 'O — Objetivo', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 7 },
+      { id: 'f_soap_a', key: 'soap_avaliacao', label: 'A — Avaliação', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 8 },
+      { id: 'f_soap_p', key: 'soap_plano', label: 'P — Plano', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 9 },
+      { id: 'f_evolucao', key: 'evolucao', label: 'Evolução', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 10 },
+      { id: 'f_obs', key: 'observacoes', label: 'Observações Gerais', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 11 },
+      { id: 'f_retorno', key: 'indicacao_retorno', label: 'Indicação de Retorno', type: 'select', required: false, enabled: true, isBuiltin: true, order: 12 },
     ],
+    type: 'standard',
+    standardTabId: 'evolution'
   },
   {
-    id: 'sec_exame',
-    title: 'Exame e Avaliação',
-    enabled: true,
-    order: 1,
-    fields: [
-      { id: 'f_exame', key: 'exame_fisico', label: 'Exame Físico', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 0 },
-      { id: 'f_hipotese', key: 'hipotese', label: 'Hipótese / Avaliação', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 1 },
-    ],
-  },
-  {
-    id: 'sec_conduta',
-    title: 'Conduta e Prescrição',
+    id: 'tab_group_activity',
+    title: 'Grupo/Oficinas Terapêuticas',
     enabled: true,
     order: 2,
-    fields: [
-      { id: 'f_conduta', key: 'conduta', label: 'Conduta', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 0 },
-      { id: 'f_prescricao', key: 'prescricao', label: 'Prescrição / Orientações', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 1 },
-    ],
+    fields: [],
+    type: 'standard',
+    standardTabId: 'group_activity'
   },
   {
-    id: 'sec_exames_solicitacao',
-    title: 'Solicitação de Exames',
+    id: 'tab_prescriptions',
+    title: 'Prescrições/Exames',
     enabled: true,
     order: 3,
     fields: [
-      { id: 'f_exames_solicitacao', key: 'solicitacao_exames', label: 'Exames Solicitados', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 0 },
+      { id: 'f_prescricao', key: 'prescricao', label: 'Prescrição / Orientações', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 0 },
+      { id: 'f_exames_solicitacao', key: 'solicitacao_exames', label: 'Exames Solicitados', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 1 },
     ],
+    type: 'standard',
+    standardTabId: 'prescriptions'
   },
   {
-    id: 'sec_evolucao',
-    title: 'Evolução e Observações',
+    id: 'tab_procedures',
+    title: 'Procedimentos/CID',
     enabled: true,
     order: 4,
-    fields: [
-      { id: 'f_evolucao', key: 'evolucao', label: 'Evolução', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 0 },
-      { id: 'f_obs', key: 'observacoes', label: 'Observações Gerais', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 1 },
-      { id: 'f_retorno', key: 'indicacao_retorno', label: 'Indicação de Retorno', type: 'select', required: false, enabled: true, isBuiltin: true, order: 2 },
-    ],
+    fields: [],
+    type: 'standard',
+    standardTabId: 'procedures'
   },
   {
-    id: 'sec_soap',
-    title: 'SOAP (Sessão)',
+    id: 'tab_treatments',
+    title: 'Tratamentos/PTS',
     enabled: true,
     order: 5,
-    fields: [
-      { id: 'f_soap_s', key: 'soap_subjetivo', label: 'S — Subjetivo', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 0 },
-      { id: 'f_soap_o', key: 'soap_objetivo', label: 'O — Objetivo', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 1 },
-      { id: 'f_soap_a', key: 'soap_avaliacao', label: 'A — Avaliação', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 2 },
-      { id: 'f_soap_p', key: 'soap_plano', label: 'P — Plano', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 3 },
-    ],
+    fields: [],
+    type: 'standard',
+    standardTabId: 'treatments'
+  },
+  {
+    id: 'tab_history',
+    title: 'Histórico Externo',
+    enabled: true,
+    order: 6,
+    fields: [],
+    type: 'standard',
+    standardTabId: 'history'
+  },
+  {
+    id: 'tab_annexes',
+    title: 'Anexos',
+    enabled: true,
+    order: 7,
+    fields: [],
+    type: 'standard',
+    standardTabId: 'annexes'
   },
 ];
 
