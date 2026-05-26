@@ -34,6 +34,8 @@ export interface ProntuarioSection {
   enabled: boolean;
   order: number;
   fields: ProntuarioField[];
+  type?: 'standard' | 'custom';
+  standardTabId?: string; // e.g., 'acolhimento', 'evolution', etc.
 }
 
 export interface ProntuarioStructure {
