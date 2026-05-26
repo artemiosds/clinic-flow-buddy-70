@@ -35,6 +35,7 @@ import DynamicProntuarioFields from '@/components/DynamicProntuarioFields';
 import SoapFieldsAdaptive from '@/components/SoapFieldsAdaptive';
 import PacienteDocumentos from '@/components/PacienteDocumentos';
 import { AcolhimentoForm } from '@/components/prontuario/AcolhimentoForm';
+import { GroupActivityForm } from '@/components/prontuario/GroupActivityForm';
 import { CreatePTSModal } from '@/components/prontuario/CreatePTSModal';
 import { CreateCycleModal } from '@/components/prontuario/CreateCycleModal';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
