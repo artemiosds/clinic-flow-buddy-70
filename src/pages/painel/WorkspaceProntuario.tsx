@@ -103,11 +103,7 @@ const WorkspaceProntuario: React.FC = () => {
     solicitacao_exames: '',
   });
 
-  const { sections: prontuarioSections, loading: structureLoading, getEnabledSections } = useProntuarioStructure();
-  
-  const enabledSections = useMemo(() => {
-    return getEnabledSections(form.tipo_registro);
-  }, [getEnabledSections, form.tipo_registro]);
+  const { sections: prontuarioSections, loading: structureLoading } = useProntuarioStructure();
 
   // Expanded clinical state
   const [procedimentos, setProcedimentos] = useState<any[]>([]);
@@ -468,9 +464,8 @@ const WorkspaceProntuario: React.FC = () => {
   };
 
   const handleSave = async () => {
-    if (saving || saveAttemptedRef.current) return;
+    if (saving) return;
     setSaving(true);
-    saveAttemptedRef.current = true;
     try {
       const { auditService } = await import('@/services/auditService');
       const finalId = editId || form.id;
@@ -482,9 +477,15 @@ const WorkspaceProntuario: React.FC = () => {
       
       const targetPacienteId = pacienteId || form.paciente_id;
 
+      if (!targetPacienteId) {
+        toast.error("Paciente não identificado.");
+        setSaving(false);
+        return;
+      }
+
       const dbPayload: any = {
-        paciente_id: form.paciente_id,
-        paciente_nome: form.paciente_nome,
+        paciente_id: targetPacienteId,
+        paciente_nome: pacienteData?.nome || pacienteNome || form.paciente_nome || 'Paciente',
         profissional_id: user?.id,
         profissional_nome: user?.nome,
         unidade_id: user?.unidadeId || '',
@@ -605,8 +606,11 @@ const WorkspaceProntuario: React.FC = () => {
       toast.success(editId ? 'Alteração finalizada com sucesso!' : 'Prontuário finalizado com sucesso!');
       // Fecha o workspace após finalizar (novo ou alteração)
       setTimeout(() => {
-        if (window.history.length > 1) navigate(-1);
-        else navigate('/painel/agenda');
+        if (editId) {
+          navigate(-1);
+        } else {
+          navigate('/painel/agenda');
+        }
       }, 300);
     } catch (e: any) { 
       console.error('[Prontuário] Erro ao salvar:', e);
@@ -817,364 +821,290 @@ const WorkspaceProntuario: React.FC = () => {
                   <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pb-2 border-b mb-4">
                     <div className="flex items-center justify-between mb-2">
                       <TabsList className="flex-1 justify-start h-12 bg-transparent gap-6 p-0 overflow-x-auto">
-                        {(enabledSections || []).map(section => (
-                          <TabsTrigger 
-                            key={section.id} 
-                            value={section.standardTabId || section.id} 
-                            className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap"
-                          >
-                            {section.title}
-                            {section.standardTabId === 'acolhimento' && acolhimentoData && (
-                              <Badge variant="secondary" className="ml-2 bg-green-100 text-green-700 hover:bg-green-100 border-green-200 py-0 px-1 text-[10px]">✓</Badge>
-                            )}
-                          </TabsTrigger>
-                        ))}
+                        <TabsTrigger value="acolhimento" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap">
+                          Acolhimento
+                          {acolhimentoData && (
+                            <Badge variant="secondary" className="ml-2 bg-green-100 text-green-700 hover:bg-green-100 border-green-200 py-0 px-1 text-[10px]">✓</Badge>
+                          )}
+                        </TabsTrigger>
+                        <TabsTrigger value="evolution" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold">Evolução</TabsTrigger>
+                        <TabsTrigger value="group_activity" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap">Grupo/Oficinas Terapêuticas</TabsTrigger>
+                        <TabsTrigger value="prescriptions" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap">Prescrições/Exames</TabsTrigger>
+                        <TabsTrigger value="procedures" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap">Procedimentos/CID</TabsTrigger>
+                        <TabsTrigger value="treatments" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap">Tratamentos/PTS</TabsTrigger>
+                        <TabsTrigger value="antecedents" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap">Histórico Externo</TabsTrigger>
+                        <TabsTrigger value="annexes" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap">Anexos</TabsTrigger>
                       </TabsList>
                     </div>
                   </div>
 
-                  {(enabledSections || [])
-                    .map(section => (
-                      <TabsContent 
-                        key={section.id} 
-                        value={section.standardTabId || section.id} 
-                        className="mt-0 animate-in fade-in duration-300" 
-                        forceMount
-                      >
-                        <div className={cn(activeTab !== (section.standardTabId || section.id) && "hidden")}>
-                          {section.standardTabId === 'acolhimento' && (
-                            <Card className="border-none shadow-none bg-transparent">
-                              <CardContent className="p-0">
-                                {loadingAcolhimento ? (
-                                  <div className="flex items-center justify-center p-12 text-muted-foreground text-sm">Carregando acolhimento...</div>
-                                ) : (
-                                  <AcolhimentoForm 
-                                    pacienteId={pacienteId || form.paciente_id}
-                                    profissionalId={user?.id}
-                                    agendamentoId={agendamentoId || undefined}
-                                    initialData={acolhimentoData}
-                                    formData={acolhimentoDraft}
-                                    setFormData={setAcolhimentoDraft}
-                                    onSave={handleSaveAcolhimento}
-                                    saving={savingAcolhimento}
-                                  />
-                                )}
-                              </CardContent>
-                            </Card>
+                  <TabsContent value="acolhimento" className="mt-0 animate-in fade-in duration-300" forceMount>
+                    <div className={cn(activeTab !== 'acolhimento' && "hidden")}>
+                      <Card className="border-none shadow-none bg-transparent">
+                        <CardContent className="p-0">
+                          {loadingAcolhimento ? (
+                            <div className="flex items-center justify-center p-12 text-muted-foreground text-sm">Carregando acolhimento...</div>
+                          ) : (
+                            <AcolhimentoForm 
+                              pacienteId={pacienteId || form.paciente_id}
+                              profissionalId={user?.id}
+                              agendamentoId={agendamentoId || undefined}
+                              initialData={acolhimentoData}
+                              formData={acolhimentoDraft}
+                              setFormData={setAcolhimentoDraft}
+                              onSave={handleSaveAcolhimento}
+                              saving={savingAcolhimento}
+                            />
                           )}
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </TabsContent>
 
-                          {section.standardTabId === 'group_activity' && (
-                            <div className="space-y-6">
-                              <GroupActivityForm 
-                                data={{
-                                  tema: form.custom_data?.custom_tema_grupo || groupActivityDraft.tema,
-                                  tipo_atividade: form.custom_data?.custom_tipo_atividade || groupActivityDraft.tipo_atividade,
-                                  evolucao: form.custom_data?.custom_evolucao_grupo || groupActivityDraft.evolucao
-                                }}
-                                onChange={(updates) => {
-                                  if (updates.tema !== undefined) handleFormChange({ custom_data: { custom_tema_grupo: updates.tema } });
-                                  if (updates.tipo_atividade !== undefined) handleFormChange({ custom_data: { custom_tipo_atividade: updates.tipo_atividade } });
-                                  if (updates.evolucao !== undefined) handleFormChange({ custom_data: { custom_evolucao_grupo: updates.evolucao } });
-                                  setGroupActivityDraft(prev => ({ ...prev, ...updates }));
-                                }}
-                                onSave={handleSaveGroupActivity}
-                                saving={savingGroupActivity}
-                              />
-                              {section.fields.filter(f => f.enabled && !['custom_tema_grupo', 'custom_tipo_atividade', 'custom_evolucao_grupo'].includes(f.key)).length > 0 && (
-                                <div className="mt-6 pt-6 border-t">
-                                  <DynamicProntuarioFields
-                                    campos={section.fields.filter(f => !['custom_tema_grupo', 'custom_tipo_atividade', 'custom_evolucao_grupo'].includes(f.key)).map(f => ({ ...f, tipo: f.type, obrigatorio: f.required, habilitado: f.enabled })) as any}
-                                    formValues={form}
-                                    customValues={form.custom_data || {}}
-                                    onFormChange={(k, v) => handleFormChange({ [k]: v })}
-                                    onCustomChange={(k, v) => handleFormChange({ custom_data: { [k]: v } })}
-                                  />
-                                </div>
-                              )}
+                  <TabsContent value="group_activity" className="mt-0 animate-in fade-in duration-300" forceMount>
+                    <div className={cn(activeTab !== 'group_activity' && "hidden")}>
+                      <GroupActivityForm 
+                        data={groupActivityDraft}
+                        onChange={(updates) => setGroupActivityDraft(prev => ({ ...prev, ...updates }))}
+                        onSave={handleSaveGroupActivity}
+                        saving={savingGroupActivity}
+                      />
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="evolution" className="mt-0 space-y-6" forceMount>
+                    <div className={cn("space-y-6", activeTab !== 'evolution' && "hidden")}>
+                      {/* View-only Acolhimento if exists and in Evolution tab */}
+                      {(acolhimentoData || (acolhimentoDraft && Object.keys(acolhimentoDraft).length > 0)) && (
+                        <div className="animate-in fade-in slide-in-from-top-4 duration-500">
+                          <AcolhimentoView 
+                            data={acolhimentoDraft && Object.keys(acolhimentoDraft).length > 0 ? acolhimentoDraft : acolhimentoData?.dados_acolhimento} 
+                            isCollapsedDefault={true}
+                          />
+                        </div>
+                      )}
+
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-gradient-to-br from-card to-muted/20 p-6 rounded-2xl border border-primary/10 shadow-md mb-8">
+                        <div className="flex items-center gap-4">
+                          <div className="p-3 rounded-xl bg-primary/10 text-primary shadow-inner">
+                            <History className="w-6 h-6" />
+                          </div>
+                          <div>
+                            <h3 className="text-base font-bold text-foreground tracking-tight">Evolução Clínica</h3>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                              <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Atendimento Ativo</p>
                             </div>
-                          )}
+                          </div>
+                        </div>
 
-                          {section.standardTabId === 'evolution' && (
-                            <div className="space-y-6">
-                              {/* View-only Acolhimento if exists and in Evolution tab */}
-                              {(acolhimentoData || (acolhimentoDraft && Object.keys(acolhimentoDraft).length > 0)) && (
-                                <div className="animate-in fade-in slide-in-from-top-4 duration-500">
-                                  <AcolhimentoView 
-                                    data={acolhimentoDraft && Object.keys(acolhimentoDraft).length > 0 ? acolhimentoDraft : acolhimentoData?.dados_acolhimento} 
-                                    isCollapsedDefault={true}
-                                  />
-                                </div>
-                              )}
-
-                              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-gradient-to-br from-card to-muted/20 p-6 rounded-2xl border border-primary/10 shadow-md mb-8">
-                                <div className="flex items-center gap-4">
-                                  <div className="p-3 rounded-xl bg-primary/10 text-primary shadow-inner">
-                                    <History className="w-6 h-6" />
-                                  </div>
-                                  <div>
-                                    <h3 className="text-base font-bold text-foreground tracking-tight">Evolução Clínica</h3>
-                                    <div className="flex items-center gap-2 mt-0.5">
-                                      <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                                      <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Atendimento Ativo</p>
+                        <div className="flex items-center gap-4 bg-background/60 p-3 rounded-xl border border-border/40 backdrop-blur-sm">
+                          <div className="flex flex-col gap-1">
+                            <Label className="text-[10px] font-black uppercase text-muted-foreground/80 tracking-widest ml-1">Tipo de Registro</Label>
+                            <Select 
+                              value={form.tipo_registro} 
+                              onValueChange={(val) => handleFormChange({ tipo_registro: val })}
+                            >
+                              <SelectTrigger className="w-[200px] h-10 text-sm font-bold bg-background border-primary/20 hover:border-primary/40 focus:ring-primary/20 transition-all shadow-sm rounded-lg">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent className="rounded-xl border-primary/10 shadow-xl">
+                                {[
+                                  { value: 'avaliacao_inicial', label: 'Avaliação/TR', color: 'bg-green-600', icon: Stethoscope },
+                                  { value: 'retorno', label: 'Retorno', color: 'bg-blue-600', icon: Clock },
+                                  { value: 'sessao', label: 'Sessão', color: 'bg-amber-500', icon: Activity },
+                                  { value: 'urgencia', label: 'Urgência', color: 'bg-red-600', icon: AlertTriangle },
+                                  { value: 'procedimento', label: 'Procedimento', color: 'bg-purple-600', icon: ClipboardList },
+                                ].map((type) => (
+                                  <SelectItem key={type.value} value={type.value} className="focus:bg-primary/5 rounded-md cursor-pointer py-2.5">
+                                    <div className="flex items-center gap-3">
+                                      <div className={cn("w-2.5 h-2.5 rounded-full ring-2 ring-background shadow-sm", type.color)} />
+                                      <span className="font-semibold">{type.label}</span>
                                     </div>
-                                  </div>
-                                </div>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <SoapFieldsAdaptive
+                        profissao={user?.profissao}
+                        values={{
+                          soap_subjetivo: form.soap_subjetivo || '',
+                          soap_objetivo: form.soap_objetivo || '',
+                          soap_avaliacao: form.soap_avaliacao || '',
+                          soap_plano: form.soap_plano || '',
+                        }}
+                        onChange={(field, value) => handleFormChange({ [field]: value })}
+                        soapErrors={false}
+                        onClearErrors={() => {}}
+                        soapEnabled={soapEnabled}
+                        onToggleSoap={handleToggleSoap}
+                        labels={soapLabels}
+                        customOptionsForField={(field) => soapCustom.getOptionsForField(field)}
+                        customOptionsWithId={(field) => soapCustom.getOptionWithId(field)}
+                        onAddCustomOption={(field, option) => soapCustom.addOption(field, option, user?.profissao || '')}
+                        onDeleteCustomOption={soapCustom.deleteOption}
+                      />
+                      
+                      {!soapEnabled && (
+                        <div className="mt-4 space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                          <div className="flex items-center gap-2 mb-1">
+                            <FileText className="w-4 h-4 text-primary" />
+                            <Label className="font-bold text-xs uppercase text-muted-foreground tracking-wider">Evolução Livre</Label>
+                          </div>
+                          <DebouncedTextarea
+                            rows={8}
+                            value={form.evolucao || ''}
+                            onChange={(e) => handleFormChange({ evolucao: e.target.value })}
+                            placeholder="Descreva a evolução clínica do paciente detalhadamente..."
+                            className="bg-card border-border/60 shadow-sm focus-visible:ring-primary/30"
+                          />
+                        </div>
+                      )}
+                      
+                      <DynamicProntuarioFields
+                        campos={getCamposForTipo(form.tipo_registro)}
+                        formValues={form}
+                        customValues={form.custom_data || {}}
+                        onFormChange={(k, v) => handleFormChange({ [k]: v })}
+                        onCustomChange={(k, v) => handleFormChange({ custom_data: { [k]: v } })}
+                        especialidadeFields={especialidadeFields}
+                        onEspecialidadeChange={(k, v) => {
+                          setEspecialidadeFields(p => ({...p, [k]: v}));
+                          setHasModifiedForm(true);
+                        }}
+                        profissao={user?.profissao}
+                        profissionalId={user?.id}
+                        tipoProntuario={form.tipo_registro === 'avaliacao_inicial' ? 'avaliacao' : (form.tipo_registro === 'retorno' ? 'retorno' : (form.tipo_registro === 'sessao' ? 'sessao' : (form.tipo_registro === 'urgencia' ? 'urgencia' : (form.tipo_registro === 'procedimento' ? 'procedimento' : 'avaliacao'))))}
+                      />
+                    </div>
+                  </TabsContent>
 
-                                <div className="flex items-center gap-4 bg-background/60 p-3 rounded-xl border border-border/40 backdrop-blur-sm">
-                                  <div className="flex flex-col gap-1">
-                                    <Label className="text-[10px] font-black uppercase text-muted-foreground/80 tracking-widest ml-1">Tipo de Registro</Label>
-                                    <Select 
-                                      value={form.tipo_registro} 
-                                      onValueChange={(val) => handleFormChange({ tipo_registro: val })}
-                                    >
-                                      <SelectTrigger className="w-[200px] h-10 text-sm font-bold bg-background border-primary/20 hover:border-primary/40 focus:ring-primary/20 transition-all shadow-sm rounded-lg">
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent className="rounded-xl border-primary/10 shadow-xl">
-                                        {[
-                                          { value: 'avaliacao_inicial', label: 'Avaliação/TR', color: 'bg-green-600', icon: Stethoscope },
-                                          { value: 'retorno', label: 'Retorno', color: 'bg-blue-600', icon: Clock },
-                                          { value: 'sessao', label: 'Sessão', color: 'bg-amber-500', icon: Activity },
-                                          { value: 'urgencia', label: 'Urgência', color: 'bg-red-600', icon: AlertTriangle },
-                                          { value: 'procedimento', label: 'Procedimento', color: 'bg-purple-600', icon: ClipboardList },
-                                        ].map((type) => (
-                                          <SelectItem key={type.value} value={type.value} className="focus:bg-primary/5 rounded-md cursor-pointer py-2.5">
-                                            <div className="flex items-center gap-3">
-                                              <div className={cn("w-2.5 h-2.5 rounded-full ring-2 ring-background shadow-sm", type.color)} />
-                                              <span className="font-semibold">{type.label}</span>
-                                            </div>
-                                          </SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                </div>
-                              </div>
-                              
-                              <SoapFieldsAdaptive
-                                profissao={user?.profissao}
-                                values={{
-                                  soap_subjetivo: form.soap_subjetivo || '',
-                                  soap_objetivo: form.soap_objetivo || '',
-                                  soap_avaliacao: form.soap_avaliacao || '',
-                                  soap_plano: form.soap_plano || '',
-                                }}
-                                onChange={(field, value) => handleFormChange({ [field]: value })}
-                                soapErrors={false}
-                                onClearErrors={() => {}}
-                                soapEnabled={soapEnabled}
-                                onToggleSoap={handleToggleSoap}
-                                labels={soapLabels}
-                                customOptionsForField={(field) => soapCustom.getOptionsForField(field)}
-                                customOptionsWithId={(field) => soapCustom.getOptionWithId(field)}
-                                onAddCustomOption={(field, option) => soapCustom.addOption(field, option, user?.profissao || '')}
-                                onDeleteCustomOption={soapCustom.deleteOption}
-                              />
-                              
-                              {!soapEnabled && (
-                                <div className="mt-4 space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <FileText className="w-4 h-4 text-primary" />
-                                    <Label className="font-bold text-xs uppercase text-muted-foreground tracking-wider">Evolução Livre</Label>
-                                  </div>
-                                  <DebouncedTextarea
-                                    rows={8}
-                                    value={form.evolucao || ''}
-                                    onChange={(e) => handleFormChange({ evolucao: e.target.value })}
-                                    placeholder="Descreva a evolução clínica do paciente detalhadamente..."
-                                    className="bg-card border-border/60 shadow-sm focus-visible:ring-primary/30"
-                                  />
-                                </div>
-                              )}
-                              
-                              <DynamicProntuarioFields
-                                campos={section.fields.filter(f => f.isBuiltin).map(f => ({ ...f, tipo: f.type, obrigatorio: f.required, habilitado: f.enabled })) as any}
-                                formValues={form}
-                                customValues={form.custom_data || {}}
-                                onFormChange={(k, v) => handleFormChange({ [k]: v })}
-                                onCustomChange={(k, v) => handleFormChange({ custom_data: { [k]: v } })}
-                                especialidadeFields={especialidadeFields}
-                                onEspecialidadeChange={(k, v) => {
-                                  setEspecialidadeFields(p => ({...p, [k]: v}));
-                                  setHasModifiedForm(true);
-                                }}
-                                profissao={user?.profissao}
-                                profissionalId={user?.id}
-                                tipoProntuario={form.tipo_registro === 'avaliacao_inicial' ? 'avaliacao' : (form.tipo_registro === 'retorno' ? 'retorno' : (form.tipo_registro === 'sessao' ? 'sessao' : (form.tipo_registro === 'urgencia' ? 'urgencia' : (form.tipo_registro === 'procedimento' ? 'procedimento' : 'avaliacao'))))}
-                              />
-                              {section.fields.filter(f => f.enabled && f.isBuiltin === false).length > 0 && (
-                                <div className="mt-6 pt-6 border-t border-dashed">
-                                  <h4 className="text-xs font-bold uppercase text-muted-foreground mb-4">Campos Adicionais</h4>
-                                  <DynamicProntuarioFields
-                                    campos={section.fields.filter(f => f.enabled && f.isBuiltin === false).map(f => ({ ...f, tipo: f.type, obrigatorio: f.required, habilitado: f.enabled })) as any}
-                                    formValues={form}
-                                    customValues={form.custom_data || {}}
-                                    onFormChange={(k, v) => handleFormChange({ [k]: v })}
-                                    onCustomChange={(k, v) => handleFormChange({ custom_data: { [k]: v } })}
-                                  />
-                                </div>
-                              )}
-                            </div>
-                          )}
+                  <TabsContent value="prescriptions" className="mt-0 space-y-6">
+                    <PrescricaoMedicamentos
+                      profissionalId={user?.id || ''}
+                      value={listaPrescricao}
+                      onChange={setListaPrescricao}
+                    />
+                    <SolicitacaoExames
+                      profissionalId={user?.id || ''}
+                      value={listaExames}
+                      onChange={setListaExames}
+                    />
+                  </TabsContent>
 
-                          {section.standardTabId === 'prescriptions' && (
-                            <div className="mt-0 space-y-6">
-                              <PrescricaoMedicamentos
-                                profissionalId={user?.id || ''}
-                                value={listaPrescricao}
-                                onChange={setListaPrescricao}
-                              />
-                              <SolicitacaoExames
-                                profissionalId={user?.id || ''}
-                                value={listaExames}
-                                onChange={setListaExames}
-                              />
-                            </div>
-                          )}
-
-                          {section.standardTabId === 'procedures' && (
-                            <div className="mt-0 space-y-6">
-                              <Card>
-                                <CardContent className="p-6">
-                                  <div className="space-y-4">
-                                    <Label>Procedimentos Realizados / CID-10</Label>
-                                    <BuscaProcedimento 
-                                      profissao={user?.profissao}
-                                      onChange={(proc) => {
-                                        if (proc && !selectedProcIds.includes(proc.id)) {
-                                          setSelectedProcIds(prev => [...prev, proc.id]);
-                                          procedureService.getCidsForProcedure(proc.id).then(list => {
-                                            setCidsByProc(prev => ({ ...prev, [proc.id]: list }));
+                  <TabsContent value="procedures" className="mt-0 space-y-6">
+                    <Card>
+                      <CardContent className="p-6">
+                        <div className="space-y-4">
+                          <Label>Procedimentos Realizados / CID-10</Label>
+                          <BuscaProcedimento 
+                            profissao={user?.profissao}
+                            onChange={(proc) => {
+                              if (proc && !selectedProcIds.includes(proc.id)) {
+                                setSelectedProcIds(prev => [...prev, proc.id]);
+                                procedureService.getCidsForProcedure(proc.id).then(list => {
+                                  setCidsByProc(prev => ({ ...prev, [proc.id]: list }));
+                                });
+                              }
+                            }}
+                          />
+                          <div className="space-y-3 mt-4">
+                            {selectedProcIds.map(pid => {
+                              const proc = procedimentos.find(p => p.id === pid);
+                              return (
+                                <div key={pid} className="p-3 border rounded-lg bg-muted/20">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <div className="flex flex-col">
+                                      <span className="font-semibold text-sm">{proc?.nome || pid}</span>
+                                      <span className="text-[10px] font-mono text-muted-foreground">Código: {proc?.id || pid}</span>
+                                    </div>
+                                    <Button variant="ghost" size="sm" onClick={() => setSelectedProcIds(prev => prev.filter(i => i !== pid))}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                                  </div>
+                                  <div className="mb-3">
+                                    <BuscaCID 
+                                      placeholder="Adicionar CID relacionado..."
+                                      onSelect={(cid) => {
+                                        const current = selectedCidsByProc[pid] || [];
+                                        if (!current.includes(cid.codigo)) {
+                                          setSelectedCidsByProc(prev => ({ ...prev, [pid]: [...current, cid.codigo] }));
+                                          setCidsByProc(prev => {
+                                            const existing = prev[pid] || [];
+                                            if (!existing.some(x => x.codigo === cid.codigo)) {
+                                              return { ...prev, [pid]: [...existing, cid] };
+                                            }
+                                            return prev;
                                           });
                                         }
-                                      }}
+                                      }} 
                                     />
-                                    <div className="space-y-3 mt-4">
-                                      {selectedProcIds.map(pid => {
-                                        const proc = procedimentos.find(p => p.id === pid);
-                                        return (
-                                          <div key={pid} className="p-3 border rounded-lg bg-muted/20">
-                                            <div className="flex items-center justify-between mb-2">
-                                              <div className="flex flex-col">
-                                                <span className="font-semibold text-sm">{proc?.nome || pid}</span>
-                                                <span className="text-[10px] font-mono text-muted-foreground">Código: {proc?.id || pid}</span>
-                                              </div>
-                                              <Button variant="ghost" size="sm" onClick={() => setSelectedProcIds(prev => prev.filter(i => i !== pid))}><Trash2 className="w-4 h-4 text-destructive" /></Button>
-                                            </div>
-                                            <div className="mb-3">
-                                              <BuscaCID 
-                                                placeholder="Adicionar CID relacionado..."
-                                                onSelect={(cid) => {
-                                                  const current = selectedCidsByProc[pid] || [];
-                                                  if (!current.includes(cid.codigo)) {
-                                                    setSelectedCidsByProc(prev => ({ ...prev, [pid]: [...current, cid.codigo] }));
-                                                    setCidsByProc(prev => {
-                                                      const existing = prev[pid] || [];
-                                                      if (!existing.some(x => x.codigo === cid.codigo)) {
-                                                        return { ...prev, [pid]: [...existing, cid] };
-                                                      }
-                                                      return prev;
-                                                    });
-                                                  }
-                                                }} 
-                                              />
-                                            </div>
-                                            <div className="flex flex-wrap gap-2">
-                                              {(cidsByProc[pid] || []).map(cid => (
-                                                <Badge 
-                                                  key={cid.codigo} 
-                                                  variant={selectedCidsByProc[pid]?.includes(cid.codigo) ? "default" : "outline"}
-                                                  className="cursor-pointer"
-                                                  onClick={() => {
-                                                    const current = selectedCidsByProc[pid] || [];
-                                                    if (current.includes(cid.codigo)) {
-                                                      setSelectedCidsByProc(prev => ({ ...prev, [pid]: current.filter(c => c !== cid.codigo) }));
-                                                    } else {
-                                                      setSelectedCidsByProc(prev => ({ ...prev, [pid]: [...current, cid.codigo] }));
-                                                    }
-                                                  }}
-                                                >
-                                                  {cid.codigo} - {cid.descricao}
-                                                </Badge>
-                                              ))}
-                                            </div>
-                                          </div>
-                                        );
-                                      })}
-                                    </div>
                                   </div>
-                                </CardContent>
-                              </Card>
-                            </div>
-                          )}
-
-                          {section.standardTabId === 'treatments' && (
-                            <div className="mt-0 space-y-6">
-                              <TreatmentTab 
-                                pacienteId={pacienteId || form.paciente_id} 
-                                pacienteNome={pacienteData?.nome || pacienteNome || 'Paciente'}
-                                onCycleCreated={() => setCreateCycleOpen(true)}
-                                onPtsCreated={() => setCreatePtsOpen(true)}
-                              />
-                            </div>
-                          )}
-
-                          {section.standardTabId === 'antecedents' && (
-                            <div className="mt-0 space-y-6">
-                              <TriagemDetalhada 
-                                triagem={triagem} 
-                              />
-                              <CamposEspecialidade 
-                                profissao={user?.profissao} 
-                                values={especialidadeFields} 
-                                onChange={(k, v) => setEspecialidadeFields(p => ({...p, [k]: v}))} 
-                                profissionalId={user?.id}
-                                tipoProntuario={form.tipo_registro === 'avaliacao_inicial' ? 'avaliacao' : form.tipo_registro as any}
-                              />
-                            </div>
-                          )}
-
-                          {section.standardTabId === 'annexes' && (
-                            <div className="mt-0 space-y-6">
-                              <ProntuarioAnexos
-                                prontuarioId={editId || form.id}
-                                pacienteId={pacienteId || form.paciente_id}
-                                agendamentoId={agendamentoId || form.agendamento_id}
-                                tipoRegistro={form.tipo_registro}
-                                unidadeId={user?.unidadeId}
-                                uploadedBy={user?.id}
-                                uploadedByNome={user?.nome}
-                                showResultadosAnteriores={form.tipo_registro === 'retorno'}
-                              />
-                              <ResultadosExames pacienteId={pacienteId || form.paciente_id} />
-                            </div>
-                          )}
-
-                          {section.type === 'custom' && (
-                            <div className="p-6 bg-card rounded-xl border shadow-sm">
-                              <div className="flex items-center justify-between mb-6">
-                                <div className="flex items-center gap-3">
-                                  <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
-                                    <ClipboardList className="w-5 h-5" />
+                                  <div className="flex flex-wrap gap-2">
+                                    {(cidsByProc[pid] || []).map(cid => (
+                                      <Badge 
+                                        key={cid.codigo} 
+                                        variant={selectedCidsByProc[pid]?.includes(cid.codigo) ? "default" : "outline"}
+                                        className="cursor-pointer"
+                                        onClick={() => {
+                                          const current = selectedCidsByProc[pid] || [];
+                                          if (current.includes(cid.codigo)) {
+                                            setSelectedCidsByProc(prev => ({ ...prev, [pid]: current.filter(c => c !== cid.codigo) }));
+                                          } else {
+                                            setSelectedCidsByProc(prev => ({ ...prev, [pid]: [...current, cid.codigo] }));
+                                          }
+                                        }}
+                                      >
+                                        {cid.codigo} - {cid.descricao}
+                                      </Badge>
+                                    ))}
                                   </div>
-                                  <h3 className="text-lg font-bold">{section.title}</h3>
                                 </div>
-                                <Badge variant="outline" className="text-[10px] uppercase tracking-wider text-primary bg-primary/5 border-primary/20">
-                                  Aba Personalizada
-                                </Badge>
-                              </div>
-                              <DynamicProntuarioFields
-                                campos={section.fields.map(f => ({ ...f, tipo: f.type, obrigatorio: f.required, habilitado: f.enabled })) as any}
-                                formValues={form}
-                                customValues={form.custom_data || {}}
-                                onFormChange={(k, v) => handleFormChange({ [k]: v })}
-                                onCustomChange={(k, v) => handleFormChange({ custom_data: { [k]: v } })}
-                              />
-                            </div>
-                          )}
+                              );
+                            })}
+                          </div>
                         </div>
-                      </TabsContent>
-                    ))}
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+
+                  <TabsContent value="treatments" className="mt-0 space-y-6">
+                    <TreatmentTab 
+                      pacienteId={pacienteId || form.paciente_id} 
+                      pacienteNome={pacienteData?.nome || pacienteNome || 'Paciente'}
+                      onCycleCreated={() => setCreateCycleOpen(true)}
+                      onPtsCreated={() => setCreatePtsOpen(true)}
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="antecedents" className="mt-0 space-y-6">
+                    <TriagemDetalhada 
+                      triagem={triagem} 
+                    />
+                    <CamposEspecialidade 
+                      profissao={user?.profissao} 
+                      values={especialidadeFields} 
+                      onChange={(k, v) => setEspecialidadeFields(p => ({...p, [k]: v}))} 
+                      profissionalId={user?.id}
+                      tipoProntuario={form.tipo_registro === 'avaliacao_inicial' ? 'avaliacao' : form.tipo_registro as any}
+                    />
+                  </TabsContent>
+
+                   <TabsContent value="annexes" className="mt-0 space-y-6">
+                    <ProntuarioAnexos
+                      prontuarioId={editId || form.id}
+                      pacienteId={pacienteId || form.paciente_id}
+                      agendamentoId={agendamentoId || form.agendamento_id}
+                      tipoRegistro={form.tipo_registro}
+                      unidadeId={user?.unidadeId}
+                      uploadedBy={user?.id}
+                      uploadedByNome={user?.nome}
+                      showResultadosAnteriores={form.tipo_registro === 'retorno'}
+                    />
+                    <ResultadosExames pacienteId={pacienteId || form.paciente_id} />
+                  </TabsContent>
                 </Tabs>
               </div>
             </ScrollArea>
