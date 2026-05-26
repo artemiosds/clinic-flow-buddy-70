@@ -86,6 +86,7 @@ const WorkspaceProntuario: React.FC = () => {
   const [editPatientOpen, setEditPatientOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [activeTab, setActiveTab] = useState('evolution');
+  const { sections: prontuarioSections, loading: structureLoading } = useProntuarioStructure();
 
   // Expanded clinical state
   const [procedimentos, setProcedimentos] = useState<any[]>([]);
