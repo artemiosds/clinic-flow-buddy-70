@@ -332,7 +332,7 @@ const WorkspaceProntuario: React.FC = () => {
 
           if (agendamentoId) {
             loadTriagem(agendamentoId);
-            const { data: pList } = await supabase.from('prontuarios').select('*').eq('agendamento_id', agendamentoId).order('criado_em', { ascending: false });
+            const { data: pList } = await supabase.from('prontuarios').select('*').eq('agendamento_id', agendamentoId).order('status', { ascending: false }).order('criado_em', { ascending: false });
             if (pList && pList.length > 0) {
               // Se houver mais de um, pegamos o primeiro (mais recente) para editar, mas idealmente não deveria haver
               processProntuario(pList[0]);
@@ -560,8 +560,10 @@ const WorkspaceProntuario: React.FC = () => {
         if (dbPayload.agendamento_id) {
           const { data: existing } = await supabase
             .from('prontuarios')
-            .select('id')
+            .select('id, status')
             .eq('agendamento_id', dbPayload.agendamento_id)
+            .order('status', { ascending: false })
+            .limit(1)
             .maybeSingle();
 
           if (existing) {
