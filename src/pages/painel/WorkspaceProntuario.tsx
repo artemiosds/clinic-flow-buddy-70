@@ -1118,11 +1118,16 @@ const WorkspaceProntuario: React.FC = () => {
 
                           {section.type === 'custom' && (
                             <div className="p-6 bg-card rounded-xl border shadow-sm">
-                              <div className="flex items-center gap-3 mb-6">
-                                <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
-                                  <ClipboardList className="w-5 h-5" />
+                              <div className="flex items-center justify-between mb-6">
+                                <div className="flex items-center gap-3">
+                                  <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
+                                    <ClipboardList className="w-5 h-5" />
+                                  </div>
+                                  <h3 className="text-lg font-bold">{section.title}</h3>
                                 </div>
-                                <h3 className="text-lg font-bold">{section.title}</h3>
+                                <Badge variant="outline" className="text-[10px] uppercase tracking-wider text-muted-foreground bg-muted/30 border-muted/50">
+                                  Aba Personalizada
+                                </Badge>
                               </div>
                               <DynamicProntuarioFields
                                 campos={section.fields.map(f => ({ ...f, tipo: f.type, obrigatorio: f.required, habilitado: f.enabled })) as any}
