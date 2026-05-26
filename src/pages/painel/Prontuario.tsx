@@ -561,6 +561,7 @@ const ProntuarioPage: React.FC = () => {
       let query = (supabase as any)
         .from("prontuarios")
         .select("*")
+        .eq("status", "finalizado")
         .order("data_atendimento", { ascending: false })
         .order("hora_atendimento", { ascending: false })
         .limit(100);
