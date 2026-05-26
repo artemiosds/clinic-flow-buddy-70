@@ -151,7 +151,7 @@ const FIELD_TYPES = [
   { value: 'number', label: 'Número' },
   { value: 'date', label: 'Data' },
   { value: 'select', label: 'Seleção' },
-  { value: 'checkbox', label: 'Checkbox' },
+  { value: 'checkbox', label: 'Múltipla Escolha' },
 ];
 
 const CONFIG_KEY = 'estrutura_prontuario';
