@@ -145,6 +145,36 @@ const renderContent = (item: ProntuarioItem) => {
     }
   }
 
+  if (item.tipo_registro === "oficina_terapeutica") {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 mb-2">
+          <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200 uppercase font-bold text-[10px] tracking-widest px-2 py-0.5">
+            Grupo / Oficina Terapêutica
+          </Badge>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-indigo-50/30 p-3 rounded-lg border border-indigo-100/50">
+          <div>
+            <span className="text-muted-foreground block uppercase font-bold text-[9px] tracking-wider mb-0.5">Tema</span>
+            <span className="text-sm font-semibold text-indigo-900">{item.custom_data?.tema || "—"}</span>
+          </div>
+          <div>
+            <span className="text-muted-foreground block uppercase font-bold text-[9px] tracking-wider mb-0.5">Tipo de Atividade</span>
+            <span className="text-sm font-semibold text-indigo-900">{item.custom_data?.tipo_atividade || "—"}</span>
+          </div>
+        </div>
+        {item.evolucao && (
+          <div className="space-y-1">
+            <span className="text-muted-foreground block uppercase font-bold text-[9px] tracking-wider px-1">Evolução do Paciente no Grupo</span>
+            <div className="text-sm text-foreground whitespace-pre-wrap leading-relaxed border-l-2 border-indigo-400/50 pl-3 py-2 bg-white/50 rounded-r-lg ring-1 ring-indigo-100 shadow-sm italic">
+              {item.evolucao}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       {item.dados_acolhimento && <AcolhimentoView data={item.dados_acolhimento} />}
