@@ -123,7 +123,7 @@ const DEFAULT_SECTIONS: ProntuarioSection[] = [
     order: 6,
     fields: [],
     type: 'standard',
-    standardTabId: 'history'
+    standardTabId: 'antecedents'
   },
   {
     id: 'tab_annexes',
