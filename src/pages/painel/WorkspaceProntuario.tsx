@@ -22,7 +22,7 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/componen
 import { 
   History, FileText, User, Activity, ArrowLeft, Save, Printer, 
   Stethoscope, ClipboardList, Clock, Search, UserCog, Stamp, Trash2,
-  Calendar, Info, AlertTriangle, FileDown
+  Calendar, Info, AlertTriangle, FileDown, Users
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { TIPO_REGISTRO_LABELS } from '@/utils/labels';
@@ -35,6 +35,7 @@ import DynamicProntuarioFields from '@/components/DynamicProntuarioFields';
 import SoapFieldsAdaptive from '@/components/SoapFieldsAdaptive';
 import PacienteDocumentos from '@/components/PacienteDocumentos';
 import { AcolhimentoForm } from '@/components/prontuario/AcolhimentoForm';
+import { GroupActivityForm } from '@/components/prontuario/GroupActivityForm';
 import { CreatePTSModal } from '@/components/prontuario/CreatePTSModal';
 import { CreateCycleModal } from '@/components/prontuario/CreateCycleModal';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -107,6 +108,10 @@ const WorkspaceProntuario: React.FC = () => {
   const [loadingAcolhimento, setLoadingAcolhimento] = useState(false);
   const [savingAcolhimento, setSavingAcolhimento] = useState(false);
   const [hasModifiedForm, setHasModifiedForm] = useState(false);
+  const [groupActivityData, setGroupActivityData] = useState<any>(null);
+  const [groupActivityDraft, setGroupActivityDraft] = useState<any>({ tema: '', tipo_atividade: '', evolucao: '' });
+  const [loadingGroupActivity, setLoadingGroupActivity] = useState(false);
+  const [savingGroupActivity, setSavingGroupActivity] = useState(false);
 
   const [form, setForm] = useState<any>({
     tipo_registro: searchParams.get('tipo') === 'Retorno' ? 'retorno' : (searchParams.get('tipo') === 'Consulta' || searchParams.get('tipo') === 'Avaliação/TR' ? 'avaliacao_inicial' : (searchParams.get('tipo') || 'avaliacao_inicial')),
@@ -221,6 +226,36 @@ const WorkspaceProntuario: React.FC = () => {
     }
   };
 
+  const loadGroupActivity = async (patientId: string) => {
+    setLoadingGroupActivity(true);
+    try {
+      const { data } = await supabase
+        .from('prontuarios')
+        .select('*')
+        .eq('paciente_id', patientId)
+        .eq('tipo_registro', 'oficina_terapeutica')
+        .order('criado_em', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      const typedData = data as any;
+      if (typedData) {
+        setGroupActivityData(typedData);
+        if (typedData.custom_data) {
+          setGroupActivityDraft({
+            tema: typedData.custom_data.tema || '',
+            tipo_atividade: typedData.custom_data.tipo_atividade || '',
+            evolucao: typedData.evolucao || ''
+          });
+        }
+      }
+    } catch (err) {
+      console.error("Error loading group activity:", err);
+    } finally {
+      setLoadingGroupActivity(false);
+    }
+  };
+
   const loadTriagem = async (agendamentoId: string) => {
     const { data } = await supabase.from("triage_records").select("*").eq("agendamento_id", agendamentoId).not("confirmado_em", "is", null).maybeSingle();
     if (data) setTriagem(data);
@@ -242,6 +277,7 @@ const WorkspaceProntuario: React.FC = () => {
           loadSessaoData(targetPacienteId);
           loadEpisodios(targetPacienteId);
           loadAcolhimento(targetPacienteId);
+          loadGroupActivity(targetPacienteId);
 
           const processProntuario = (p: any) => {
             if (p) {
@@ -346,6 +382,15 @@ const WorkspaceProntuario: React.FC = () => {
       const s4 = data.secao4?.sintomas?.length > 0 ? `<div style="margin-bottom: 1px;"><strong>Sintomas (30 dias):</strong> ${data.secao4.sintomas.join(', ')}</div>` : '';
       const s15 = data.secao15?.parecer ? `<div style="margin-bottom: 1px;"><strong>Parecer Profissional:</strong> ${data.secao15.parecer}</div>` : '';
       body += `<div style="border: 0.5px solid #000; padding: 2px 4px; margin-bottom: 2px; page-break-inside: avoid;"><div style="font-size: 8pt; font-weight: 800; text-transform: uppercase; border-bottom: 0.5px solid #000; padding-bottom: 0px; margin-bottom: 1px;">Acolhimento em Saúde Mental</div><div style="font-size: 9pt; line-height: 1.05;">${s3}${s4}${s15}</div></div>`;
+    }
+
+    // 2.3 Group Activity section if data exists
+    if (groupActivityDraft.tema || groupActivityDraft.tipo_atividade || groupActivityDraft.evolucao) {
+      body += `<div class="section" style="margin-bottom: 2px; page-break-inside: avoid;"><div class="section-title" style="margin-bottom: 1px;">Grupo / Oficina Terapêutica</div><div class="section-content" style="font-size: 9pt; line-height: 1.05;">
+        ${groupActivityDraft.tema ? `<div style="margin-bottom: 1px;"><strong>Tema:</strong> ${groupActivityDraft.tema}</div>` : ''}
+        ${groupActivityDraft.tipo_atividade ? `<div style="margin-bottom: 1px;"><strong>Tipo de Atividade:</strong> ${groupActivityDraft.tipo_atividade}</div>` : ''}
+        ${groupActivityDraft.evolucao ? `<div style="margin-bottom: 1px;"><strong>Evolução no Grupo:</strong> ${groupActivityDraft.evolucao.replace(/\n/g, '<br/>')}</div>` : ''}
+      </div></div>`;
     }
 
     // 2.5 Treatment Plan section
@@ -605,6 +650,62 @@ const WorkspaceProntuario: React.FC = () => {
     }
   };
 
+  const handleSaveGroupActivity = async () => {
+    if (savingGroupActivity) return;
+    const targetPacienteId = pacienteId || form.paciente_id;
+    if (!targetPacienteId) {
+      toast.error("Selecione um paciente primeiro.");
+      return;
+    }
+    setSavingGroupActivity(true);
+    try {
+      const payload: any = {
+        paciente_id: targetPacienteId,
+        paciente_nome: pacienteData?.nome || pacienteNome || form.paciente_nome || 'Paciente',
+        profissional_id: user?.id || '',
+        profissional_nome: user?.nome || 'Profissional',
+        unidade_id: user?.unidadeId || '',
+        tipo_registro: 'oficina_terapeutica',
+        data_atendimento: new Date().toISOString().split('T')[0],
+        hora_atendimento: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        evolucao: groupActivityDraft.evolucao,
+        custom_data: {
+          tema: groupActivityDraft.tema,
+          tipo_atividade: groupActivityDraft.tipo_atividade
+        },
+        agendamento_id: agendamentoId || null
+      };
+
+      let result;
+      if (groupActivityData?.id) {
+        const { data, error } = await supabase
+          .from('prontuarios')
+          .update(payload)
+          .eq('id', groupActivityData.id)
+          .select()
+          .single();
+        if (error) throw error;
+        result = data;
+      } else {
+        const { data, error } = await supabase
+          .from('prontuarios')
+          .insert(payload)
+          .select()
+          .single();
+        if (error) throw error;
+        result = data;
+      }
+      
+      setGroupActivityData(result as any);
+      toast.success("Registro de grupo salvo com sucesso!");
+    } catch (e: any) {
+      console.error("Erro ao salvar atividade de grupo:", e);
+      toast.error("Erro ao salvar registro de grupo.");
+    } finally {
+      setSavingGroupActivity(false);
+    }
+  };
+
   if (loading) return <div className="flex items-center justify-center h-screen">Carregando...</div>;
 
   return (
@@ -665,6 +766,7 @@ const WorkspaceProntuario: React.FC = () => {
                           )}
                         </TabsTrigger>
                         <TabsTrigger value="evolution" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold">Evolução</TabsTrigger>
+                        <TabsTrigger value="group_activity" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap">Grupo/Oficinas Terapêuticas</TabsTrigger>
                         <TabsTrigger value="prescriptions" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap">Prescrições/Exames</TabsTrigger>
                         <TabsTrigger value="procedures" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap">Procedimentos/CID</TabsTrigger>
                         <TabsTrigger value="treatments" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap">Tratamentos/PTS</TabsTrigger>
@@ -695,6 +797,17 @@ const WorkspaceProntuario: React.FC = () => {
                         )}
                       </CardContent>
                     </Card>
+                  </TabsContent>
+
+                  <TabsContent value="group_activity" className="mt-0 animate-in fade-in duration-300" forceMount>
+                    <div className={cn(activeTab !== 'group_activity' && "hidden")}>
+                      <GroupActivityForm 
+                        data={groupActivityDraft}
+                        onChange={(updates) => setGroupActivityDraft(prev => ({ ...prev, ...updates }))}
+                        onSave={handleSaveGroupActivity}
+                        saving={savingGroupActivity}
+                      />
+                    </div>
                   </TabsContent>
 
                   <TabsContent value="evolution" className="mt-0 space-y-6" forceMount>
