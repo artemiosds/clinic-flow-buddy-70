@@ -464,9 +464,8 @@ const WorkspaceProntuario: React.FC = () => {
   };
 
   const handleSave = async () => {
-    if (saving || saveAttemptedRef.current) return;
+    if (saving) return;
     setSaving(true);
-    saveAttemptedRef.current = true;
     try {
       const { auditService } = await import('@/services/auditService');
       const finalId = editId || form.id;
