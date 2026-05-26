@@ -426,6 +426,22 @@ const WorkspaceProntuario: React.FC = () => {
       body += `<div class="section" style="margin-bottom: 2px;"><div class="section-title" style="margin-bottom: 1px;">Informações Complementares</div><div class="section-content" style="font-size: 9pt; line-height: 1.05;">${dynamicFields.map(f => `<div style="margin-bottom: 1px;"><span style="font-weight: 700; color: #475569; font-size: 7.5pt; text-transform: uppercase;">${f.label}:</span> ${String(f.value).replace(/\n/g, '<br/>')}</div>`).join('')}</div></div>`;
     }
 
+    // 3.5 Custom Sections in Print
+    const customSectionsInPrint = (prontuarioSections || []).filter(s => s.enabled && s.type === 'custom' && (s.tiposProntuario || []).includes(form.tipo_registro));
+    customSectionsInPrint.forEach(section => {
+      const activeFields = section.fields.filter(f => f.enabled);
+      const fieldsWithData = activeFields.filter(f => (form.custom_data || {})[f.key]);
+      
+      if (fieldsWithData.length > 0) {
+        body += `<div class="section" style="margin-bottom: 2px; page-break-inside: avoid;"><div class="section-title" style="margin-bottom: 1px;">${section.title}</div><div class="section-content" style="font-size: 9pt; line-height: 1.05;">`;
+        fieldsWithData.forEach(f => {
+          const value = (form.custom_data || {})[f.key];
+          body += `<div style="margin-bottom: 1px;"><span style="font-weight: 700; color: #475569; font-size: 7.5pt; text-transform: uppercase;">${f.label}:</span> ${String(value).replace(/\n/g, '<br/>')}</div>`;
+        });
+        body += `</div></div>`;
+      }
+    });
+
     // 4. Procedures & CIDs
     if (selectedProcIds.length > 0) {
       body += `<div class="section" style="margin-bottom: 2px;"><div class="section-title" style="margin-bottom: 1px;">Procedimentos / CID</div><div class="section-content"><ul style="padding-left: 15px; margin: 0; font-size: 9pt;">${selectedProcIds.map(pid => {
@@ -829,6 +845,18 @@ const WorkspaceProntuario: React.FC = () => {
                         </TabsTrigger>
                         <TabsTrigger value="evolution" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold">Evolução</TabsTrigger>
                         <TabsTrigger value="group_activity" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap">Grupo/Oficinas Terapêuticas</TabsTrigger>
+                        
+                        {/* Custom Tabs */}
+                        {(prontuarioSections || []).filter(s => s.enabled && s.type === 'custom' && (s.tiposProntuario || []).includes(form.tipo_registro)).map(section => (
+                          <TabsTrigger 
+                            key={section.id} 
+                            value={section.id} 
+                            className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap"
+                          >
+                            {section.title}
+                          </TabsTrigger>
+                        ))}
+
                         <TabsTrigger value="prescriptions" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap">Prescrições/Exames</TabsTrigger>
                         <TabsTrigger value="procedures" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap">Procedimentos/CID</TabsTrigger>
                         <TabsTrigger value="treatments" className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 text-sm font-semibold whitespace-nowrap">Tratamentos/PTS</TabsTrigger>
@@ -871,6 +899,25 @@ const WorkspaceProntuario: React.FC = () => {
                       />
                     </div>
                   </TabsContent>
+
+                  {/* Custom Tabs Content */}
+                  {(prontuarioSections || []).filter(s => s.enabled && s.type === 'custom' && (s.tiposProntuario || []).includes(form.tipo_registro)).map(section => (
+                    <TabsContent key={section.id} value={section.id} className="mt-0 animate-in fade-in duration-300" forceMount>
+                      <div className={cn(activeTab !== section.id && "hidden")}>
+                        <Card className="border-border/50 shadow-sm">
+                          <CardContent className="p-6">
+                            <DynamicProntuarioFields
+                              campos={section.fields.filter(f => f.enabled)}
+                              formValues={form}
+                              customValues={form.custom_data || {}}
+                              onFormChange={(k, v) => handleFormChange({ [k]: v })}
+                              onCustomChange={(k, v) => handleFormChange({ custom_data: { [k]: v } })}
+                            />
+                          </CardContent>
+                        </Card>
+                      </div>
+                    </TabsContent>
+                  ))}
 
                   <TabsContent value="evolution" className="mt-0 space-y-6" forceMount>
                     <div className={cn("space-y-6", activeTab !== 'evolution' && "hidden")}>
