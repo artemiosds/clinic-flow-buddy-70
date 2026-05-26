@@ -549,7 +549,7 @@ const WorkspaceProntuario: React.FC = () => {
                                   <GroupActivityForm 
                                     data={groupActivityDraft}
                                     onChange={(updates) => setGroupActivityDraft((prev: any) => ({ ...prev, ...updates }))}
-                                    onSave={handleSaveGroupActivity}
+                                    onSave={() => handleSaveGroupActivity(groupActivityDraft)}
                                     saving={savingGroupActivity}
                                   />
                                 )}
