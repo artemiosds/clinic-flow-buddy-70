@@ -988,7 +988,7 @@ const WorkspaceProntuario: React.FC = () => {
                               )}
                               
                               <DynamicProntuarioFields
-                                campos={section.fields.map(f => ({ ...f, tipo: f.type, obrigatorio: f.required, habilitado: f.enabled })) as any}
+                                campos={section.fields.filter(f => f.isBuiltin).map(f => ({ ...f, tipo: f.type, obrigatorio: f.required, habilitado: f.enabled })) as any}
                                 formValues={form}
                                 customValues={form.custom_data || {}}
                                 onFormChange={(k, v) => handleFormChange({ [k]: v })}
@@ -1004,7 +1004,7 @@ const WorkspaceProntuario: React.FC = () => {
                               />
                               {section.fields.filter(f => f.enabled && f.isBuiltin === false).length > 0 && (
                                 <div className="mt-6 pt-6 border-t border-dashed">
-                                  <h4 className="text-xs font-bold uppercase text-muted-foreground mb-4">Campos Personalizados</h4>
+                                  <h4 className="text-xs font-bold uppercase text-muted-foreground mb-4">Campos Adicionais</h4>
                                   <DynamicProntuarioFields
                                     campos={section.fields.filter(f => f.enabled && f.isBuiltin === false).map(f => ({ ...f, tipo: f.type, obrigatorio: f.required, habilitado: f.enabled })) as any}
                                     formValues={form}
