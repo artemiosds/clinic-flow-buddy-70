@@ -5,6 +5,7 @@ import { DebouncedTextarea } from '@/components/ui/debounced-textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { CampoConfig } from '@/hooks/useProntuarioTiposConfig';
+import type { ProntuarioField } from '@/components/EditorProntuarioConfig';
 import CamposEspecialidade from './CamposEspecialidade';
 
 /** Known builtin keys that map directly to form state */
@@ -16,7 +17,7 @@ const BUILTIN_KEYS = new Set([
 ]);
 
 interface DynamicProntuarioFieldsProps {
-  campos: CampoConfig[];
+  campos: (CampoConfig | ProntuarioField)[];
   /** Builtin form values (form.queixa_principal, etc.) */
   formValues: Record<string, string>;
   /** Custom (non-builtin) field values */
@@ -38,12 +39,12 @@ const DynamicProntuarioFields: React.FC<DynamicProntuarioFieldsProps> = ({
 }) => {
   if (campos.length === 0) return null;
 
-  const getValue = (campo: CampoConfig): string => {
+  const getValue = (campo: CampoConfig | ProntuarioField): string => {
     if (BUILTIN_KEYS.has(campo.key)) return formValues[campo.key] || '';
     return customValues[campo.key] || '';
   };
 
-  const setValue = (campo: CampoConfig, value: string) => {
+  const setValue = (campo: CampoConfig | ProntuarioField, value: string) => {
     if (BUILTIN_KEYS.has(campo.key)) {
       onFormChange(campo.key, value);
     } else {
@@ -58,16 +59,18 @@ const DynamicProntuarioFields: React.FC<DynamicProntuarioFieldsProps> = ({
         if (campo.key.startsWith('evolucao.') || campo.key === 'contador_sessao' || campo.key === 'sinais_vitais_urgencia') return null;
 
         const value = getValue(campo);
+        const tipo = (campo as CampoConfig).tipo || (campo as ProntuarioField).type;
+        const obrigatorio = (campo as CampoConfig).obrigatorio ?? (campo as ProntuarioField).required;
 
         return (
           <div key={campo.id}>
             <Label className="text-sm">
               {campo.label}
-              {campo.obrigatorio && <span className="text-destructive ml-1">*</span>}
+              {obrigatorio && <span className="text-destructive ml-1">*</span>}
             </Label>
 
             {/* TEXTAREA */}
-            {(campo.tipo === 'textarea') && (
+            {(tipo === 'textarea') && (
               <DebouncedTextarea
                 rows={2}
                 value={value}
@@ -78,7 +81,7 @@ const DynamicProntuarioFields: React.FC<DynamicProntuarioFieldsProps> = ({
             )}
 
             {/* TEXT */}
-            {(campo.tipo === 'texto' || campo.tipo === 'text') && (
+            {(tipo === 'texto' || tipo === 'text') && (
               <Input
                 value={value}
                 onChange={(e) => setValue(campo, e.target.value)}
@@ -89,7 +92,7 @@ const DynamicProntuarioFields: React.FC<DynamicProntuarioFieldsProps> = ({
             )}
 
             {/* NUMBER */}
-            {campo.tipo === 'numero' && (
+            {tipo === 'numero' && (
               <Input
                 type="number"
                 value={value}
@@ -101,7 +104,7 @@ const DynamicProntuarioFields: React.FC<DynamicProntuarioFieldsProps> = ({
             )}
 
             {/* DATE */}
-            {campo.tipo === 'data' && (
+            {tipo === 'data' && (
               <Input
                 type="date"
                 value={value}
@@ -112,7 +115,7 @@ const DynamicProntuarioFields: React.FC<DynamicProntuarioFieldsProps> = ({
             )}
 
             {/* SELECT */}
-            {campo.tipo === 'select' && (
+            {tipo === 'select' && (
               <Select value={value} onValueChange={(v) => setValue(campo, v)} disabled={disabled}>
                 <SelectTrigger className="h-9">
                   <SelectValue placeholder={`Selecione ${campo.label}`} />
@@ -126,7 +129,7 @@ const DynamicProntuarioFields: React.FC<DynamicProntuarioFieldsProps> = ({
             )}
 
             {/* CHECKBOX (multiple choice) */}
-            {campo.tipo === 'checkbox' && (
+            {tipo === 'checkbox' && (
               <div className="space-y-1.5 mt-1">
                 {(campo.opcoes || []).map((opt) => {
                   const selected = value ? value.split('||') : [];
