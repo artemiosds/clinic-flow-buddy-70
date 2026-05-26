@@ -53,7 +53,8 @@ const DEFAULT_SECTIONS: ProntuarioSection[] = [
     order: 0,
     fields: [],
     type: 'standard',
-    standardTabId: 'acolhimento'
+    standardTabId: 'acolhimento',
+    tiposProntuario: ['primeira_consulta', 'retorno', 'sessao', 'urgencia', 'procedimento']
   },
   {
     id: 'tab_evolution',
@@ -76,7 +77,8 @@ const DEFAULT_SECTIONS: ProntuarioSection[] = [
       { id: 'f_retorno', key: 'indicacao_retorno', label: 'Indicação de Retorno', type: 'select', required: false, enabled: true, isBuiltin: true, order: 12 },
     ],
     type: 'standard',
-    standardTabId: 'evolution'
+    standardTabId: 'evolution',
+    tiposProntuario: ['primeira_consulta', 'retorno', 'sessao', 'urgencia', 'procedimento']
   },
   {
     id: 'tab_group_activity',
@@ -85,7 +87,8 @@ const DEFAULT_SECTIONS: ProntuarioSection[] = [
     order: 2,
     fields: [],
     type: 'standard',
-    standardTabId: 'group_activity'
+    standardTabId: 'group_activity',
+    tiposProntuario: ['primeira_consulta', 'retorno', 'sessao', 'urgencia', 'procedimento']
   },
   {
     id: 'tab_prescriptions',
@@ -97,7 +100,8 @@ const DEFAULT_SECTIONS: ProntuarioSection[] = [
       { id: 'f_exames_solicitacao', key: 'solicitacao_exames', label: 'Exames Solicitados', type: 'textarea', required: false, enabled: true, isBuiltin: true, order: 1 },
     ],
     type: 'standard',
-    standardTabId: 'prescriptions'
+    standardTabId: 'prescriptions',
+    tiposProntuario: ['primeira_consulta', 'retorno', 'sessao', 'urgencia', 'procedimento']
   },
   {
     id: 'tab_procedures',
@@ -106,7 +110,8 @@ const DEFAULT_SECTIONS: ProntuarioSection[] = [
     order: 4,
     fields: [],
     type: 'standard',
-    standardTabId: 'procedures'
+    standardTabId: 'procedures',
+    tiposProntuario: ['primeira_consulta', 'retorno', 'sessao', 'urgencia', 'procedimento']
   },
   {
     id: 'tab_treatments',
@@ -115,7 +120,8 @@ const DEFAULT_SECTIONS: ProntuarioSection[] = [
     order: 5,
     fields: [],
     type: 'standard',
-    standardTabId: 'treatments'
+    standardTabId: 'treatments',
+    tiposProntuario: ['primeira_consulta', 'retorno', 'sessao', 'urgencia', 'procedimento']
   },
   {
     id: 'tab_history',
@@ -124,7 +130,8 @@ const DEFAULT_SECTIONS: ProntuarioSection[] = [
     order: 6,
     fields: [],
     type: 'standard',
-    standardTabId: 'antecedents'
+    standardTabId: 'antecedents',
+    tiposProntuario: ['primeira_consulta', 'retorno', 'sessao', 'urgencia', 'procedimento']
   },
   {
     id: 'tab_annexes',
@@ -133,7 +140,8 @@ const DEFAULT_SECTIONS: ProntuarioSection[] = [
     order: 7,
     fields: [],
     type: 'standard',
-    standardTabId: 'annexes'
+    standardTabId: 'annexes',
+    tiposProntuario: ['primeira_consulta', 'retorno', 'sessao', 'urgencia', 'procedimento']
   },
 ];
 
