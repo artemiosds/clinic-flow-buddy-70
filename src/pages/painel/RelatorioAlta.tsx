@@ -129,6 +129,101 @@ const RelatorioAlta: React.FC = () => {
   const { user } = useAuth();
   const { pacientes, funcionarios } = useData();
   const [modo, setModo] = useState<ModoRelatorio>("selector");
+  const [loadingInitial, setLoadingInitial] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('id');
+    if (id) {
+      loadRelatorio(id);
+    }
+  }, []);
+
+  const loadRelatorio = async (id: string) => {
+    setLoadingInitial(true);
+    try {
+      const { data, error } = await supabase
+        .from('prontuarios')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (error) throw error;
+      if (data) {
+        setPacienteId(data.paciente_id);
+        setRelatorioId(data.id);
+        setModo(data.tipo_registro === 'alta_multiprofissional' ? 'multiprofissional' : 'individual');
+        setStatus(data.status);
+        
+        let obs = {};
+        try {
+          obs = typeof data.observacoes === 'string' ? JSON.parse(data.observacoes) : data.observacoes;
+        } catch (e) { console.error(e); }
+        
+        const o = obs as any;
+        setVersaoAtual(o.versao || 1);
+        setHistoricoVersoes(o.historico || []);
+
+        if (data.tipo_registro === 'alta_multiprofissional') {
+          setModalidades(o.modalidades || []);
+          setCid10(o.cid10 || "");
+          setCidDesc(o.cidDesc || "");
+          setCidSecundario(o.cidSecundario || "");
+          setCidSecDesc(o.cidSecDesc || "");
+          setDiagClinico(o.diagClinico || "");
+          setCifFuncoes(o.cifFuncoes || "");
+          setCifAtividades(o.cifAtividades || "");
+          setCifFatores(o.cifFatores || "");
+          setProfSections(o.profissionais || []);
+          setMotivoAlta(o.motivoAlta || "");
+          setMotivoDetalhe(o.motivoDetalhe || "");
+          setTipoAlta(o.tipoAlta || "");
+          setCondicaoAdmissao(o.condicaoAdmissao || "");
+          setCondicaoFuncional(o.condicaoFuncional || "");
+          setNivelIndep(o.nivelIndep || "");
+          setOrientacoesUsuario(o.orientacoesUsuario || "");
+          setOrientacoesUbs(o.orientacoesUbs || "");
+          setOrientacoesEscola(o.orientacoesEscola || "");
+          setEncaminhamentos(o.encaminhamentos || []);
+          setFreqAps(o.freqAps || "");
+          setDataAlta(o.dataAlta || data.data_atendimento || "");
+          setAdesaoGlobal(o.adesaoGlobal || "boa");
+          setObjetivosGerais(o.objetivosGerais || "");
+          setMetasMultiprofissionais(o.metasMultiprofissionais || "");
+          setResumoConsolidado(o.resumoConsolidado || "");
+        } else {
+          setIndDiagCid(o.diagCid || "");
+          setIndCidDesc(o.cidDesc || "");
+          setIndCif(o.cif || "");
+          setIndObjetivos(o.objetivos || "");
+          setIndIntervencoes(o.intervencoes || "");
+          setIndEvolucao(o.evolucao || "");
+          setIndMetas(o.metas || "totalmente");
+          setIndMetasJust(o.metasJust || "");
+          setIndTA(o.ta || "");
+          setIndMotivo(o.motivo || "");
+          setIndMotivoDet(o.motivoDet || "");
+          setIndOrientacoes(o.orientacoes || "");
+          setIndEncaminhamento(o.encaminhamento || "");
+          setIndModalidade(o.modalidade || "");
+          setIndDataAlta(o.dataAlta || data.data_atendimento || "");
+          setIndSessoes(o.sessoes || 0);
+          setIndPeriodoInicio(o.periodoInicio || "");
+          setIndPeriodoFim(o.periodoFim || "");
+          setIndAdesao(o.adesao || "boa");
+          setIndIntercorrencias(o.intercorrencias || []);
+          setIndQueixa(o.queixa || "");
+          setIndHistorico(o.historico || "");
+          setIndResumoAuto(o.indResumoAuto || "");
+        }
+      }
+    } catch (err) {
+      console.error('Erro ao carregar relatório:', err);
+      toast.error('Erro ao carregar os dados do relatório.');
+    } finally {
+      setLoadingInitial(false);
+    }
+  };
 
   /* ── shared patient selection ─── */
   const [pacienteId, setPacienteId] = useState("");
