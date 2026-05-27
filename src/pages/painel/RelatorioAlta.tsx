@@ -997,28 +997,38 @@ const RelatorioAlta: React.FC = () => {
 
       {/* Patient + Professional info */}
       <Card>
-        <CardHeader className="pb-3"><CardTitle className="text-sm">1. Identificação</CardTitle></CardHeader>
+        <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
+          <CardTitle className="text-sm">1. Identificação e Base Clínica</CardTitle>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className={status === 'rascunho' ? 'bg-yellow-50 text-yellow-700' : 'bg-green-50 text-green-700'}>
+              {status === 'rascunho' ? <Clock className="w-3 h-3 mr-1" /> : <CheckCircle className="w-3 h-3 mr-1" />}
+              {status === 'rascunho' ? 'Rascunho' : 'Validado'}
+            </Badge>
+          </div>
+        </CardHeader>
         <CardContent className="space-y-4">
           <BuscaPaciente pacientes={pacientes} value={pacienteId} onChange={setPacienteId} />
           {paciente && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm bg-muted/50 rounded-lg p-3">
-              <div><span className="text-muted-foreground text-xs block">Paciente</span><strong>{paciente.nome}</strong></div>
-              <div><span className="text-muted-foreground text-xs block">Data Nasc.</span>{fmt(paciente.dataNascimento)} ({calcIdade(paciente.dataNascimento)})</div>
-              <div><span className="text-muted-foreground text-xs block">CNS</span>{paciente.cns || "—"}</div>
-              <div><span className="text-muted-foreground text-xs block">CPF</span>{paciente.cpf || "—"}</div>
-              <div><span className="text-muted-foreground text-xs block">Profissional</span>{user?.nome}</div>
-              <div><span className="text-muted-foreground text-xs block">Profissão</span>{funcionarios.find(f => f.id === user?.id)?.profissao || "—"}</div>
-              <div><span className="text-muted-foreground text-xs block">Período</span>{fmt(indPeriodoInicio)} a {fmt(indPeriodoFim)}</div>
-              <div><span className="text-muted-foreground text-xs block">Sessões</span>{indSessoes}</div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm bg-muted/50 rounded-lg p-3 border border-border/50">
+              <div className="col-span-2"><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">Paciente</span><span className="font-semibold">{paciente.nome}</span></div>
+              <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">CPF</span>{paciente.cpf || "—"}</div>
+              <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">CNS</span>{paciente.cns || "—"}</div>
+              <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">Data Nasc.</span>{fmt(paciente.dataNascimento)} ({calcIdade(paciente.dataNascimento)})</div>
+              <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">Telefone</span>{paciente.telefone || "—"}</div>
+              <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">Profissional</span>{user?.nome}</div>
+              <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">Especialidade</span>{funcionarios.find(f => f.id === user?.id)?.profissao || "—"}</div>
+              <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">Tratamento</span>{fmt(indPeriodoInicio)} a {fmt(indPeriodoFim)}</div>
+              <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">Sessões Realizadas</span><Badge variant="secondary" className="h-5 px-1.5">{indSessoes}</Badge></div>
             </div>
           )}
-          <div className="grid grid-cols-2 gap-3">
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
-              <Label className="text-xs">Data de Alta</Label>
+              <Label className="text-xs font-semibold">Data de Alta</Label>
               <Input type="date" value={indDataAlta} onChange={e => setIndDataAlta(e.target.value)} className="h-8 text-sm" />
             </div>
             <div>
-              <Label className="text-xs">Modalidade</Label>
+              <Label className="text-xs font-semibold">Modalidade</Label>
               <Select value={indModalidade} onValueChange={setIndModalidade}>
                 <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Selecione..." /></SelectTrigger>
                 <SelectContent>
@@ -1026,13 +1036,43 @@ const RelatorioAlta: React.FC = () => {
                 </SelectContent>
               </Select>
             </div>
+            <div>
+               <Label className="text-xs font-semibold">Adesão ao Tratamento</Label>
+               <Select value={indAdesao} onValueChange={(v: any) => setIndAdesao(v)}>
+                 <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                 <SelectContent>
+                   {ADESAO_OPCOES.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                 </SelectContent>
+               </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+            <div>
+              <Label className="text-xs font-semibold">Queixa Principal / Motivo Encaminhamento</Label>
+              <Textarea value={indQueixa} onChange={e => setIndQueixa(e.target.value)} rows={2} className="text-sm" placeholder="Puxado do PTS ou prontuário..." />
+            </div>
+            <div>
+              <Label className="text-xs font-semibold">Contexto Familiar/Social/Histórico</Label>
+              <Textarea value={indHistorico} onChange={e => setIndHistorico(e.target.value)} rows={2} className="text-sm" placeholder="Resumo relevante para a alta..." />
+            </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Diagnosis */}
       <Card>
-        <CardHeader className="pb-3"><CardTitle className="text-sm">2. Diagnóstico</CardTitle></CardHeader>
+        <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
+          <CardTitle className="text-sm">2. Diagnóstico e Funcionalidade</CardTitle>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Sparkles className="w-4 h-4 text-primary cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent>Sugestões baseadas no prontuário</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </CardHeader>
         <CardContent className="space-y-3">
           <BuscaCIDField 
             value={indDiagCid} 
@@ -1041,27 +1081,69 @@ const RelatorioAlta: React.FC = () => {
             onDescChange={setIndCidDesc} 
           />
           <div>
-            <Label className="text-xs">CIF</Label>
-            <Textarea value={indCif} onChange={e => setIndCif(e.target.value)} rows={2} className="text-sm" />
+            <Label className="text-xs font-semibold">Diagnóstico Funcional (CIF / Avaliação)</Label>
+            <Textarea value={indCif} onChange={e => setIndCif(e.target.value)} rows={3} className="text-sm" placeholder="Descreva as limitações e potencialidades funcionais..." />
           </div>
         </CardContent>
       </Card>
 
       {/* Clinical */}
       <Card>
-        <CardHeader className="pb-3"><CardTitle className="text-sm">3. Evolução Clínica</CardTitle></CardHeader>
+        <CardHeader className="pb-3"><CardTitle className="text-sm">3. Evolução Clínica e Metas</CardTitle></CardHeader>
         <CardContent className="space-y-3">
-          <div>
-            <Label className="text-xs">Objetivos Terapêuticos Iniciais</Label>
-            <Textarea value={indObjetivos} onChange={e => setIndObjetivos(e.target.value)} rows={3} className="text-sm" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs font-semibold">Objetivos Terapêuticos Iniciais (do PTS)</Label>
+              <Textarea value={indObjetivos} onChange={e => setIndObjetivos(e.target.value)} rows={3} className="text-sm" />
+            </div>
+            <div>
+              <Label className="text-xs font-semibold">Intervenções e Procedimentos Realizados</Label>
+              <Textarea value={indIntervencoes} onChange={e => setIndIntervencoes(e.target.value)} rows={3} className="text-sm" placeholder="Técnicas, métodos e recursos utilizados..." />
+            </div>
           </div>
           <div>
-            <Label className="text-xs">Intervenções/Procedimentos Realizados</Label>
-            <Textarea value={indIntervencoes} onChange={e => setIndIntervencoes(e.target.value)} rows={3} className="text-sm" />
+            <Label className="text-xs font-semibold">Evolução Clínica e Resposta Terapêutica</Label>
+            <Textarea value={indEvolucao} onChange={e => setIndEvolucao(e.target.value)} rows={4} className="text-sm" placeholder="Resumo comparativo entre início e alta..." />
           </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs font-semibold">Metas do PTS Atingidas</Label>
+              <Select value={indMetas} onValueChange={v => setIndMetas(v as any)}>
+                <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {METAS_STATUS_OPCOES.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              {indMetas !== "totalmente" && (
+                <Textarea value={indMetasJust} onChange={e => setIndMetasJust(e.target.value)} placeholder="Justificativa técnica das metas não atingidas..." rows={2} className="text-sm mt-2" />
+              )}
+            </div>
+            <div>
+              <Label className="text-xs font-semibold block mb-2">Intercorrências no Período</Label>
+              <div className="grid grid-cols-2 gap-2 p-2 border border-border/50 rounded-md bg-muted/20">
+                {INTERCORRENCIAS_OPCOES.map(opt => (
+                  <label key={opt} className="flex items-center gap-2 text-[11px] cursor-pointer hover:bg-muted/50 p-1 rounded">
+                    <Checkbox 
+                      checked={indIntercorrencias.includes(opt)}
+                      onCheckedChange={(checked) => {
+                        setIndIntercorrencias(prev => checked ? [...prev, opt] : prev.filter(x => x !== opt));
+                      }}
+                    />
+                    {opt}
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+          
           <div>
-            <Label className="text-xs">Evolução Clínica e Funcional</Label>
-            <Textarea value={indEvolucao} onChange={e => setIndEvolucao(e.target.value)} rows={3} className="text-sm" />
+            <Label className="text-xs font-semibold">Tecnologia Assistiva Concedida / Orientações de Uso</Label>
+            <Input value={indTA} onChange={e => setIndTA(e.target.value)} placeholder="Cadeira de rodas, órteses, AASI, etc." className="h-8 text-sm" />
+          </div>
+        </CardContent>
+      </Card>
+
           </div>
           <div>
             <Label className="text-xs">Metas Atingidas</Label>
