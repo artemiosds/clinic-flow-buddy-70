@@ -24,7 +24,6 @@ import {
   Stethoscope, ClipboardList, Clock, Search, UserCog, Stamp, Trash2,
   Calendar, Info, AlertTriangle, FileDown, Users, Target
 } from 'lucide-react';
-} from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { TIPO_REGISTRO_LABELS } from '@/utils/labels';
 
