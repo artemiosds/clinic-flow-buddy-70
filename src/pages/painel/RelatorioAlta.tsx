@@ -1168,54 +1168,98 @@ const RelatorioAlta: React.FC = () => {
 
       {/* Discharge */}
       <Card>
-        <CardHeader className="pb-3"><CardTitle className="text-sm">4. Alta e Orientações</CardTitle></CardHeader>
-        <CardContent className="space-y-3">
-          <div>
-            <Label className="text-xs">Motivo da Alta *</Label>
-            <Select value={indMotivo} onValueChange={setIndMotivo}>
-              <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Selecione..." /></SelectTrigger>
-              <SelectContent>
-                {MOTIVOS_ALTA.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            {(indMotivo === "infrequencia" || indMotivo === "encaminhamentos" || indMotivo === "obito") && (
-              <Input value={indMotivoDet} onChange={e => setIndMotivoDet(e.target.value)}
-                placeholder={indMotivo === "infrequencia" ? "Nº de faltas" : indMotivo === "obito" ? "Data do óbito" : "Qual serviço?"}
-                className="h-8 text-sm mt-2" />
-            )}
+        <CardHeader className="pb-3"><CardTitle className="text-sm">4. Alta e Orientações Finais</CardTitle></CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label className="text-xs font-semibold">Tipo / Motivo da Alta *</Label>
+              <Select value={indMotivo} onValueChange={setIndMotivo}>
+                <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                <SelectContent>
+                  {MOTIVOS_ALTA.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              {(indMotivo === "infrequencia" || indMotivo === "encaminhamentos" || indMotivo === "obito" || indMotivo === "transferencia") && (
+                <Input value={indMotivoDet} onChange={e => setIndMotivoDet(e.target.value)}
+                  placeholder={indMotivo === "infrequencia" ? "Justificar período/faltas" : indMotivo === "obito" ? "Data/Causa (se souber)" : "Qual serviço/unidade?"}
+                  className="h-8 text-sm mt-2" />
+              )}
+            </div>
+            <div>
+              <Label className="text-xs font-semibold">Necessidade de Continuidade Terapêutica</Label>
+              <Select defaultValue="nao">
+                <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="nao">Não, alta definitiva na área</SelectItem>
+                  <SelectItem value="sim_mesma">Sim, na mesma área (manutenção)</SelectItem>
+                  <SelectItem value="sim_outra">Sim, em outra área/especialidade</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          <div>
-            <Label className="text-xs">Orientações Específicas</Label>
-            <Textarea value={indOrientacoes} onChange={e => setIndOrientacoes(e.target.value)} rows={3} className="text-sm" />
-          </div>
-          <div>
-            <Label className="text-xs">Encaminhamentos</Label>
-            <Textarea value={indEncaminhamento} onChange={e => setIndEncaminhamento(e.target.value)} rows={2} className="text-sm" placeholder="Descreva os encaminhamentos..." />
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label className="text-xs font-semibold">Orientações para Paciente / Família / Cuidador</Label>
+              <Textarea value={indOrientacoes} onChange={e => setIndOrientacoes(e.target.value)} rows={4} className="text-sm" placeholder="Cuidados em casa, exercícios, sinais de alerta..." />
+            </div>
+            <div>
+              <Label className="text-xs font-semibold">Encaminhamentos e Plano de Cuidados Pós-Alta</Label>
+              <Textarea value={indEncaminhamento} onChange={e => setIndEncaminhamento(e.target.value)} rows={4} className="text-sm" placeholder="UBS de referência, outros especialistas, prazo para reavaliação..." />
+            </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Actions */}
-      <div className="flex flex-wrap gap-3 sticky bottom-0 bg-background py-3 border-t border-border">
-        <Button variant="outline" onClick={() => {
-          const errs = validateInd();
-          if (errs.length > 0) { errs.forEach(e => toast.error(e)); return; }
-          toast.success("Todos os campos obrigatórios estão preenchidos");
-        }}>
-          <CheckCircle className="w-4 h-4 mr-1" /> Validar
-        </Button>
-        <Button variant="outline" onClick={() => handlePrint("individual")}>
-          <Printer className="w-4 h-4 mr-1" /> Imprimir
-        </Button>
-        <Button variant="outline" onClick={() => handlePrint("individual")}>
-          <FileDown className="w-4 h-4 mr-1" /> Gerar PDF
-        </Button>
-        <Button onClick={() => handleSave("individual")}>
-          <Save className="w-4 h-4 mr-1" /> Salvar no Prontuário
-        </Button>
+      <div className="flex flex-wrap items-center justify-between gap-3 sticky bottom-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-4 border-t border-border z-10">
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => {
+            const errs = validateInd();
+            if (errs.length > 0) { 
+              errs.forEach(e => toast.error(e)); 
+              return; 
+            }
+            setStatus("validado");
+            toast.success("Relatório validado com sucesso");
+          }}>
+            <CheckSquare className="w-4 h-4 mr-1.5 text-green-600" /> Validar
+          </Button>
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="sm" onClick={() => handleSave("individual")}>
+                  <Save className="w-4 h-4 mr-1.5 text-muted-foreground" /> Salvar Rascunho
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Salva o estado atual sem emitir definitivamente</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => handlePrint("individual")}>
+            <Printer className="w-4 h-4 mr-1.5" /> Imprimir
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => handlePrint("individual")}>
+            <FileDown className="w-4 h-4 mr-1.5" /> Gerar PDF
+          </Button>
+          <Button size="sm" className="bg-primary hover:bg-primary/90" onClick={() => {
+             const errs = validateInd();
+             if (errs.length > 0) {
+               toast.error("Por favor, preencha os campos obrigatórios e valide o relatório antes de emitir.");
+               return;
+             }
+             handleSave("individual");
+          }}>
+            <CheckCircle className="w-4 h-4 mr-1.5" /> Finalizar e Salvar no Prontuário
+          </Button>
+        </div>
       </div>
     </div>
   );
 };
 
 export default RelatorioAlta;
+
