@@ -12,7 +12,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   Activity, ClipboardList, Plus, Play, CheckCircle, 
   Loader2, Copy, ChevronRight, Calendar, Info, 
-  AlertTriangle, RotateCcw, X, Pencil, Eraser, ListOrdered, Link2, Unlink
+  AlertTriangle, RotateCcw, X, Pencil, Eraser, ListOrdered, Link2, Unlink, User
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
