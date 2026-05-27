@@ -62,6 +62,8 @@ const menuGroups: MenuGroup[] = [
       { to: '/painel/pts', label: 'PTS', icon: FileText, modulo: 'pts' },
       { to: '/painel/multiprofissional', label: 'Avaliação Multi', icon: BookOpen, modulo: 'avaliacao_multi' },
       { to: '/painel/alta', label: 'Relatório de Alta', icon: FileText, modulo: 'relatorio_alta' },
+      { to: '/painel/gestao-alta', label: 'Gestão de Alta', icon: LayoutDashboard, modulo: 'relatorio_alta' },
+
     ]
   },
   {
