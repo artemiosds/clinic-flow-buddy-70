@@ -26,6 +26,7 @@ import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { auditService } from "@/services/auditService";
 
 
 /* ── types ─────────────────────────────────────────── */
@@ -128,6 +129,101 @@ const RelatorioAlta: React.FC = () => {
   const { user } = useAuth();
   const { pacientes, funcionarios } = useData();
   const [modo, setModo] = useState<ModoRelatorio>("selector");
+  const [loadingInitial, setLoadingInitial] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('id');
+    if (id) {
+      loadRelatorio(id);
+    }
+  }, []);
+
+  const loadRelatorio = async (id: string) => {
+    setLoadingInitial(true);
+    try {
+      const { data, error } = await supabase
+        .from('prontuarios')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (error) throw error;
+      if (data) {
+        setPacienteId(data.paciente_id);
+        setRelatorioId(data.id);
+        setModo(data.tipo_registro === 'alta_multiprofissional' ? 'multiprofissional' : 'individual');
+        setStatus(data.status as any);
+        
+        let obs = {};
+        try {
+          obs = typeof data.observacoes === 'string' ? JSON.parse(data.observacoes) : data.observacoes;
+        } catch (e) { console.error(e); }
+        
+        const o = obs as any;
+        setVersaoAtual(o.versao || 1);
+        setHistoricoVersoes(o.historico || []);
+
+        if (data.tipo_registro === 'alta_multiprofissional') {
+          setModalidades(o.modalidades || []);
+          setCid10(o.cid10 || "");
+          setCidDesc(o.cidDesc || "");
+          setCidSecundario(o.cidSecundario || "");
+          setCidSecDesc(o.cidSecDesc || "");
+          setDiagClinico(o.diagClinico || "");
+          setCifFuncoes(o.cifFuncoes || "");
+          setCifAtividades(o.cifAtividades || "");
+          setCifFatores(o.cifFatores || "");
+          setProfSections(o.profissionais || []);
+          setMotivoAlta(o.motivoAlta || "");
+          setMotivoDetalhe(o.motivoDetalhe || "");
+          setTipoAlta(o.tipoAlta || "");
+          setCondicaoAdmissao(o.condicaoAdmissao || "");
+          setCondicaoFuncional(o.condicaoFuncional || "");
+          setNivelIndep(o.nivelIndep || "");
+          setOrientacoesUsuario(o.orientacoesUsuario || "");
+          setOrientacoesUbs(o.orientacoesUbs || "");
+          setOrientacoesEscola(o.orientacoesEscola || "");
+          setEncaminhamentos(o.encaminhamentos || []);
+          setFreqAps(o.freqAps || "");
+          setDataAlta(o.dataAlta || data.data_atendimento || "");
+          setAdesaoGlobal(o.adesaoGlobal || "boa");
+          setObjetivosGerais(o.objetivosGerais || "");
+          setMetasMultiprofissionais(o.metasMultiprofissionais || "");
+          setResumoConsolidado(o.resumoConsolidado || "");
+        } else {
+          setIndDiagCid(o.diagCid || "");
+          setIndCidDesc(o.cidDesc || "");
+          setIndCif(o.cif || "");
+          setIndObjetivos(o.objetivos || "");
+          setIndIntervencoes(o.intervencoes || "");
+          setIndEvolucao(o.evolucao || "");
+          setIndMetas(o.metas || "totalmente");
+          setIndMetasJust(o.metasJust || "");
+          setIndTA(o.ta || "");
+          setIndMotivo(o.motivo || "");
+          setIndMotivoDet(o.motivoDet || "");
+          setIndOrientacoes(o.orientacoes || "");
+          setIndEncaminhamento(o.encaminhamento || "");
+          setIndModalidade(o.modalidade || "");
+          setIndDataAlta(o.dataAlta || data.data_atendimento || "");
+          setIndSessoes(o.sessoes || 0);
+          setIndPeriodoInicio(o.periodoInicio || "");
+          setIndPeriodoFim(o.periodoFim || "");
+          setIndAdesao(o.adesao || "boa");
+          setIndIntercorrencias(o.intercorrencias || []);
+          setIndQueixa(o.queixa || "");
+          setIndHistorico(o.historico || "");
+          setIndResumoAuto(o.indResumoAuto || "");
+        }
+      }
+    } catch (err) {
+      console.error('Erro ao carregar relatório:', err);
+      toast.error('Erro ao carregar os dados do relatório.');
+    } finally {
+      setLoadingInitial(false);
+    }
+  };
 
   /* ── shared patient selection ─── */
   const [pacienteId, setPacienteId] = useState("");
@@ -665,6 +761,18 @@ const RelatorioAlta: React.FC = () => {
         "Paciente": paciente?.nome || "",
         "Data de Alta": fmt(dataAlta)
       });
+      
+      // Log Action
+      if (pacienteId) {
+        auditService.log({
+          acao: 'Impressão de Relatório Multiprofissional',
+          entidade: 'relatorio_alta',
+          entidadeId: pacienteId,
+          pacienteId,
+          user: user as any,
+          modulo: 'Alta'
+        });
+      }
     } else {
       const errs = validateInd();
       if (errs.length > 0) { toast.error(errs[0]); return; }
@@ -678,6 +786,18 @@ const RelatorioAlta: React.FC = () => {
           "Data de Alta": fmt(indDataAlta)
         }
       );
+
+      // Log Action
+      if (pacienteId) {
+        auditService.log({
+          acao: 'Impressão de Relatório Individual',
+          entidade: 'relatorio_alta',
+          entidadeId: pacienteId,
+          pacienteId,
+          user: user as any,
+          modulo: 'Alta'
+        });
+      }
     }
   };
 
@@ -735,10 +855,26 @@ const RelatorioAlta: React.FC = () => {
     };
 
 
-    const { error } = await supabase.from("prontuarios").insert(record);
+    const { data, error } = await supabase.from("prontuarios").insert(record).select().single();
+    
     if (error) {
       toast.error("Erro ao salvar: " + error.message);
     } else {
+      // Log Action for Timeline
+      auditService.log({
+        acao: status === 'rascunho' ? 'Salvamento de rascunho' : 'Finalização de relatório',
+        entidade: 'relatorio_alta',
+        entidadeId: data.id,
+        pacienteId,
+        user: user as any,
+        modulo: 'Alta',
+        detalhes: {
+          tipo: type,
+          status: status,
+          versao: versaoAtual
+        }
+      });
+
       toast.success(status === 'rascunho' ? "Rascunho salvo com sucesso" : "Relatório de alta finalizado e salvo no prontuário");
     }
   };
@@ -1732,7 +1868,7 @@ const RelatorioAlta: React.FC = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsReReabrindo(false)}>Cancelar</Button>
-            <Button disabled={!motivoReabertura} onClick={() => {
+             <Button disabled={!motivoReabertura} onClick={() => {
               const novaVersao = versaoAtual + 1;
               setHistoricoVersoes(prev => [...prev, {
                 versao: versaoAtual,
@@ -1740,9 +1876,14 @@ const RelatorioAlta: React.FC = () => {
                 usuario: user?.nome || "Desconhecido",
                 motivo: motivoReabertura,
                 tipo_registro: modo.toString() === 'multiprofissional' ? 'alta_multiprofissional' : 'alta_individual',
-                dados: {} // Here we would save previous state
-
+                dados: {} // Aqui salvamos o estado anterior se necessário
               }]);
+              
+              // Log Reabertura for Timeline
+              // Note: We don't have the record ID here yet if it's in-memory, 
+              // but if we are editing an existing one, we should use its ID.
+              // For now, we'll log it as a general action or it will be caught by handleSave.
+              
               setVersaoAtual(novaVersao);
               setStatus("rascunho");
               setIsReReabrindo(false);
