@@ -10,10 +10,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Loader2, ArrowLeft, Target, Activity, 
   ClipboardList, Calendar, Zap, CheckCircle2, 
-  History, LogOut, Save, Plus, Trash2, Printer
+  History, LogOut, Save, Plus, Trash2, Printer, Info
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ptsService, type PTS, type PTSMeta } from '@/services/ptsService';
@@ -144,6 +145,7 @@ export const PTSDetails: React.FC = () => {
 
       toast.success('Revisão registrada com sucesso!');
       setRevisionNotes('');
+      // Reload data
       const { data } = await supabase.from('pts').select('*, metas:pts_metas(*)').eq('id', id).single();
       setPts(data as any);
     } catch (err: any) {
@@ -371,7 +373,7 @@ export const PTSDetails: React.FC = () => {
                 {editMetas.map((meta, index) => (
                   <div key={meta.id || index} className="relative group">
                     <PTSMetaForm 
-                      meta={meta} 
+                      meta={meta}
                       professionals={funcionarios}
                       onChange={(updated) => {
                         const next = [...editMetas];
@@ -439,7 +441,7 @@ export const PTSDetails: React.FC = () => {
 
               <div className="space-y-4">
                 <h4 className="font-bold text-sm uppercase text-muted-foreground tracking-widest">Histórico de Revisões</h4>
-                <p className="text-xs text-muted-foreground italic">Carregando histórico...</p>
+                <p className="text-xs text-muted-foreground italic">Histórico será exibido conforme registros de auditoria e revisão.</p>
               </div>
             </TabsContent>
 
