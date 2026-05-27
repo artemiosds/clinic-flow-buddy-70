@@ -117,6 +117,7 @@ const maskCEP = (v: string): string => {
 export interface PacienteFormData {
   // Bloco 1 - Identificação
   nome: string;
+  rg?: string;
   dataNascimento: string;
   cpf: string;
   cns: string;
@@ -184,7 +185,7 @@ export interface PacienteFormData {
 }
 
 export const emptyPacienteForm: PacienteFormData = {
-  nome: "", dataNascimento: "", cpf: "", cns: "", telefone: "", municipio: "",
+  nome: "", rg: "", dataNascimento: "", cpf: "", cns: "", telefone: "", municipio: "",
   menorIdade: false, nomeResponsavel: "", cpfResponsavel: "",
   sexo: "", naturalidade: "", nacionalidade: "Brasil", raca_cor: "",
   especialidadeDestino: "", ubsOrigem: "", profissionalSolicitante: "",
@@ -420,6 +421,17 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                     inputMode="numeric"
                   />
                   {errors.cpf && <p className="text-xs text-destructive mt-1">{errors.cpf}</p>}
+                </div>
+              )}
+
+              {!H("rg") && (
+                <div>
+                  <Label>{L("rg", "RG")}</Label>
+                  <Input
+                    value={form.rg || ""}
+                    onChange={(e) => set("rg", sanitizeUpper(e.target.value))}
+                    placeholder="DOCUMENTO DE IDENTIDADE"
+                  />
                 </div>
               )}
 

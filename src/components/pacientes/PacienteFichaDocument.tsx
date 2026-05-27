@@ -13,6 +13,7 @@ export interface PacienteFichaDocumentData {
     data_nascimento: string;
     sexo?: string;
     cpf: string;
+    rg?: string;
     cns: string;
     naturalidade?: string;
     naturalidade_uf?: string;
@@ -372,6 +373,7 @@ export const PacienteFichaDocument: React.FC<PacienteFichaDocumentProps> = ({
         </div>
         <div className="patient-sheet-grid patient-sheet-grid--5">
           <Field label="CPF" value={p.cpf} fallback="Não informado" />
+          <Field label="RG" value={p.rg} fallback="Não informado" />
           <Field label="CNS" value={p.cns} fallback="Não informado" />
           <Field label="Data de nascimento" value={formatDate(p.data_nascimento, 'Não informado')} fallback="Não informado" />
           <Field label="Idade" value={calculateAge(p.data_nascimento)} />

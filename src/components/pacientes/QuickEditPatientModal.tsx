@@ -286,6 +286,14 @@ const QuickEditPatientModal: React.FC<Props> = ({ open, onOpenChange, pacienteId
                     />
                   </div>
                   <div className="space-y-2">
+                    <Label className="text-slate-600 font-bold">RG</Label>
+                    <Input 
+                      className="h-11 border-slate-200 focus:border-primary transition-all"
+                      value={form.rg || ""} 
+                      onChange={e => set("rg", sanitizeUpper(e.target.value))} 
+                    />
+                  </div>
+                  <div className="space-y-2">
                     <Label className="text-slate-600 font-bold flex items-center gap-1.5">
                       Data de Nascimento <span className="text-red-500">*</span>
                     </Label>

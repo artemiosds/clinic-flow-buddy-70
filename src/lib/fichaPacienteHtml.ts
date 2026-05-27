@@ -191,6 +191,7 @@ export function buildFichaBody(
     ]) +
     grid(5, [
       { label: 'CPF', value: p.cpf, fallback: 'Não informado' },
+      { label: 'RG', value: (p as any).rg, fallback: 'Não informado' },
       { label: 'CNS', value: p.cns, fallback: 'Não informado' },
       { label: 'Data de nascimento', value: formatDate(p.data_nascimento, 'Não informado'), fallback: 'Não informado' },
       { label: 'Idade', value: calculateAge(p.data_nascimento) },

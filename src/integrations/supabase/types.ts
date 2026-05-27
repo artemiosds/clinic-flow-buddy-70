@@ -2171,6 +2171,7 @@ export type Database = {
           possui_ordem_judicial: boolean | null
           profissional_solicitante: string
           raca_cor: string | null
+          rg: string | null
           sexo: string | null
           situacao_rua: boolean | null
           status_falta: string
@@ -2242,6 +2243,7 @@ export type Database = {
           possui_ordem_judicial?: boolean | null
           profissional_solicitante?: string
           raca_cor?: string | null
+          rg?: string | null
           sexo?: string | null
           situacao_rua?: boolean | null
           status_falta?: string
@@ -2313,6 +2315,7 @@ export type Database = {
           possui_ordem_judicial?: boolean | null
           profissional_solicitante?: string
           raca_cor?: string | null
+          rg?: string | null
           sexo?: string | null
           situacao_rua?: boolean | null
           status_falta?: string
