@@ -26,6 +26,7 @@ import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { auditService } from "@/services/auditService";
 
 
 /* ── types ─────────────────────────────────────────── */
