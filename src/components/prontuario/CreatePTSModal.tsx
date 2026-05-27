@@ -114,28 +114,27 @@ export const CreatePTSModal: React.FC<CreatePTSModalProps> = ({
     }
   }, [form.especialidades_envolvidas]);
 
-  // Load SIGTAP procedures based on selected specialties
+  // Load initial SIGTAP procedures
   useEffect(() => {
     if (!open) return;
     
     const loadProcs = async () => {
       setLoadingProcs(true);
       try {
-        const sigtapKeys = form.especialidades_envolvidas.map(s => SPECIALTY_TO_SIGTAP[s]).filter(Boolean);
-        let query = supabase.from('sigtap_procedimentos').select('*').eq('ativo', true);
-        if (sigtapKeys.length > 0) {
-          query = query.in('especialidade', sigtapKeys);
-        } else {
-          query = query.limit(50);
-        }
-        const { data } = await query.order('codigo');
+        // Just load some initial procedures to show something
+        const { data } = await supabase
+          .from('sigtap_procedimentos')
+          .select('*')
+          .eq('ativo', true)
+          .limit(50)
+          .order('codigo');
         setSigtapProcs(data || []);
       } finally {
         setLoadingProcs(false);
       }
     };
     loadProcs();
-  }, [open, form.especialidades_envolvidas]);
+  }, [open]);
 
   const toggleSpec = (spec: string) => {
     setForm(p => {
