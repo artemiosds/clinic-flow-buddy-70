@@ -63,10 +63,13 @@ const PainelGestaoAlta: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterUnit, setFilterUnit] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [periodo, setPeriodo] = useState('30d'); // 7d, 30d, 90d, all
   
-  // Detalhes
+  // Detalhes e Timeline
   const [selectedRelatorio, setSelectedRelatorio] = useState<any>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [timeline, setTimeline] = useState<any[]>([]);
+  const [loadingTimeline, setLoadingTimeline] = useState(false);
 
   const loadData = async () => {
     setLoading(true);
@@ -96,11 +99,17 @@ const PainelGestaoAlta: React.FC = () => {
         const diasSemUpdate = differenceInDays(new Date(), new Date(r.criado_em));
         const isAtrasado = (r.status !== 'emitido' && r.status !== 'validado') && diasSemUpdate > 5;
         
+        // Versões
+        const historico = (obs as any)?.historico || [];
+        const isReaberto = historico.length > 0;
+        
         return {
           ...r,
           parsedObs: obs,
           isAtrasado,
-          diasSemUpdate
+          diasSemUpdate,
+          isReaberto,
+          historicoCount: historico.length
         };
       });
       
@@ -113,15 +122,44 @@ const PainelGestaoAlta: React.FC = () => {
     }
   };
 
+  const loadTimeline = async (relatorioId: string) => {
+    setLoadingTimeline(true);
+    try {
+      const { data, error } = await supabase
+        .from('action_logs')
+        .select('*')
+        .eq('entidade_id', relatorioId)
+        .order('created_at', { ascending: true });
+      
+      if (error) throw error;
+      setTimeline(data || []);
+    } catch (err) {
+      console.error('Erro ao carregar timeline:', err);
+    } finally {
+      setLoadingTimeline(false);
+    }
+  };
+
   useEffect(() => {
     loadData();
   }, [user]);
 
   const filteredData = useMemo(() => {
     return relatorios.filter(r => {
+      // Filtro de período
+      if (periodo !== 'all') {
+        const dias = periodo === '7d' ? 7 : periodo === '30d' ? 30 : 90;
+        if (!isAfter(new Date(r.criado_em), subDays(new Date(), dias))) return false;
+      }
+      
       if (filterType !== 'all' && r.tipo_registro !== filterType) return false;
-      if (filterStatus !== 'all' && r.status !== filterStatus) return false;
+      if (filterStatus !== 'all') {
+        if (filterStatus === 'atrasado') return r.isAtrasado;
+        if (filterStatus === 'reaberto') return r.isReaberto;
+        if (r.status !== filterStatus) return false;
+      }
       if (filterUnit !== 'all' && r.unidade_id !== filterUnit) return false;
+      
       if (searchTerm) {
         const search = searchTerm.toLowerCase();
         return r.paciente_nome.toLowerCase().includes(search) || 
@@ -129,30 +167,75 @@ const PainelGestaoAlta: React.FC = () => {
       }
       return true;
     });
-  }, [relatorios, filterType, filterStatus, filterUnit, searchTerm]);
+  }, [relatorios, filterType, filterStatus, filterUnit, searchTerm, periodo]);
 
   const stats = useMemo(() => {
+    const total = filteredData.length;
+    const emitidos = filteredData.filter(r => r.status === 'emitido').length;
+    const pendentes = filteredData.filter(r => r.status !== 'emitido').length;
+    const atrasados = filteredData.filter(r => r.isAtrasado).length;
+    const reabertos = filteredData.filter(r => r.isReaberto).length;
+    
+    // Tempo médio (aprox.)
+    const emitidosComData = filteredData.filter(r => r.status === 'emitido');
+    const totalDias = emitidosComData.reduce((acc, curr) => acc + differenceInDays(new Date(), new Date(curr.criado_em)), 0);
+    const tempoMedio = emitidosComData.length > 0 ? Math.round(totalDias / emitidosComData.length) : 0;
+
     return {
-      total: filteredData.length,
-      emitidos: filteredData.filter(r => r.status === 'emitido').length,
-      pendentes: filteredData.filter(r => r.status !== 'emitido').length,
-      atrasados: filteredData.filter(r => r.isAtrasado).length,
-      multiprofissionais: filteredData.filter(r => r.tipo_registro === 'alta_multiprofissional').length
+      total,
+      emitidos,
+      pendentes,
+      atrasados,
+      reabertos,
+      tempoMedio,
+      taxaEmissao: total > 0 ? Math.round((emitidos / total) ? Math.round((emitidos / total) * 100) : 0 : 0
     };
   }, [filteredData]);
 
-  const StatCard = ({ title, value, icon: Icon, color, subtitle }: any) => (
+  const exportToCSV = () => {
+    const headers = ["ID", "Paciente", "Profissional", "Unidade", "Tipo", "Status", "Criado Em", "Atrasado", "Reaberto"];
+    const rows = filteredData.map(r => [
+      r.id,
+      r.paciente_nome,
+      r.profissional_nome,
+      unidades.find(u => u.id === r.unidade_id)?.nome || 'N/A',
+      r.tipo_registro === 'alta_multiprofissional' ? 'Multiprofissional' : 'Individual',
+      STATUS_CONFIG[r.status]?.label || r.status,
+      format(new Date(r.criado_em), 'dd/MM/yyyy HH:mm'),
+      r.isAtrasado ? 'SIM' : 'NÃO',
+      r.isReaberto ? 'SIM' : 'NÃO'
+    ]);
+
+    const csvContent = [headers, ...rows].map(e => e.join(";")).join("\n");
+    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `gestao_alta_${format(new Date(), 'yyyyMMdd')}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success("Relatório exportado com sucesso.");
+  };
+
+  const StatCard = ({ title, value, icon: Icon, color, subtitle, trend }: any) => (
     <Card className="border-0 shadow-sm overflow-hidden group">
       <CardContent className="p-5 flex items-center gap-4">
         <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-110", color)}>
           <Icon className="w-6 h-6" />
         </div>
-        <div>
-          <p className="text-sm text-muted-foreground font-medium">{title}</p>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">{title}</p>
           <div className="flex items-baseline gap-2">
             <h3 className="text-2xl font-bold text-foreground">{value}</h3>
             {subtitle && <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">{subtitle}</span>}
           </div>
+          {trend && (
+            <div className={cn("flex items-center gap-1 text-[10px] font-bold mt-1", trend > 0 ? "text-green-600" : "text-red-600")}>
+              {trend > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingUp className="w-3 h-3 rotate-180" />}
+              {Math.abs(trend)}% vs anterior
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
