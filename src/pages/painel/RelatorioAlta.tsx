@@ -16,17 +16,21 @@ import { BuscaPaciente } from "@/components/BuscaPaciente";
 import { toast } from "sonner";
 import {
   FileText, Users, User, ArrowLeft, Printer, FileDown, CheckCircle,
-  Save, Send, ClipboardList, Stethoscope, Heart, Activity, Search
+  Save, Send, ClipboardList, Stethoscope, Heart, Activity, Search,
+  History, Sparkles, CheckSquare, AlertCircle, Clock
 } from "lucide-react";
 import { openPrintDocument } from "@/lib/printLayout";
 import { fetchProfessionalCarimbo, formatCarimboBlock } from "@/lib/documentSignature";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 /* ── types ─────────────────────────────────────────── */
 interface ProfSection {
   profissional_id: string;
   profissional_nome: string;
+
   profissao: string;
   conselho: string;
   periodo_inicio: string;
@@ -38,6 +42,8 @@ interface ProfSection {
   metas_status: "totalmente" | "parcialmente" | "nao_atingidas";
   metas_justificativa: string;
   tecnologia_assistiva: string;
+  adesao: "excelente" | "boa" | "regular" | "baixa";
+  intercorrencias: string[];
 }
 
 type ModoRelatorio = "selector" | "multiprofissional" | "individual";
@@ -48,11 +54,14 @@ const MODALIDADES = [
 
 const MOTIVOS_ALTA = [
   { value: "objetivos_atingidos", label: "Alta por objetivos atingidos" },
+  { value: "administrativa", label: "Alta Administrativa" },
   { value: "pedido_usuario", label: "A pedido do usuário/família" },
   { value: "infrequencia", label: "Infrequência/abandono" },
+  { value: "transferencia", label: "Transferência" },
   { value: "encaminhamentos", label: "Encaminhamento para outro serviço" },
   { value: "agravamento", label: "Agravamento clínico" },
   { value: "obito", label: "Óbito" },
+  { value: "outros", label: "Outros" },
 ];
 
 const ENCAMINHAMENTOS = [
@@ -65,6 +74,23 @@ const NIVEIS_INDEPENDENCIA = [
 
 const FREQUENCIAS_APS = ["Mensal", "Bimestral", "Semestral", "Anual", "Sem necessidade"];
 
+const ADESAO_OPCOES = [
+  { value: "excelente", label: "Excelente" },
+  { value: "boa", label: "Boa" },
+  { value: "regular", label: "Regular" },
+  { value: "baixa", label: "Baixa" }
+];
+
+const METAS_STATUS_OPCOES = [
+  { value: "totalmente", label: "Totalmente atingidas" },
+  { value: "parcialmente", label: "Parcialmente atingidas" },
+  { value: "nao_atingidas", label: "Não atingidas" }
+];
+
+const INTERCORRENCIAS_OPCOES = [
+  "Nenhuma", "Faltas frequentes", "Baixa adesão", "Agravamento clínico", "Barreiras familiares", "Barreiras sociais"
+];
+
 const fmt = (d: string) => {
   if (!d) return "—";
   try { return new Date(d).toLocaleDateString("pt-BR"); } catch { return d; }
@@ -75,9 +101,11 @@ const calcIdade = (dn: string) => {
   try {
     const b = new Date(dn);
     const diff = Date.now() - b.getTime();
-    return `${Math.floor(diff / 31557600000)} anos`;
+    const idade = Math.floor(diff / 31557600000);
+    return `${idade} anos`;
   } catch { return ""; }
 };
+
 
 const RelatorioAlta: React.FC = () => {
   const { user } = useAuth();
@@ -106,6 +134,7 @@ const RelatorioAlta: React.FC = () => {
   const [freqAps, setFreqAps] = useState("");
   const [dataAlta, setDataAlta] = useState(new Date().toISOString().split("T")[0]);
   const [tabProf, setTabProf] = useState("");
+  const [status, setStatus] = useState<"rascunho" | "validado" | "emitido">("rascunho");
 
   /* ── individual state ─── */
   const [indDiagCid, setIndDiagCid] = useState("");
@@ -126,6 +155,11 @@ const RelatorioAlta: React.FC = () => {
   const [indSessoes, setIndSessoes] = useState(0);
   const [indPeriodoInicio, setIndPeriodoInicio] = useState("");
   const [indPeriodoFim, setIndPeriodoFim] = useState("");
+  const [indAdesao, setIndAdesao] = useState<"excelente" | "boa" | "regular" | "baixa">("boa");
+  const [indIntercorrencias, setIndIntercorrencias] = useState<string[]>([]);
+  const [indQueixa, setIndQueixa] = useState("");
+  const [indHistorico, setIndHistorico] = useState("");
+
 
   /* ── CID Search state ─── */
   const [cidSearch, setCidSearch] = useState("");
@@ -165,7 +199,7 @@ const RelatorioAlta: React.FC = () => {
     // Get all professionals who created prontuarios for this patient
     const { data: pronts } = await supabase
       .from("prontuarios")
-      .select("profissional_id, profissional_nome, data_atendimento")
+      .select("profissional_id, profissional_nome, data_atendimento, evolucao")
       .eq("paciente_id", pid)
       .order("data_atendimento", { ascending: true });
 
@@ -175,13 +209,14 @@ const RelatorioAlta: React.FC = () => {
     }
 
     // Group by professional
-    const profMap = new Map<string, { nome: string; datas: string[] }>();
+    const profMap = new Map<string, { nome: string; datas: string[]; lastEvolucao?: string }>();
     pronts.forEach(p => {
       const existing = profMap.get(p.profissional_id);
       if (existing) {
         existing.datas.push(p.data_atendimento);
+        existing.lastEvolucao = p.evolucao;
       } else {
-        profMap.set(p.profissional_id, { nome: p.profissional_nome, datas: [p.data_atendimento] });
+        profMap.set(p.profissional_id, { nome: p.profissional_nome, datas: [p.data_atendimento], lastEvolucao: p.evolucao });
       }
     });
 
@@ -197,6 +232,14 @@ const RelatorioAlta: React.FC = () => {
       sessionCounts.set(s.professional_id, (sessionCounts.get(s.professional_id) || 0) + 1);
     });
 
+    // Fetch PTS to suggest goals
+    const { data: pts } = await supabase
+      .from("pts")
+      .select("*")
+      .eq("patient_id", pid)
+      .eq("status", "ativo")
+      .maybeSingle();
+
     const sections: ProfSection[] = [];
     profMap.forEach((val, profId) => {
       const func = funcionarios.find(f => f.id === profId);
@@ -209,12 +252,14 @@ const RelatorioAlta: React.FC = () => {
         periodo_inicio: datas[0] || "",
         periodo_fim: datas[datas.length - 1] || "",
         sessoes: sessionCounts.get(profId) || val.datas.length,
-        objetivos: "",
+        objetivos: pts?.objetivos_terapeuticos || "",
         intervencoes: "",
-        evolucao: "",
+        evolucao: val.lastEvolucao || "",
         metas_status: "totalmente",
         metas_justificativa: "",
         tecnologia_assistiva: "",
+        adesao: "boa",
+        intercorrencias: []
       });
     });
 
@@ -233,13 +278,17 @@ const RelatorioAlta: React.FC = () => {
         .maybeSingle();
       if (data) setCidDesc(data.descricao);
     }
+
+    if (pts?.diagnostico_funcional) {
+        setCondicaoFuncional(pts.diagnostico_funcional);
+    }
   };
 
   const loadIndividualData = async (pid: string) => {
     if (!user?.id) return;
     const { data: pronts } = await supabase
       .from("prontuarios")
-      .select("data_atendimento")
+      .select("data_atendimento, evolucao")
       .eq("paciente_id", pid)
       .eq("profissional_id", user.id)
       .order("data_atendimento", { ascending: true });
@@ -247,6 +296,7 @@ const RelatorioAlta: React.FC = () => {
     if (pronts && pronts.length > 0) {
       setIndPeriodoInicio(pronts[0].data_atendimento);
       setIndPeriodoFim(pronts[pronts.length - 1].data_atendimento);
+      setIndEvolucao(pronts[pronts.length - 1].evolucao || "");
     }
 
     const { data: sessions } = await supabase
@@ -257,6 +307,21 @@ const RelatorioAlta: React.FC = () => {
       .eq("status", "realizada");
 
     setIndSessoes(sessions?.length || pronts?.length || 0);
+
+    // Fetch PTS
+    const { data: pts } = await supabase
+      .from("pts")
+      .select("*")
+      .eq("patient_id", pid)
+      .eq("status", "ativo")
+      .maybeSingle();
+    
+    if (pts) {
+      setIndObjetivos(pts.objetivos_terapeuticos || "");
+      setIndQueixa(pts.motivo_encaminhamento || "");
+      setIndHistorico(pts.fatores_risco_vulnerabilidade || "");
+      setIndCif(pts.diagnostico_funcional || "");
+    }
 
     const pat = pacientes.find(p => p.id === pid);
     if (pat?.cid) {
@@ -269,6 +334,7 @@ const RelatorioAlta: React.FC = () => {
       if (data) setIndCidDesc(data.descricao);
     }
   };
+
 
   const updateProfSection = (profId: string, field: keyof ProfSection, value: any) => {
     setProfSections(prev =>
@@ -426,51 +492,49 @@ const RelatorioAlta: React.FC = () => {
     return `
       <div class="info-grid">
         <div><span class="info-label">Paciente:</span> <span class="info-value">${p.nome}</span></div>
-        <div><span class="info-label">CNS:</span> <span class="info-value">${p.cns || "—"}</span></div>
-        <div><span class="info-label">CPF:</span> <span class="info-value">${p.cpf || "—"}</span></div>
+        <div><span class="info-label">CNS/CPF:</span> <span class="info-value">${p.cns || p.cpf || "—"}</span></div>
         <div><span class="info-label">Data Nasc:</span> <span class="info-value">${fmt(p.dataNascimento)} (${calcIdade(p.dataNascimento)})</span></div>
         <div><span class="info-label">Profissional:</span> <span class="info-value">${profNome}</span></div>
-        <div><span class="info-label">Conselho:</span> <span class="info-value">${conselho}</span></div>
         <div><span class="info-label">Data de Alta:</span> <span class="info-value">${fmt(indDataAlta)}</span></div>
         <div><span class="info-label">Modalidade:</span> <span class="info-value">${indModalidade || "—"}</span></div>
+        <div><span class="info-label">Adesão:</span> <span class="info-value">${ADESAO_OPCOES.find(a => a.value === indAdesao)?.label || indAdesao}</span></div>
+        <div><span class="info-label">Período:</span> <span class="info-value">${fmt(indPeriodoInicio)} a ${fmt(indPeriodoFim)} (${indSessoes} sessões)</span></div>
       </div>
 
       <div class="section">
-        <div class="section-title">1. Diagnóstico e Atendimento</div>
+        <div class="section-title">1. Diagnóstico e Contexto Clínico</div>
         <div class="field">
-          <span class="field-label">CID-10:</span>
+          <span class="field-label">Diagnóstico (CID-10):</span>
           <div class="field-value"><strong>${indDiagCid}</strong> ${indCidDesc ? ` — ${indCidDesc}` : ""}</div>
         </div>
-        ${indCif ? `<div class="field"><span class="field-label">CIF:</span><div class="field-value">${indCif}</div></div>` : ""}
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
-          <div><strong>Período de Acompanhamento:</strong> ${fmt(indPeriodoInicio)} a ${fmt(indPeriodoFim)}</div>
-          <div><strong>Sessões Realizadas:</strong> ${indSessoes}</div>
-        </div>
+        ${indQueixa ? `<div class="field"><span class="field-label">Queixa/Motivo:</span><div class="field-value">${indQueixa}</div></div>` : ""}
+        ${indCif ? `<div class="field"><span class="field-label">Diagnóstico Funcional:</span><div class="field-value">${indCif}</div></div>` : ""}
       </div>
 
       <div class="section">
-        <div class="section-title">2. Evolução Clínica e Funcional</div>
-        ${indObjetivos ? `<div class="field"><span class="field-label">Objetivos Terapêuticos:</span><div class="field-value">${indObjetivos}</div></div>` : ""}
-        ${indIntervencoes ? `<div class="field"><span class="field-label">Intervenções / Procedimentos:</span><div class="field-value">${indIntervencoes}</div></div>` : ""}
-        ${indEvolucao ? `<div class="field"><span class="field-label">Evolução Clínica e Funcional:</span><div class="field-value">${indEvolucao}</div></div>` : ""}
+        <div class="section-title">2. Evolução Clínica e Terapêutica</div>
+        ${indObjetivos ? `<div class="field"><span class="field-label">Objetivos Iniciais:</span><div class="field-value">${indObjetivos}</div></div>` : ""}
+        ${indIntervencoes ? `<div class="field"><span class="field-label">Intervenções Realizadas:</span><div class="field-value">${indIntervencoes}</div></div>` : ""}
+        ${indEvolucao ? `<div class="field"><span class="field-label">Evolução e Resposta Terapêutica:</span><div class="field-value">${indEvolucao}</div></div>` : ""}
         <div class="field">
-          <span class="field-label">Metas:</span>
+          <span class="field-label">Status das Metas:</span>
           <div class="field-value">
-            ${indMetas === "totalmente" ? "Totalmente atingidas" : indMetas === "parcialmente" ? "Parcialmente atingidas" : "Não atingidas"}
+            ${METAS_STATUS_OPCOES.find(m => m.value === indMetas)?.label || indMetas}
             ${indMetasJust ? `<br/><small>Justificativa: ${indMetasJust}</small>` : ""}
           </div>
         </div>
-        ${indTA ? `<div class="field"><span class="field-label">Tecnologia Assistiva:</span><div class="field-value">${indTA}</div></div>` : ""}
+        ${indIntercorrencias.length > 0 ? `<div class="field"><span class="field-label">Intercorrências:</span><div class="field-value">${indIntercorrencias.join(", ")}</div></div>` : ""}
+        ${indTA ? `<div class="field"><span class="field-label">Tecnologia Assistiva / Órteses:</span><div class="field-value">${indTA}</div></div>` : ""}
       </div>
 
       <div class="section">
-        <div class="section-title">3. Conclusão e Orientações</div>
+        <div class="section-title">3. Conclusão e Plano Pós-Alta</div>
         <div class="field">
           <span class="field-label">Motivo da Alta:</span>
           <div class="field-value">${motivoLabel}${indMotivoDet ? ` — ${indMotivoDet}` : ""}</div>
         </div>
-        ${indOrientacoes ? `<div class="field"><span class="field-label">Orientações:</span><div class="field-value">${indOrientacoes}</div></div>` : ""}
-        ${indEncaminhamento ? `<div class="field"><span class="field-label">Encaminhamentos:</span><div class="field-value">${indEncaminhamento}</div></div>` : ""}
+        ${indOrientacoes ? `<div class="field"><span class="field-label">Orientações Finais:</span><div class="field-value">${indOrientacoes}</div></div>` : ""}
+        ${indEncaminhamento ? `<div class="field"><span class="field-label">Encaminhamentos / Plano de Cuidados:</span><div class="field-value">${indEncaminhamento}</div></div>` : ""}
       </div>
 
       <div class="doc-sign-footer" style="margin-top: 60px; display: flex; justify-content: space-between; align-items: flex-end;">
@@ -485,6 +549,7 @@ const RelatorioAlta: React.FC = () => {
       </div>
     `;
   };
+
 
   const handlePrint = async (type: "multi" | "individual") => {
     if (type === "multi") {
@@ -524,7 +589,7 @@ const RelatorioAlta: React.FC = () => {
       modalidades, cid10, cidDesc, cifFuncoes, cifAtividades, cifFatores,
       profissionais: profSections, motivoAlta, motivoDetalhe,
       condicaoFuncional, nivelIndep, orientacoesUsuario, orientacoesUbs,
-      encaminhamentos, freqAps, dataAlta,
+      encaminhamentos, freqAps, dataAlta, status,
       pacienteNome: paciente?.nome,
       pacienteCns: paciente?.cns,
       pacienteCpf: paciente?.cpf,
@@ -537,11 +602,14 @@ const RelatorioAlta: React.FC = () => {
       orientacoes: indOrientacoes, encaminhamento: indEncaminhamento,
       modalidade: indModalidade, sessoes: indSessoes,
       periodoInicio: indPeriodoInicio, periodoFim: indPeriodoFim, dataAlta: indDataAlta,
+      adesao: indAdesao, intercorrencias: indIntercorrencias,
+      queixa: indQueixa, historico: indHistorico, status,
       pacienteNome: paciente?.nome,
       pacienteCns: paciente?.cns,
       pacienteCpf: paciente?.cpf,
       dataNascimento: paciente?.dataNascimento,
     };
+
 
     const record = {
       paciente_id: pacienteId,
@@ -555,13 +623,15 @@ const RelatorioAlta: React.FC = () => {
       evolucao: type === "multi"
         ? `RELATÓRIO DE ALTA MULTIPROFISSIONAL: ${MOTIVOS_ALTA.find(m => m.value === motivoAlta)?.label || ""}`
         : `RELATÓRIO DE ALTA INDIVIDUAL: ${MOTIVOS_ALTA.find(m => m.value === indMotivo)?.label || ""}`,
+      status: status,
     };
+
 
     const { error } = await supabase.from("prontuarios").insert(record);
     if (error) {
       toast.error("Erro ao salvar: " + error.message);
     } else {
-      toast.success("Relatório de alta salvo no prontuário");
+      toast.success(status === 'rascunho' ? "Rascunho salvo com sucesso" : "Relatório de alta finalizado e salvo no prontuário");
     }
   };
 
@@ -577,10 +647,15 @@ const RelatorioAlta: React.FC = () => {
         </PopoverTrigger>
         <PopoverContent className="w-[400px] p-0" align="start">
           <Command shouldFilter={false}>
-            <CommandInput 
-              placeholder="Digite o código ou descrição (mín. 3 letras)..." 
-              onValueChange={setCidSearch}
-            />
+            <div className="flex items-center border-b px-3">
+              <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+              <input 
+                className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                placeholder="Digite o código ou descrição (mín. 3 letras)..." 
+                value={cidSearch}
+                onChange={(e) => setCidSearch(e.target.value)}
+              />
+            </div>
             <CommandList>
               {isSearchingCid && <div className="p-4 text-center text-sm text-muted-foreground">Buscando...</div>}
               {!isSearchingCid && cidOptions.length === 0 && cidSearch.length >= 3 && <CommandEmpty>Nenhum CID encontrado.</CommandEmpty>}
@@ -603,6 +678,7 @@ const RelatorioAlta: React.FC = () => {
               </CommandGroup>
             </CommandList>
           </Command>
+
         </PopoverContent>
       </Popover>
     </div>
@@ -679,8 +755,14 @@ const RelatorioAlta: React.FC = () => {
         </div>
 
         {/* Patient selection */}
-        <Card>
-          <CardHeader className="pb-3"><CardTitle className="text-sm flex items-center gap-2"><ClipboardList className="w-4 h-4" /> 1. Identificação do Paciente</CardTitle></CardHeader>
+        <Card className="border-primary/20 shadow-sm">
+          <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
+            <CardTitle className="text-sm flex items-center gap-2"><ClipboardList className="w-4 h-4 text-primary" /> 1. Identificação do Paciente</CardTitle>
+            <Badge variant="outline" className={status === 'rascunho' ? 'bg-yellow-50 text-yellow-700' : 'bg-green-50 text-green-700'}>
+              {status === 'rascunho' ? <Clock className="w-3 h-3 mr-1" /> : <CheckCircle className="w-3 h-3 mr-1" />}
+              {status === 'rascunho' ? 'Rascunho' : 'Validado'}
+            </Badge>
+          </CardHeader>
           <CardContent className="space-y-4">
             <BuscaPaciente
               pacientes={pacientes}
@@ -688,24 +770,24 @@ const RelatorioAlta: React.FC = () => {
               onChange={setPacienteId}
             />
             {paciente && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm bg-muted/50 rounded-lg p-3">
-                <div><span className="text-muted-foreground text-xs block">Nome</span><strong>{paciente.nome}</strong></div>
-                <div><span className="text-muted-foreground text-xs block">Data Nasc.</span>{fmt(paciente.dataNascimento)} ({calcIdade(paciente.dataNascimento)})</div>
-                <div><span className="text-muted-foreground text-xs block">CNS</span>{paciente.cns || "—"}</div>
-                <div><span className="text-muted-foreground text-xs block">CPF</span>{paciente.cpf || "—"}</div>
-                <div><span className="text-muted-foreground text-xs block">Responsável</span>{paciente.nomeMae || "—"}</div>
-                <div><span className="text-muted-foreground text-xs block">Admissão</span>{fmt(paciente.criadoEm || "")}</div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm bg-muted/50 rounded-lg p-3 border border-border/50">
+                <div className="col-span-2"><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">Nome</span><span className="font-semibold">{paciente.nome}</span></div>
+                <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">Data Nasc.</span>{fmt(paciente.dataNascimento)} ({calcIdade(paciente.dataNascimento)})</div>
+                <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">CPF</span>{paciente.cpf || "—"}</div>
+                <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">CNS</span>{paciente.cns || "—"}</div>
+                <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">Responsável</span>{paciente.nomeMae || "—"}</div>
+                <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">Unidade</span>{"CER II — Oriximiná"}</div>
                 <div>
-                  <Label className="text-xs">Data de Alta</Label>
+                  <Label className="text-xs font-semibold">Data de Alta</Label>
                   <Input type="date" value={dataAlta} onChange={e => setDataAlta(e.target.value)} className="h-8 text-sm" />
                 </div>
               </div>
             )}
             <div>
               <Label className="text-xs font-semibold mb-2 block">Modalidades Atendidas</Label>
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap gap-4 p-3 bg-muted/20 rounded-md">
                 {MODALIDADES.map(m => (
-                  <label key={m} className="flex items-center gap-2 text-sm cursor-pointer">
+                  <label key={m} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/50 p-1 rounded transition-colors">
                     <Checkbox
                       checked={modalidades.includes(m)}
                       onCheckedChange={c => setModalidades(prev => c ? [...prev, m] : prev.filter(x => x !== m))}
@@ -717,6 +799,7 @@ const RelatorioAlta: React.FC = () => {
             </div>
           </CardContent>
         </Card>
+
 
         {/* Diagnosis */}
         <Card>
@@ -757,53 +840,88 @@ const RelatorioAlta: React.FC = () => {
                   ))}
                 </TabsList>
                 {profSections.map(s => (
-                  <TabsContent key={s.profissional_id} value={s.profissional_id} className="space-y-3">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 bg-muted/30 p-3 rounded-lg text-sm">
-                      <div><span className="text-muted-foreground text-xs block">Profissional</span><strong>{s.profissional_nome}</strong></div>
-                      <div><span className="text-muted-foreground text-xs block">Profissão</span>{s.profissao || "—"}</div>
-                      <div><span className="text-muted-foreground text-xs block">Período</span>{fmt(s.periodo_inicio)} a {fmt(s.periodo_fim)}</div>
-                      <div><span className="text-muted-foreground text-xs block">Sessões</span>{s.sessoes}</div>
+                  <TabsContent key={s.profissional_id} value={s.profissional_id} className="space-y-4 pt-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 bg-muted/30 p-3 rounded-lg text-sm border border-border/50">
+                      <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">Profissional</span><strong>{s.profissional_nome}</strong></div>
+                      <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">Profissão</span>{s.profissao || "—"}</div>
+                      <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">Período</span>{fmt(s.periodo_inicio)} a {fmt(s.periodo_fim)}</div>
+                      <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">Sessões</span><Badge variant="secondary" className="h-5 px-1.5">{s.sessoes}</Badge></div>
                     </div>
-                    <div>
-                      <Label className="text-xs">Objetivos Terapêuticos Iniciais</Label>
-                      <Textarea value={s.objetivos} onChange={e => updateProfSection(s.profissional_id, "objetivos", e.target.value)} rows={3} className="text-sm" />
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-xs font-semibold">Objetivos Terapêuticos Iniciais</Label>
+                        <Textarea value={s.objetivos} onChange={e => updateProfSection(s.profissional_id, "objetivos", e.target.value)} rows={3} className="text-sm" />
+                      </div>
+                      <div>
+                        <Label className="text-xs font-semibold">Intervenções/Procedimentos Realizados</Label>
+                        <Textarea value={s.intervencoes} onChange={e => updateProfSection(s.profissional_id, "intervencoes", e.target.value)} rows={3} className="text-sm" />
+                      </div>
                     </div>
+
                     <div>
-                      <Label className="text-xs">Intervenções/Procedimentos Realizados</Label>
-                      <Textarea value={s.intervencoes} onChange={e => updateProfSection(s.profissional_id, "intervencoes", e.target.value)} rows={3} className="text-sm" />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Evolução Clínica e Funcional</Label>
+                      <Label className="text-xs font-semibold">Evolução Clínica e Funcional</Label>
                       <Textarea value={s.evolucao} onChange={e => updateProfSection(s.profissional_id, "evolucao", e.target.value)} rows={3} className="text-sm" />
                     </div>
-                    <div>
-                      <Label className="text-xs">Metas Atingidas</Label>
-                      <Select value={s.metas_status} onValueChange={v => updateProfSection(s.profissional_id, "metas_status", v)}>
-                        <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="totalmente">Totalmente atingidas</SelectItem>
-                          <SelectItem value="parcialmente">Parcialmente atingidas</SelectItem>
-                          <SelectItem value="nao_atingidas">Não atingidas</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      {s.metas_status !== "totalmente" && (
-                        <Textarea
-                          value={s.metas_justificativa}
-                          onChange={e => updateProfSection(s.profissional_id, "metas_justificativa", e.target.value)}
-                          placeholder="Justificativa obrigatória..."
-                          rows={2} className="text-sm mt-2"
-                        />
-                      )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div>
+                        <Label className="text-xs font-semibold">Metas Atingidas</Label>
+                        <Select value={s.metas_status} onValueChange={v => updateProfSection(s.profissional_id, "metas_status", v)}>
+                          <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                             {METAS_STATUS_OPCOES.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                        {s.metas_status !== "totalmente" && (
+                          <Textarea
+                            value={s.metas_justificativa}
+                            onChange={e => updateProfSection(s.profissional_id, "metas_justificativa", e.target.value)}
+                            placeholder="Justificativa técnica..."
+                            rows={2} className="text-sm mt-2"
+                          />
+                        )}
+                      </div>
+                      <div>
+                        <Label className="text-xs font-semibold">Adesão ao Tratamento</Label>
+                        <Select value={s.adesao} onValueChange={v => updateProfSection(s.profissional_id, "adesao", v)}>
+                          <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                             {ADESAO_OPCOES.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label className="text-xs font-semibold block mb-2">Intercorrências</Label>
+                        <div className="flex flex-wrap gap-2 p-2 border border-border/50 rounded-md bg-muted/20">
+                          {INTERCORRENCIAS_OPCOES.slice(0, 4).map(opt => (
+                            <label key={opt} className="flex items-center gap-1.5 text-[10px] cursor-pointer">
+                              <Checkbox 
+                                checked={s.intercorrencias?.includes(opt)}
+                                onCheckedChange={(checked) => {
+                                  const prev = s.intercorrencias || [];
+                                  updateProfSection(s.profissional_id, "intercorrencias", checked ? [...prev, opt] : prev.filter(x => x !== opt));
+                                }}
+                              />
+                              {opt}
+                            </label>
+                          ))}
+                        </div>
+                      </div>
                     </div>
+
                     <div>
-                      <Label className="text-xs">Tecnologia Assistiva Concedida</Label>
+                      <Label className="text-xs font-semibold">Tecnologia Assistiva Concedida</Label>
                       <Input value={s.tecnologia_assistiva} onChange={e => updateProfSection(s.profissional_id, "tecnologia_assistiva", e.target.value)} placeholder="Órteses, próteses, AASI, cadeira de rodas..." className="h-8 text-sm" />
                     </div>
-                    <div className="text-xs text-muted-foreground bg-muted/30 p-2 rounded">
-                      Assinatura: {s.profissional_nome} — {s.conselho}
+                    
+                    <div className="flex items-center gap-2 p-2 bg-primary/5 border border-primary/10 rounded text-[10px] text-primary font-medium">
+                      <CheckCircle className="w-3.5 h-3.5" />
+                      Documento assinado digitalmente: {s.profissional_nome} — {s.conselho}
                     </div>
                   </TabsContent>
                 ))}
+
               </Tabs>
             </CardContent>
           </Card>
@@ -884,24 +1002,49 @@ const RelatorioAlta: React.FC = () => {
         </Card>
 
         {/* Actions */}
-        <div className="flex flex-wrap gap-3 sticky bottom-0 bg-background py-3 border-t border-border">
-          <Button variant="outline" onClick={() => {
-            const errs = validateMulti();
-            if (errs.length > 0) { errs.forEach(e => toast.error(e)); return; }
-            toast.success("Todos os campos obrigatórios estão preenchidos");
-          }}>
-            <CheckCircle className="w-4 h-4 mr-1" /> Validar
-          </Button>
-          <Button variant="outline" onClick={() => handlePrint("multi")}>
-            <Printer className="w-4 h-4 mr-1" /> Imprimir
-          </Button>
-          <Button variant="outline" onClick={() => handlePrint("multi")}>
-            <FileDown className="w-4 h-4 mr-1" /> Gerar PDF
-          </Button>
-          <Button onClick={() => handleSave("multi")}>
-            <Save className="w-4 h-4 mr-1" /> Salvar no Prontuário
-          </Button>
+        <div className="flex flex-wrap items-center justify-between gap-3 sticky bottom-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-4 border-t border-border z-10">
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => {
+              const errs = validateMulti();
+              if (errs.length > 0) { errs.forEach(e => toast.error(e)); return; }
+              setStatus("validado");
+              toast.success("Relatório multiprofissional validado com sucesso");
+            }}>
+              <CheckSquare className="w-4 h-4 mr-1.5 text-green-600" /> Validar
+            </Button>
+            
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="sm" onClick={() => handleSave("multi")}>
+                    <Save className="w-4 h-4 mr-1.5 text-muted-foreground" /> Salvar Rascunho
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Salva o estado atual sem emitir definitivamente</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => handlePrint("multi")}>
+              <Printer className="w-4 h-4 mr-1.5" /> Imprimir
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => handlePrint("multi")}>
+              <FileDown className="w-4 h-4 mr-1.5" /> Gerar PDF
+            </Button>
+            <Button size="sm" className="bg-primary hover:bg-primary/90" onClick={() => {
+               const errs = validateMulti();
+               if (errs.length > 0) {
+                 toast.error("Por favor, preencha os campos obrigatórios e valide o relatório antes de emitir.");
+                 return;
+               }
+               handleSave("multi");
+            }}>
+              <CheckCircle className="w-4 h-4 mr-1.5" /> Finalizar e Salvar no Prontuário
+            </Button>
+          </div>
         </div>
+
       </div>
     );
   }
@@ -922,28 +1065,38 @@ const RelatorioAlta: React.FC = () => {
 
       {/* Patient + Professional info */}
       <Card>
-        <CardHeader className="pb-3"><CardTitle className="text-sm">1. Identificação</CardTitle></CardHeader>
+        <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
+          <CardTitle className="text-sm">1. Identificação e Base Clínica</CardTitle>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className={status === 'rascunho' ? 'bg-yellow-50 text-yellow-700' : 'bg-green-50 text-green-700'}>
+              {status === 'rascunho' ? <Clock className="w-3 h-3 mr-1" /> : <CheckCircle className="w-3 h-3 mr-1" />}
+              {status === 'rascunho' ? 'Rascunho' : 'Validado'}
+            </Badge>
+          </div>
+        </CardHeader>
         <CardContent className="space-y-4">
           <BuscaPaciente pacientes={pacientes} value={pacienteId} onChange={setPacienteId} />
           {paciente && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm bg-muted/50 rounded-lg p-3">
-              <div><span className="text-muted-foreground text-xs block">Paciente</span><strong>{paciente.nome}</strong></div>
-              <div><span className="text-muted-foreground text-xs block">Data Nasc.</span>{fmt(paciente.dataNascimento)} ({calcIdade(paciente.dataNascimento)})</div>
-              <div><span className="text-muted-foreground text-xs block">CNS</span>{paciente.cns || "—"}</div>
-              <div><span className="text-muted-foreground text-xs block">CPF</span>{paciente.cpf || "—"}</div>
-              <div><span className="text-muted-foreground text-xs block">Profissional</span>{user?.nome}</div>
-              <div><span className="text-muted-foreground text-xs block">Profissão</span>{funcionarios.find(f => f.id === user?.id)?.profissao || "—"}</div>
-              <div><span className="text-muted-foreground text-xs block">Período</span>{fmt(indPeriodoInicio)} a {fmt(indPeriodoFim)}</div>
-              <div><span className="text-muted-foreground text-xs block">Sessões</span>{indSessoes}</div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm bg-muted/50 rounded-lg p-3 border border-border/50">
+              <div className="col-span-2"><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">Paciente</span><span className="font-semibold">{paciente.nome}</span></div>
+              <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">CPF</span>{paciente.cpf || "—"}</div>
+              <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">CNS</span>{paciente.cns || "—"}</div>
+              <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">Data Nasc.</span>{fmt(paciente.dataNascimento)} ({calcIdade(paciente.dataNascimento)})</div>
+              <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">Telefone</span>{paciente.telefone || "—"}</div>
+              <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">Profissional</span>{user?.nome}</div>
+              <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">Especialidade</span>{funcionarios.find(f => f.id === user?.id)?.profissao || "—"}</div>
+              <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">Tratamento</span>{fmt(indPeriodoInicio)} a {fmt(indPeriodoFim)}</div>
+              <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">Sessões Realizadas</span><Badge variant="secondary" className="h-5 px-1.5">{indSessoes}</Badge></div>
             </div>
           )}
-          <div className="grid grid-cols-2 gap-3">
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
-              <Label className="text-xs">Data de Alta</Label>
+              <Label className="text-xs font-semibold">Data de Alta</Label>
               <Input type="date" value={indDataAlta} onChange={e => setIndDataAlta(e.target.value)} className="h-8 text-sm" />
             </div>
             <div>
-              <Label className="text-xs">Modalidade</Label>
+              <Label className="text-xs font-semibold">Modalidade</Label>
               <Select value={indModalidade} onValueChange={setIndModalidade}>
                 <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Selecione..." /></SelectTrigger>
                 <SelectContent>
@@ -951,13 +1104,43 @@ const RelatorioAlta: React.FC = () => {
                 </SelectContent>
               </Select>
             </div>
+            <div>
+               <Label className="text-xs font-semibold">Adesão ao Tratamento</Label>
+               <Select value={indAdesao} onValueChange={(v: any) => setIndAdesao(v)}>
+                 <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                 <SelectContent>
+                   {ADESAO_OPCOES.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                 </SelectContent>
+               </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+            <div>
+              <Label className="text-xs font-semibold">Queixa Principal / Motivo Encaminhamento</Label>
+              <Textarea value={indQueixa} onChange={e => setIndQueixa(e.target.value)} rows={2} className="text-sm" placeholder="Puxado do PTS ou prontuário..." />
+            </div>
+            <div>
+              <Label className="text-xs font-semibold">Contexto Familiar/Social/Histórico</Label>
+              <Textarea value={indHistorico} onChange={e => setIndHistorico(e.target.value)} rows={2} className="text-sm" placeholder="Resumo relevante para a alta..." />
+            </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Diagnosis */}
       <Card>
-        <CardHeader className="pb-3"><CardTitle className="text-sm">2. Diagnóstico</CardTitle></CardHeader>
+        <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
+          <CardTitle className="text-sm">2. Diagnóstico e Funcionalidade</CardTitle>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Sparkles className="w-4 h-4 text-primary cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent>Sugestões baseadas no prontuário</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </CardHeader>
         <CardContent className="space-y-3">
           <BuscaCIDField 
             value={indDiagCid} 
@@ -966,99 +1149,164 @@ const RelatorioAlta: React.FC = () => {
             onDescChange={setIndCidDesc} 
           />
           <div>
-            <Label className="text-xs">CIF</Label>
-            <Textarea value={indCif} onChange={e => setIndCif(e.target.value)} rows={2} className="text-sm" />
+            <Label className="text-xs font-semibold">Diagnóstico Funcional (CIF / Avaliação)</Label>
+            <Textarea value={indCif} onChange={e => setIndCif(e.target.value)} rows={3} className="text-sm" placeholder="Descreva as limitações e potencialidades funcionais..." />
           </div>
         </CardContent>
       </Card>
 
       {/* Clinical */}
       <Card>
-        <CardHeader className="pb-3"><CardTitle className="text-sm">3. Evolução Clínica</CardTitle></CardHeader>
+        <CardHeader className="pb-3"><CardTitle className="text-sm">3. Evolução Clínica e Metas</CardTitle></CardHeader>
         <CardContent className="space-y-3">
-          <div>
-            <Label className="text-xs">Objetivos Terapêuticos Iniciais</Label>
-            <Textarea value={indObjetivos} onChange={e => setIndObjetivos(e.target.value)} rows={3} className="text-sm" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs font-semibold">Objetivos Terapêuticos Iniciais (do PTS)</Label>
+              <Textarea value={indObjetivos} onChange={e => setIndObjetivos(e.target.value)} rows={3} className="text-sm" />
+            </div>
+            <div>
+              <Label className="text-xs font-semibold">Intervenções e Procedimentos Realizados</Label>
+              <Textarea value={indIntervencoes} onChange={e => setIndIntervencoes(e.target.value)} rows={3} className="text-sm" placeholder="Técnicas, métodos e recursos utilizados..." />
+            </div>
           </div>
           <div>
-            <Label className="text-xs">Intervenções/Procedimentos Realizados</Label>
-            <Textarea value={indIntervencoes} onChange={e => setIndIntervencoes(e.target.value)} rows={3} className="text-sm" />
+            <Label className="text-xs font-semibold">Evolução Clínica e Resposta Terapêutica</Label>
+            <Textarea value={indEvolucao} onChange={e => setIndEvolucao(e.target.value)} rows={4} className="text-sm" placeholder="Resumo comparativo entre início e alta..." />
           </div>
-          <div>
-            <Label className="text-xs">Evolução Clínica e Funcional</Label>
-            <Textarea value={indEvolucao} onChange={e => setIndEvolucao(e.target.value)} rows={3} className="text-sm" />
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs font-semibold">Metas do PTS Atingidas</Label>
+              <Select value={indMetas} onValueChange={v => setIndMetas(v as any)}>
+                <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {METAS_STATUS_OPCOES.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              {indMetas !== "totalmente" && (
+                <Textarea value={indMetasJust} onChange={e => setIndMetasJust(e.target.value)} placeholder="Justificativa técnica das metas não atingidas..." rows={2} className="text-sm mt-2" />
+              )}
+            </div>
+            <div>
+              <Label className="text-xs font-semibold block mb-2">Intercorrências no Período</Label>
+              <div className="grid grid-cols-2 gap-2 p-2 border border-border/50 rounded-md bg-muted/20">
+                {INTERCORRENCIAS_OPCOES.map(opt => (
+                  <label key={opt} className="flex items-center gap-2 text-[11px] cursor-pointer hover:bg-muted/50 p-1 rounded">
+                    <Checkbox 
+                      checked={indIntercorrencias.includes(opt)}
+                      onCheckedChange={(checked) => {
+                        setIndIntercorrencias(prev => checked ? [...prev, opt] : prev.filter(x => x !== opt));
+                      }}
+                    />
+                    {opt}
+                  </label>
+                ))}
+              </div>
+            </div>
           </div>
+          
           <div>
-            <Label className="text-xs">Metas Atingidas</Label>
-            <Select value={indMetas} onValueChange={v => setIndMetas(v as any)}>
-              <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="totalmente">Totalmente atingidas</SelectItem>
-                <SelectItem value="parcialmente">Parcialmente atingidas</SelectItem>
-                <SelectItem value="nao_atingidas">Não atingidas</SelectItem>
-              </SelectContent>
-            </Select>
-            {indMetas !== "totalmente" && (
-              <Textarea value={indMetasJust} onChange={e => setIndMetasJust(e.target.value)} placeholder="Justificativa obrigatória..." rows={2} className="text-sm mt-2" />
-            )}
-          </div>
-          <div>
-            <Label className="text-xs">Tecnologia Assistiva Concedida</Label>
-            <Input value={indTA} onChange={e => setIndTA(e.target.value)} placeholder="Órteses, próteses, AASI..." className="h-8 text-sm" />
+            <Label className="text-xs font-semibold">Tecnologia Assistiva Concedida / Orientações de Uso</Label>
+            <Input value={indTA} onChange={e => setIndTA(e.target.value)} placeholder="Cadeira de rodas, órteses, AASI, etc." className="h-8 text-sm" />
           </div>
         </CardContent>
       </Card>
 
+
       {/* Discharge */}
       <Card>
-        <CardHeader className="pb-3"><CardTitle className="text-sm">4. Alta e Orientações</CardTitle></CardHeader>
-        <CardContent className="space-y-3">
-          <div>
-            <Label className="text-xs">Motivo da Alta *</Label>
-            <Select value={indMotivo} onValueChange={setIndMotivo}>
-              <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Selecione..." /></SelectTrigger>
-              <SelectContent>
-                {MOTIVOS_ALTA.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            {(indMotivo === "infrequencia" || indMotivo === "encaminhamentos" || indMotivo === "obito") && (
-              <Input value={indMotivoDet} onChange={e => setIndMotivoDet(e.target.value)}
-                placeholder={indMotivo === "infrequencia" ? "Nº de faltas" : indMotivo === "obito" ? "Data do óbito" : "Qual serviço?"}
-                className="h-8 text-sm mt-2" />
-            )}
+        <CardHeader className="pb-3"><CardTitle className="text-sm">4. Alta e Orientações Finais</CardTitle></CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label className="text-xs font-semibold">Tipo / Motivo da Alta *</Label>
+              <Select value={indMotivo} onValueChange={setIndMotivo}>
+                <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                <SelectContent>
+                  {MOTIVOS_ALTA.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              {(indMotivo === "infrequencia" || indMotivo === "encaminhamentos" || indMotivo === "obito" || indMotivo === "transferencia") && (
+                <Input value={indMotivoDet} onChange={e => setIndMotivoDet(e.target.value)}
+                  placeholder={indMotivo === "infrequencia" ? "Justificar período/faltas" : indMotivo === "obito" ? "Data/Causa (se souber)" : "Qual serviço/unidade?"}
+                  className="h-8 text-sm mt-2" />
+              )}
+            </div>
+            <div>
+              <Label className="text-xs font-semibold">Necessidade de Continuidade Terapêutica</Label>
+              <Select defaultValue="nao">
+                <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="nao">Não, alta definitiva na área</SelectItem>
+                  <SelectItem value="sim_mesma">Sim, na mesma área (manutenção)</SelectItem>
+                  <SelectItem value="sim_outra">Sim, em outra área/especialidade</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          <div>
-            <Label className="text-xs">Orientações Específicas</Label>
-            <Textarea value={indOrientacoes} onChange={e => setIndOrientacoes(e.target.value)} rows={3} className="text-sm" />
-          </div>
-          <div>
-            <Label className="text-xs">Encaminhamentos</Label>
-            <Textarea value={indEncaminhamento} onChange={e => setIndEncaminhamento(e.target.value)} rows={2} className="text-sm" placeholder="Descreva os encaminhamentos..." />
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label className="text-xs font-semibold">Orientações para Paciente / Família / Cuidador</Label>
+              <Textarea value={indOrientacoes} onChange={e => setIndOrientacoes(e.target.value)} rows={4} className="text-sm" placeholder="Cuidados em casa, exercícios, sinais de alerta..." />
+            </div>
+            <div>
+              <Label className="text-xs font-semibold">Encaminhamentos e Plano de Cuidados Pós-Alta</Label>
+              <Textarea value={indEncaminhamento} onChange={e => setIndEncaminhamento(e.target.value)} rows={4} className="text-sm" placeholder="UBS de referência, outros especialistas, prazo para reavaliação..." />
+            </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Actions */}
-      <div className="flex flex-wrap gap-3 sticky bottom-0 bg-background py-3 border-t border-border">
-        <Button variant="outline" onClick={() => {
-          const errs = validateInd();
-          if (errs.length > 0) { errs.forEach(e => toast.error(e)); return; }
-          toast.success("Todos os campos obrigatórios estão preenchidos");
-        }}>
-          <CheckCircle className="w-4 h-4 mr-1" /> Validar
-        </Button>
-        <Button variant="outline" onClick={() => handlePrint("individual")}>
-          <Printer className="w-4 h-4 mr-1" /> Imprimir
-        </Button>
-        <Button variant="outline" onClick={() => handlePrint("individual")}>
-          <FileDown className="w-4 h-4 mr-1" /> Gerar PDF
-        </Button>
-        <Button onClick={() => handleSave("individual")}>
-          <Save className="w-4 h-4 mr-1" /> Salvar no Prontuário
-        </Button>
+      <div className="flex flex-wrap items-center justify-between gap-3 sticky bottom-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-4 border-t border-border z-10">
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => {
+            const errs = validateInd();
+            if (errs.length > 0) { 
+              errs.forEach(e => toast.error(e)); 
+              return; 
+            }
+            setStatus("validado");
+            toast.success("Relatório validado com sucesso");
+          }}>
+            <CheckSquare className="w-4 h-4 mr-1.5 text-green-600" /> Validar
+          </Button>
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="sm" onClick={() => handleSave("individual")}>
+                  <Save className="w-4 h-4 mr-1.5 text-muted-foreground" /> Salvar Rascunho
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Salva o estado atual sem emitir definitivamente</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => handlePrint("individual")}>
+            <Printer className="w-4 h-4 mr-1.5" /> Imprimir
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => handlePrint("individual")}>
+            <FileDown className="w-4 h-4 mr-1.5" /> Gerar PDF
+          </Button>
+          <Button size="sm" className="bg-primary hover:bg-primary/90" onClick={() => {
+             const errs = validateInd();
+             if (errs.length > 0) {
+               toast.error("Por favor, preencha os campos obrigatórios e valide o relatório antes de emitir.");
+               return;
+             }
+             handleSave("individual");
+          }}>
+            <CheckCircle className="w-4 h-4 mr-1.5" /> Finalizar e Salvar no Prontuário
+          </Button>
+        </div>
       </div>
     </div>
   );
 };
 
 export default RelatorioAlta;
+
