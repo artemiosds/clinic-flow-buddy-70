@@ -191,6 +191,8 @@ const RelatorioAlta: React.FC = () => {
   const [indIntercorrencias, setIndIntercorrencias] = useState<string[]>([]);
   const [indQueixa, setIndQueixa] = useState("");
   const [indHistorico, setIndHistorico] = useState("");
+  const [indResumoAuto, setIndResumoAuto] = useState("");
+
 
 
   /* ── CID Search state ─── */
