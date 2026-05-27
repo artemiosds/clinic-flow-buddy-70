@@ -165,6 +165,49 @@ const getRacaLabel = (value?: string): string => {
   return labels[normalized] || textValue(value, 'Não declarado');
 };
 
+const getEscolaridadeLabel = (value?: string): string => {
+  const labels: Record<string, string> = {
+    analfabeto: 'Analfabeto',
+    fundamental_incompleto: 'Fundamental – incompleto',
+    fundamental_completo: 'Fundamental – completo',
+    medio_incompleto: 'Médio – incompleto',
+    medio_completo: 'Médio – completo',
+    superior_incompleto: 'Superior – incompleto',
+    superior_completo: 'Superior – completo',
+  };
+  return labels[String(value).toLowerCase()] || textValue(value, '—');
+};
+
+const getEstadoCivilLabel = (value?: string): string => {
+  const labels: Record<string, string> = {
+    solteiro: 'Solteiro',
+    casado: 'Casado/união estável',
+    divorciado: 'Divorciado/Separado',
+    viuvo: 'Viúvo',
+    ignorado: 'Ignorado',
+  };
+  return labels[String(value).toLowerCase()] || textValue(value, '—');
+};
+
+const getSituacaoMercadoLabel = (value?: string): string => {
+  const labels: Record<string, string> = {
+    empregado_registrado: 'Empregado registrado',
+    empregado_nao_registrado: 'Empregado não registrado',
+    autonomo: 'Autônomo conta própria',
+    servidor_estatutario: 'Servidor público Estatutário',
+    servidor_celetista: 'Servidor Público Celetista',
+    aposentado: 'Aposentado',
+    desempregado: 'Desempregado',
+    trabalho_temporario: 'Trabalho Temporário',
+    cooperativado: 'Cooperativado',
+    trabalhador_avulso: 'Trabalhador Avulso',
+    empregador: 'Empregador',
+    outros: 'Outros',
+    ignorado: 'Ignorado',
+  };
+  return labels[String(value).toLowerCase()] || textValue(value, '—');
+};
+
 const resolveLogoUrl = (value: string | undefined, fallback: string): string => {
   if (value && value.trim()) return value;
   return fallback;
@@ -393,6 +436,12 @@ export const PacienteFichaDocument: React.FC<PacienteFichaDocumentProps> = ({
         <div className="patient-sheet-grid patient-sheet-grid--2">
           <Field label="Profissional solicitante" value={p.profissional_solicitante} />
           <Field label="Observações cadastrais" value={p.observacoes} fallback="Não informado" />
+        </div>
+        <div className="patient-sheet-grid patient-sheet-grid--4">
+          <Field label="Escolaridade" value={getEscolaridadeLabel(data.customData?.escolaridade)} />
+          <Field label="Estado civil" value={getEstadoCivilLabel(data.customData?.estado_civil)} />
+          <Field label="Ocupação" value={data.customData?.ocupacao} />
+          <Field label="Situação no mercado" value={getSituacaoMercadoLabel(data.customData?.situacao_mercado)} />
         </div>
       </section>
 

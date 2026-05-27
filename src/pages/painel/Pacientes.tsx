@@ -1279,6 +1279,62 @@ const Pacientes: React.FC = () => {
               <PCampo label="CID" valor={cidVal} />
             </PSecao>
 
+            <PSecao titulo="Dados Complementares">
+              <PCampo 
+                label="Escolaridade" 
+                valor={(() => {
+                  const val = (detalhePaciente as any).custom_data?.escolaridade;
+                  const labels: Record<string, string> = {
+                    analfabeto: 'Analfabeto',
+                    fundamental_incompleto: 'Fundamental – incompleto',
+                    fundamental_completo: 'Fundamental – completo',
+                    medio_incompleto: 'Médio – incompleto',
+                    medio_completo: 'Médio – completo',
+                    superior_incompleto: 'Superior – incompleto',
+                    superior_completo: 'Superior – completo',
+                  };
+                  return labels[String(val).toLowerCase()] || val;
+                })()} 
+              />
+              <PCampo 
+                label="Estado Civil" 
+                valor={(() => {
+                  const val = (detalhePaciente as any).custom_data?.estado_civil;
+                  const labels: Record<string, string> = {
+                    solteiro: 'Solteiro',
+                    casado: 'Casado/união estável',
+                    divorciado: 'Divorciado/Separado',
+                    viuvo: 'Viúvo',
+                    ignorado: 'Ignorado',
+                  };
+                  return labels[String(val).toLowerCase()] || val;
+                })()} 
+              />
+              <PCampo label="Ocupação" valor={(detalhePaciente as any).custom_data?.ocupacao} />
+              <PCampo 
+                label="Situação no Mercado" 
+                valor={(() => {
+                  const val = (detalhePaciente as any).custom_data?.situacao_mercado;
+                  const labels: Record<string, string> = {
+                    empregado_registrado: 'Empregado registrado',
+                    empregado_nao_registrado: 'Empregado não registrado',
+                    autonomo: 'Autônomo conta própria',
+                    servidor_estatutario: 'Servidor público Estatutário',
+                    servidor_celetista: 'Servidor Público Celetista',
+                    aposentado: 'Aposentado',
+                    desempregado: 'Desempregado',
+                    trabalho_temporario: 'Trabalho Temporário',
+                    cooperativado: 'Cooperativado',
+                    trabalhador_avulso: 'Trabalhador Avulso',
+                    empregador: 'Empregador',
+                    outros: 'Outros',
+                    ignorado: 'Ignorado',
+                  };
+                  return labels[String(val).toLowerCase()] || val;
+                })()} 
+              />
+            </PSecao>
+
             <PSecao titulo="Contato">
               <PCampo label={L('telefone', 'Telefone')} valor={formatTelefoneBR(detalhePaciente.telefone)} />
               <PCampo label={L('email', 'E-mail')} valor={detalhePaciente.email} />

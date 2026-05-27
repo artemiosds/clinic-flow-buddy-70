@@ -54,6 +54,40 @@ const RACA_COR_OPTIONS = [
   { value: "nao_declarado", label: "Não declarado" },
 ];
 
+const ESCOLARIDADE_OPTIONS = [
+  { value: "analfabeto", label: "Analfabeto" },
+  { value: "fundamental_incompleto", label: "Fundamental – incompleto" },
+  { value: "fundamental_completo", label: "Fundamental – completo" },
+  { value: "medio_incompleto", label: "Médio – incompleto" },
+  { value: "medio_completo", label: "Médio – completo" },
+  { value: "superior_incompleto", label: "Superior – incompleto" },
+  { value: "superior_completo", label: "Superior – completo" },
+];
+
+const ESTADO_CIVIL_OPTIONS = [
+  { value: "solteiro", label: "Solteiro" },
+  { value: "casado", label: "Casado/união estável" },
+  { value: "divorciado", label: "Divorciado/Separado" },
+  { value: "viuvo", label: "Viúvo" },
+  { value: "ignorado", label: "Ignorado" },
+];
+
+const SITUACAO_MERCADO_OPTIONS = [
+  { value: "empregado_registrado", label: "Empregado registrado" },
+  { value: "empregado_nao_registrado", label: "Empregado não registrado" },
+  { value: "autonomo", label: "Autônomo conta própria" },
+  { value: "servidor_estatutario", label: "Servidor público Estatutário" },
+  { value: "servidor_celetista", label: "Servidor Público Celetista" },
+  { value: "aposentado", label: "Aposentado" },
+  { value: "desempregado", label: "Desempregado" },
+  { value: "trabalho_temporario", label: "Trabalho Temporário" },
+  { value: "cooperativado", label: "Cooperativado" },
+  { value: "trabalhador_avulso", label: "Trabalhador Avulso" },
+  { value: "empregador", label: "Empregador" },
+  { value: "outros", label: "Outros" },
+  { value: "ignorado", label: "Ignorado" },
+];
+
 // Sanitização: uppercase + remove acentos
 const sanitizeUpper = (v: string): string =>
   (v || "")
@@ -697,7 +731,6 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                   <div className="md:col-span-2">
                     <Label>Etnia (povo indígena) *</Label>
                     <Select value={cd.etnia || ""} onValueChange={(v) => setCustom("etnia", v)}>
-
                       <SelectTrigger><SelectValue placeholder="Selecione a etnia" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="X101">X101 — Apalai</SelectItem>
@@ -721,7 +754,7 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                 )}
 
                 {/* País de nascimento: obrigatório se estrangeiro */}
-                {cd.nacionalidade === "estrangeiro" && (
+                {form.nacionalidade === "Estrangeiro" && (
                   <div className="md:col-span-2">
                     <Label>País de nascimento *</Label>
                     <Input
@@ -736,6 +769,75 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
               <p className="text-[11px] text-muted-foreground">
                 Esses campos são exigidos pelo SIA/SUS na geração do arquivo BPA-I mensal.
               </p>
+            </div>
+
+            {/* ── Bloco Social / Educacional ── */}
+            <div className="rounded-lg border border-primary/20 bg-muted/30 p-3 space-y-4">
+              <div className="flex items-center gap-2 text-sm font-semibold text-primary">
+                <User className="w-4 h-4" /> Dados Sociais e Educacionais
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <Label>Escolaridade</Label>
+                  <Select
+                    value={cd.escolaridade || ""}
+                    onValueChange={(v) => setCustom("escolaridade", v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ESCOLARIDADE_OPTIONS.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label>Estado Civil</Label>
+                  <Select
+                    value={cd.estado_civil || ""}
+                    onValueChange={(v) => setCustom("estado_civil", v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ESTADO_CIVIL_OPTIONS.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label>Ocupação</Label>
+                  <Input
+                    value={cd.ocupacao || ""}
+                    onChange={(e) => setCustom("ocupacao", sanitizeUpper(e.target.value))}
+                    placeholder="EX: PROFESSOR, PEDREIRO, ETC"
+                  />
+                </div>
+
+                <div>
+                  <Label>Situação no Mercado de Trabalho</Label>
+                  <Select
+                    value={cd.situacao_mercado || ""}
+                    onValueChange={(v) => setCustom("situacao_mercado", v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SITUACAO_MERCADO_OPTIONS.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
 
             {/* Encaminhamento (UBS) - NOVO HISTÓRICO ORGANIZADO */}
