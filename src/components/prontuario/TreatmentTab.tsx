@@ -12,8 +12,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   Activity, ClipboardList, Plus, Play, CheckCircle, 
   Loader2, Copy, ChevronRight, Calendar, Info, 
-  AlertTriangle, RotateCcw, X, Pencil, Eraser, ListOrdered, Link2, Unlink, User
+  AlertTriangle, RotateCcw, X, Pencil, Eraser, ListOrdered, Link2, Unlink, User, Trash2
 } from 'lucide-react';
+
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
