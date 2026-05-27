@@ -188,7 +188,8 @@ const PainelGestaoAlta: React.FC = () => {
       atrasados,
       reabertos,
       tempoMedio,
-      taxaEmissao: total > 0 ? Math.round((emitidos / total) * 100) : 0
+      taxaEmissao: total > 0 ? Math.round((emitidos / total) * 100) : 0,
+      multiprofissionais: filteredData.filter(r => r.tipo_registro === 'alta_multiprofissional').length
     };
   }, [filteredData]);
 
