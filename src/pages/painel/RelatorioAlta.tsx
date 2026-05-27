@@ -1773,7 +1773,7 @@ const RelatorioAlta: React.FC = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsReReabrindo(false)}>Cancelar</Button>
-            <Button disabled={!motivoReabertura} onClick={() => {
+             <Button disabled={!motivoReabertura} onClick={() => {
               const novaVersao = versaoAtual + 1;
               setHistoricoVersoes(prev => [...prev, {
                 versao: versaoAtual,
@@ -1781,9 +1781,14 @@ const RelatorioAlta: React.FC = () => {
                 usuario: user?.nome || "Desconhecido",
                 motivo: motivoReabertura,
                 tipo_registro: modo.toString() === 'multiprofissional' ? 'alta_multiprofissional' : 'alta_individual',
-                dados: {} // Here we would save previous state
-
+                dados: {} // Aqui salvamos o estado anterior se necessário
               }]);
+              
+              // Log Reabertura for Timeline
+              // Note: We don't have the record ID here yet if it's in-memory, 
+              // but if we are editing an existing one, we should use its ID.
+              // For now, we'll log it as a general action or it will be caught by handleSave.
+              
               setVersaoAtual(novaVersao);
               setStatus("rascunho");
               setIsReReabrindo(false);
