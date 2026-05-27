@@ -1535,9 +1535,31 @@ const RelatorioAlta: React.FC = () => {
       </Card>
 
 
+      {/* Global Summary */}
+      <Card className="border-primary shadow-sm bg-primary/5">
+        <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
+          <CardTitle className="text-sm flex items-center gap-2"><Sparkles className="w-4 h-4 text-primary" /> Resumo Clínico Consolidado (Automático e Editável)</CardTitle>
+          <Button variant="ghost" size="sm" onClick={generateAutoSummaryInd} className="text-xs h-7">
+             <History className="w-3.5 h-3.5 mr-1" /> Gerar do Registro
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <Textarea 
+            value={indResumoAuto} 
+            onChange={e => setIndResumoAuto(e.target.value)} 
+            rows={4} 
+            className="text-sm bg-white" 
+            placeholder="Síntese clínica final do acompanhamento..." 
+          />
+        </CardContent>
+      </Card>
+
       {/* Discharge */}
       <Card>
-        <CardHeader className="pb-3"><CardTitle className="text-sm">4. Alta e Orientações Finais</CardTitle></CardHeader>
+        <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
+          <CardTitle className="text-sm">4. Alta e Orientações Finais</CardTitle>
+        </CardHeader>
+
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
