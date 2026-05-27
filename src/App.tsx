@@ -91,6 +91,8 @@ const ArquivoDigital              = lazyRetry(() => import("./pages/ArquivoDigit
 const PacienteAtualizacaoCadastral = lazyRetry(() => import("./pages/painel/PacienteAtualizacaoCadastral"));
 const MonitoramentoSistema = lazyRetry(() => import("./pages/painel/MonitoramentoSistema"));
 const WorkspaceProntuario = lazyRetry(() => import("./pages/painel/WorkspaceProntuario"));
+const PainelGestaoAlta = lazyRetry(() => import("./pages/painel/PainelGestaoAlta"));
+
 
 const LoginExterno                = lazyRetry(() => import("./pages/LoginExterno"));
 const AgendamentoExterno          = lazyRetry(() => import("./pages/AgendamentoExterno"));
