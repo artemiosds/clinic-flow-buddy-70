@@ -314,7 +314,10 @@ export const PTSDetails: React.FC = () => {
                 <ClipboardList className="w-4 h-4" /> Diagnóstico & Objetivos
               </TabsTrigger>
               <TabsTrigger value="metas" className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-0 gap-2 font-bold">
-                <Target className="w-4 h-4" /> Metas ({pts.metas?.length || 0})
+                <Target className="w-4 h-4" /> Metas ({editMetas.length})
+              </TabsTrigger>
+              <TabsTrigger value="execucao" className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-0 gap-2 font-bold">
+                <CheckCircle2 className="w-4 h-4" /> SIGTAP & CIDs
               </TabsTrigger>
               <TabsTrigger value="revisoes" className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-0 gap-2 font-bold">
                 <History className="w-4 h-4" /> Revisões
