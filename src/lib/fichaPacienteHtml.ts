@@ -72,6 +72,49 @@ const racaLabel = (v?: string): string => {
   return map[n] || txt(v, 'Não declarado');
 };
 
+const escolaridadeLabel = (v?: string): string => {
+  const map: Record<string, string> = {
+    analfabeto: 'Analfabeto',
+    fundamental_incompleto: 'Fundamental – incompleto',
+    fundamental_completo: 'Fundamental – completo',
+    medio_incompleto: 'Médio – incompleto',
+    medio_completo: 'Médio – completo',
+    superior_incompleto: 'Superior – incompleto',
+    superior_completo: 'Superior – completo',
+  };
+  return map[String(v).toLowerCase()] || txt(v, '—');
+};
+
+const estadoCivilLabel = (v?: string): string => {
+  const map: Record<string, string> = {
+    solteiro: 'Solteiro',
+    casado: 'Casado/união estável',
+    divorciado: 'Divorciado/Separado',
+    viuvo: 'Viúvo',
+    ignorado: 'Ignorado',
+  };
+  return map[String(v).toLowerCase()] || txt(v, '—');
+};
+
+const situacaoMercadoLabel = (v?: string): string => {
+  const map: Record<string, string> = {
+    empregado_registrado: 'Empregado registrado',
+    empregado_nao_registrado: 'Empregado não registrado',
+    autonomo: 'Autônomo conta própria',
+    servidor_estatutario: 'Servidor público Estatutário',
+    servidor_celetista: 'Servidor Público Celetista',
+    aposentado: 'Aposentado',
+    desempregado: 'Desempregado',
+    trabalho_temporario: 'Trabalho Temporário',
+    cooperativado: 'Cooperativado',
+    trabalhador_avulso: 'Trabalhador Avulso',
+    empregador: 'Empregador',
+    outros: 'Outros',
+    ignorado: 'Ignorado',
+  };
+  return map[String(v).toLowerCase()] || txt(v, '—');
+};
+
 interface FieldItem { label: string; value: unknown; fallback?: string; emphasis?: boolean; manual?: boolean; }
 
 const field = (f: FieldItem): string => `
