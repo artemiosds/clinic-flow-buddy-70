@@ -70,7 +70,7 @@ export const ptsService = {
       .maybeSingle();
 
     if (error) throw error;
-    return data;
+    return data as any;
   },
 
   async getPTSHistory(patientId: string): Promise<PTS[]> {
@@ -81,13 +81,16 @@ export const ptsService = {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    return (data || []) as any[];
   },
 
   async createPTS(ptsData: Partial<PTS>, metas: PTSMeta[], sigtap: any[], cids: any[]) {
+    // Filter out relation fields
+    const { metas: _, sigtap: __, cids: ___, id: ____, created_at: _____, updated_at: ______, ...cleanData } = ptsData as any;
+    
     const { data: newPts, error } = await supabase
       .from('pts')
-      .insert(ptsData)
+      .insert(cleanData)
       .select('id')
       .single();
 
@@ -96,21 +99,30 @@ export const ptsService = {
     if (metas.length > 0) {
       const { error: metasError } = await supabase
         .from('pts_metas')
-        .insert(metas.map(m => ({ ...m, pts_id: newPts.id })));
+        .insert(metas.map(m => {
+          const { id, ...cleanMeta } = m as any;
+          return { ...cleanMeta, pts_id: newPts.id };
+        }));
       if (metasError) throw metasError;
     }
 
     if (sigtap.length > 0) {
       const { error: sigtapError } = await supabase
         .from('pts_sigtap')
-        .insert(sigtap.map(s => ({ ...s, pts_id: newPts.id })));
+        .insert(sigtap.map(s => {
+          const { id, pts_id, ...cleanSigtap } = s;
+          return { ...cleanSigtap, pts_id: newPts.id };
+        }));
       if (sigtapError) throw sigtapError;
     }
 
     if (cids.length > 0) {
       const { error: cidsError } = await supabase
         .from('pts_cid')
-        .insert(cids.map(c => ({ ...c, pts_id: newPts.id })));
+        .insert(cids.map(c => {
+          const { id, pts_id, ...cleanCid } = c;
+          return { ...cleanCid, pts_id: newPts.id };
+        }));
       if (cidsError) throw cidsError;
     }
 
@@ -118,9 +130,10 @@ export const ptsService = {
   },
 
   async updatePTS(ptsId: string, ptsData: Partial<PTS>) {
+    const { metas: _, sigtap: __, cids: ___, id: ____, created_at: _____, updated_at: ______, ...cleanData } = ptsData as any;
     const { error } = await supabase
       .from('pts')
-      .update(ptsData)
+      .update(cleanData)
       .eq('id', ptsId);
 
     if (error) throw error;
