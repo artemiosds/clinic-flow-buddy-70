@@ -17,7 +17,7 @@ import { toast } from "sonner";
 import {
   FileText, Users, User, ArrowLeft, Printer, FileDown, CheckCircle,
   Save, Send, ClipboardList, Stethoscope, Heart, Activity, Search,
-  History, Sparkles, CheckSquare, AlertCircle, Clock
+  History, Sparkles, CheckSquare, AlertCircle, Clock, ChevronDown, ChevronRight
 } from "lucide-react";
 import { openPrintDocument } from "@/lib/printLayout";
 import { fetchProfessionalCarimbo, formatCarimboBlock } from "@/lib/documentSignature";
@@ -25,6 +25,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
 
 /* ── types ─────────────────────────────────────────── */
 interface ProfSection {
