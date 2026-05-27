@@ -208,7 +208,7 @@ export const procedureService = {
       .eq('ativo', true)
       .or(`codigo.ilike.%${safe}%,nome.ilike.%${safe}%`)
       .limit(limit * 4);
-    if (profissao) {
+    if (profissao && !query.includes(' ')) {
       const espKey = profissaoToEspecialidadeSigtap(profissao);
       if (espKey) qb = qb.eq('especialidade', espKey);
     }
