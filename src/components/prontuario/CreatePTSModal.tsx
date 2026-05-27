@@ -546,7 +546,7 @@ export const CreatePTSModal: React.FC<CreatePTSModalProps> = ({
                           }
                           setCidsSelecionados(prev => [...prev, {
                             cid_codigo: cid.codigo,
-                            cid_nome: cid.nome
+                            cid_nome: cid.descricao
                           }]);
                         }}
                         placeholder="Buscar por código CID ou diagnóstico..."
