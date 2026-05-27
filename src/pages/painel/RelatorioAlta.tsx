@@ -1107,17 +1107,23 @@ const RelatorioAlta: React.FC = () => {
                       </div>
                       <div className="ml-4">
                         <Select value={s.status} onValueChange={v => updateProfSection(s.profissional_id, "status", v)}>
-                          <SelectTrigger className={`h-8 w-32 text-xs ${s.status === 'concluido' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'}`}>
+                          <SelectTrigger className={`h-8 w-40 text-xs ${
+                            s.status === 'assinado' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                            s.status === 'concluido' ? 'bg-green-50 text-green-700 border-green-200' : 
+                            'bg-yellow-50 text-yellow-700 border-yellow-200'
+                          }`}>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="pendente">Não iniciado</SelectItem>
                             <SelectItem value="preenchendo">Preenchendo</SelectItem>
                             <SelectItem value="concluido">Concluído</SelectItem>
+                            <SelectItem value="assinado">Concluído e Assinado</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                     </div>
+
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
