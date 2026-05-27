@@ -629,7 +629,7 @@ const RelatorioAlta: React.FC = () => {
     if (error) {
       toast.error("Erro ao salvar: " + error.message);
     } else {
-      toast.success("Relatório de alta salvo no prontuário");
+      toast.success(status === 'rascunho' ? "Rascunho salvo com sucesso" : "Relatório de alta finalizado e salvo no prontuário");
     }
   };
 
