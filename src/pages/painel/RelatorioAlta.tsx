@@ -849,16 +849,74 @@ const RelatorioAlta: React.FC = () => {
   if (modo === "multiprofissional") {
     return (
       <div className="space-y-6">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => setModo("selector")}><ArrowLeft className="w-5 h-5" /></Button>
-          <div>
-            <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
-              <Users className="w-5 h-5 text-primary" />
-              Relatório de Alta — Multiprofissional
-            </h1>
-            <p className="text-xs text-muted-foreground">Documento consolidado de toda a equipe</p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={() => setModo("selector")}><ArrowLeft className="w-5 h-5" /></Button>
+            <div>
+              <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
+                <Users className="w-5 h-5 text-primary" />
+                Relatório de Alta — Multiprofissional
+              </h1>
+              <p className="text-xs text-muted-foreground">Documento consolidado de toda a equipe</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <div className="text-right hidden md:block">
+               <p className="text-[10px] uppercase font-bold text-muted-foreground">Status do Relatório</p>
+               <div className="flex items-center gap-2 mt-0.5">
+                  <Badge variant="outline" className={`
+                    ${status === 'emitido' ? 'bg-green-100 text-green-700 border-green-200' : 
+                      status === 'validado' ? 'bg-blue-100 text-blue-700 border-blue-200' :
+                      status === 'aguardando' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' :
+                      'bg-slate-100 text-slate-700 border-slate-200'}
+                  `}>
+                    {status.toUpperCase()}
+                  </Badge>
+                  <span className="text-[10px] text-muted-foreground font-medium">V{versaoAtual}</span>
+               </div>
+            </div>
+            {status === 'emitido' && (
+              <Button variant="outline" size="sm" onClick={() => setIsReReabrindo(true)} className="text-xs h-8">
+                <History className="w-3.5 h-3.5 mr-1.5" /> Reabrir para Edição
+              </Button>
+            )}
           </div>
         </div>
+
+        {/* Visual Checklist for Multiprofessional */}
+        <Card className="bg-muted/30 border-dashed">
+          <CardContent className="p-3">
+            <div className="flex flex-wrap items-center gap-4 text-[11px]">
+              <div className="flex items-center gap-1.5">
+                {pacienteId ? <CheckCircle className="w-3.5 h-3.5 text-green-600" /> : <AlertCircle className="w-3.5 h-3.5 text-slate-400" />}
+                <span>Paciente</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                {diagClinico && cid10 ? <CheckCircle className="w-3.5 h-3.5 text-green-600" /> : <AlertCircle className="w-3.5 h-3.5 text-slate-400" />}
+                <span>Diagnóstico</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                {tipoAlta && motivoAlta ? <CheckCircle className="w-3.5 h-3.5 text-green-600" /> : <AlertCircle className="w-3.5 h-3.5 text-slate-400" />}
+                <span>Tipo/Motivo Alta</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                {condicaoFuncional ? <CheckCircle className="w-3.5 h-3.5 text-green-600" /> : <AlertCircle className="w-3.5 h-3.5 text-slate-400" />}
+                <span>Condição Funcional</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                {profSections.filter(s => s.status === 'concluido' || s.status === 'assinado').length > 0 ? 
+                  <CheckCircle className="w-3.5 h-3.5 text-green-600" /> : <AlertCircle className="w-3.5 h-3.5 text-slate-400" />}
+                <span>Contribuição Equipe ({profSections.filter(s => s.status === 'concluido' || s.status === 'assinado').length}/{profSections.length})</span>
+              </div>
+              <Separator orientation="vertical" className="h-4" />
+              <div className="font-bold text-primary italic">
+                {validateMulti().length === 0 ? "Pronto para emitir" : `Faltam ${validateMulti().length} itens obrigatórios`}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
 
         {/* Patient selection */}
         <Card className="border-primary/20 shadow-sm">
