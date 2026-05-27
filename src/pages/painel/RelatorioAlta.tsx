@@ -370,13 +370,22 @@ const RelatorioAlta: React.FC = () => {
     if (!motivoAlta) errors.push("Selecione o motivo da alta");
     if (!nivelIndep) errors.push("Selecione o nível de independência");
     if (modalidades.length === 0) errors.push("Selecione pelo menos uma modalidade");
+    if (!condicaoFuncional) errors.push("Preencha a condição funcional na alta");
+    
+    const concluidoCount = profSections.filter(s => s.status === "concluido").length;
+    if (concluidoCount === 0) errors.push("Pelo menos um profissional deve concluir sua contribuição");
+
     profSections.forEach(s => {
-      if (s.metas_status !== "totalmente" && !s.metas_justificativa) {
-        errors.push(`Justificativa obrigatória para ${s.profissional_nome}`);
+      if (s.status === "concluido") {
+        if (s.metas_status !== "totalmente" && !s.metas_justificativa) {
+          errors.push(`Justificativa obrigatória para ${s.profissional_nome}`);
+        }
+        if (!s.evolucao) errors.push(`Evolução obrigatória para ${s.profissional_nome}`);
       }
     });
     return errors;
   };
+
 
   const validateInd = (): string[] => {
     const errors: string[] = [];
