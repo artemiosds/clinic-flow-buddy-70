@@ -454,7 +454,73 @@ const QuickEditPatientModal: React.FC<Props> = ({ open, onOpenChange, pacienteId
                       value={form.nacionalidade || "Brasil"} 
                       onChange={e => set("nacionalidade", sanitizeUpper(e.target.value))} 
                     />
+                </div>
+
+                <div className="pt-4 border-t space-y-6">
+                  <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Social / Educacional</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                    <div className="space-y-2">
+                      <Label className="text-slate-600 font-bold">Escolaridade</Label>
+                      <Select 
+                        value={form.custom_data?.escolaridade || ""} 
+                        onValueChange={v => setCustom("escolaridade", v)}
+                      >
+                        <SelectTrigger className="h-11 border-slate-200">
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ESCOLARIDADE_OPTIONS.map(o => (
+                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-slate-600 font-bold">Estado Civil</Label>
+                      <Select 
+                        value={form.custom_data?.estado_civil || ""} 
+                        onValueChange={v => setCustom("estado_civil", v)}
+                      >
+                        <SelectTrigger className="h-11 border-slate-200">
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ESTADO_CIVIL_OPTIONS.map(o => (
+                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-slate-600 font-bold">Ocupação</Label>
+                      <Input 
+                        className="h-11 border-slate-200 focus:border-primary"
+                        value={form.custom_data?.ocupacao || ""} 
+                        onChange={e => setCustom("ocupacao", sanitizeUpper(e.target.value))} 
+                        placeholder="EX: PROFESSOR, PEDREIRO"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-slate-600 font-bold">Situação no Mercado</Label>
+                      <Select 
+                        value={form.custom_data?.situacao_mercado || ""} 
+                        onValueChange={v => setCustom("situacao_mercado", v)}
+                      >
+                        <SelectTrigger className="h-11 border-slate-200">
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {SITUACAO_MERCADO_OPTIONS.map(o => (
+                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
+                </div>
                   <div className="md:col-span-2 space-y-2">
                     <Label className="text-slate-600 font-bold">Unidade Vinculada (Opcional)</Label>
                     <UnidadeSelect 
