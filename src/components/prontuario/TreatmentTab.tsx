@@ -212,6 +212,16 @@ export const TreatmentTab: React.FC<Props> = ({ pacienteId, pacienteNome, onCycl
 
   if (loading) return <div className="flex items-center justify-center p-12"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
 
+  if (!pacienteId) {
+    return (
+      <div className="p-8 text-center border-2 border-dashed rounded-2xl bg-muted/20">
+        <User className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+        <h3 className="font-bold text-foreground text-sm uppercase tracking-tight">Paciente não identificado</h3>
+        <p className="text-xs text-muted-foreground mt-1">Selecione um paciente para visualizar os tratamentos e PTS.</p>
+      </div>
+    );
+  }
+
   const progressPct = activeCycle ? Math.round((activeCycle.sessions_done / activeCycle.total_sessions) * 100) : 0;
   const salasDisponiveis = activeCycle ? (salas || []).filter((s: any) => s.unidadeId === activeCycle.unit_id && s.ativo) : [];
 
