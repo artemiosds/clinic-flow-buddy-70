@@ -253,6 +253,15 @@ const RelatorioAlta: React.FC = () => {
       .eq("status", "ativo")
       .maybeSingle();
 
+    if (pts) {
+      setObjetivosGerais(pts.objetivos_terapeuticos || "");
+      setMetasMultiprofissionais(
+        `${pts.metas_curto_prazo || ""} ${pts.metas_medio_prazo || ""} ${pts.metas_longo_prazo || ""}`.trim()
+      );
+      setCondicaoAdmissao(pts.contextos_afetados?.join(", ") || "");
+      setCondicaoFuncional(pts.diagnostico_funcional || "");
+    }
+
     const sections: ProfSection[] = [];
     profMap.forEach((val, profId) => {
       const func = funcionarios.find(f => f.id === profId);
@@ -272,7 +281,10 @@ const RelatorioAlta: React.FC = () => {
         metas_justificativa: "",
         tecnologia_assistiva: "",
         adesao: "boa",
-        intercorrencias: []
+        intercorrencias: [],
+        status: "pendente",
+        orientacoes_especificas: "",
+        encaminhamentos_especificos: ""
       });
     });
 
@@ -283,7 +295,6 @@ const RelatorioAlta: React.FC = () => {
     const pat = pacientes.find(p => p.id === pid);
     if (pat?.cid) {
       setCid10(pat.cid);
-      // Try to find description
       const { data } = await supabase
         .from('cid10_codigos')
         .select('descricao')
@@ -291,11 +302,8 @@ const RelatorioAlta: React.FC = () => {
         .maybeSingle();
       if (data) setCidDesc(data.descricao);
     }
-
-    if (pts?.diagnostico_funcional) {
-        setCondicaoFuncional(pts.diagnostico_funcional);
-    }
   };
+
 
   const loadIndividualData = async (pid: string) => {
     if (!user?.id) return;
