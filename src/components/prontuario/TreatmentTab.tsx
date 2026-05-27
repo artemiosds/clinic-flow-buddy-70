@@ -210,7 +210,32 @@ export const TreatmentTab: React.FC<Props> = ({ pacienteId, pacienteNome, onCycl
     }
   };
 
+  const handleDeletePts = async () => {
+    if (!activePts) return;
+    if (!window.confirm("Deseja realmente excluir este Projeto Terapêutico Singular (PTS)?")) return;
+
+    try {
+      const { error } = await supabase.from('pts').delete().eq('id', activePts.id);
+      if (error) throw error;
+
+      await logAction({
+        acao: 'excluir_pts',
+        entidade: 'pts',
+        entidadeId: activePts.id,
+        modulo: 'tratamentos',
+        user,
+        detalhes: { paciente_id: pacienteId, paciente_nome: pacienteNome },
+      });
+
+      toast.success("PTS excluído com sucesso!");
+      loadData();
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao excluir PTS.");
+    }
+  };
+
   if (loading) return <div className="flex items-center justify-center p-12"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+
 
   if (!pacienteId) {
     return (
@@ -305,8 +330,22 @@ export const TreatmentTab: React.FC<Props> = ({ pacienteId, pacienteNome, onCycl
                 </div>
                 <h3 className="font-bold text-foreground">Projeto Terapêutico Singular (PTS)</h3>
               </div>
-              <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">Ativo</Badge>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">Ativo</Badge>
+                {canManageFull && (
+                  <Button 
+                    size="icon" 
+                    variant="ghost" 
+                    className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10" 
+                    onClick={handleDeletePts}
+                    title="Excluir PTS"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
             </div>
+
 
             <div className="grid gap-4">
               <div>

@@ -452,6 +452,34 @@ const PTS: React.FC = () => {
     setSaving(false);
   };
 
+  const handleDelete = async (pts: PTSRecord) => {
+    if (!window.confirm(`Deseja realmente excluir o PTS do paciente ${pacientes.find(p => p.id === pts.patient_id)?.nome || pts.patient_id}?`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase.from('pts').delete().eq('id', pts.id);
+      if (error) throw error;
+
+      await logAction({
+        acao: 'excluir_pts',
+        entidade: 'pts', entidadeId: pts.id,
+        modulo: 'pts', user,
+        detalhes: {
+          paciente_id: pts.patient_id,
+          paciente_nome: pacientes.find(p => p.id === pts.patient_id)?.nome
+        },
+      });
+
+      toast.success('PTS excluído com sucesso!');
+      loadPts();
+      if (detailPts?.id === pts.id) setDetailPts(null);
+    } catch (err: any) {
+      toast.error('Erro ao excluir: ' + (err?.message || 'erro'));
+    }
+  };
+
+
   const procsBySpecialty = useMemo(() => {
     const map: Record<string, SigtapProcedimento[]> = {};
     for (const p of sigtapProcs) {
@@ -523,7 +551,13 @@ const PTS: React.FC = () => {
                     <Button size="sm" variant="ghost" onClick={() => openDetailDialog(pts)} title="Visualizar">
                       <Eye className="w-4 h-4" />
                     </Button>
+                    {editable && (
+                      <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => handleDelete(pts)} title="Excluir PTS">
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
                   </div>
+
                 </CardContent>
               </Card>
             );
@@ -781,10 +815,16 @@ const PTS: React.FC = () => {
                 </div>
               )}
               {canEditPts(detailPts) && (
-                <Button variant="outline" className="w-full mt-2" onClick={() => { const pts = detailPts; setDetailPts(null); setDetailSigtap([]); setDetailCids([]); openEditDialog(pts); }}>
-                  <Edit2 className="w-4 h-4 mr-2" /> Editar este PTS
-                </Button>
+                <div className="flex gap-2 mt-2">
+                  <Button variant="outline" className="flex-1" onClick={() => { const pts = detailPts; setDetailPts(null); setDetailSigtap([]); setDetailCids([]); openEditDialog(pts); }}>
+                    <Edit2 className="w-4 h-4 mr-2" /> Editar
+                  </Button>
+                  <Button variant="outline" className="flex-1 border-destructive text-destructive hover:bg-destructive/5" onClick={() => handleDelete(detailPts)}>
+                    <Trash2 className="w-4 h-4 mr-2" /> Excluir
+                  </Button>
+                </div>
               )}
+
             </div>
           )}
         </DialogContent>
