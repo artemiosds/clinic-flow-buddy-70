@@ -127,7 +127,7 @@ export const TreatmentTab: React.FC<Props> = ({ pacienteId, pacienteNome, onCycl
       if (cycleRes.data) {
         const [sessRes, agRes] = await Promise.all([
           supabase.from('treatment_sessions').select('*').eq('cycle_id', cycleRes.data.id).order('session_number', { ascending: true }),
-          supabase.from('agendamentos').select('id, data, hora, status, paciente_id, profissional_id, falta_justificada, regularizada').eq('paciente_id', pacienteId).not('status', 'in', '("cancelado")'),
+          supabase.from('agendamentos').select('id, data, hora, status, paciente_id, profissional_id, falta_justificada, regularizada').eq('paciente_id', pacienteId).not('status', 'eq', 'cancelado'),
         ]);
 
         if (sessRes.error) throw sessRes.error;
