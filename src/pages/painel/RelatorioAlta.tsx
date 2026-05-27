@@ -134,6 +134,7 @@ const RelatorioAlta: React.FC = () => {
   const [freqAps, setFreqAps] = useState("");
   const [dataAlta, setDataAlta] = useState(new Date().toISOString().split("T")[0]);
   const [tabProf, setTabProf] = useState("");
+  const [status, setStatus] = useState<"rascunho" | "validado" | "emitido">("rascunho");
 
   /* ── individual state ─── */
   const [indDiagCid, setIndDiagCid] = useState("");
@@ -154,6 +155,11 @@ const RelatorioAlta: React.FC = () => {
   const [indSessoes, setIndSessoes] = useState(0);
   const [indPeriodoInicio, setIndPeriodoInicio] = useState("");
   const [indPeriodoFim, setIndPeriodoFim] = useState("");
+  const [indAdesao, setIndAdesao] = useState<"excelente" | "boa" | "regular" | "baixa">("boa");
+  const [indIntercorrencias, setIndIntercorrencias] = useState<string[]>([]);
+  const [indQueixa, setIndQueixa] = useState("");
+  const [indHistorico, setIndHistorico] = useState("");
+
 
   /* ── CID Search state ─── */
   const [cidSearch, setCidSearch] = useState("");
