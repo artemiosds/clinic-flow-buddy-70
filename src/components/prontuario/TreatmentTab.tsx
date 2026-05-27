@@ -118,6 +118,9 @@ export const TreatmentTab: React.FC<Props> = ({ pacienteId, pacienteNome, onCycl
         supabase.from('pts').select('*').eq('patient_id', pacienteId).eq('status', 'ativo').order('created_at', { ascending: false }).limit(1).maybeSingle(),
       ]);
 
+      if (cycleRes.error) throw cycleRes.error;
+      if (ptsRes.error) throw ptsRes.error;
+
       setActiveCycle(cycleRes.data);
       setActivePts(ptsRes.data);
 
@@ -126,6 +129,9 @@ export const TreatmentTab: React.FC<Props> = ({ pacienteId, pacienteNome, onCycl
           supabase.from('treatment_sessions').select('*').eq('cycle_id', cycleRes.data.id).order('session_number', { ascending: true }),
           supabase.from('agendamentos').select('id, data, hora, status, paciente_id, profissional_id, falta_justificada, regularizada').eq('paciente_id', pacienteId).not('status', 'in', '("cancelado")'),
         ]);
+
+        if (sessRes.error) throw sessRes.error;
+        if (agRes.error) throw agRes.error;
 
         setSessions(sessRes.data || []);
         
@@ -136,9 +142,13 @@ export const TreatmentTab: React.FC<Props> = ({ pacienteId, pacienteNome, onCycl
           agMap[ag.id] = ag;
         });
         setAgendamentoMap(agMap);
+      } else {
+        setSessions([]);
+        setAgendamentoMap({});
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error loading treatment data:', err);
+      toast.error("Erro ao carregar dados de tratamento: " + (err.message || "Erro desconhecido"));
     } finally {
       setLoading(false);
     }
