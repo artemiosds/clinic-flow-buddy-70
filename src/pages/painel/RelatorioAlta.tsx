@@ -753,8 +753,14 @@ const RelatorioAlta: React.FC = () => {
         </div>
 
         {/* Patient selection */}
-        <Card>
-          <CardHeader className="pb-3"><CardTitle className="text-sm flex items-center gap-2"><ClipboardList className="w-4 h-4" /> 1. Identificação do Paciente</CardTitle></CardHeader>
+        <Card className="border-primary/20 shadow-sm">
+          <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
+            <CardTitle className="text-sm flex items-center gap-2"><ClipboardList className="w-4 h-4 text-primary" /> 1. Identificação do Paciente</CardTitle>
+            <Badge variant="outline" className={status === 'rascunho' ? 'bg-yellow-50 text-yellow-700' : 'bg-green-50 text-green-700'}>
+              {status === 'rascunho' ? <Clock className="w-3 h-3 mr-1" /> : <CheckCircle className="w-3 h-3 mr-1" />}
+              {status === 'rascunho' ? 'Rascunho' : 'Validado'}
+            </Badge>
+          </CardHeader>
           <CardContent className="space-y-4">
             <BuscaPaciente
               pacientes={pacientes}
@@ -762,24 +768,24 @@ const RelatorioAlta: React.FC = () => {
               onChange={setPacienteId}
             />
             {paciente && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm bg-muted/50 rounded-lg p-3">
-                <div><span className="text-muted-foreground text-xs block">Nome</span><strong>{paciente.nome}</strong></div>
-                <div><span className="text-muted-foreground text-xs block">Data Nasc.</span>{fmt(paciente.dataNascimento)} ({calcIdade(paciente.dataNascimento)})</div>
-                <div><span className="text-muted-foreground text-xs block">CNS</span>{paciente.cns || "—"}</div>
-                <div><span className="text-muted-foreground text-xs block">CPF</span>{paciente.cpf || "—"}</div>
-                <div><span className="text-muted-foreground text-xs block">Responsável</span>{paciente.nomeMae || "—"}</div>
-                <div><span className="text-muted-foreground text-xs block">Admissão</span>{fmt(paciente.criadoEm || "")}</div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm bg-muted/50 rounded-lg p-3 border border-border/50">
+                <div className="col-span-2"><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">Nome</span><span className="font-semibold">{paciente.nome}</span></div>
+                <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">Data Nasc.</span>{fmt(paciente.dataNascimento)} ({calcIdade(paciente.dataNascimento)})</div>
+                <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">CPF</span>{paciente.cpf || "—"}</div>
+                <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">CNS</span>{paciente.cns || "—"}</div>
+                <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">Responsável</span>{paciente.nomeMae || "—"}</div>
+                <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">Unidade</span>{user?.unidadeNome || "CER II"}</div>
                 <div>
-                  <Label className="text-xs">Data de Alta</Label>
+                  <Label className="text-xs font-semibold">Data de Alta</Label>
                   <Input type="date" value={dataAlta} onChange={e => setDataAlta(e.target.value)} className="h-8 text-sm" />
                 </div>
               </div>
             )}
             <div>
               <Label className="text-xs font-semibold mb-2 block">Modalidades Atendidas</Label>
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap gap-4 p-3 bg-muted/20 rounded-md">
                 {MODALIDADES.map(m => (
-                  <label key={m} className="flex items-center gap-2 text-sm cursor-pointer">
+                  <label key={m} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/50 p-1 rounded transition-colors">
                     <Checkbox
                       checked={modalidades.includes(m)}
                       onCheckedChange={c => setModalidades(prev => c ? [...prev, m] : prev.filter(x => x !== m))}
@@ -791,6 +797,7 @@ const RelatorioAlta: React.FC = () => {
             </div>
           </CardContent>
         </Card>
+
 
         {/* Diagnosis */}
         <Card>
