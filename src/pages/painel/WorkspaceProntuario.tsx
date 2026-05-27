@@ -22,7 +22,8 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/componen
 import { 
   History, FileText, User, Activity, ArrowLeft, Save, Printer, 
   Stethoscope, ClipboardList, Clock, Search, UserCog, Stamp, Trash2,
-  Calendar, Info, AlertTriangle, FileDown, Users
+  Calendar, Info, AlertTriangle, FileDown, Users, Target
+} from 'lucide-react';
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { TIPO_REGISTRO_LABELS } from '@/utils/labels';
@@ -534,6 +535,7 @@ const WorkspaceProntuario: React.FC = () => {
         procedimentos_texto: form.procedimentos_texto || '',
         outro_procedimento: form.outro_procedimento || '',
         tipo_registro: form.tipo_registro || 'consulta',
+        pts_meta_id: form.pts_meta_id || null,
         soap_subjetivo: form.soap_subjetivo || '',
         soap_objetivo: form.soap_objetivo || '',
         soap_avaliacao: form.soap_avaliacao || '',
