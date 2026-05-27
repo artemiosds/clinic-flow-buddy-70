@@ -45,6 +45,8 @@ export const PTSDetails: React.FC = () => {
   
   const [editForm, setEditForm] = useState<Partial<PTS>>({});
   const [editMetas, setEditMetas] = useState<PTSMeta[]>([]);
+  const [editSigtap, setEditSigtap] = useState<any[]>([]);
+  const [editCids, setEditCids] = useState<any[]>([]);
   
   const [revisionNotes, setRevisionNotes] = useState('');
   const [nextRevisionDate, setNextRevisionDate] = useState('');
