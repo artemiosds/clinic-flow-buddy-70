@@ -153,7 +153,7 @@ const RelatorioAlta: React.FC = () => {
         setPacienteId(data.paciente_id);
         setRelatorioId(data.id);
         setModo(data.tipo_registro === 'alta_multiprofissional' ? 'multiprofissional' : 'individual');
-        setStatus(data.status);
+        setStatus(data.status as any);
         
         let obs = {};
         try {
