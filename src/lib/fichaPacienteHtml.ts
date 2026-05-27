@@ -256,6 +256,12 @@ export function buildFichaBody(
     grid(2, [
       { label: 'Profissional solicitante', value: p.profissional_solicitante },
       { label: 'Observações cadastrais', value: p.observacoes, fallback: 'Não informado' },
+    ]) +
+    grid(4, [
+      { label: 'Escolaridade', value: escolaridadeLabel(data.customData?.escolaridade) },
+      { label: 'Estado civil', value: estadoCivilLabel(data.customData?.estado_civil) },
+      { label: 'Ocupação', value: data.customData?.ocupacao },
+      { label: 'Situação no mercado', value: situacaoMercadoLabel(data.customData?.situacao_mercado) },
     ]),
   ));
 
