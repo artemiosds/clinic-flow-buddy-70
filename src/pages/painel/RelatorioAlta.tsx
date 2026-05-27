@@ -42,6 +42,8 @@ interface ProfSection {
   metas_status: "totalmente" | "parcialmente" | "nao_atingidas";
   metas_justificativa: string;
   tecnologia_assistiva: string;
+  adesao: "excelente" | "boa" | "regular" | "baixa";
+  intercorrencias: string[];
 }
 
 type ModoRelatorio = "selector" | "multiprofissional" | "individual";
@@ -52,11 +54,14 @@ const MODALIDADES = [
 
 const MOTIVOS_ALTA = [
   { value: "objetivos_atingidos", label: "Alta por objetivos atingidos" },
+  { value: "administrativa", label: "Alta Administrativa" },
   { value: "pedido_usuario", label: "A pedido do usuário/família" },
   { value: "infrequencia", label: "Infrequência/abandono" },
+  { value: "transferencia", label: "Transferência" },
   { value: "encaminhamentos", label: "Encaminhamento para outro serviço" },
   { value: "agravamento", label: "Agravamento clínico" },
   { value: "obito", label: "Óbito" },
+  { value: "outros", label: "Outros" },
 ];
 
 const ENCAMINHAMENTOS = [
@@ -69,6 +74,23 @@ const NIVEIS_INDEPENDENCIA = [
 
 const FREQUENCIAS_APS = ["Mensal", "Bimestral", "Semestral", "Anual", "Sem necessidade"];
 
+const ADESAO_OPCOES = [
+  { value: "excelente", label: "Excelente" },
+  { value: "boa", label: "Boa" },
+  { value: "regular", label: "Regular" },
+  { value: "baixa", label: "Baixa" }
+];
+
+const METAS_STATUS_OPCOES = [
+  { value: "totalmente", label: "Totalmente atingidas" },
+  { value: "parcialmente", label: "Parcialmente atingidas" },
+  { value: "nao_atingidas", label: "Não atingidas" }
+];
+
+const INTERCORRENCIAS_OPCOES = [
+  "Nenhuma", "Faltas frequentes", "Baixa adesão", "Agravamento clínico", "Barreiras familiares", "Barreiras sociais"
+];
+
 const fmt = (d: string) => {
   if (!d) return "—";
   try { return new Date(d).toLocaleDateString("pt-BR"); } catch { return d; }
@@ -79,9 +101,11 @@ const calcIdade = (dn: string) => {
   try {
     const b = new Date(dn);
     const diff = Date.now() - b.getTime();
-    return `${Math.floor(diff / 31557600000)} anos`;
+    const idade = Math.floor(diff / 31557600000);
+    return `${idade} anos`;
   } catch { return ""; }
 };
+
 
 const RelatorioAlta: React.FC = () => {
   const { user } = useAuth();
