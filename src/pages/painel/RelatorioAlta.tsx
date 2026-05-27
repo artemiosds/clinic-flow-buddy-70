@@ -1679,8 +1679,9 @@ const RelatorioAlta: React.FC = () => {
                 data: new Date().toISOString(),
                 usuario: user?.nome || "Desconhecido",
                 motivo: motivoReabertura,
-                tipo_registro: modo === 'multiprofissional' ? 'alta_multiprofissional' : 'alta_individual',
+                tipo_registro: modo.toString() === 'multiprofissional' ? 'alta_multiprofissional' : 'alta_individual',
                 dados: {} // Here we would save previous state
+
               }]);
               setVersaoAtual(novaVersao);
               setStatus("rascunho");
