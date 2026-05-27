@@ -19,6 +19,40 @@ import UnidadeSelect from "./UnidadeSelect";
 import { calcularPendenciasPaciente } from "@/lib/pacientePendencias";
 import { Badge } from "@/components/ui/badge";
 
+const ESCOLARIDADE_OPTIONS = [
+  { value: "analfabeto", label: "Analfabeto" },
+  { value: "fundamental_incompleto", label: "Fundamental – incompleto" },
+  { value: "fundamental_completo", label: "Fundamental – completo" },
+  { value: "medio_incompleto", label: "Médio – incompleto" },
+  { value: "medio_completo", label: "Médio – completo" },
+  { value: "superior_incompleto", label: "Superior – incompleto" },
+  { value: "superior_completo", label: "Superior – completo" },
+];
+
+const ESTADO_CIVIL_OPTIONS = [
+  { value: "solteiro", label: "Solteiro" },
+  { value: "casado", label: "Casado/união estável" },
+  { value: "divorciado", label: "Divorciado/Separado" },
+  { value: "viuvo", label: "Viúvo" },
+  { value: "ignorado", label: "Ignorado" },
+];
+
+const SITUACAO_MERCADO_OPTIONS = [
+  { value: "empregado_registrado", label: "Empregado registrado" },
+  { value: "empregado_nao_registrado", label: "Empregado não registrado" },
+  { value: "autonomo", label: "Autônomo conta própria" },
+  { value: "servidor_estatutario", label: "Servidor público Estatutário" },
+  { value: "servidor_celetista", label: "Servidor Público Celetista" },
+  { value: "aposentado", label: "Aposentado" },
+  { value: "desempregado", label: "Desempregado" },
+  { value: "trabalho_temporario", label: "Trabalho Temporário" },
+  { value: "cooperativado", label: "Cooperativado" },
+  { value: "trabalhador_avulso", label: "Trabalhador Avulso" },
+  { value: "empregador", label: "Empregador" },
+  { value: "outros", label: "Outros" },
+  { value: "ignorado", label: "Ignorado" },
+];
+
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
