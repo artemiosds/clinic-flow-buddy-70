@@ -907,7 +907,7 @@ const RelatorioAlta: React.FC = () => {
                         <input 
                           className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground"
                           placeholder="Código ou descrição..." 
-                          onValueChange={(v: string) => setCidSearch(v)}
+                          onChange={(e) => setCidSearch(e.target.value)}
                         />
                       </div>
                       <CommandList>
