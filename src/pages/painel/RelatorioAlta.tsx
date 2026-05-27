@@ -17,7 +17,7 @@ import { toast } from "sonner";
 import {
   FileText, Users, User, ArrowLeft, Printer, FileDown, CheckCircle,
   Save, Send, ClipboardList, Stethoscope, Heart, Activity, Search,
-  History, Sparkles, CheckSquare, AlertCircle, Clock
+  History, Sparkles, CheckSquare, AlertCircle, Clock, ChevronDown, ChevronRight
 } from "lucide-react";
 import { openPrintDocument } from "@/lib/printLayout";
 import { fetchProfessionalCarimbo, formatCarimboBlock } from "@/lib/documentSignature";
@@ -25,6 +25,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
 
 /* ── types ─────────────────────────────────────────── */
 interface ProfSection {
@@ -43,10 +45,22 @@ interface ProfSection {
   tecnologia_assistiva: string;
   adesao: "excelente" | "boa" | "regular" | "baixa";
   intercorrencias: string[];
-  status: "pendente" | "preenchendo" | "concluido";
+  status: "pendente" | "preenchendo" | "concluido" | "assinado";
+  concluido_em?: string;
+  assinado_por?: string;
   orientacoes_especificas?: string;
   encaminhamentos_especificos?: string;
 }
+
+interface RelatorioVersion {
+  versao: number;
+  data: string;
+  usuario: string;
+  motivo: string;
+  tipo_registro: string;
+  dados: any;
+}
+
 
 
 type ModoRelatorio = "selector" | "multiprofissional" | "individual";
@@ -118,6 +132,11 @@ const RelatorioAlta: React.FC = () => {
   /* ── shared patient selection ─── */
   const [pacienteId, setPacienteId] = useState("");
   const paciente = useMemo(() => pacientes.find(p => p.id === pacienteId), [pacientes, pacienteId]);
+  const [relatorioId, setRelatorioId] = useState<string | null>(null);
+  const [versaoAtual, setVersaoAtual] = useState(1);
+  const [historicoVersoes, setHistoricoVersoes] = useState<RelatorioVersion[]>([]);
+  const [isReabrindo, setIsReReabrindo] = useState(false);
+  const [motivoReabertura, setMotivoReabertura] = useState("");
 
   /* ── multiprofissional state ─── */
   const [modalidades, setModalidades] = useState<string[]>([]);
@@ -147,6 +166,8 @@ const RelatorioAlta: React.FC = () => {
   const [adesaoGlobal, setAdesaoGlobal] = useState<string>("boa");
   const [objetivosGerais, setObjetivosGerais] = useState("");
   const [metasMultiprofissionais, setMetasMultiprofissionais] = useState("");
+  const [resumoConsolidado, setResumoConsolidado] = useState("");
+
 
 
   /* ── individual state ─── */
@@ -172,6 +193,8 @@ const RelatorioAlta: React.FC = () => {
   const [indIntercorrencias, setIndIntercorrencias] = useState<string[]>([]);
   const [indQueixa, setIndQueixa] = useState("");
   const [indHistorico, setIndHistorico] = useState("");
+  const [indResumoAuto, setIndResumoAuto] = useState("");
+
 
 
   /* ── CID Search state ─── */
@@ -368,15 +391,16 @@ const RelatorioAlta: React.FC = () => {
     const errors: string[] = [];
     if (!pacienteId) errors.push("Selecione um paciente");
     if (!motivoAlta) errors.push("Selecione o motivo da alta");
+    if (!tipoAlta) errors.push("Selecione o tipo de alta");
     if (!nivelIndep) errors.push("Selecione o nível de independência");
     if (modalidades.length === 0) errors.push("Selecione pelo menos uma modalidade");
     if (!condicaoFuncional) errors.push("Preencha a condição funcional na alta");
     
-    const concluidoCount = profSections.filter(s => s.status === "concluido").length;
+    const concluidoCount = profSections.filter(s => s.status === "concluido" || s.status === "assinado").length;
     if (concluidoCount === 0) errors.push("Pelo menos um profissional deve concluir sua contribuição");
 
     profSections.forEach(s => {
-      if (s.status === "concluido") {
+      if (s.status === "concluido" || s.status === "assinado") {
         if (s.metas_status !== "totalmente" && !s.metas_justificativa) {
           errors.push(`Justificativa obrigatória para ${s.profissional_nome}`);
         }
@@ -385,6 +409,25 @@ const RelatorioAlta: React.FC = () => {
     });
     return errors;
   };
+
+  const generateAutoSummaryMulti = () => {
+    const profs = profSections.filter(s => s.status === "concluido" || s.status === "assinado");
+    if (profs.length === 0) return "";
+    
+    const resumo = profs.map(p => 
+      `[${p.profissao || 'Área'}] ${p.evolucao}. Metas: ${METAS_STATUS_OPCOES.find(m => m.value === p.metas_status)?.label || p.metas_status}.`
+    ).join("\n\n");
+    
+    setResumoConsolidado(resumo);
+    toast.success("Resumo multiprofissional gerado com sucesso");
+  };
+
+  const generateAutoSummaryInd = () => {
+    const resumo = `Período de ${fmt(indPeriodoInicio)} a ${fmt(indPeriodoFim)} com total de ${indSessoes} sessões. Objetivos: ${indObjetivos}. Evolução: ${indEvolucao}. Metas: ${METAS_STATUS_OPCOES.find(m => m.value === indMetas)?.label || indMetas}. Adesão: ${ADESAO_OPCOES.find(a => a.value === indAdesao)?.label || indAdesao}.`;
+    setIndResumoAuto(resumo);
+    toast.success("Resumo clínico individual gerado");
+  };
+
 
 
   const validateInd = (): string[] => {
@@ -808,16 +851,74 @@ const RelatorioAlta: React.FC = () => {
   if (modo === "multiprofissional") {
     return (
       <div className="space-y-6">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => setModo("selector")}><ArrowLeft className="w-5 h-5" /></Button>
-          <div>
-            <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
-              <Users className="w-5 h-5 text-primary" />
-              Relatório de Alta — Multiprofissional
-            </h1>
-            <p className="text-xs text-muted-foreground">Documento consolidado de toda a equipe</p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={() => setModo("selector")}><ArrowLeft className="w-5 h-5" /></Button>
+            <div>
+              <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
+                <Users className="w-5 h-5 text-primary" />
+                Relatório de Alta — Multiprofissional
+              </h1>
+              <p className="text-xs text-muted-foreground">Documento consolidado de toda a equipe</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <div className="text-right hidden md:block">
+               <p className="text-[10px] uppercase font-bold text-muted-foreground">Status do Relatório</p>
+               <div className="flex items-center gap-2 mt-0.5">
+                  <Badge variant="outline" className={`
+                    ${status === 'emitido' ? 'bg-green-100 text-green-700 border-green-200' : 
+                      status === 'validado' ? 'bg-blue-100 text-blue-700 border-blue-200' :
+                      status === 'aguardando' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' :
+                      'bg-slate-100 text-slate-700 border-slate-200'}
+                  `}>
+                    {status.toUpperCase()}
+                  </Badge>
+                  <span className="text-[10px] text-muted-foreground font-medium">V{versaoAtual}</span>
+               </div>
+            </div>
+            {status === 'emitido' && (
+              <Button variant="outline" size="sm" onClick={() => setIsReReabrindo(true)} className="text-xs h-8">
+                <History className="w-3.5 h-3.5 mr-1.5" /> Reabrir para Edição
+              </Button>
+            )}
           </div>
         </div>
+
+        {/* Visual Checklist for Multiprofessional */}
+        <Card className="bg-muted/30 border-dashed">
+          <CardContent className="p-3">
+            <div className="flex flex-wrap items-center gap-4 text-[11px]">
+              <div className="flex items-center gap-1.5">
+                {pacienteId ? <CheckCircle className="w-3.5 h-3.5 text-green-600" /> : <AlertCircle className="w-3.5 h-3.5 text-slate-400" />}
+                <span>Paciente</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                {diagClinico && cid10 ? <CheckCircle className="w-3.5 h-3.5 text-green-600" /> : <AlertCircle className="w-3.5 h-3.5 text-slate-400" />}
+                <span>Diagnóstico</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                {tipoAlta && motivoAlta ? <CheckCircle className="w-3.5 h-3.5 text-green-600" /> : <AlertCircle className="w-3.5 h-3.5 text-slate-400" />}
+                <span>Tipo/Motivo Alta</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                {condicaoFuncional ? <CheckCircle className="w-3.5 h-3.5 text-green-600" /> : <AlertCircle className="w-3.5 h-3.5 text-slate-400" />}
+                <span>Condição Funcional</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                {profSections.filter(s => s.status === 'concluido' || s.status === 'assinado').length > 0 ? 
+                  <CheckCircle className="w-3.5 h-3.5 text-green-600" /> : <AlertCircle className="w-3.5 h-3.5 text-slate-400" />}
+                <span>Contribuição Equipe ({profSections.filter(s => s.status === 'concluido' || s.status === 'assinado').length}/{profSections.length})</span>
+              </div>
+              <Separator orientation="vertical" className="h-4" />
+              <div className="font-bold text-primary italic">
+                {validateMulti().length === 0 ? "Pronto para emitir" : `Faltam ${validateMulti().length} itens obrigatórios`}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
 
         {/* Patient selection */}
         <Card className="border-primary/20 shadow-sm">
@@ -1008,17 +1109,23 @@ const RelatorioAlta: React.FC = () => {
                       </div>
                       <div className="ml-4">
                         <Select value={s.status} onValueChange={v => updateProfSection(s.profissional_id, "status", v)}>
-                          <SelectTrigger className={`h-8 w-32 text-xs ${s.status === 'concluido' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'}`}>
+                          <SelectTrigger className={`h-8 w-40 text-xs ${
+                            s.status === 'assinado' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                            s.status === 'concluido' ? 'bg-green-50 text-green-700 border-green-200' : 
+                            'bg-yellow-50 text-yellow-700 border-yellow-200'
+                          }`}>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="pendente">Não iniciado</SelectItem>
                             <SelectItem value="preenchendo">Preenchendo</SelectItem>
                             <SelectItem value="concluido">Concluído</SelectItem>
+                            <SelectItem value="assinado">Concluído e Assinado</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                     </div>
+
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
@@ -1096,8 +1203,27 @@ const RelatorioAlta: React.FC = () => {
                       <Label className="text-xs font-semibold">Tecnologia Assistiva Concedida</Label>
                       <Input value={s.tecnologia_assistiva} onChange={e => updateProfSection(s.profissional_id, "tecnologia_assistiva", e.target.value)} placeholder="Órteses, próteses, cadeira de rodas..." className="h-8 text-sm" />
                     </div>
+                    {s.status === 'assinado' && (
+                      <div className="mt-2 flex items-center gap-2 p-2 bg-blue-50 border border-blue-100 rounded text-[10px] text-blue-700">
+                        <CheckCircle className="w-3 h-3" />
+                        Contribuição finalizada e assinada digitalmente por {s.assinado_por || s.profissional_nome} em {s.concluido_em ? fmt(s.concluido_em) : 'data não registrada'}.
+                      </div>
+                    )}
+                    {s.status !== 'assinado' && s.profissional_id === user?.id && (
+                      <div className="mt-2 flex justify-end">
+                        <Button size="sm" variant="outline" className="text-xs h-7 border-blue-200 text-blue-700 hover:bg-blue-50" onClick={() => {
+                          updateProfSection(s.profissional_id, "status", "assinado");
+                          updateProfSection(s.profissional_id, "concluido_em", new Date().toISOString());
+                          updateProfSection(s.profissional_id, "assinado_por", user?.nome);
+                          toast.success("Contribuição assinada com sucesso");
+                        }}>
+                          <CheckSquare className="w-3.5 h-3.5 mr-1.5" /> Assinar Contribuição
+                        </Button>
+                      </div>
+                    )}
                   </TabsContent>
                 ))}
+
 
 
               </Tabs>
@@ -1141,9 +1267,29 @@ const RelatorioAlta: React.FC = () => {
           </CardContent>
         </Card>
 
+        {/* Global Summary */}
+        <Card className="border-primary shadow-sm bg-primary/5">
+          <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
+            <CardTitle className="text-sm flex items-center gap-2"><Sparkles className="w-4 h-4 text-primary" /> Resumo Consolidado Final (Automático e Editável)</CardTitle>
+            <Button variant="ghost" size="sm" onClick={generateAutoSummaryMulti} className="text-xs h-7">
+               <History className="w-3.5 h-3.5 mr-1" /> Gerar do Percurso
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <Textarea 
+              value={resumoConsolidado} 
+              onChange={e => setResumoConsolidado(e.target.value)} 
+              rows={4} 
+              className="text-sm bg-white" 
+              placeholder="Síntese clínica final consolidada de toda a equipe..." 
+            />
+          </CardContent>
+        </Card>
+
         {/* Post-discharge plan */}
         <Card>
-          <CardHeader className="pb-3"><CardTitle className="text-sm flex items-center gap-2"><Send className="w-4 h-4" /> 5. Plano Pós-Alta</CardTitle></CardHeader>
+          <CardHeader className="pb-3"><CardTitle className="text-sm flex items-center gap-2"><Send className="w-4 h-4" /> 5. Plano Pós-Alta e Encaminhamentos</CardTitle></CardHeader>
+
           <CardContent className="space-y-4">
             <div>
               <Label className="text-xs">Orientações para Usuário e Família</Label>
@@ -1216,8 +1362,10 @@ const RelatorioAlta: React.FC = () => {
                  toast.error("Por favor, preencha os campos obrigatórios e valide o relatório antes de emitir.");
                  return;
                }
+               setStatus("emitido");
                handleSave("multi");
             }}>
+
               <CheckCircle className="w-4 h-4 mr-1.5" /> Finalizar e Salvar no Prontuário
             </Button>
           </div>
@@ -1230,16 +1378,72 @@ const RelatorioAlta: React.FC = () => {
   /* ═══ INDIVIDUAL ═══ */
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => setModo("selector")}><ArrowLeft className="w-5 h-5" /></Button>
-        <div>
-          <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
-            <User className="w-5 h-5 text-primary" />
-            Relatório de Alta — Individual
-          </h1>
-          <p className="text-xs text-muted-foreground">Relatório individual do profissional logado</p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => setModo("selector")}><ArrowLeft className="w-5 h-5" /></Button>
+          <div>
+            <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
+              <User className="w-5 h-5 text-primary" />
+              Relatório de Alta — Individual
+            </h1>
+            <p className="text-xs text-muted-foreground">Relatório individual do profissional logado</p>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-4">
+          <div className="text-right hidden md:block">
+             <p className="text-[10px] uppercase font-bold text-muted-foreground">Status do Relatório</p>
+             <div className="flex items-center gap-2 mt-0.5">
+                <Badge variant="outline" className={`
+                  ${status === 'emitido' ? 'bg-green-100 text-green-700 border-green-200' : 
+                    status === 'validado' ? 'bg-blue-100 text-blue-700 border-blue-200' :
+                    'bg-slate-100 text-slate-700 border-slate-200'}
+                `}>
+                  {status.toUpperCase()}
+                </Badge>
+                <span className="text-[10px] text-muted-foreground font-medium">V{versaoAtual}</span>
+             </div>
+          </div>
+          {status === 'emitido' && (
+            <Button variant="outline" size="sm" onClick={() => setIsReReabrindo(true)} className="text-xs h-8">
+              <History className="w-3.5 h-3.5 mr-1.5" /> Reabrir para Edição
+            </Button>
+          )}
         </div>
       </div>
+
+      {/* Visual Checklist for Individual */}
+      <Card className="bg-muted/30 border-dashed">
+        <CardContent className="p-3">
+          <div className="flex flex-wrap items-center gap-4 text-[11px]">
+            <div className="flex items-center gap-1.5">
+              {pacienteId ? <CheckCircle className="w-3.5 h-3.5 text-green-600" /> : <AlertCircle className="w-3.5 h-3.5 text-slate-400" />}
+              <span>Paciente</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              {indDiagCid && indCidDesc ? <CheckCircle className="w-3.5 h-3.5 text-green-600" /> : <AlertCircle className="w-3.5 h-3.5 text-slate-400" />}
+              <span>Diagnóstico</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              {indEvolucao && indObjetivos ? <CheckCircle className="w-3.5 h-3.5 text-green-600" /> : <AlertCircle className="w-3.5 h-3.5 text-slate-400" />}
+              <span>Evolução / Objetivos</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              {indMotivo ? <CheckCircle className="w-3.5 h-3.5 text-green-600" /> : <AlertCircle className="w-3.5 h-3.5 text-slate-400" />}
+              <span>Motivo Alta</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              {indResumoAuto ? <CheckCircle className="w-3.5 h-3.5 text-green-600" /> : <AlertCircle className="w-3.5 h-3.5 text-slate-400" />}
+              <span>Resumo Clínico</span>
+            </div>
+            <Separator orientation="vertical" className="h-4" />
+            <div className="font-bold text-primary italic">
+              {validateInd().length === 0 ? "Pronto para emitir" : `Faltam ${validateInd().length} itens obrigatórios`}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
 
       {/* Patient + Professional info */}
       <Card>
@@ -1391,9 +1595,31 @@ const RelatorioAlta: React.FC = () => {
       </Card>
 
 
+      {/* Global Summary */}
+      <Card className="border-primary shadow-sm bg-primary/5">
+        <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
+          <CardTitle className="text-sm flex items-center gap-2"><Sparkles className="w-4 h-4 text-primary" /> Resumo Clínico Consolidado (Automático e Editável)</CardTitle>
+          <Button variant="ghost" size="sm" onClick={generateAutoSummaryInd} className="text-xs h-7">
+             <History className="w-3.5 h-3.5 mr-1" /> Gerar do Registro
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <Textarea 
+            value={indResumoAuto} 
+            onChange={e => setIndResumoAuto(e.target.value)} 
+            rows={4} 
+            className="text-sm bg-white" 
+            placeholder="Síntese clínica final do acompanhamento..." 
+          />
+        </CardContent>
+      </Card>
+
       {/* Discharge */}
       <Card>
-        <CardHeader className="pb-3"><CardTitle className="text-sm">4. Alta e Orientações Finais</CardTitle></CardHeader>
+        <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
+          <CardTitle className="text-sm">4. Alta e Orientações Finais</CardTitle>
+        </CardHeader>
+
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -1476,15 +1702,60 @@ const RelatorioAlta: React.FC = () => {
                toast.error("Por favor, preencha os campos obrigatórios e valide o relatório antes de emitir.");
                return;
              }
+             setStatus("emitido");
              handleSave("individual");
           }}>
+
             <CheckCircle className="w-4 h-4 mr-1.5" /> Finalizar e Salvar no Prontuário
           </Button>
         </div>
       </div>
+
+      {/* Reopening Dialog */}
+      <Dialog open={isReabrindo} onOpenChange={setIsReReabrindo}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reabrir Relatório para Edição</DialogTitle>
+            <DialogDescription>
+              Relatórios emitidos são documentos oficiais. A reabertura criará uma nova versão e será registrada na auditoria.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Motivo da Reabertura</Label>
+              <Textarea 
+                value={motivoReabertura} 
+                onChange={e => setMotivoReabertura(e.target.value)}
+                placeholder="Descreva o motivo clínico ou administrativo para a alteração..."
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsReReabrindo(false)}>Cancelar</Button>
+            <Button disabled={!motivoReabertura} onClick={() => {
+              const novaVersao = versaoAtual + 1;
+              setHistoricoVersoes(prev => [...prev, {
+                versao: versaoAtual,
+                data: new Date().toISOString(),
+                usuario: user?.nome || "Desconhecido",
+                motivo: motivoReabertura,
+                tipo_registro: modo.toString() === 'multiprofissional' ? 'alta_multiprofissional' : 'alta_individual',
+                dados: {} // Here we would save previous state
+
+              }]);
+              setVersaoAtual(novaVersao);
+              setStatus("rascunho");
+              setIsReReabrindo(false);
+              setMotivoReabertura("");
+              toast.success(`Relatório reaberto. Versão ${novaVersao} iniciada.`);
+            }}>Confirmar Reabertura</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
 
 export default RelatorioAlta;
+
 
