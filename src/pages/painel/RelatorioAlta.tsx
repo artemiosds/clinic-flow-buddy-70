@@ -123,21 +123,31 @@ const RelatorioAlta: React.FC = () => {
   const [modalidades, setModalidades] = useState<string[]>([]);
   const [cid10, setCid10] = useState("");
   const [cidDesc, setCidDesc] = useState("");
+  const [cidSecundario, setCidSecundario] = useState("");
+  const [cidSecDesc, setCidSecDesc] = useState("");
+  const [diagClinico, setDiagClinico] = useState("");
   const [cifFuncoes, setCifFuncoes] = useState("");
   const [cifAtividades, setCifAtividades] = useState("");
   const [cifFatores, setCifFatores] = useState("");
   const [profSections, setProfSections] = useState<ProfSection[]>([]);
   const [motivoAlta, setMotivoAlta] = useState("");
   const [motivoDetalhe, setMotivoDetalhe] = useState("");
+  const [tipoAlta, setTipoAlta] = useState<string>("");
+  const [condicaoAdmissao, setCondicaoAdmissao] = useState("");
   const [condicaoFuncional, setCondicaoFuncional] = useState("");
   const [nivelIndep, setNivelIndep] = useState("");
   const [orientacoesUsuario, setOrientacoesUsuario] = useState("");
   const [orientacoesUbs, setOrientacoesUbs] = useState("");
+  const [orientacoesEscola, setOrientacoesEscola] = useState("");
   const [encaminhamentos, setEncaminhamentos] = useState<string[]>([]);
   const [freqAps, setFreqAps] = useState("");
   const [dataAlta, setDataAlta] = useState(new Date().toISOString().split("T")[0]);
   const [tabProf, setTabProf] = useState("");
-  const [status, setStatus] = useState<"rascunho" | "validado" | "emitido">("rascunho");
+  const [status, setStatus] = useState<"rascunho" | "preenchendo" | "aguardando" | "validado" | "emitido">("rascunho");
+  const [adesaoGlobal, setAdesaoGlobal] = useState<string>("boa");
+  const [objetivosGerais, setObjetivosGerais] = useState("");
+  const [metasMultiprofissionais, setMetasMultiprofissionais] = useState("");
+
 
   /* ── individual state ─── */
   const [indDiagCid, setIndDiagCid] = useState("");
