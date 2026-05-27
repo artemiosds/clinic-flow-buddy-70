@@ -12,7 +12,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   Activity, ClipboardList, Plus, Play, CheckCircle, 
   Loader2, Copy, ChevronRight, Calendar, Info, 
-  AlertTriangle, RotateCcw, X, Pencil, Eraser, ListOrdered, Link2, Unlink
+  AlertTriangle, RotateCcw, X, Pencil, Eraser, ListOrdered, Link2, Unlink, User
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -107,7 +107,10 @@ export const TreatmentTab: React.FC<Props> = ({ pacienteId, pacienteNome, onCycl
   const canControlSessions = isProfissional || user?.role === 'master';
 
   const loadData = useCallback(async () => {
-    if (!pacienteId) return;
+    if (!pacienteId) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const [cycleRes, ptsRes] = await Promise.all([
@@ -115,14 +118,20 @@ export const TreatmentTab: React.FC<Props> = ({ pacienteId, pacienteNome, onCycl
         supabase.from('pts').select('*').eq('patient_id', pacienteId).eq('status', 'ativo').order('created_at', { ascending: false }).limit(1).maybeSingle(),
       ]);
 
+      if (cycleRes.error) throw cycleRes.error;
+      if (ptsRes.error) throw ptsRes.error;
+
       setActiveCycle(cycleRes.data);
       setActivePts(ptsRes.data);
 
       if (cycleRes.data) {
         const [sessRes, agRes] = await Promise.all([
           supabase.from('treatment_sessions').select('*').eq('cycle_id', cycleRes.data.id).order('session_number', { ascending: true }),
-          supabase.from('agendamentos').select('id, data, hora, status, paciente_id, profissional_id, falta_justificada, regularizada').eq('paciente_id', pacienteId).not('status', 'in', '("cancelado")'),
+          supabase.from('agendamentos').select('id, data, hora, status, paciente_id, profissional_id, falta_justificada, regularizada').eq('paciente_id', pacienteId).not('status', 'eq', 'cancelado'),
         ]);
+
+        if (sessRes.error) throw sessRes.error;
+        if (agRes.error) throw agRes.error;
 
         setSessions(sessRes.data || []);
         
@@ -133,9 +142,13 @@ export const TreatmentTab: React.FC<Props> = ({ pacienteId, pacienteNome, onCycl
           agMap[ag.id] = ag;
         });
         setAgendamentoMap(agMap);
+      } else {
+        setSessions([]);
+        setAgendamentoMap({});
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error loading treatment data:', err);
+      toast.error("Erro ao carregar dados de tratamento: " + (err.message || "Erro desconhecido"));
     } finally {
       setLoading(false);
     }
@@ -198,6 +211,16 @@ export const TreatmentTab: React.FC<Props> = ({ pacienteId, pacienteNome, onCycl
   };
 
   if (loading) return <div className="flex items-center justify-center p-12"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+
+  if (!pacienteId) {
+    return (
+      <div className="p-8 text-center border-2 border-dashed rounded-2xl bg-muted/20">
+        <User className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+        <h3 className="font-bold text-foreground text-sm uppercase tracking-tight">Paciente não identificado</h3>
+        <p className="text-xs text-muted-foreground mt-1">Selecione um paciente para visualizar os tratamentos e PTS.</p>
+      </div>
+    );
+  }
 
   const progressPct = activeCycle ? Math.round((activeCycle.sessions_done / activeCycle.total_sessions) * 100) : 0;
   const salasDisponiveis = activeCycle ? (salas || []).filter((s: any) => s.unidadeId === activeCycle.unit_id && s.ativo) : [];
