@@ -1201,8 +1201,27 @@ const RelatorioAlta: React.FC = () => {
                       <Label className="text-xs font-semibold">Tecnologia Assistiva Concedida</Label>
                       <Input value={s.tecnologia_assistiva} onChange={e => updateProfSection(s.profissional_id, "tecnologia_assistiva", e.target.value)} placeholder="Órteses, próteses, cadeira de rodas..." className="h-8 text-sm" />
                     </div>
+                    {s.status === 'assinado' && (
+                      <div className="mt-2 flex items-center gap-2 p-2 bg-blue-50 border border-blue-100 rounded text-[10px] text-blue-700">
+                        <CheckCircle className="w-3 h-3" />
+                        Contribuição finalizada e assinada digitalmente por {s.assinado_por || s.profissional_nome} em {s.concluido_em ? fmt(s.concluido_em) : 'data não registrada'}.
+                      </div>
+                    )}
+                    {s.status !== 'assinado' && s.profissional_id === user?.id && (
+                      <div className="mt-2 flex justify-end">
+                        <Button size="sm" variant="outline" className="text-xs h-7 border-blue-200 text-blue-700 hover:bg-blue-50" onClick={() => {
+                          updateProfSection(s.profissional_id, "status", "assinado");
+                          updateProfSection(s.profissional_id, "concluido_em", new Date().toISOString());
+                          updateProfSection(s.profissional_id, "assinado_por", user?.nome);
+                          toast.success("Contribuição assinada com sucesso");
+                        }}>
+                          <CheckSquare className="w-3.5 h-3.5 mr-1.5" /> Assinar Contribuição
+                        </Button>
+                      </div>
+                    )}
                   </TabsContent>
                 ))}
+
 
 
               </Tabs>
