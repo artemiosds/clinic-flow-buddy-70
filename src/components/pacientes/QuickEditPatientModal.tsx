@@ -128,6 +128,14 @@ const QuickEditPatientModal: React.FC<Props> = ({ open, onOpenChange, pacienteId
     setForm((prev: any) => ({ ...prev, [field]: value }));
     setDirty(true);
   };
+
+  const setCustom = (key: string, value: any) => {
+    setForm((prev: any) => ({
+      ...prev,
+      custom_data: { ...(prev.custom_data || {}), [key]: value }
+    }));
+    setDirty(true);
+  };
   
   useEffect(() => {
     if (!dirty || !pacienteId || saving) return;
