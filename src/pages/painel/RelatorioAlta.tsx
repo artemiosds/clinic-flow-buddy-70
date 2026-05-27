@@ -999,32 +999,46 @@ const RelatorioAlta: React.FC = () => {
                 </TabsList>
                 {profSections.map(s => (
                   <TabsContent key={s.profissional_id} value={s.profissional_id} className="space-y-4 pt-4">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 bg-muted/30 p-3 rounded-lg text-sm border border-border/50">
-                      <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">Profissional</span><strong>{s.profissional_nome}</strong></div>
-                      <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">Profissão</span>{s.profissao || "—"}</div>
-                      <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">Período</span>{fmt(s.periodo_inicio)} a {fmt(s.periodo_fim)}</div>
-                      <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">Sessões</span><Badge variant="secondary" className="h-5 px-1.5">{s.sessoes}</Badge></div>
+                    <div className="flex items-center justify-between bg-muted/30 p-3 rounded-lg border border-border/50">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 flex-1">
+                        <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">Profissional</span><strong>{s.profissional_nome}</strong></div>
+                        <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">Profissão</span>{s.profissao || "—"}</div>
+                        <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">Período</span>{fmt(s.periodo_inicio)} a {fmt(s.periodo_fim)}</div>
+                        <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">Sessões</span><Badge variant="secondary" className="h-5 px-1.5">{s.sessoes}</Badge></div>
+                      </div>
+                      <div className="ml-4">
+                        <Select value={s.status} onValueChange={v => updateProfSection(s.profissional_id, "status", v)}>
+                          <SelectTrigger className={`h-8 w-32 text-xs ${s.status === 'concluido' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'}`}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="pendente">Não iniciado</SelectItem>
+                            <SelectItem value="preenchendo">Preenchendo</SelectItem>
+                            <SelectItem value="concluido">Concluído</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label className="text-xs font-semibold">Objetivos Terapêuticos Iniciais</Label>
+                        <Label className="text-xs font-semibold">Avaliação / Objetivos Específicos</Label>
                         <Textarea value={s.objetivos} onChange={e => updateProfSection(s.profissional_id, "objetivos", e.target.value)} rows={3} className="text-sm" />
                       </div>
                       <div>
-                        <Label className="text-xs font-semibold">Intervenções/Procedimentos Realizados</Label>
+                        <Label className="text-xs font-semibold">Intervenções e Recursos Utilizados</Label>
                         <Textarea value={s.intervencoes} onChange={e => updateProfSection(s.profissional_id, "intervencoes", e.target.value)} rows={3} className="text-sm" />
                       </div>
                     </div>
 
                     <div>
-                      <Label className="text-xs font-semibold">Evolução Clínica e Funcional</Label>
-                      <Textarea value={s.evolucao} onChange={e => updateProfSection(s.profissional_id, "evolucao", e.target.value)} rows={3} className="text-sm" />
+                      <Label className="text-xs font-semibold">Evolução Clínica e Funcional da Área</Label>
+                      <Textarea value={s.evolucao} onChange={e => updateProfSection(s.profissional_id, "evolucao", e.target.value)} rows={3} className="text-sm" placeholder="Principais avanços e limitações observadas..." />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                       <div>
-                        <Label className="text-xs font-semibold">Metas Atingidas</Label>
+                        <Label className="text-xs font-semibold">Status das Metas</Label>
                         <Select value={s.metas_status} onValueChange={v => updateProfSection(s.profissional_id, "metas_status", v)}>
                           <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
                           <SelectContent>
@@ -1040,20 +1054,19 @@ const RelatorioAlta: React.FC = () => {
                           />
                         )}
                       </div>
-                      <div>
-                        <Label className="text-xs font-semibold">Adesão ao Tratamento</Label>
-                        <Select value={s.adesao} onValueChange={v => updateProfSection(s.profissional_id, "adesao", v)}>
-                          <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                             {ADESAO_OPCOES.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label className="text-xs font-semibold block mb-2">Intercorrências</Label>
+                      <div className="md:col-span-2">
+                        <Label className="text-xs font-semibold block mb-2">Intercorrências e Adesão</Label>
+                        <div className="flex items-center gap-4 mb-2">
+                           <Select value={s.adesao} onValueChange={v => updateProfSection(s.profissional_id, "adesao", v)}>
+                             <SelectTrigger className="h-8 w-40 text-sm"><SelectValue placeholder="Adesão..." /></SelectTrigger>
+                             <SelectContent>
+                               {ADESAO_OPCOES.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                             </SelectContent>
+                           </Select>
+                        </div>
                         <div className="flex flex-wrap gap-2 p-2 border border-border/50 rounded-md bg-muted/20">
-                          {INTERCORRENCIAS_OPCOES.slice(0, 4).map(opt => (
-                            <label key={opt} className="flex items-center gap-1.5 text-[10px] cursor-pointer">
+                          {INTERCORRENCIAS_OPCOES.map(opt => (
+                            <label key={opt} className="flex items-center gap-1.5 text-[10px] cursor-pointer hover:bg-muted/50 p-1 rounded transition-colors">
                               <Checkbox 
                                 checked={s.intercorrencias?.includes(opt)}
                                 onCheckedChange={(checked) => {
@@ -1068,17 +1081,24 @@ const RelatorioAlta: React.FC = () => {
                       </div>
                     </div>
 
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                       <div>
+                         <Label className="text-xs font-semibold">Orientações Específicas da Área</Label>
+                         <Textarea value={s.orientacoes_especificas} onChange={e => updateProfSection(s.profissional_id, "orientacoes_especificas", e.target.value)} rows={2} className="text-sm" />
+                       </div>
+                       <div>
+                         <Label className="text-xs font-semibold">Encaminhamentos Específicos</Label>
+                         <Textarea value={s.encaminhamentos_especificos} onChange={e => updateProfSection(s.profissional_id, "encaminhamentos_especificos", e.target.value)} rows={2} className="text-sm" />
+                       </div>
+                    </div>
+
                     <div>
                       <Label className="text-xs font-semibold">Tecnologia Assistiva Concedida</Label>
-                      <Input value={s.tecnologia_assistiva} onChange={e => updateProfSection(s.profissional_id, "tecnologia_assistiva", e.target.value)} placeholder="Órteses, próteses, AASI, cadeira de rodas..." className="h-8 text-sm" />
-                    </div>
-                    
-                    <div className="flex items-center gap-2 p-2 bg-primary/5 border border-primary/10 rounded text-[10px] text-primary font-medium">
-                      <CheckCircle className="w-3.5 h-3.5" />
-                      Documento assinado digitalmente: {s.profissional_nome} — {s.conselho}
+                      <Input value={s.tecnologia_assistiva} onChange={e => updateProfSection(s.profissional_id, "tecnologia_assistiva", e.target.value)} placeholder="Órteses, próteses, cadeira de rodas..." className="h-8 text-sm" />
                     </div>
                   </TabsContent>
                 ))}
+
 
               </Tabs>
             </CardContent>
