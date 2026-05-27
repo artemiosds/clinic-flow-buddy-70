@@ -130,6 +130,11 @@ const RelatorioAlta: React.FC = () => {
   /* ── shared patient selection ─── */
   const [pacienteId, setPacienteId] = useState("");
   const paciente = useMemo(() => pacientes.find(p => p.id === pacienteId), [pacientes, pacienteId]);
+  const [relatorioId, setRelatorioId] = useState<string | null>(null);
+  const [versaoAtual, setVersaoAtual] = useState(1);
+  const [historicoVersoes, setHistoricoVersoes] = useState<RelatorioVersion[]>([]);
+  const [isReabrindo, setIsReReabrindo] = useState(false);
+  const [motivoReabertura, setMotivoReabertura] = useState("");
 
   /* ── multiprofissional state ─── */
   const [modalidades, setModalidades] = useState<string[]>([]);
@@ -159,6 +164,8 @@ const RelatorioAlta: React.FC = () => {
   const [adesaoGlobal, setAdesaoGlobal] = useState<string>("boa");
   const [objetivosGerais, setObjetivosGerais] = useState("");
   const [metasMultiprofissionais, setMetasMultiprofissionais] = useState("");
+  const [resumoConsolidado, setResumoConsolidado] = useState("");
+
 
 
   /* ── individual state ─── */
