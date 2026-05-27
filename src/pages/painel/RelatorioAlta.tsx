@@ -646,10 +646,15 @@ const RelatorioAlta: React.FC = () => {
         </PopoverTrigger>
         <PopoverContent className="w-[400px] p-0" align="start">
           <Command shouldFilter={false}>
-            <CommandInput 
-              placeholder="Digite o código ou descrição (mín. 3 letras)..." 
-              onValueChange={setCidSearch}
-            />
+            <div className="flex items-center border-b px-3">
+              <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+              <input 
+                className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                placeholder="Digite o código ou descrição (mín. 3 letras)..." 
+                value={cidSearch}
+                onChange={(e) => setCidSearch(e.target.value)}
+              />
+            </div>
             <CommandList>
               {isSearchingCid && <div className="p-4 text-center text-sm text-muted-foreground">Buscando...</div>}
               {!isSearchingCid && cidOptions.length === 0 && cidSearch.length >= 3 && <CommandEmpty>Nenhum CID encontrado.</CommandEmpty>}
@@ -672,6 +677,7 @@ const RelatorioAlta: React.FC = () => {
               </CommandGroup>
             </CommandList>
           </Command>
+
         </PopoverContent>
       </Popover>
     </div>
