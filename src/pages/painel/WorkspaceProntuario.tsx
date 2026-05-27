@@ -22,7 +22,7 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/componen
 import { 
   History, FileText, User, Activity, ArrowLeft, Save, Printer, 
   Stethoscope, ClipboardList, Clock, Search, UserCog, Stamp, Trash2,
-  Calendar, Info, AlertTriangle, FileDown, Users
+  Calendar, Info, AlertTriangle, FileDown, Users, Target
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { TIPO_REGISTRO_LABELS } from '@/utils/labels';
@@ -102,6 +102,7 @@ const WorkspaceProntuario: React.FC = () => {
     agendamento_id: agendamentoId || '',
     prescricao: '',
     solicitacao_exames: '',
+    pts_meta_id: '',
   });
 
   const { sections: prontuarioSections, loading: structureLoading } = useProntuarioStructure();
@@ -175,7 +176,7 @@ const WorkspaceProntuario: React.FC = () => {
     try {
       const [cycleRes, ptsRes] = await Promise.all([
         supabase.from('treatment_cycles').select('*').eq('patient_id', patientId).in('status', ['em_andamento', 'ativo']).order('created_at', { ascending: false }).limit(1).maybeSingle(),
-        supabase.from('pts').select('*').eq('patient_id', patientId).eq('status', 'ativo').order('created_at', { ascending: false }).limit(1).maybeSingle(),
+        supabase.from('pts').select('*, metas:pts_metas(*)').eq('patient_id', patientId).eq('status', 'ativo').order('created_at', { ascending: false }).limit(1).maybeSingle(),
       ]);
       setSessaoCycle(cycleRes.data);
       setSessaoPts(ptsRes.data);
@@ -533,6 +534,7 @@ const WorkspaceProntuario: React.FC = () => {
         procedimentos_texto: form.procedimentos_texto || '',
         outro_procedimento: form.outro_procedimento || '',
         tipo_registro: form.tipo_registro || 'consulta',
+        pts_meta_id: form.pts_meta_id || null,
         soap_subjetivo: form.soap_subjetivo || '',
         soap_objetivo: form.soap_objetivo || '',
         soap_avaliacao: form.soap_avaliacao || '',
@@ -938,6 +940,37 @@ const WorkspaceProntuario: React.FC = () => {
 
                   <TabsContent value="evolution" className="mt-0 space-y-6" forceMount>
                     <div className={cn("space-y-6", activeTab !== 'evolution' && "hidden")}>
+                      {sessaoPts && sessaoPts.metas?.length > 0 && (
+                        <Card className="border-purple-100 bg-purple-50/20 shadow-sm animate-in fade-in slide-in-from-top-4 duration-500">
+                          <CardContent className="p-4 space-y-3">
+                            <div className="flex items-center gap-2 mb-1">
+                              <Target className="w-4 h-4 text-purple-600" />
+                              <Label className="font-bold text-xs uppercase text-purple-700 tracking-wider">Meta Trabalhada nesta Evolução</Label>
+                            </div>
+                            <Select 
+                              value={form.pts_meta_id || 'no_meta'} 
+                              onValueChange={(v) => handleFormChange({ pts_meta_id: v === 'no_meta' ? '' : v })}
+                            >
+                              <SelectTrigger className="bg-background border-purple-200">
+                                <SelectValue placeholder="Selecione a meta do PTS..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="no_meta">Nenhuma meta específica</SelectItem>
+                                {sessaoPts.metas.map((m: any) => (
+                                  <SelectItem key={m.id} value={m.id}>
+                                    <div className="flex flex-col items-start gap-0.5">
+                                      <span className="font-bold text-xs">{m.titulo}</span>
+                                      <span className="text-[10px] text-muted-foreground">{m.especialidade} • {m.categoria}</span>
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <p className="text-[10px] text-purple-600/70 italic">Relacionar a evolução a uma meta facilita o acompanhamento do progresso clínico no PTS.</p>
+                          </CardContent>
+                        </Card>
+                      )}
+
                       {/* View-only Acolhimento if exists and in Evolution tab */}
                       {(acolhimentoData || (acolhimentoDraft && Object.keys(acolhimentoDraft).length > 0)) && (
                         <div className="animate-in fade-in slide-in-from-top-4 duration-500">

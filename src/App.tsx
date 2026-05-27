@@ -237,6 +237,7 @@ const App = () => (
                     <Route path="enfermagem" element={<ModuleRoute modulo="avaliacao_enfermagem"><AvaliacaoEnfermagem /></ModuleRoute>} />
                     <Route path="avaliacao_enfermagem" element={<Navigate to="/painel/enfermagem" replace />} />
                     <Route path="pts" element={<ModuleRoute modulo="pts"><PTSPage /></ModuleRoute>} />
+                    <Route path="pts/:id" element={<ModuleRoute modulo="pts"><PTSPage /></ModuleRoute>} />
                     <Route path="multiprofissional" element={<ModuleRoute modulo="avaliacao_multi"><AvaliacaoMultiprofissional /></ModuleRoute>} />
                     <Route path="configuracoes" element={<ModuleRoute modulo="configuracoes" masterOnly><Configuracoes /></ModuleRoute>} />
                     <Route path="permissoes" element={<ModuleRoute modulo="permissoes" masterOnly><Permissoes /></ModuleRoute>} />
