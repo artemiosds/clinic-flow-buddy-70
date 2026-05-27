@@ -24,7 +24,7 @@ function highlight(text: string, q: string) {
   );
 }
 
-export function BuscaProcedimento({ onChange, profissao, placeholder = "Buscar procedimento por nome ou código SIGTAP..." }: BuscaProcedimentoProps) {
+export function BuscaProcedimento({ onChange, profissao, placeholder = "Buscar em toda a base SIGTAP (nome ou código)..." }: BuscaProcedimentoProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<ProcedimentoDB[]>([]);
   const [loading, setLoading] = useState(false);
