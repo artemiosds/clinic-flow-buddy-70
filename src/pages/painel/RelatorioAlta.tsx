@@ -1144,27 +1144,6 @@ const RelatorioAlta: React.FC = () => {
         </CardContent>
       </Card>
 
-          </div>
-          <div>
-            <Label className="text-xs">Metas Atingidas</Label>
-            <Select value={indMetas} onValueChange={v => setIndMetas(v as any)}>
-              <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="totalmente">Totalmente atingidas</SelectItem>
-                <SelectItem value="parcialmente">Parcialmente atingidas</SelectItem>
-                <SelectItem value="nao_atingidas">Não atingidas</SelectItem>
-              </SelectContent>
-            </Select>
-            {indMetas !== "totalmente" && (
-              <Textarea value={indMetasJust} onChange={e => setIndMetasJust(e.target.value)} placeholder="Justificativa obrigatória..." rows={2} className="text-sm mt-2" />
-            )}
-          </div>
-          <div>
-            <Label className="text-xs">Tecnologia Assistiva Concedida</Label>
-            <Input value={indTA} onChange={e => setIndTA(e.target.value)} placeholder="Órteses, próteses, AASI..." className="h-8 text-sm" />
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Discharge */}
       <Card>
