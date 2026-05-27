@@ -107,7 +107,10 @@ export const TreatmentTab: React.FC<Props> = ({ pacienteId, pacienteNome, onCycl
   const canControlSessions = isProfissional || user?.role === 'master';
 
   const loadData = useCallback(async () => {
-    if (!pacienteId) return;
+    if (!pacienteId) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const [cycleRes, ptsRes] = await Promise.all([
