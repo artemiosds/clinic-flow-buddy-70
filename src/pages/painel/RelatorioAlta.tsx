@@ -467,7 +467,9 @@ const RelatorioAlta: React.FC = () => {
             </div>
           </div>
           ${s.tecnologia_assistiva ? `<div class="field"><span class="field-label">Tecnologia Assistiva Concedida:</span><div class="field-value">${s.tecnologia_assistiva}</div></div>` : ""}
-          
+          ${s.orientacoes_especificas ? `<div class="field"><span class="field-label">Orientações Específicas:</span><div class="field-value">${s.orientacoes_especificas}</div></div>` : ""}
+          ${s.encaminhamentos_especificos ? `<div class="field"><span class="field-label">Encaminhamentos Específicos:</span><div class="field-value">${s.encaminhamentos_especificos}</div></div>` : ""}
+
           <div class="doc-sign-footer" style="margin-top: 15px; display: flex; justify-content: space-between; align-items: flex-end;">
             <div class="signature" style="flex: 1; text-align: left;">
               <div class="signature-line" style="width: 200px; border-top: 1px solid #000; margin-bottom: 3px;"></div>
@@ -485,7 +487,11 @@ const RelatorioAlta: React.FC = () => {
     const motivoLabel = MOTIVOS_ALTA.find(m => m.value === motivoAlta)?.label || motivoAlta;
     html += `
       <div class="section">
-        <div class="section-title">3. Motivo da Alta e Condição Final</div>
+        <div class="section-title">4. Conclusão Multiprofissional e Condição na Alta</div>
+        <div class="field">
+          <span class="field-label">Tipo de Alta:</span>
+          <div class="field-value">${tipoAlta || "—"}</div>
+        </div>
         <div class="field">
           <span class="field-label">Motivo da Alta:</span>
           <div class="field-value">${motivoLabel}${motivoDetalhe ? ` — ${motivoDetalhe}` : ""}</div>
@@ -501,10 +507,14 @@ const RelatorioAlta: React.FC = () => {
       </div>
 
       <div class="section">
-        <div class="section-title">4. Orientações e Encaminhamentos</div>
+        <div class="section-title">5. Plano de Cuidados e Orientações Pós-Alta</div>
         ${orientacoesUsuario ? `<div class="field"><span class="field-label">Orientações ao Usuário/Família:</span><div class="field-value">${orientacoesUsuario}</div></div>` : ""}
         ${orientacoesUbs ? `<div class="field"><span class="field-label">Orientações para UBS/ESF:</span><div class="field-value">${orientacoesUbs}</div></div>` : ""}
+        ${orientacoesEscola ? `<div class="field"><span class="field-label">Orientações para Escola/Outros:</span><div class="field-value">${orientacoesEscola}</div></div>` : ""}
         ${encaminhamentos.length > 0 ? `<div class="field"><span class="field-label">Encaminhamentos Efetuados:</span><div class="field-value">${encaminhamentos.join(", ")}</div></div>` : ""}
+        ${freqAps ? `<div class="field"><span class="field-label">Frequência Recomendada na APS:</span><div class="field-value">${freqAps}</div></div>` : ""}
+      </div>
+
         ${freqAps ? `<div class="field"><span class="field-label">Frequência Recomendada na APS:</span><div class="field-value">${freqAps}</div></div>` : ""}
       </div>
 
