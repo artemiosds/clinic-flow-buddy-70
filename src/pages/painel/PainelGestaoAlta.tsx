@@ -852,8 +852,3 @@ const PainelGestaoAlta: React.FC = () => {
 };
 
 export default PainelGestaoAlta;
-    </div>
-  );
-};
-
-export default PainelGestaoAlta;
