@@ -9,14 +9,19 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Plus, AlertTriangle, Trash2 } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Loader2, Plus, AlertTriangle, Trash2, ClipboardList, Target, Zap, CheckCircle2, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-
-const SPECIALTIES = [
-  'Fisioterapia', 'Fonoaudiologia', 'Psicologia', 'Terapia Ocupacional',
-  'Neuropsicologia', 'Psicopedagogia', 'Nutrição', 'Serviço Social', 'Enfermagem',
-];
+import { ptsService, type PTSMeta } from '@/services/ptsService';
+import { PTSMetaForm } from './PTSMetaForm';
+import { 
+  PTS_PRIORITIES, 
+  PTS_CONTEXTS, 
+  PTS_ATTENDANCE_TYPES, 
+  SPECIALTIES, 
+  DEFAULT_METAS_BY_SPECIALTY 
+} from '@/data/ptsConstants';
 
 const SPECIALTY_TO_SIGTAP: Record<string, string> = {
   'Fisioterapia': 'fisioterapia',
@@ -36,29 +41,6 @@ interface CreatePTSModalProps {
   onSuccess?: () => void;
 }
 
-interface SigtapProcedimento {
-  id: string;
-  codigo: string;
-  nome: string;
-  especialidade: string;
-}
-
-interface SigtapCid {
-  cid_codigo: string;
-  cid_descricao: string;
-}
-
-interface SelectedSigtap {
-  procedimento_codigo: string;
-  procedimento_nome: string;
-  especialidade: string;
-}
-
-interface SelectedCid {
-  cid_codigo: string;
-  cid_descricao: string;
-}
-
 export const CreatePTSModal: React.FC<CreatePTSModalProps> = ({
   open,
   onOpenChange,
@@ -67,37 +49,72 @@ export const CreatePTSModal: React.FC<CreatePTSModalProps> = ({
   onSuccess
 }) => {
   const { user } = useAuth();
-  const { logAction } = useData();
+  const { logAction, funcionarios } = useData();
   const [saving, setSaving] = useState(false);
   const [loadingProcs, setLoadingProcs] = useState(false);
-  const [loadingCids, setLoadingCids] = useState(false);
+  const [activeTab, setActiveTab] = useState('contexto');
   
   const [form, setForm] = useState({
     diagnostico_funcional: '',
     objetivos_terapeuticos: '',
-    metas_curto_prazo: '',
-    metas_medio_prazo: '',
-    metas_longo_prazo: '',
     especialidades_envolvidas: [] as string[],
+    prioridade: 'media',
+    contextos_afetados: [] as string[],
+    fatores_risco_vulnerabilidade: '',
+    rede_apoio: '',
+    tipo_atendimento: [] as string[],
+    necessidade_interdisciplinar: false,
+    motivo_encaminhamento: '',
+    barreiras: '',
+    potencialidades: '',
+    objetivos_especificos: '',
+    plano_conduta: '',
+    data_proxima_revisao: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    revisao_obrigatoria: true,
+    ciencia_familia: false,
   });
 
-  const [sigtapProcs, setSigtapProcs] = useState<SigtapProcedimento[]>([]);
+  const [metas, setMetas] = useState<PTSMeta[]>([]);
+  const [sigtapProcs, setSigtapProcs] = useState<any[]>([]);
   const [selectedProcCodigo, setSelectedProcCodigo] = useState('');
-  const [validCids, setValidCids] = useState<SigtapCid[]>([]);
-  const [cidSearch, setCidSearch] = useState('');
-  const [cidWarning, setCidWarning] = useState(false);
-  const [sigtapSelecionados, setSigtapSelecionados] = useState<SelectedSigtap[]>([]);
-  const [cidsSelecionados, setCidsSelecionados] = useState<SelectedCid[]>([]);
+  const [sigtapSelecionados, setSigtapSelecionados] = useState<any[]>([]);
+  const [cidsSelecionados, setCidsSelecionados] = useState<any[]>([]);
 
   const isMaster = user?.role === 'master';
-  const isFisioterapeuta = useMemo(() => {
-    const prof = (user?.profissao || '').toLowerCase();
-    return prof.includes('fisioterap') || prof.includes('fisio');
-  }, [user]);
+  const isProfissional = user?.role === 'profissional';
+
+  // Sugerir metas ao selecionar especialidades
+  useEffect(() => {
+    if (form.especialidades_envolvidas.length === 0) return;
+    
+    const lastSpec = form.especialidades_envolvidas[form.especialidades_envolvidas.length - 1];
+    const suggestions = DEFAULT_METAS_BY_SPECIALTY[lastSpec] || [];
+    
+    if (suggestions.length > 0) {
+      const existingTitles = metas.map(m => m.titulo);
+      const newMetas = suggestions
+        .filter(title => !existingTitles.includes(title))
+        .map(title => ({
+          titulo: title,
+          descricao: '',
+          categoria: 'curto',
+          especialidade: lastSpec,
+          prioridade: 'media',
+          status: 'nao_iniciado',
+          indicador_sucesso: '',
+          observacoes: ''
+        }));
+      
+      if (newMetas.length > 0) {
+        setMetas(prev => [...prev, ...newMetas]);
+        toast.info(`Sugeridas ${newMetas.length} metas para ${lastSpec}`);
+      }
+    }
+  }, [form.especialidades_envolvidas]);
 
   // Load SIGTAP procedures based on selected specialties
   useEffect(() => {
-    if (!open || (!isFisioterapeuta && !isMaster)) return;
+    if (!open) return;
     
     const loadProcs = async () => {
       setLoadingProcs(true);
@@ -107,7 +124,7 @@ export const CreatePTSModal: React.FC<CreatePTSModalProps> = ({
         if (sigtapKeys.length > 0) {
           query = query.in('especialidade', sigtapKeys);
         } else {
-          query = query.limit(100);
+          query = query.limit(50);
         }
         const { data } = await query.order('codigo');
         setSigtapProcs(data || []);
@@ -116,22 +133,7 @@ export const CreatePTSModal: React.FC<CreatePTSModalProps> = ({
       }
     };
     loadProcs();
-  }, [open, form.especialidades_envolvidas, isFisioterapeuta, isMaster]);
-
-  // Load CIDs when procedure is selected
-  useEffect(() => {
-    if (!selectedProcCodigo) { setValidCids([]); return; }
-    setLoadingCids(true);
-    supabase
-      .from('sigtap_procedimento_cids')
-      .select('cid_codigo, cid_descricao')
-      .eq('procedimento_codigo', selectedProcCodigo)
-      .order('cid_codigo')
-      .then(({ data }) => {
-        setValidCids(data || []);
-        setLoadingCids(false);
-      });
-  }, [selectedProcCodigo]);
+  }, [open, form.especialidades_envolvidas]);
 
   const toggleSpec = (spec: string) => {
     setForm(p => {
@@ -140,6 +142,47 @@ export const CreatePTSModal: React.FC<CreatePTSModalProps> = ({
         : [...p.especialidades_envolvidas, spec];
       return { ...p, especialidades_envolvidas: newSpecs };
     });
+  };
+
+  const toggleContext = (ctx: string) => {
+    setForm(p => {
+      const newCtx = p.contextos_afetados.includes(ctx)
+        ? p.contextos_afetados.filter(c => c !== ctx)
+        : [...p.contextos_afetados, ctx];
+      return { ...p, contextos_afetados: newCtx };
+    });
+  };
+
+  const toggleAttendance = (type: string) => {
+    setForm(p => {
+      const newTypes = p.tipo_atendimento.includes(type)
+        ? p.tipo_atendimento.filter(t => t !== type)
+        : [...p.tipo_atendimento, type];
+      return { ...p, tipo_atendimento: newTypes };
+    });
+  };
+
+  const addMeta = () => {
+    setMetas(prev => [...prev, {
+      titulo: '',
+      descricao: '',
+      categoria: 'curto',
+      especialidade: form.especialidades_envolvidas[0] || '',
+      prioridade: 'media',
+      status: 'nao_iniciado',
+      indicador_sucesso: '',
+      observacoes: ''
+    }]);
+  };
+
+  const updateMeta = (index: number, updated: PTSMeta) => {
+    const newMetas = [...metas];
+    newMetas[index] = updated;
+    setMetas(newMetas);
+  };
+
+  const removeMeta = (index: number) => {
+    setMetas(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleAddSigtap = () => {
@@ -154,44 +197,35 @@ export const CreatePTSModal: React.FC<CreatePTSModalProps> = ({
     setSelectedProcCodigo('');
   };
 
-  const handleAddCid = (cid: SigtapCid) => {
-    if (cidsSelecionados.some(c => c.cid_codigo === cid.cid_codigo)) return;
-    setCidsSelecionados(prev => [...prev, { cid_codigo: cid.cid_codigo, cid_descricao: cid.cid_descricao }]);
-    setCidSearch('');
-  };
-
   const handleSave = async () => {
     if (!pacienteId || !form.diagnostico_funcional || !form.objetivos_terapeuticos) {
-      toast.error('Preencha os campos obrigatórios.');
+      toast.error('Preencha os campos obrigatórios (Diagnóstico e Objetivos).');
+      setActiveTab('contexto');
       return;
     }
+
+    if (metas.length === 0) {
+      toast.error('Adicione pelo menos uma meta ao PTS.');
+      setActiveTab('metas');
+      return;
+    }
+
     setSaving(true);
     try {
-      const { data: newPts, error } = await supabase.from('pts').insert({
-        patient_id: pacienteId,
-        professional_id: user?.id,
-        unit_id: user?.unidadeId,
-        diagnostico_funcional: form.diagnostico_funcional,
-        objetivos_terapeuticos: form.objetivos_terapeuticos,
-        metas_curto_prazo: form.metas_curto_prazo,
-        metas_medio_prazo: form.metas_medio_prazo,
-        metas_longo_prazo: form.metas_longo_prazo,
-        especialidades_envolvidas: form.especialidades_envolvidas,
-        status: 'ativo'
-      }).select('id').single();
+      const ptsId = await ptsService.createPTS(
+        {
+          ...form,
+          patient_id: pacienteId,
+          professional_id: user?.id,
+          unit_id: user?.unidadeId,
+          status: 'ativo'
+        },
+        metas,
+        sigtapSelecionados,
+        cidsSelecionados
+      );
 
-      if (error) throw error;
-
-      // Relationships
-      if (sigtapSelecionados.length > 0) {
-        await supabase.from('pts_sigtap').insert(sigtapSelecionados.map(s => ({ ...s, pts_id: newPts.id })));
-      }
-      if (cidsSelecionados.length > 0) {
-        await supabase.from('pts_cid').insert(cidsSelecionados.map(c => ({ ...c, pts_id: newPts.id })));
-      }
-
-      // Prontuario entry
-      const procInfo = sigtapSelecionados.map(s => `${s.procedimento_codigo}`).join(', ');
+      // Prontuario entry for audit/history
       await supabase.from('prontuarios').insert({
         paciente_id: pacienteId,
         paciente_nome: pacienteNome,
@@ -201,163 +235,338 @@ export const CreatePTSModal: React.FC<CreatePTSModalProps> = ({
         data_atendimento: new Date().toISOString().split('T')[0],
         hora_atendimento: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
         tipo_registro: 'pts',
-        queixa_principal: 'Projeto Terapêutico Singular',
-        anamnese: form.diagnostico_funcional,
-        hipotese: form.objetivos_terapeuticos,
-        conduta: `Curto: ${form.metas_curto_prazo}\nMédio: ${form.metas_medio_prazo}\nLongo: ${form.metas_longo_prazo}`,
-        observacoes: `SIGTAP: ${procInfo}`,
+        queixa_principal: 'Criação de PTS Estruturado',
+        anamnese: `Diagnóstico: ${form.diagnostico_funcional}\nContextos: ${form.contextos_afetados.join(', ')}`,
+        hipotese: `Objetivo: ${form.objetivos_terapeuticos}`,
+        conduta: `Plano: ${form.plano_conduta}\nMetas: ${metas.length} metas definidas.`,
       });
 
       await logAction({
-        acao: 'criar_pts',
+        acao: 'criar_pts_estruturado',
         entidade: 'pts',
-        entidadeId: newPts.id,
+        entidadeId: ptsId,
         modulo: 'pts',
         user,
-        detalhes: { paciente_id: pacienteId }
+        detalhes: { paciente_id: pacienteId, metas_count: metas.length }
       });
 
-      toast.success('PTS criado com sucesso!');
+      toast.success('Projeto Terapêutico Singular criado com sucesso!');
       onSuccess?.();
       onOpenChange(false);
     } catch (err: any) {
-      toast.error(err.message || 'Erro ao salvar');
+      console.error(err);
+      toast.error(err.message || 'Erro ao salvar PTS');
     } finally {
       setSaving(false);
     }
   };
 
-  const filteredCids = useMemo(() => {
-    if (!cidSearch.trim()) return validCids.slice(0, 10);
-    const q = cidSearch.toUpperCase();
-    return validCids.filter(c => c.cid_codigo.includes(q) || c.cid_descricao.toUpperCase().includes(q)).slice(0, 20);
-  }, [validCids, cidSearch]);
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Novo Projeto Terapêutico Singular (PTS)</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4 py-4">
-          <div className="p-3 bg-muted rounded-lg border">
-            <Label className="text-xs uppercase font-bold text-muted-foreground">Paciente</Label>
-            <p className="font-semibold">{pacienteNome}</p>
+      <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto p-0">
+        <div className="p-6 pb-0">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-2xl">
+              <ClipboardList className="w-6 h-6 text-primary" />
+              Evolução do Projeto Terapêutico Singular (PTS)
+            </DialogTitle>
+          </DialogHeader>
+        </div>
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <div className="px-6 border-b bg-muted/20">
+            <TabsList className="bg-transparent h-12 gap-6 p-0">
+              <TabsTrigger value="contexto" className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-0 gap-2">
+                <Info className="w-4 h-4" /> Contexto
+              </TabsTrigger>
+              <TabsTrigger value="clinico" className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-0 gap-2">
+                <Zap className="w-4 h-4" /> Clínico
+              </TabsTrigger>
+              <TabsTrigger value="metas" className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-0 gap-2">
+                <Target className="w-4 h-4" /> Metas
+              </TabsTrigger>
+              <TabsTrigger value="execucao" className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-0 gap-2">
+                <CheckCircle2 className="w-4 h-4" /> Execução
+              </TabsTrigger>
+            </TabsList>
           </div>
 
-          <div className="space-y-2">
-            <Label>Especialidades Envolvidas</Label>
-            <div className="flex flex-wrap gap-x-4 gap-y-2">
-              {SPECIALTIES.map(spec => (
-                <label key={spec} className="flex items-center gap-2 text-sm cursor-pointer">
-                  <Checkbox 
-                    checked={form.especialidades_envolvidas.includes(spec)}
-                    onCheckedChange={() => toggleSpec(spec)}
-                  />
-                  {spec}
-                </label>
-              ))}
-            </div>
-          </div>
+          <div className="p-6">
+            <TabsContent value="contexto" className="space-y-6 mt-0">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div className="p-3 bg-primary/5 rounded-lg border border-primary/10">
+                    <Label className="text-[10px] uppercase font-black text-primary tracking-widest">Paciente</Label>
+                    <p className="font-bold text-lg">{pacienteNome}</p>
+                  </div>
 
-          {(isFisioterapeuta || isMaster) && (
-            <div className="p-4 border rounded-lg bg-muted/30 space-y-3">
-              <Label className="text-sm font-bold flex items-center gap-2">
-                📋 Procedimentos SIGTAP {loadingProcs && <Loader2 className="w-3 h-3 animate-spin" />}
-              </Label>
-              <div className="flex gap-2">
-                <Select value={selectedProcCodigo} onValueChange={setSelectedProcCodigo}>
-                  <SelectTrigger className="flex-1 bg-background">
-                    <SelectValue placeholder="Selecione um procedimento..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sigtapProcs.map(p => (
-                      <SelectItem key={p.codigo} value={p.codigo}>
-                        <span className="font-mono text-xs mr-2">{p.codigo}</span>
-                        {p.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button size="sm" onClick={handleAddSigtap} disabled={!selectedProcCodigo}>Adicionar</Button>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-bold">Motivo do Encaminhamento</Label>
+                    <Textarea 
+                      placeholder="Por que o paciente foi encaminhado para o PTS?" 
+                      value={form.motivo_encaminhamento}
+                      onChange={e => setForm(p => ({ ...p, motivo_encaminhamento: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-sm font-bold">Prioridade do Caso</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {PTS_PRIORITIES.map(p => (
+                        <Button
+                          key={p.value}
+                          type="button"
+                          variant={form.prioridade === p.value ? 'default' : 'outline'}
+                          size="sm"
+                          className={form.prioridade === p.value ? '' : 'text-muted-foreground'}
+                          onClick={() => setForm(prev => ({ ...prev, prioridade: p.value }))}
+                        >
+                          {p.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-bold">Contextos Afetados</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {PTS_CONTEXTS.map(ctx => (
+                        <label key={ctx.id} className="flex items-center gap-2 p-2 border rounded-md hover:bg-muted/50 cursor-pointer transition-colors">
+                          <Checkbox 
+                            checked={form.contextos_afetados.includes(ctx.id)}
+                            onCheckedChange={() => toggleContext(ctx.id)}
+                          />
+                          <span className="text-xs font-medium">{ctx.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-sm font-bold">Rede de Apoio</Label>
+                    <Textarea 
+                      placeholder="Família, escola, comunidade..." 
+                      rows={2}
+                      value={form.rede_apoio}
+                      onChange={e => setForm(p => ({ ...p, rede_apoio: e.target.value }))}
+                    />
+                  </div>
+                </div>
               </div>
 
-              {sigtapSelecionados.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {sigtapSelecionados.map(s => (
-                    <Badge key={s.procedimento_codigo} variant="secondary" className="pr-1 gap-1">
-                      {s.procedimento_codigo}
-                      <Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => setSigtapSelecionados(p => p.filter(x => x.procedimento_codigo !== s.procedimento_codigo))}>
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </Badge>
+              <div className="space-y-2">
+                <Label className="text-sm font-bold">Fatores de Risco / Vulnerabilidade</Label>
+                <Textarea 
+                  placeholder="Situações que podem comprometer o tratamento..." 
+                  value={form.fatores_risco_vulnerabilidade}
+                  onChange={e => setForm(p => ({ ...p, fatores_risco_vulnerabilidade: e.target.value }))}
+                />
+              </div>
+            </TabsContent>
+
+            <TabsContent value="clinico" className="space-y-6 mt-0">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-bold">Diagnóstico Funcional Global *</Label>
+                    <Textarea 
+                      rows={4} 
+                      placeholder="Descreva o estado funcional e as necessidades principais..."
+                      value={form.diagnostico_funcional}
+                      onChange={e => setForm(p => ({ ...p, diagnostico_funcional: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-bold">Potencialidades do Paciente</Label>
+                    <Textarea 
+                      rows={3} 
+                      placeholder="Habilidades e pontos fortes do paciente..."
+                      value={form.potencialidades}
+                      onChange={e => setForm(p => ({ ...p, potencialidades: e.target.value }))}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-bold">Objetivos Terapêuticos Gerais *</Label>
+                    <Textarea 
+                      rows={4} 
+                      placeholder="Onde queremos chegar com este PTS?"
+                      value={form.objetivos_terapeuticos}
+                      onChange={e => setForm(p => ({ ...p, objetivos_terapeuticos: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-bold">Barreiras e Dificuldades</Label>
+                    <Textarea 
+                      rows={3} 
+                      placeholder="O que pode dificultar o progresso?"
+                      value={form.barreiras}
+                      onChange={e => setForm(p => ({ ...p, barreiras: e.target.value }))}
+                    />
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="metas" className="space-y-4 mt-0">
+              <div className="flex items-center justify-between">
+                <h4 className="font-bold flex items-center gap-2">
+                  <Target className="w-4 h-4 text-primary" />
+                  Metas Estruturadas ({metas.length})
+                </h4>
+                <Button size="sm" onClick={addMeta} variant="outline" className="gap-2">
+                  <Plus className="w-4 h-4" /> Adicionar Meta
+                </Button>
+              </div>
+
+              {metas.length === 0 ? (
+                <div className="py-12 border-2 border-dashed rounded-xl flex flex-col items-center justify-center text-muted-foreground bg-muted/10">
+                  <Target className="w-10 h-10 mb-3 opacity-20" />
+                  <p className="text-sm">Nenhuma meta adicionada. Selecione especialidades para receber sugestões.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {metas.map((meta, index) => (
+                    <PTSMetaForm 
+                      key={index} 
+                      meta={meta} 
+                      professionals={funcionarios}
+                      onChange={(updated) => updateMeta(index, updated)}
+                      onRemove={() => removeMeta(index)}
+                    />
                   ))}
                 </div>
               )}
+            </TabsContent>
 
-              {selectedProcCodigo && (
-                <div className="space-y-2 border-t pt-2 mt-2">
-                  <Label className="text-xs">Buscar CID relacionado</Label>
-                  <Input 
-                    placeholder="Código ou nome do CID..." 
-                    value={cidSearch} 
-                    onChange={e => setCidSearch(e.target.value)} 
-                    className="h-8 text-xs bg-background"
-                  />
-                  {cidSearch.trim() && (
-                    <div className="border rounded bg-background max-h-32 overflow-y-auto divide-y">
-                      {filteredCids.map(c => (
-                        <button key={c.cid_codigo} onClick={() => handleAddCid(c)} className="w-full text-left px-2 py-1.5 text-xs hover:bg-accent flex justify-between">
-                          <span className="font-bold">{c.cid_codigo}</span>
-                          <span className="truncate flex-1 ml-2 text-muted-foreground">{c.cid_descricao}</span>
-                        </button>
+            <TabsContent value="execucao" className="space-y-6 mt-0">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-bold">Especialidades Envolvidas</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {SPECIALTIES.map(spec => (
+                        <label key={spec} className="flex items-center gap-2 p-2 border rounded-md hover:bg-muted/50 cursor-pointer transition-colors">
+                          <Checkbox 
+                            checked={form.especialidades_envolvidas.includes(spec)}
+                            onCheckedChange={() => toggleSpec(spec)}
+                          />
+                          <span className="text-xs font-medium">{spec}</span>
+                        </label>
                       ))}
                     </div>
-                  )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-sm font-bold">Tipo de Atendimento</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {PTS_ATTENDANCE_TYPES.map(type => (
+                        <label key={type.id} className="flex items-center gap-2 p-2 border rounded-md hover:bg-muted/50 cursor-pointer transition-colors">
+                          <Checkbox 
+                            checked={form.tipo_atendimento.includes(type.id)}
+                            onCheckedChange={() => toggleAttendance(type.id)}
+                          />
+                          <span className="text-xs font-medium">{type.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg border">
+                    <Checkbox 
+                      id="interdisciplinary" 
+                      checked={form.necessidade_interdisciplinar}
+                      onCheckedChange={(v) => setForm(p => ({ ...p, necessidade_interdisciplinar: !!v }))}
+                    />
+                    <Label htmlFor="interdisciplinary" className="text-sm cursor-pointer">Necessidade de atuação interdisciplinar contínua</Label>
+                  </div>
                 </div>
-              )}
-            </div>
-          )}
 
-          <div className="space-y-2">
-            <Label>Diagnóstico Funcional Global *</Label>
-            <Textarea 
-              rows={3} 
-              value={form.diagnostico_funcional}
-              onChange={e => setForm(p => ({ ...p, diagnostico_funcional: e.target.value }))}
-              placeholder="Descreva o estado funcional do paciente..."
+                <div className="space-y-4">
+                  <div className="p-4 border rounded-lg bg-primary/5 space-y-3">
+                    <Label className="text-sm font-bold flex items-center gap-2">
+                      📋 Procedimentos SIGTAP {loadingProcs && <Loader2 className="w-3 h-3 animate-spin text-primary" />}
+                    </Label>
+                    <div className="flex gap-2">
+                      <Select value={selectedProcCodigo} onValueChange={setSelectedProcCodigo}>
+                        <SelectTrigger className="flex-1 bg-background">
+                          <SelectValue placeholder="Selecione..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {sigtapProcs.map(p => (
+                            <SelectItem key={p.codigo} value={p.codigo}>
+                              <span className="font-mono text-xs mr-2">{p.codigo}</span>
+                              {p.nome}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button size="sm" onClick={handleAddSigtap} disabled={!selectedProcCodigo}>Adicionar</Button>
+                    </div>
+                    {sigtapSelecionados.length > 0 && (
+                      <div className="flex flex-wrap gap-2 pt-2">
+                        {sigtapSelecionados.map(s => (
+                          <Badge key={s.procedimento_codigo} variant="secondary" className="pl-2 pr-1 py-1 gap-1">
+                            <span className="text-[10px] font-mono opacity-60 mr-1">{s.procedimento_codigo}</span>
+                            {s.procedimento_nome}
+                            <Button variant="ghost" size="icon" className="h-4 w-4 ml-1 hover:bg-destructive/20 text-muted-foreground hover:text-destructive" onClick={() => setSigtapSelecionados(p => p.filter(x => x.procedimento_codigo !== s.procedimento_codigo))}>
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-sm font-bold">Plano de Conduta</Label>
+                    <Textarea 
+                      rows={3} 
+                      placeholder="Condutas gerais planejadas..."
+                      value={form.plano_conduta}
+                      onChange={e => setForm(p => ({ ...p, plano_conduta: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-bold">Próxima Revisão</Label>
+                      <Input 
+                        type="date" 
+                        value={form.data_proxima_revisao}
+                        onChange={e => setForm(p => ({ ...p, data_proxima_revisao: e.target.value }))}
+                      />
+                    </div>
+                    <div className="flex items-center gap-2 mt-8">
+                      <Checkbox 
+                        id="revisao_obrigatoria" 
+                        checked={form.revisao_obrigatoria}
+                        onCheckedChange={(v) => setForm(p => ({ ...p, revisao_obrigatoria: !!v }))}
+                      />
+                      <Label htmlFor="revisao_obrigatoria" className="text-xs cursor-pointer">Revisão Obrigatória</Label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+          </div>
+        </Tabs>
+
+        <DialogFooter className="p-6 border-t bg-muted/10 gap-2">
+          <div className="flex-1 flex items-center gap-2">
+            <Checkbox 
+              id="ciencia_familia" 
+              checked={form.ciencia_familia}
+              onCheckedChange={(v) => setForm(p => ({ ...p, ciencia_familia: !!v }))}
             />
+            <Label htmlFor="ciencia_familia" className="text-xs text-muted-foreground cursor-pointer">Família/Responsável ciente do plano terapêutico</Label>
           </div>
-
-          <div className="space-y-2">
-            <Label>Objetivos Terapêuticos *</Label>
-            <Textarea 
-              rows={3}
-              value={form.objetivos_terapeuticos}
-              onChange={e => setForm(p => ({ ...p, objetivos_terapeuticos: e.target.value }))}
-              placeholder="Quais os principais objetivos deste tratamento?"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="space-y-2">
-              <Label className="text-xs">Metas — Curto Prazo</Label>
-              <Textarea rows={2} value={form.metas_curto_prazo} onChange={e => setForm(p => ({...p, metas_curto_prazo: e.target.value}))} />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs">Metas — Médio Prazo</Label>
-              <Textarea rows={2} value={form.metas_medio_prazo} onChange={e => setForm(p => ({...p, metas_medio_prazo: e.target.value}))} />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs">Metas — Longo Prazo</Label>
-              <Textarea rows={2} value={form.metas_longo_prazo} onChange={e => setForm(p => ({...p, metas_longo_prazo: e.target.value}))} />
-            </div>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={handleSave} disabled={saving}>
-            {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : 'Criar Projeto Terapêutico'}
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Cancelar</Button>
+          <Button onClick={handleSave} disabled={saving} className="min-w-[150px]">
+            {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : 'Criar PTS Estruturado'}
           </Button>
         </DialogFooter>
       </DialogContent>
