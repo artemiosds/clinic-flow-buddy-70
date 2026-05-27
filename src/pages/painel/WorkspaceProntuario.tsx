@@ -102,6 +102,7 @@ const WorkspaceProntuario: React.FC = () => {
     agendamento_id: agendamentoId || '',
     prescricao: '',
     solicitacao_exames: '',
+    pts_meta_id: '',
   });
 
   const { sections: prontuarioSections, loading: structureLoading } = useProntuarioStructure();
