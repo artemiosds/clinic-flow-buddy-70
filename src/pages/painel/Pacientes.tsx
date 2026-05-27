@@ -698,6 +698,7 @@ const Pacientes: React.FC = () => {
       data_nascimento: pacienteData.data_nascimento || "",
       sexo: cd.sexo || (pacienteData as any).sexo || "",
       cpf: pacienteData.cpf || "",
+      rg: pacienteData.rg || "",
       cns: pacienteData.cns || "",
       naturalidade: cd.naturalidade || (pacienteData as any).naturalidade || "",
       naturalidade_uf: cd.naturalidadeUf || (pacienteData as any).naturalidade_uf || "",
@@ -1274,6 +1275,7 @@ const Pacientes: React.FC = () => {
                 } 
               />
               <PCampo label={L('cpf', 'CPF')} valor={formatCPF(detalhePaciente.cpf)} />
+              <PCampo label={L('rg', 'RG')} valor={(detalhePaciente as any).rg} />
               <PCampo label={L('cns', 'Cartão SUS')} valor={formatCNS(detalhePaciente.cns)} />
               <PCampo label={L('nomeMae', 'Nome da mãe')} valor={detalhePaciente.nomeMae} />
               <PCampo label="CID" valor={cidVal} />
