@@ -1650,9 +1650,51 @@ const RelatorioAlta: React.FC = () => {
           </Button>
         </div>
       </div>
+
+      {/* Reopening Dialog */}
+      <Dialog open={isReabrindo} onOpenChange={setIsReReabrindo}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reabrir Relatório para Edição</DialogTitle>
+            <DialogDescription>
+              Relatórios emitidos são documentos oficiais. A reabertura criará uma nova versão e será registrada na auditoria.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Motivo da Reabertura</Label>
+              <Textarea 
+                value={motivoReabertura} 
+                onChange={e => setMotivoReabertura(e.target.value)}
+                placeholder="Descreva o motivo clínico ou administrativo para a alteração..."
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsReReabrindo(false)}>Cancelar</Button>
+            <Button disabled={!motivoReabertura} onClick={() => {
+              const novaVersao = versaoAtual + 1;
+              setHistoricoVersoes(prev => [...prev, {
+                versao: versaoAtual,
+                data: new Date().toISOString(),
+                usuario: user?.nome || "Desconhecido",
+                motivo: motivoReabertura,
+                tipo_registro: modo === 'multiprofissional' ? 'alta_multiprofissional' : 'alta_individual',
+                dados: {} // Here we would save previous state
+              }]);
+              setVersaoAtual(novaVersao);
+              setStatus("rascunho");
+              setIsReReabrindo(false);
+              setMotivoReabertura("");
+              toast.success(`Relatório reaberto. Versão ${novaVersao} iniciada.`);
+            }}>Confirmar Reabertura</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
 
 export default RelatorioAlta;
+
 
