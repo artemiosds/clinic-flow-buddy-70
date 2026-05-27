@@ -623,7 +623,9 @@ const RelatorioAlta: React.FC = () => {
       evolucao: type === "multi"
         ? `RELATÓRIO DE ALTA MULTIPROFISSIONAL: ${MOTIVOS_ALTA.find(m => m.value === motivoAlta)?.label || ""}`
         : `RELATÓRIO DE ALTA INDIVIDUAL: ${MOTIVOS_ALTA.find(m => m.value === indMotivo)?.label || ""}`,
+      status: status,
     };
+
 
     const { error } = await supabase.from("prontuarios").insert(record);
     if (error) {
