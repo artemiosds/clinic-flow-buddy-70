@@ -10,9 +10,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend, AreaChart, Area } from 'recharts';
-import { Download, FileText, Filter, Clock, Users, CalendarDays, TrendingUp, AlertTriangle, UserCheck, ListOrdered, Printer, BarChart3, HeartPulse, MapPin, Search, RefreshCw, Stethoscope, Brain, Ear, Dumbbell, Hand, Apple, Heart, Users2, Activity, PieChart as PieChartIcon, type LucideIcon } from 'lucide-react';
+import { Download, FileText, Filter, Clock, Users, CalendarDays, TrendingUp, AlertTriangle, UserCheck, ListOrdered, Printer, BarChart3, HeartPulse, MapPin, Search, RefreshCw, Stethoscope, Brain, Ear, Dumbbell, Hand, Apple, Heart, Users2, Activity, PieChart as PieChartIcon, ArrowRight, type LucideIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { openPrintDocument } from '@/lib/printLayout';
+import { format } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
+
 import { fetchProfessionalCarimbo, formatCarimboBlock } from "@/lib/documentSignature";
 import { toast } from 'sonner';
 import { useUnidadeFilter } from '@/hooks/useUnidadeFilter';
@@ -51,7 +54,9 @@ const Relatorios: React.FC = () => {
   const { agendamentos, pacientes, funcionarios, unidades, salas, fila } = useData();
   const resolvePaciente = usePacienteNomeResolver();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('geral');
+
   const [filterRoleProd, setFilterRoleProd] = useState('all');
   const [filterCargoProd, setFilterCargoProd] = useState('all');
   const [prodViewMode, setProdViewMode] = useState<'tabela' | 'grafico'>('tabela');
@@ -1495,6 +1500,8 @@ ${dataRows}
             { value: 'detalhado', label: 'Detalhado' },
             { value: 'municipios', label: '🏙️ Municípios' },
             { value: 'mapa', label: '📍 Mapa Atendimento' },
+            { value: 'gestao_alta', label: '📊 Gestão de Alta' },
+
 
           ].map(tab => (
             <button
@@ -2816,9 +2823,103 @@ ${dataRows}
             </CardContent>
           </Card>
         </TabsContent>
+        {/* === GESTÃO DE ALTA === */}
+        <TabsContent value="gestao_alta" className="space-y-5 mt-4">
+           {(() => {
+             const highReports = prontuariosDB.filter(p => ['alta_individual', 'alta_multiprofissional'].includes(p.tipo_registro));
+             const stats = {
+               total: highReports.length,
+               emitidos: highReports.filter(p => p.status === 'emitido').length,
+               rascunhos: highReports.filter(p => p.status === 'rascunho').length,
+               multi: highReports.filter(p => p.tipo_registro === 'alta_multiprofissional').length
+             };
+
+             return (
+               <div className="space-y-6">
+                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                   <Card className="shadow-card border-0">
+                     <CardContent className="p-4 text-center">
+                       <p className="text-2xl font-bold text-primary">{stats.total}</p>
+                       <p className="text-xs text-muted-foreground uppercase">Total de Relatórios</p>
+                     </CardContent>
+                   </Card>
+                   <Card className="shadow-card border-0">
+                     <CardContent className="p-4 text-center">
+                       <p className="text-2xl font-bold text-success">{stats.emitidos}</p>
+                       <p className="text-xs text-muted-foreground uppercase">Emitidos</p>
+                     </CardContent>
+                   </Card>
+                   <Card className="shadow-card border-0">
+                     <CardContent className="p-4 text-center">
+                       <p className="text-2xl font-bold text-warning">{stats.rascunhos}</p>
+                       <p className="text-xs text-muted-foreground uppercase">Rascunhos</p>
+                     </CardContent>
+                   </Card>
+                   <Card className="shadow-card border-0">
+                     <CardContent className="p-4 text-center">
+                       <p className="text-2xl font-bold text-info">{stats.multi}</p>
+                       <p className="text-xs text-muted-foreground uppercase">Multiprofissionais</p>
+                     </CardContent>
+                   </Card>
+                 </div>
+
+                 <Card className="shadow-card border-0">
+                   <CardContent className="p-5">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-semibold font-display">Resumo Gerencial de Altas</h3>
+                        <Button variant="outline" size="sm" onClick={() => navigate('/painel/gestao-alta')}>
+                           Abrir Central de Gestão <ArrowRight className="w-4 h-4 ml-2" />
+                        </Button>
+                      </div>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="bg-muted/50 border-b">
+                              <th className="text-left py-3 px-4">Paciente</th>
+                              <th className="text-left py-3 px-4">Responsável</th>
+                              <th className="text-center py-3 px-4">Status</th>
+                              <th className="text-center py-3 px-4">Data</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {highReports.slice(0, 10).map((r) => (
+                              <tr key={r.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
+                                <td className="py-3 px-4 font-medium">{r.paciente_nome}</td>
+                                <td className="py-3 px-4">{r.profissional_nome}</td>
+                                <td className="py-3 px-4 text-center">
+                                  <Badge variant="outline" className={
+                                    r.status === 'emitido' ? 'bg-green-50 text-green-700' : 
+                                    r.status === 'rascunho' ? 'bg-yellow-50 text-yellow-700' : 
+                                    'bg-blue-50 text-blue-700'
+                                  }>
+                                    {r.status || 'Pendente'}
+                                  </Badge>
+                                </td>
+                                <td className="py-3 px-4 text-center text-muted-foreground">
+                                  {format(new Date(r.data_atendimento), 'dd/MM/yyyy')}
+                                </td>
+                              </tr>
+                            ))}
+                            {highReports.length === 0 && (
+                              <tr>
+                                <td colSpan={4} className="py-8 text-center text-muted-foreground">
+                                  Nenhum relatório de alta registrado.
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                   </CardContent>
+                 </Card>
+               </div>
+             );
+           })()}
+        </TabsContent>
       </Tabs>
     </div>
   );
 };
+
 
 export default Relatorios;
