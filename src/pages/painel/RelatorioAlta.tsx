@@ -666,6 +666,18 @@ const RelatorioAlta: React.FC = () => {
         "Paciente": paciente?.nome || "",
         "Data de Alta": fmt(dataAlta)
       });
+      
+      // Log Action
+      if (pacienteId) {
+        auditService.log({
+          acao: 'Impressão de Relatório Multiprofissional',
+          entidade: 'relatorio_alta',
+          entidadeId: pacienteId,
+          pacienteId,
+          user: user as any,
+          modulo: 'Alta'
+        });
+      }
     } else {
       const errs = validateInd();
       if (errs.length > 0) { toast.error(errs[0]); return; }
@@ -679,6 +691,18 @@ const RelatorioAlta: React.FC = () => {
           "Data de Alta": fmt(indDataAlta)
         }
       );
+
+      // Log Action
+      if (pacienteId) {
+        auditService.log({
+          acao: 'Impressão de Relatório Individual',
+          entidade: 'relatorio_alta',
+          entidadeId: pacienteId,
+          pacienteId,
+          user: user as any,
+          modulo: 'Alta'
+        });
+      }
     }
   };
 
