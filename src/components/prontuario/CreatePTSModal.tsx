@@ -10,7 +10,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Plus, AlertTriangle, Trash2, ClipboardList, Target, Zap, CheckCircle2, Info } from 'lucide-react';
+import { Loader2, Plus, AlertTriangle, Trash2, ClipboardList, Target, Zap, CheckCircle2, Info, Search, Tag, FileText } from 'lucide-react';
+import { BuscaProcedimento } from '../BuscaProcedimento';
+import { BuscaCID } from '../BuscaCID';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { ptsService, type PTSMeta } from '@/services/ptsService';
@@ -486,39 +488,89 @@ export const CreatePTSModal: React.FC<CreatePTSModalProps> = ({
                 </div>
 
                 <div className="space-y-4">
-                  <div className="p-4 border rounded-lg bg-primary/5 space-y-3">
+                  <div className="p-4 border rounded-lg bg-primary/5 space-y-4">
                     <Label className="text-sm font-bold flex items-center gap-2">
-                      📋 Procedimentos SIGTAP {loadingProcs && <Loader2 className="w-3 h-3 animate-spin text-primary" />}
+                      <FileText className="w-4 h-4 text-primary" />
+                      Procedimentos SIGTAP
                     </Label>
-                    <div className="flex gap-2">
-                      <Select value={selectedProcCodigo} onValueChange={setSelectedProcCodigo}>
-                        <SelectTrigger className="flex-1 bg-background">
-                          <SelectValue placeholder="Selecione..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {sigtapProcs.map(p => (
-                            <SelectItem key={p.codigo} value={p.codigo}>
-                              <span className="font-mono text-xs mr-2">{p.codigo}</span>
-                              {p.nome}
-                            </SelectItem>
+                    
+                    <div className="space-y-3">
+                      <BuscaProcedimento 
+                        onChange={(proc) => {
+                          if (sigtapSelecionados.some(s => s.procedimento_codigo === proc.id)) {
+                            toast.error("Procedimento já adicionado");
+                            return;
+                          }
+                          setSigtapSelecionados(prev => [...prev, {
+                            procedimento_codigo: proc.id,
+                            procedimento_nome: proc.nome,
+                            especialidade: proc.especialidade,
+                          }]);
+                        }}
+                        placeholder="Buscar por código ou nome do procedimento..."
+                      />
+
+                      {sigtapSelecionados.length > 0 && (
+                        <div className="flex flex-wrap gap-2 pt-1">
+                          {sigtapSelecionados.map(s => (
+                            <Badge key={s.procedimento_codigo} variant="secondary" className="pl-2 pr-1 py-1 gap-1 border-primary/20 bg-primary/5 text-primary">
+                              <span className="text-[10px] font-mono opacity-70 mr-1">{s.procedimento_codigo}</span>
+                              <span className="max-w-[200px] truncate">{s.procedimento_nome}</span>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-4 w-4 ml-1 hover:bg-destructive/20 text-muted-foreground hover:text-destructive" 
+                                onClick={() => setSigtapSelecionados(p => p.filter(x => x.procedimento_codigo !== s.procedimento_codigo))}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </Badge>
                           ))}
-                        </SelectContent>
-                      </Select>
-                      <Button size="sm" onClick={handleAddSigtap} disabled={!selectedProcCodigo}>Adicionar</Button>
+                        </div>
+                      )}
                     </div>
-                    {sigtapSelecionados.length > 0 && (
-                      <div className="flex flex-wrap gap-2 pt-2">
-                        {sigtapSelecionados.map(s => (
-                          <Badge key={s.procedimento_codigo} variant="secondary" className="pl-2 pr-1 py-1 gap-1">
-                            <span className="text-[10px] font-mono opacity-60 mr-1">{s.procedimento_codigo}</span>
-                            {s.procedimento_nome}
-                            <Button variant="ghost" size="icon" className="h-4 w-4 ml-1 hover:bg-destructive/20 text-muted-foreground hover:text-destructive" onClick={() => setSigtapSelecionados(p => p.filter(x => x.procedimento_codigo !== s.procedimento_codigo))}>
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
+                  </div>
+
+                  <div className="p-4 border rounded-lg bg-blue-50/30 space-y-4">
+                    <Label className="text-sm font-bold flex items-center gap-2 text-blue-700">
+                      <Tag className="w-4 h-4" />
+                      Diagnósticos CID-10 Relacionados
+                    </Label>
+                    
+                    <div className="space-y-3">
+                      <BuscaCID 
+                        onSelect={(cid) => {
+                          if (cidsSelecionados.some(c => c.cid_codigo === cid.codigo)) {
+                            toast.error("CID já adicionado");
+                            return;
+                          }
+                          setCidsSelecionados(prev => [...prev, {
+                            cid_codigo: cid.codigo,
+                            cid_nome: cid.descricao
+                          }]);
+                        }}
+                        placeholder="Buscar por código CID ou diagnóstico..."
+                      />
+
+                      {cidsSelecionados.length > 0 && (
+                        <div className="flex flex-wrap gap-2 pt-1">
+                          {cidsSelecionados.map(c => (
+                            <Badge key={c.cid_codigo} variant="secondary" className="pl-2 pr-1 py-1 gap-1 border-blue-200 bg-blue-50 text-blue-700">
+                              <span className="text-[10px] font-mono opacity-70 mr-1">{c.cid_codigo}</span>
+                              <span className="max-w-[200px] truncate">{c.cid_nome}</span>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-4 w-4 ml-1 hover:bg-destructive/20 text-muted-foreground hover:text-destructive" 
+                                onClick={() => setCidsSelecionados(p => p.filter(x => x.cid_codigo !== c.cid_codigo))}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="space-y-2">
@@ -530,6 +582,7 @@ export const CreatePTSModal: React.FC<CreatePTSModalProps> = ({
                       onChange={e => setForm(p => ({ ...p, plano_conduta: e.target.value }))}
                     />
                   </div>
+...
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">

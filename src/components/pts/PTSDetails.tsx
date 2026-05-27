@@ -14,8 +14,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { 
   Loader2, ArrowLeft, Target, Activity, 
   ClipboardList, Calendar, Zap, CheckCircle2, 
-  History, LogOut, Save, Plus, Trash2, Printer, Info
+  History, LogOut, Save, Plus, Trash2, Printer, Info, Search, Tag, FileText
 } from 'lucide-react';
+import { BuscaProcedimento } from '../BuscaProcedimento';
+import { BuscaCID } from '../BuscaCID';
 import { toast } from 'sonner';
 import { ptsService, type PTS, type PTSMeta } from '@/services/ptsService';
 import { PTSMetaForm } from '@/components/prontuario/PTSMetaForm';
@@ -43,6 +45,8 @@ export const PTSDetails: React.FC = () => {
   
   const [editForm, setEditForm] = useState<Partial<PTS>>({});
   const [editMetas, setEditMetas] = useState<PTSMeta[]>([]);
+  const [editSigtap, setEditSigtap] = useState<any[]>([]);
+  const [editCids, setEditCids] = useState<any[]>([]);
   
   const [revisionNotes, setRevisionNotes] = useState('');
   const [nextRevisionDate, setNextRevisionDate] = useState('');
@@ -75,6 +79,8 @@ export const PTSDetails: React.FC = () => {
         setPts(data as any);
         setEditForm(data as any);
         setEditMetas(data.metas || []);
+        setEditSigtap(data.sigtap || []);
+        setEditCids(data.cids || []);
         if (data.data_proxima_revisao) setNextRevisionDate(data.data_proxima_revisao);
       } catch (err: any) {
         toast.error('Erro ao carregar PTS: ' + err.message);
@@ -94,6 +100,7 @@ export const PTSDetails: React.FC = () => {
     try {
       await ptsService.updatePTS(id, editForm);
       
+      // Update Metas
       for (const meta of editMetas) {
         if (meta.id) {
           const { id: metaId, ...cleanMeta } = meta as any;
@@ -101,6 +108,36 @@ export const PTSDetails: React.FC = () => {
         } else {
           await supabase.from('pts_metas').insert({ ...meta, pts_id: id });
         }
+      }
+
+      // Update SIGTAP
+      // Delete removed ones
+      const currentSigtapIds = editSigtap.map(s => s.id).filter(Boolean);
+      if (pts.sigtap && pts.sigtap.length > 0) {
+        const toDelete = pts.sigtap.filter(s => !currentSigtapIds.includes(s.id)).map(s => s.id);
+        if (toDelete.length > 0) {
+          await supabase.from('pts_sigtap').delete().in('id', toDelete);
+        }
+      }
+      // Insert new ones
+      const newSigtap = editSigtap.filter(s => !s.id);
+      if (newSigtap.length > 0) {
+        await supabase.from('pts_sigtap').insert(newSigtap.map(s => ({ ...s, pts_id: id })));
+      }
+
+      // Update CIDs
+      // Delete removed ones
+      const currentCidIds = editCids.map(c => c.id).filter(Boolean);
+      if (pts.cids && pts.cids.length > 0) {
+        const toDelete = pts.cids.filter(c => !currentCidIds.includes(c.id)).map(c => c.id);
+        if (toDelete.length > 0) {
+          await supabase.from('pts_cid').delete().in('id', toDelete);
+        }
+      }
+      // Insert new ones
+      const newCids = editCids.filter(c => !c.id);
+      if (newCids.length > 0) {
+        await supabase.from('pts_cid').insert(newCids.map(c => ({ ...c, pts_id: id })));
       }
 
       await logAction({
@@ -277,7 +314,10 @@ export const PTSDetails: React.FC = () => {
                 <ClipboardList className="w-4 h-4" /> Diagnóstico & Objetivos
               </TabsTrigger>
               <TabsTrigger value="metas" className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-0 gap-2 font-bold">
-                <Target className="w-4 h-4" /> Metas ({pts.metas?.length || 0})
+                <Target className="w-4 h-4" /> Metas ({editMetas.length})
+              </TabsTrigger>
+              <TabsTrigger value="execucao" className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-0 gap-2 font-bold">
+                <CheckCircle2 className="w-4 h-4" /> SIGTAP & CIDs
               </TabsTrigger>
               <TabsTrigger value="revisoes" className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-0 gap-2 font-bold">
                 <History className="w-4 h-4" /> Revisões
@@ -398,6 +438,118 @@ export const PTSDetails: React.FC = () => {
                     )}
                   </div>
                 ))}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="execucao" className="space-y-6 mt-0">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div className="p-4 border rounded-lg bg-primary/5 space-y-4">
+                    <Label className="text-sm font-bold flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-primary" />
+                      Procedimentos SIGTAP
+                    </Label>
+                    
+                    {pts.status === 'ativo' && (
+                      <BuscaProcedimento 
+                        onChange={(proc) => {
+                          if (editSigtap.some(s => s.procedimento_codigo === proc.id)) {
+                            toast.error("Procedimento já adicionado");
+                            return;
+                          }
+                          setEditSigtap(prev => [...prev, {
+                            procedimento_codigo: proc.id,
+                            procedimento_nome: proc.nome,
+                            especialidade: proc.especialidade,
+                          }]);
+                        }}
+                        placeholder="Buscar por código ou nome do procedimento..."
+                      />
+                    )}
+
+                    {editSigtap.length > 0 && (
+                      <div className="flex flex-col gap-2 pt-1">
+                        {editSigtap.map((s, idx) => (
+                          <div key={idx} className="flex items-center justify-between p-2 bg-background border rounded-md">
+                            <div className="flex items-center gap-3">
+                              <Badge variant="outline" className="font-mono text-[10px]">{s.procedimento_codigo}</Badge>
+                              <span className="text-sm font-medium">{s.procedimento_nome}</span>
+                            </div>
+                            {pts.status === 'ativo' && (
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-7 w-7 text-muted-foreground hover:text-destructive" 
+                                onClick={() => setEditSigtap(p => p.filter((_, i) => i !== idx))}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="p-4 border rounded-lg bg-blue-50/30 space-y-4">
+                    <Label className="text-sm font-bold flex items-center gap-2 text-blue-700">
+                      <Tag className="w-4 h-4" />
+                      Diagnósticos CID-10 Relacionados
+                    </Label>
+                    
+                    {pts.status === 'ativo' && (
+                      <BuscaCID 
+                        onSelect={(cid) => {
+                          if (editCids.some(c => c.cid_codigo === cid.codigo)) {
+                            toast.error("CID já adicionado");
+                            return;
+                          }
+                          setEditCids(prev => [...prev, {
+                            cid_codigo: cid.codigo,
+                            cid_nome: cid.descricao
+                          }]);
+                        }}
+                        placeholder="Buscar por código CID ou diagnóstico..."
+                      />
+                    )}
+
+                    {editCids.length > 0 && (
+                      <div className="flex flex-col gap-2 pt-1">
+                        {editCids.map((c, idx) => (
+                          <div key={idx} className="flex items-center justify-between p-2 bg-background border rounded-md">
+                            <div className="flex items-center gap-3">
+                              <Badge variant="outline" className="font-mono text-[10px] text-blue-600 border-blue-200">{c.cid_codigo}</Badge>
+                              <span className="text-sm font-medium">{c.cid_nome}</span>
+                            </div>
+                            {pts.status === 'ativo' && (
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-7 w-7 text-muted-foreground hover:text-destructive" 
+                                onClick={() => setEditCids(p => p.filter((_, i) => i !== idx))}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-bold">Plano de Conduta Detalhado</Label>
+                <Textarea 
+                  rows={4} 
+                  value={editForm.plano_conduta || ''} 
+                  onChange={e => setEditForm(p => ({ ...p, plano_conduta: e.target.value }))}
+                  disabled={pts.status !== 'ativo'}
+                  placeholder="Detalhamento das condutas e frequências de atendimento..."
+                />
               </div>
             </TabsContent>
 
