@@ -760,10 +760,26 @@ const RelatorioAlta: React.FC = () => {
     };
 
 
-    const { error } = await supabase.from("prontuarios").insert(record);
+    const { data, error } = await supabase.from("prontuarios").insert(record).select().single();
+    
     if (error) {
       toast.error("Erro ao salvar: " + error.message);
     } else {
+      // Log Action for Timeline
+      auditService.log({
+        acao: status === 'rascunho' ? 'Salvamento de rascunho' : 'Finalização de relatório',
+        entidade: 'relatorio_alta',
+        entidadeId: data.id,
+        pacienteId,
+        user: user as any,
+        modulo: 'Alta',
+        detalhes: {
+          tipo: type,
+          status: status,
+          versao: versaoAtual
+        }
+      });
+
       toast.success(status === 'rascunho' ? "Rascunho salvo com sucesso" : "Relatório de alta finalizado e salvo no prontuário");
     }
   };
