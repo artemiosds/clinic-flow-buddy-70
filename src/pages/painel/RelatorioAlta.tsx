@@ -590,7 +590,7 @@ const RelatorioAlta: React.FC = () => {
       modalidades, cid10, cidDesc, cifFuncoes, cifAtividades, cifFatores,
       profissionais: profSections, motivoAlta, motivoDetalhe,
       condicaoFuncional, nivelIndep, orientacoesUsuario, orientacoesUbs,
-      encaminhamentos, freqAps, dataAlta,
+      encaminhamentos, freqAps, dataAlta, status,
       pacienteNome: paciente?.nome,
       pacienteCns: paciente?.cns,
       pacienteCpf: paciente?.cpf,
@@ -603,11 +603,14 @@ const RelatorioAlta: React.FC = () => {
       orientacoes: indOrientacoes, encaminhamento: indEncaminhamento,
       modalidade: indModalidade, sessoes: indSessoes,
       periodoInicio: indPeriodoInicio, periodoFim: indPeriodoFim, dataAlta: indDataAlta,
+      adesao: indAdesao, intercorrencias: indIntercorrencias,
+      queixa: indQueixa, historico: indHistorico, status,
       pacienteNome: paciente?.nome,
       pacienteCns: paciente?.cns,
       pacienteCpf: paciente?.cpf,
       dataNascimento: paciente?.dataNascimento,
     };
+
 
     const record = {
       paciente_id: pacienteId,
