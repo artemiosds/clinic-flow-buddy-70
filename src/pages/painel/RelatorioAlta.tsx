@@ -389,15 +389,16 @@ const RelatorioAlta: React.FC = () => {
     const errors: string[] = [];
     if (!pacienteId) errors.push("Selecione um paciente");
     if (!motivoAlta) errors.push("Selecione o motivo da alta");
+    if (!tipoAlta) errors.push("Selecione o tipo de alta");
     if (!nivelIndep) errors.push("Selecione o nível de independência");
     if (modalidades.length === 0) errors.push("Selecione pelo menos uma modalidade");
     if (!condicaoFuncional) errors.push("Preencha a condição funcional na alta");
     
-    const concluidoCount = profSections.filter(s => s.status === "concluido").length;
+    const concluidoCount = profSections.filter(s => s.status === "concluido" || s.status === "assinado").length;
     if (concluidoCount === 0) errors.push("Pelo menos um profissional deve concluir sua contribuição");
 
     profSections.forEach(s => {
-      if (s.status === "concluido") {
+      if (s.status === "concluido" || s.status === "assinado") {
         if (s.metas_status !== "totalmente" && !s.metas_justificativa) {
           errors.push(`Justificativa obrigatória para ${s.profissional_nome}`);
         }
@@ -406,6 +407,25 @@ const RelatorioAlta: React.FC = () => {
     });
     return errors;
   };
+
+  const generateAutoSummaryMulti = () => {
+    const profs = profSections.filter(s => s.status === "concluido" || s.status === "assinado");
+    if (profs.length === 0) return "";
+    
+    const resumo = profs.map(p => 
+      `[${p.profissao || 'Área'}] ${p.evolucao}. Metas: ${METAS_STATUS_OPCOES.find(m => m.value === p.metas_status)?.label || p.metas_status}.`
+    ).join("\n\n");
+    
+    setResumoConsolidado(resumo);
+    toast.success("Resumo multiprofissional gerado com sucesso");
+  };
+
+  const generateAutoSummaryInd = () => {
+    const resumo = `Período de ${fmt(indPeriodoInicio)} a ${fmt(indPeriodoFim)} com total de ${indSessoes} sessões. Objetivos: ${indObjetivos}. Evolução: ${indEvolucao}. Metas: ${METAS_STATUS_OPCOES.find(m => m.value === indMetas)?.label || indMetas}. Adesão: ${ADESAO_OPCOES.find(a => a.value === indAdesao)?.label || indAdesao}.`;
+    setIndResumoAuto(resumo);
+    toast.success("Resumo clínico individual gerado");
+  };
+
 
 
   const validateInd = (): string[] => {
