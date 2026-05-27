@@ -43,10 +43,22 @@ interface ProfSection {
   tecnologia_assistiva: string;
   adesao: "excelente" | "boa" | "regular" | "baixa";
   intercorrencias: string[];
-  status: "pendente" | "preenchendo" | "concluido";
+  status: "pendente" | "preenchendo" | "concluido" | "assinado";
+  concluido_em?: string;
+  assinado_por?: string;
   orientacoes_especificas?: string;
   encaminhamentos_especificos?: string;
 }
+
+interface RelatorioVersion {
+  versao: number;
+  data: string;
+  usuario: string;
+  motivo: string;
+  tipo_registro: string;
+  dados: any;
+}
+
 
 
 type ModoRelatorio = "selector" | "multiprofissional" | "individual";
