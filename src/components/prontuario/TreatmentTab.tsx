@@ -322,59 +322,102 @@ export const TreatmentTab: React.FC<Props> = ({ pacienteId, pacienteNome, onCycl
       )}
 
       {activePts ? (
-        <Card className="border-0 shadow-sm ring-1 ring-border/50 border-l-4 border-l-purple-500">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-purple-500/10 flex items-center justify-center">
-                  <ClipboardList className="w-5 h-5 text-purple-600" />
+        <Card className="border-0 shadow-sm ring-1 ring-border/50 border-l-4 border-l-purple-500 overflow-hidden">
+          <CardContent className="p-0">
+            <div className="p-5 border-b bg-purple-50/20">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
+                    <ClipboardList className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-foreground">Projeto Terapêutico Singular (PTS)</h3>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <Badge variant="outline" className="bg-success/10 text-success border-success/20 py-0 text-[10px]">Ativo</Badge>
+                      <span className="text-[10px] text-muted-foreground">• Criado em {new Date(activePts.created_at).toLocaleDateString('pt-BR')}</span>
+                    </div>
+                  </div>
                 </div>
-                <h3 className="font-bold text-foreground">Projeto Terapêutico Singular (PTS)</h3>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">Ativo</Badge>
-                {canManageFull && (
-                  <Button 
-                    size="icon" 
-                    variant="ghost" 
-                    className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10" 
-                    onClick={handleDeletePts}
-                    title="Excluir PTS"
-                  >
-                    <Trash2 className="w-4 h-4" />
+                <div className="flex items-center gap-2">
+                  <Button size="sm" variant="outline" className="h-8 gap-2 bg-background" onClick={() => navigate(`/painel/pts/${activePts.id}`)}>
+                    <Info className="w-3.5 h-3.5" /> Gerenciar PTS
                   </Button>
-                )}
+                  {canManageFull && (
+                    <Button 
+                      size="icon" 
+                      variant="ghost" 
+                      className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10" 
+                      onClick={handleDeletePts}
+                      title="Excluir PTS"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
 
+            <div className="p-5 space-y-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Diagnóstico Funcional</p>
+                  <p className="text-sm line-clamp-3 text-foreground/80 leading-relaxed">{activePts.diagnostico_funcional}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Objetivos Gerais</p>
+                  <p className="text-sm line-clamp-3 text-foreground/80 leading-relaxed">{activePts.objetivos_terapeuticos}</p>
+                </div>
+              </div>
 
-            <div className="grid gap-4">
-              <div>
-                <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-1.5">Diagnóstico Funcional</p>
-                <div className="p-3 bg-muted/40 rounded-lg text-sm leading-relaxed border border-border/50">{activePts.diagnostico_funcional}</div>
+              <div className="flex flex-wrap gap-2">
+                {activePts.especialidades_envolvidas?.map((spec: string) => (
+                  <Badge key={spec} variant="secondary" className="bg-muted text-muted-foreground text-[10px] px-2 py-0">
+                    {spec}
+                  </Badge>
+                ))}
+                {activePts.necessidade_interdisciplinar && (
+                  <Badge variant="outline" className="border-purple-200 text-purple-600 text-[10px] bg-purple-50">Interdisciplinar</Badge>
+                )}
               </div>
-              <div>
-                <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-1.5">Objetivos Terapêuticos</p>
-                <div className="p-3 bg-muted/40 rounded-lg text-sm leading-relaxed border border-border/50">{activePts.objetivos_terapeuticos}</div>
-              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div className="p-3 bg-blue-50/50 rounded-lg border border-blue-100">
-                  <p className="text-[9px] font-black uppercase text-blue-600 tracking-widest mb-1">📌 Curto Prazo</p>
-                  <p className="text-xs">{activePts.metas_curto_prazo || '—'}</p>
+                <div className="p-3 bg-blue-50/40 rounded-lg border border-blue-100/50">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <p className="text-[9px] font-black uppercase text-blue-600 tracking-widest flex items-center gap-1">
+                      <Target className="w-3 h-3" /> Metas
+                    </p>
+                    {activePts.metas && (
+                      <span className="text-[9px] font-bold bg-blue-100 text-blue-700 px-1.5 rounded-full">{activePts.metas.length}</span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-blue-800/80 font-medium">Plano terapêutico estruturado com metas de curto, médio e longo prazo.</p>
                 </div>
-                <div className="p-3 bg-orange-50/50 rounded-lg border border-orange-100">
-                  <p className="text-[9px] font-black uppercase text-orange-600 tracking-widest mb-1">📋 Médio Prazo</p>
-                  <p className="text-xs">{activePts.metas_medio_prazo || '—'}</p>
+
+                <div className="p-3 bg-orange-50/40 rounded-lg border border-orange-100/50">
+                  <p className="text-[9px] font-black uppercase text-orange-600 tracking-widest mb-1.5 flex items-center gap-1">
+                    <Calendar className="w-3 h-3" /> Revisão
+                  </p>
+                  <div className="flex flex-col">
+                    <span className="text-[11px] font-bold text-orange-800">Próxima: {activePts.data_proxima_revisao ? new Date(activePts.data_proxima_revisao + 'T12:00:00').toLocaleDateString('pt-BR') : 'Não definida'}</span>
+                    <span className="text-[9px] text-orange-700/60">{activePts.revisao_obrigatoria ? 'Obrigatória' : 'Opcional'}</span>
+                  </div>
                 </div>
-                <div className="p-3 bg-green-50/50 rounded-lg border border-green-100">
-                  <p className="text-[9px] font-black uppercase text-green-600 tracking-widest mb-1">🎯 Longo Prazo</p>
-                  <p className="text-xs">{activePts.metas_longo_prazo || '—'}</p>
+
+                <div className="p-3 bg-slate-50/40 rounded-lg border border-slate-100/50">
+                  <p className="text-[9px] font-black uppercase text-slate-600 tracking-widest mb-1.5 flex items-center gap-1">
+                    <Activity className="w-3 h-3" /> Status
+                  </p>
+                  <div className="flex flex-col">
+                    <span className="text-[11px] font-bold text-slate-800">Prioridade: {activePts.prioridade || 'Média'}</span>
+                    <span className="text-[9px] text-slate-700/60">Paciente ciente: {activePts.ciencia_familia ? 'Sim' : 'Não'}</span>
+                  </div>
                 </div>
               </div>
             </div>
           </CardContent>
         </Card>
       ) : (
+
         <div className="p-8 text-center border-2 border-dashed rounded-2xl bg-muted/20">
           <ClipboardList className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
           <h3 className="font-bold text-foreground">Sem PTS Vinculado</h3>
