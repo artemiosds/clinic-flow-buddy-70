@@ -13,10 +13,13 @@ import {
   FileText, Users, Clock, CheckCircle, AlertTriangle, 
   Search, Filter, History, Eye, Printer, FileDown, 
   ArrowRight, Users2, User, UserCheck, Calendar, Activity,
-  ChevronRight, MoreHorizontal, MessageSquare, RefreshCw
+  ChevronRight, MoreHorizontal, MessageSquare, RefreshCw,
+  TrendingUp, BarChart3, AlertCircle, CheckSquare, Download,
+  ArrowUpRight, ArrowDownRight, Award, Building2, Timer,
+  Flag, Bell, LayoutDashboard, ListTodo, ShieldCheck
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { format, differenceInDays } from 'date-fns';
+import { format, differenceInDays, subDays, isAfter, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import {
@@ -34,6 +37,12 @@ import {
 } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, 
+  ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line
+} from 'recharts';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const STATUS_CONFIG: Record<string, { label: string, color: string, icon: any }> = {
   rascunho: { label: 'Rascunho', color: 'bg-slate-100 text-slate-700 border-slate-200', icon: Clock },
