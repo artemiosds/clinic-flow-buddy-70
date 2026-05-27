@@ -724,7 +724,76 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                     </SelectContent>
                   </Select>
                   {errors.raca_cor && <p className="text-xs text-destructive mt-1">{errors.raca_cor}</p>}
+            </div>
+
+            {/* ── Bloco Social / Educacional ── */}
+            <div className="rounded-lg border border-primary/20 bg-muted/30 p-3 space-y-4">
+              <div className="flex items-center gap-2 text-sm font-semibold text-primary">
+                <User className="w-4 h-4" /> Dados Sociais e Educacionais
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <Label>Escolaridade</Label>
+                  <Select
+                    value={cd.escolaridade || ""}
+                    onValueChange={(v) => setCustom("escolaridade", v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ESCOLARIDADE_OPTIONS.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
+
+                <div>
+                  <Label>Estado Civil</Label>
+                  <Select
+                    value={cd.estado_civil || ""}
+                    onValueChange={(v) => setCustom("estado_civil", v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ESTADO_CIVIL_OPTIONS.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label>Ocupação</Label>
+                  <Input
+                    value={cd.ocupacao || ""}
+                    onChange={(e) => setCustom("ocupacao", sanitizeUpper(e.target.value))}
+                    placeholder="EX: AUXILIAR DE SERVIÇOS GERAIS"
+                  />
+                </div>
+
+                <div>
+                  <Label>Situação no Mercado de Trabalho</Label>
+                  <Select
+                    value={cd.situacao_mercado || ""}
+                    onValueChange={(v) => setCustom("situacao_mercado", v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SITUACAO_MERCADO_OPTIONS.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
 
                 {/* Etnia: obrigatória apenas se Raça/Cor = Indígena */}
                 {form.raca_cor === "indigena" && (
