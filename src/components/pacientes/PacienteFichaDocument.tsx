@@ -437,6 +437,12 @@ export const PacienteFichaDocument: React.FC<PacienteFichaDocumentProps> = ({
           <Field label="Profissional solicitante" value={p.profissional_solicitante} />
           <Field label="Observações cadastrais" value={p.observacoes} fallback="Não informado" />
         </div>
+        <div className="patient-sheet-grid patient-sheet-grid--4">
+          <Field label="Escolaridade" value={getEscolaridadeLabel(data.customData?.escolaridade)} />
+          <Field label="Estado civil" value={getEstadoCivilLabel(data.customData?.estado_civil)} />
+          <Field label="Ocupação" value={data.customData?.ocupacao} />
+          <Field label="Situação no mercado" value={getSituacaoMercadoLabel(data.customData?.situacao_mercado)} />
+        </div>
       </section>
 
       {!somenteDadosPessoais ? (
