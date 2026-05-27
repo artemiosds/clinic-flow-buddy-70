@@ -199,7 +199,7 @@ const RelatorioAlta: React.FC = () => {
     // Get all professionals who created prontuarios for this patient
     const { data: pronts } = await supabase
       .from("prontuarios")
-      .select("profissional_id, profissional_nome, data_atendimento")
+      .select("profissional_id, profissional_nome, data_atendimento, evolucao")
       .eq("paciente_id", pid)
       .order("data_atendimento", { ascending: true });
 
@@ -209,13 +209,14 @@ const RelatorioAlta: React.FC = () => {
     }
 
     // Group by professional
-    const profMap = new Map<string, { nome: string; datas: string[] }>();
+    const profMap = new Map<string, { nome: string; datas: string[]; lastEvolucao?: string }>();
     pronts.forEach(p => {
       const existing = profMap.get(p.profissional_id);
       if (existing) {
         existing.datas.push(p.data_atendimento);
+        existing.lastEvolucao = p.evolucao;
       } else {
-        profMap.set(p.profissional_id, { nome: p.profissional_nome, datas: [p.data_atendimento] });
+        profMap.set(p.profissional_id, { nome: p.profissional_nome, datas: [p.data_atendimento], lastEvolucao: p.evolucao });
       }
     });
 
@@ -231,6 +232,14 @@ const RelatorioAlta: React.FC = () => {
       sessionCounts.set(s.professional_id, (sessionCounts.get(s.professional_id) || 0) + 1);
     });
 
+    // Fetch PTS to suggest goals
+    const { data: pts } = await supabase
+      .from("pts")
+      .select("*")
+      .eq("patient_id", pid)
+      .eq("status", "ativo")
+      .maybeSingle();
+
     const sections: ProfSection[] = [];
     profMap.forEach((val, profId) => {
       const func = funcionarios.find(f => f.id === profId);
@@ -243,12 +252,14 @@ const RelatorioAlta: React.FC = () => {
         periodo_inicio: datas[0] || "",
         periodo_fim: datas[datas.length - 1] || "",
         sessoes: sessionCounts.get(profId) || val.datas.length,
-        objetivos: "",
+        objetivos: pts?.objetivos_terapeuticos || "",
         intervencoes: "",
-        evolucao: "",
+        evolucao: val.lastEvolucao || "",
         metas_status: "totalmente",
         metas_justificativa: "",
         tecnologia_assistiva: "",
+        adesao: "boa",
+        intercorrencias: []
       });
     });
 
@@ -267,13 +278,17 @@ const RelatorioAlta: React.FC = () => {
         .maybeSingle();
       if (data) setCidDesc(data.descricao);
     }
+
+    if (pts?.diagnostico_funcional) {
+        setCondicaoFuncional(pts.diagnostico_funcional);
+    }
   };
 
   const loadIndividualData = async (pid: string) => {
     if (!user?.id) return;
     const { data: pronts } = await supabase
       .from("prontuarios")
-      .select("data_atendimento")
+      .select("data_atendimento, evolucao")
       .eq("paciente_id", pid)
       .eq("profissional_id", user.id)
       .order("data_atendimento", { ascending: true });
@@ -281,6 +296,7 @@ const RelatorioAlta: React.FC = () => {
     if (pronts && pronts.length > 0) {
       setIndPeriodoInicio(pronts[0].data_atendimento);
       setIndPeriodoFim(pronts[pronts.length - 1].data_atendimento);
+      setIndEvolucao(pronts[pronts.length - 1].evolucao || "");
     }
 
     const { data: sessions } = await supabase
@@ -291,6 +307,21 @@ const RelatorioAlta: React.FC = () => {
       .eq("status", "realizada");
 
     setIndSessoes(sessions?.length || pronts?.length || 0);
+
+    // Fetch PTS
+    const { data: pts } = await supabase
+      .from("pts")
+      .select("*")
+      .eq("patient_id", pid)
+      .eq("status", "ativo")
+      .maybeSingle();
+    
+    if (pts) {
+      setIndObjetivos(pts.objetivos_terapeuticos || "");
+      setIndQueixa(pts.motivo_encaminhamento || "");
+      setIndHistorico(pts.fatores_risco_vulnerabilidade || "");
+      setIndCif(pts.diagnostico_funcional || "");
+    }
 
     const pat = pacientes.find(p => p.id === pid);
     if (pat?.cid) {
@@ -303,6 +334,7 @@ const RelatorioAlta: React.FC = () => {
       if (data) setIndCidDesc(data.descricao);
     }
   };
+
 
   const updateProfSection = (profId: string, field: keyof ProfSection, value: any) => {
     setProfSections(prev =>
