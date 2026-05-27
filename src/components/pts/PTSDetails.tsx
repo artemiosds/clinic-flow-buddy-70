@@ -14,8 +14,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { 
   Loader2, ArrowLeft, Target, Activity, 
   ClipboardList, Calendar, Zap, CheckCircle2, 
-  History, LogOut, Save, Plus, Trash2, Printer, Info
+  History, LogOut, Save, Plus, Trash2, Printer, Info, Search, Tag, FileText
 } from 'lucide-react';
+import { BuscaProcedimento } from '../BuscaProcedimento';
+import { BuscaCID } from '../BuscaCID';
 import { toast } from 'sonner';
 import { ptsService, type PTS, type PTSMeta } from '@/services/ptsService';
 import { PTSMetaForm } from '@/components/prontuario/PTSMetaForm';
