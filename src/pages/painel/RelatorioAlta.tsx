@@ -16,17 +16,21 @@ import { BuscaPaciente } from "@/components/BuscaPaciente";
 import { toast } from "sonner";
 import {
   FileText, Users, User, ArrowLeft, Printer, FileDown, CheckCircle,
-  Save, Send, ClipboardList, Stethoscope, Heart, Activity, Search
+  Save, Send, ClipboardList, Stethoscope, Heart, Activity, Search,
+  History, Sparkles, CheckSquare, AlertCircle, Clock
 } from "lucide-react";
 import { openPrintDocument } from "@/lib/printLayout";
 import { fetchProfessionalCarimbo, formatCarimboBlock } from "@/lib/documentSignature";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 /* ── types ─────────────────────────────────────────── */
 interface ProfSection {
   profissional_id: string;
   profissional_nome: string;
+
   profissao: string;
   conselho: string;
   periodo_inicio: string;
