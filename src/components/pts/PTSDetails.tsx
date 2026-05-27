@@ -441,6 +441,118 @@ export const PTSDetails: React.FC = () => {
               </div>
             </TabsContent>
 
+            <TabsContent value="execucao" className="space-y-6 mt-0">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div className="p-4 border rounded-lg bg-primary/5 space-y-4">
+                    <Label className="text-sm font-bold flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-primary" />
+                      Procedimentos SIGTAP
+                    </Label>
+                    
+                    {pts.status === 'ativo' && (
+                      <BuscaProcedimento 
+                        onChange={(proc) => {
+                          if (editSigtap.some(s => s.procedimento_codigo === proc.id)) {
+                            toast.error("Procedimento já adicionado");
+                            return;
+                          }
+                          setEditSigtap(prev => [...prev, {
+                            procedimento_codigo: proc.id,
+                            procedimento_nome: proc.nome,
+                            especialidade: proc.especialidade,
+                          }]);
+                        }}
+                        placeholder="Buscar por código ou nome do procedimento..."
+                      />
+                    )}
+
+                    {editSigtap.length > 0 && (
+                      <div className="flex flex-col gap-2 pt-1">
+                        {editSigtap.map((s, idx) => (
+                          <div key={idx} className="flex items-center justify-between p-2 bg-background border rounded-md">
+                            <div className="flex items-center gap-3">
+                              <Badge variant="outline" className="font-mono text-[10px]">{s.procedimento_codigo}</Badge>
+                              <span className="text-sm font-medium">{s.procedimento_nome}</span>
+                            </div>
+                            {pts.status === 'ativo' && (
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-7 w-7 text-muted-foreground hover:text-destructive" 
+                                onClick={() => setEditSigtap(p => p.filter((_, i) => i !== idx))}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="p-4 border rounded-lg bg-blue-50/30 space-y-4">
+                    <Label className="text-sm font-bold flex items-center gap-2 text-blue-700">
+                      <Tag className="w-4 h-4" />
+                      Diagnósticos CID-10 Relacionados
+                    </Label>
+                    
+                    {pts.status === 'ativo' && (
+                      <BuscaCID 
+                        onSelect={(cid) => {
+                          if (editCids.some(c => c.cid_codigo === cid.codigo)) {
+                            toast.error("CID já adicionado");
+                            return;
+                          }
+                          setEditCids(prev => [...prev, {
+                            cid_codigo: cid.codigo,
+                            cid_nome: cid.descricao
+                          }]);
+                        }}
+                        placeholder="Buscar por código CID ou diagnóstico..."
+                      />
+                    )}
+
+                    {editCids.length > 0 && (
+                      <div className="flex flex-col gap-2 pt-1">
+                        {editCids.map((c, idx) => (
+                          <div key={idx} className="flex items-center justify-between p-2 bg-background border rounded-md">
+                            <div className="flex items-center gap-3">
+                              <Badge variant="outline" className="font-mono text-[10px] text-blue-600 border-blue-200">{c.cid_codigo}</Badge>
+                              <span className="text-sm font-medium">{c.cid_nome}</span>
+                            </div>
+                            {pts.status === 'ativo' && (
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-7 w-7 text-muted-foreground hover:text-destructive" 
+                                onClick={() => setEditCids(p => p.filter((_, i) => i !== idx))}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-bold">Plano de Conduta Detalhado</Label>
+                <Textarea 
+                  rows={4} 
+                  value={editForm.plano_conduta || ''} 
+                  onChange={e => setEditForm(p => ({ ...p, plano_conduta: e.target.value }))}
+                  disabled={pts.status !== 'ativo'}
+                  placeholder="Detalhamento das condutas e frequências de atendimento..."
+                />
+              </div>
+            </TabsContent>
+
             <TabsContent value="revisoes" className="space-y-8 mt-0">
               {pts.status === 'ativo' && (
                 <Card className="border-orange-100 bg-orange-50/10">
