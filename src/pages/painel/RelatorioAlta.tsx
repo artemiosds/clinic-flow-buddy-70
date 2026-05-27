@@ -394,10 +394,10 @@ const RelatorioAlta: React.FC = () => {
     let html = `
       <div class="info-grid">
         <div><span class="info-label">Paciente:</span> <span class="info-value">${p.nome}</span></div>
-        <div><span class="info-label">CNS:</span> <span class="info-value">${p.cns || "—"}</span></div>
-        <div><span class="info-label">CPF:</span> <span class="info-value">${p.cpf || "—"}</span></div>
+        <div><span class="info-label">CNS/CPF:</span> <span class="info-value">${p.cns || p.cpf || "—"}</span></div>
         <div><span class="info-label">Data Nasc:</span> <span class="info-value">${fmt(p.dataNascimento)} (${calcIdade(p.dataNascimento)})</span></div>
         <div><span class="info-label">Mãe/Resp:</span> <span class="info-value">${p.nomeMae || "—"}</span></div>
+        <div><span class="info-label">Endereço:</span> <span class="info-value">${p.logradouro || ""}, ${p.numero || ""} ${p.bairro || ""}</span></div>
         <div><span class="info-label">Data Alta:</span> <span class="info-value">${fmt(dataAlta)}</span></div>
         <div style="grid-column: span 2;"><span class="info-label">Modalidades:</span> <span class="info-value">${modalidades.join(", ") || "—"}</span></div>
       </div>
@@ -405,16 +405,37 @@ const RelatorioAlta: React.FC = () => {
       <div class="section">
         <div class="section-title">1. Diagnóstico e Funcionalidade</div>
         <div class="field">
-          <span class="field-label">CID-10:</span>
+          <span class="field-label">Diagnóstico Clínico:</span>
+          <div class="field-value">${diagClinico || "—"}</div>
+        </div>
+        <div class="field">
+          <span class="field-label">CID-10 Principal:</span>
           <div class="field-value"><strong>${cid10}</strong> ${cidDesc ? ` — ${cidDesc}` : ""}</div>
+        </div>
+        ${cidSecundario ? `
+        <div class="field">
+          <span class="field-label">CID-10 Secundário:</span>
+          <div class="field-value"><strong>${cidSecundario}</strong> ${cidSecDesc ? ` — ${cidSecDesc}` : ""}</div>
+        </div>` : ""}
+        <div class="field">
+          <span class="field-label">Condição Funcional na Admissão:</span>
+          <div class="field-value">${condicaoAdmissao || "—"}</div>
         </div>
         ${cifFuncoes ? `<div class="field"><span class="field-label">CIF — Funções do Corpo:</span><div class="field-value">${cifFuncoes}</div></div>` : ""}
         ${cifAtividades ? `<div class="field"><span class="field-label">CIF — Atividades e Participação:</span><div class="field-value">${cifAtividades}</div></div>` : ""}
         ${cifFatores ? `<div class="field"><span class="field-label">CIF — Fatores Ambientais:</span><div class="field-value">${cifFatores}</div></div>` : ""}
       </div>
 
-      <div class="section-title">2. Evolução por Área / Especialidade</div>
+      <div class="section">
+        <div class="section-title">2. Percurso Terapêutico Multiprofissional</div>
+        <div class="field"><span class="field-label">Objetivos Gerais:</span><div class="field-value">${objetivosGerais}</div></div>
+        <div class="field"><span class="field-label">Metas Multiprofissionais (PTS):</span><div class="field-value">${metasMultiprofissionais}</div></div>
+        <div class="field"><span class="field-label">Adesão Global:</span><div class="field-value">${ADESAO_OPCOES.find(a => a.value === adesaoGlobal)?.label || adesaoGlobal}</div></div>
+      </div>
+
+      <div class="section-title">3. Evolução por Área / Especialidade</div>
     `;
+
 
     const sectionsWithStamps = await Promise.all(profSections.map(async (s) => {
       const carimbo = await fetchProfessionalCarimbo(supabase, s.profissional_id);
