@@ -866,30 +866,123 @@ const RelatorioAlta: React.FC = () => {
         </Card>
 
 
-        {/* Diagnosis */}
-        <Card>
-          <CardHeader className="pb-3"><CardTitle className="text-sm flex items-center gap-2"><Stethoscope className="w-4 h-4" /> 2. Diagnóstico</CardTitle></CardHeader>
-          <CardContent className="space-y-3">
-            <BuscaCIDField 
-              value={cid10} 
-              onChange={setCid10} 
-              descValue={cidDesc} 
-              onDescChange={setCidDesc} 
-            />
+        {/* Diagnosis & Global Context */}
+        <Card className="border-primary/20 shadow-sm">
+          <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
+            <CardTitle className="text-sm flex items-center gap-2"><Stethoscope className="w-4 h-4 text-primary" /> 2. Diagnóstico e Contexto Biopsicossocial</CardTitle>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Sparkles className="w-4 h-4 text-primary cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent>Sugestões baseadas no histórico clínico</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div>
-              <Label className="text-xs">CIF — Funções do Corpo</Label>
-              <Textarea value={cifFuncoes} onChange={e => setCifFuncoes(e.target.value)} rows={2} className="text-sm" />
+              <Label className="text-xs font-semibold">Diagnóstico Clínico Resumido</Label>
+              <Input value={diagClinico} onChange={e => setDiagClinico(e.target.value)} placeholder="Ex: Paralisia Cerebral Espástica, TEA Nível 2..." className="h-8 text-sm" />
             </div>
-            <div>
-              <Label className="text-xs">CIF — Atividades e Participação</Label>
-              <Textarea value={cifAtividades} onChange={e => setCifAtividades(e.target.value)} rows={2} className="text-sm" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <BuscaCIDField 
+                value={cid10} 
+                onChange={setCid10} 
+                descValue={cidDesc} 
+                onDescChange={setCidDesc} 
+              />
+              <div className="space-y-1">
+                <Label className="text-xs">CID-10 Secundário</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-between h-8 text-sm font-normal px-2">
+                      <span className="truncate">{cidSecundario ? `${cidSecundario} - ${cidSecDesc || '...'}` : "Buscar CID-10..."}</span>
+                      <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[400px] p-0" align="start">
+                    <Command shouldFilter={false}>
+                      <div className="flex items-center border-b px-3">
+                        <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                        <input 
+                          className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground"
+                          placeholder="Código ou descrição..." 
+                          onValueChange={(v: string) => setCidSearch(v)}
+                        />
+                      </div>
+                      <CommandList>
+                        {isSearchingCid && <div className="p-4 text-center text-sm text-muted-foreground">Buscando...</div>}
+                        <CommandGroup>
+                          {cidOptions.map((opt) => (
+                            <CommandItem
+                              key={opt.codigo}
+                              onSelect={() => {
+                                setCidSecundario(opt.codigo);
+                                setCidSecDesc(opt.descricao);
+                                setCidSearch("");
+                              }}
+                            >
+                              <span className="font-bold mr-2">{opt.codigo}</span>
+                              <span className="truncate">{opt.descricao}</span>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
-            <div>
-              <Label className="text-xs">CIF — Fatores Ambientais</Label>
-              <Textarea value={cifFatores} onChange={e => setCifFatores(e.target.value)} rows={2} className="text-sm" />
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <Label className="text-xs font-semibold">CIF — Funções do Corpo</Label>
+                <Textarea value={cifFuncoes} onChange={e => setCifFuncoes(e.target.value)} rows={2} className="text-sm" placeholder="Limitações orgânicas..." />
+              </div>
+              <div>
+                <Label className="text-xs font-semibold">CIF — Atividades e Participação</Label>
+                <Textarea value={cifAtividades} onChange={e => setCifAtividades(e.target.value)} rows={2} className="text-sm" placeholder="Restrições de vida diária..." />
+              </div>
+              <div>
+                <Label className="text-xs font-semibold">CIF — Fatores Ambientais</Label>
+                <Textarea value={cifFatores} onChange={e => setCifFatores(e.target.value)} rows={2} className="text-sm" placeholder="Barreiras e facilitadores..." />
+              </div>
             </div>
           </CardContent>
         </Card>
+
+        {/* Treatment Summary */}
+        <Card className="border-primary/20 shadow-sm">
+          <CardHeader className="pb-3"><CardTitle className="text-sm flex items-center gap-2"><History className="w-4 h-4 text-primary" /> 3. Percurso Terapêutico e Adesão</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-xs font-semibold">Objetivos Terapêuticos Gerais</Label>
+                <Textarea value={objetivosGerais} onChange={e => setObjetivosGerais(e.target.value)} rows={2} className="text-sm" placeholder="Consolidação dos objetivos do PTS..." />
+              </div>
+              <div>
+                <Label className="text-xs font-semibold">Metas Multiprofissionais Alcançadas</Label>
+                <Textarea value={metasMultiprofissionais} onChange={e => setMetasMultiprofissionais(e.target.value)} rows={2} className="text-sm" placeholder="Resumo das metas do projeto terapêutico..." />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+               <div>
+                  <Label className="text-xs font-semibold">Adesão Global ao Tratamento</Label>
+                  <Select value={adesaoGlobal} onValueChange={setAdesaoGlobal}>
+                    <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {ADESAO_OPCOES.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+               </div>
+               <div>
+                 <Label className="text-xs font-semibold">Condição Funcional na Admissão</Label>
+                 <Input value={condicaoAdmissao} onChange={e => setCondicaoAdmissao(e.target.value)} className="h-8 text-sm" placeholder="Estado inicial para comparação..." />
+               </div>
+            </div>
+          </CardContent>
+        </Card>
+
 
         {/* Professional sections */}
         {profSections.length > 0 && (
