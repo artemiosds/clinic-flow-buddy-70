@@ -175,7 +175,7 @@ const WorkspaceProntuario: React.FC = () => {
     try {
       const [cycleRes, ptsRes] = await Promise.all([
         supabase.from('treatment_cycles').select('*').eq('patient_id', patientId).in('status', ['em_andamento', 'ativo']).order('created_at', { ascending: false }).limit(1).maybeSingle(),
-        supabase.from('pts').select('*').eq('patient_id', patientId).eq('status', 'ativo').order('created_at', { ascending: false }).limit(1).maybeSingle(),
+        supabase.from('pts').select('*, metas:pts_metas(*)').eq('patient_id', patientId).eq('status', 'ativo').order('created_at', { ascending: false }).limit(1).maybeSingle(),
       ]);
       setSessaoCycle(cycleRes.data);
       setSessaoPts(ptsRes.data);
