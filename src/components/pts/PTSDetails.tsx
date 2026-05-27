@@ -79,6 +79,8 @@ export const PTSDetails: React.FC = () => {
         setPts(data as any);
         setEditForm(data as any);
         setEditMetas(data.metas || []);
+        setEditSigtap(data.sigtap || []);
+        setEditCids(data.cids || []);
         if (data.data_proxima_revisao) setNextRevisionDate(data.data_proxima_revisao);
       } catch (err: any) {
         toast.error('Erro ao carregar PTS: ' + err.message);
