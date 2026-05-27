@@ -116,7 +116,7 @@ export const TreatmentTab: React.FC<Props> = ({ pacienteId, pacienteNome, onCycl
     try {
       const [cycleRes, ptsRes] = await Promise.all([
         supabase.from('treatment_cycles').select('*').eq('patient_id', pacienteId).in('status', ['em_andamento', 'ativo']).order('created_at', { ascending: false }).limit(1).maybeSingle(),
-        supabase.from('pts').select('*').eq('patient_id', pacienteId).eq('status', 'ativo').order('created_at', { ascending: false }).limit(1).maybeSingle(),
+        supabase.from('pts').select('*, metas:pts_metas(*)').eq('patient_id', pacienteId).eq('status', 'ativo').order('created_at', { ascending: false }).limit(1).maybeSingle(),
       ]);
 
       if (cycleRes.error) throw cycleRes.error;
