@@ -397,7 +397,8 @@ const RelatorioAlta: React.FC = () => {
         <div><span class="info-label">CNS/CPF:</span> <span class="info-value">${p.cns || p.cpf || "—"}</span></div>
         <div><span class="info-label">Data Nasc:</span> <span class="info-value">${fmt(p.dataNascimento)} (${calcIdade(p.dataNascimento)})</span></div>
         <div><span class="info-label">Mãe/Resp:</span> <span class="info-value">${p.nomeMae || "—"}</span></div>
-        <div><span class="info-label">Endereço:</span> <span class="info-value">${p.logradouro || ""}, ${p.numero || ""} ${p.bairro || ""}</span></div>
+        <div><span class="info-label">Endereço:</span> <span class="info-value">${p.endereco || "—"}</span></div>
+
         <div><span class="info-label">Data Alta:</span> <span class="info-value">${fmt(dataAlta)}</span></div>
         <div style="grid-column: span 2;"><span class="info-label">Modalidades:</span> <span class="info-value">${modalidades.join(", ") || "—"}</span></div>
       </div>
