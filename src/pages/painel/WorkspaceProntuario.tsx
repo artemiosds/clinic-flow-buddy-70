@@ -939,6 +939,37 @@ const WorkspaceProntuario: React.FC = () => {
 
                   <TabsContent value="evolution" className="mt-0 space-y-6" forceMount>
                     <div className={cn("space-y-6", activeTab !== 'evolution' && "hidden")}>
+                      {sessaoPts && sessaoPts.metas?.length > 0 && (
+                        <Card className="border-purple-100 bg-purple-50/20 shadow-sm animate-in fade-in slide-in-from-top-4 duration-500">
+                          <CardContent className="p-4 space-y-3">
+                            <div className="flex items-center gap-2 mb-1">
+                              <Target className="w-4 h-4 text-purple-600" />
+                              <Label className="font-bold text-xs uppercase text-purple-700 tracking-wider">Meta Trabalhada nesta Evolução</Label>
+                            </div>
+                            <Select 
+                              value={form.pts_meta_id || 'no_meta'} 
+                              onValueChange={(v) => handleFormChange({ pts_meta_id: v === 'no_meta' ? '' : v })}
+                            >
+                              <SelectTrigger className="bg-background border-purple-200">
+                                <SelectValue placeholder="Selecione a meta do PTS..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="no_meta">Nenhuma meta específica</SelectItem>
+                                {sessaoPts.metas.map((m: any) => (
+                                  <SelectItem key={m.id} value={m.id}>
+                                    <div className="flex flex-col items-start gap-0.5">
+                                      <span className="font-bold text-xs">{m.titulo}</span>
+                                      <span className="text-[10px] text-muted-foreground">{m.especialidade} • {m.categoria}</span>
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <p className="text-[10px] text-purple-600/70 italic">Relacionar a evolução a uma meta facilita o acompanhamento do progresso clínico no PTS.</p>
+                          </CardContent>
+                        </Card>
+                      )}
+
                       {/* View-only Acolhimento if exists and in Evolution tab */}
                       {(acolhimentoData || (acolhimentoDraft && Object.keys(acolhimentoDraft).length > 0)) && (
                         <div className="animate-in fade-in slide-in-from-top-4 duration-500">
