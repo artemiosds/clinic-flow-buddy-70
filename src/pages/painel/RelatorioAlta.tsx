@@ -1700,8 +1700,10 @@ const RelatorioAlta: React.FC = () => {
                toast.error("Por favor, preencha os campos obrigatórios e valide o relatório antes de emitir.");
                return;
              }
+             setStatus("emitido");
              handleSave("individual");
           }}>
+
             <CheckCircle className="w-4 h-4 mr-1.5" /> Finalizar e Salvar no Prontuário
           </Button>
         </div>
