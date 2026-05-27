@@ -1495,6 +1495,8 @@ ${dataRows}
             { value: 'detalhado', label: 'Detalhado' },
             { value: 'municipios', label: '🏙️ Municípios' },
             { value: 'mapa', label: '📍 Mapa Atendimento' },
+            { value: 'gestao_alta', label: '📊 Gestão de Alta' },
+
 
           ].map(tab => (
             <button
