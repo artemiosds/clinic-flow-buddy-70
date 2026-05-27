@@ -492,51 +492,49 @@ const RelatorioAlta: React.FC = () => {
     return `
       <div class="info-grid">
         <div><span class="info-label">Paciente:</span> <span class="info-value">${p.nome}</span></div>
-        <div><span class="info-label">CNS:</span> <span class="info-value">${p.cns || "—"}</span></div>
-        <div><span class="info-label">CPF:</span> <span class="info-value">${p.cpf || "—"}</span></div>
+        <div><span class="info-label">CNS/CPF:</span> <span class="info-value">${p.cns || p.cpf || "—"}</span></div>
         <div><span class="info-label">Data Nasc:</span> <span class="info-value">${fmt(p.dataNascimento)} (${calcIdade(p.dataNascimento)})</span></div>
         <div><span class="info-label">Profissional:</span> <span class="info-value">${profNome}</span></div>
-        <div><span class="info-label">Conselho:</span> <span class="info-value">${conselho}</span></div>
         <div><span class="info-label">Data de Alta:</span> <span class="info-value">${fmt(indDataAlta)}</span></div>
         <div><span class="info-label">Modalidade:</span> <span class="info-value">${indModalidade || "—"}</span></div>
+        <div><span class="info-label">Adesão:</span> <span class="info-value">${ADESAO_OPCOES.find(a => a.value === indAdesao)?.label || indAdesao}</span></div>
+        <div><span class="info-label">Período:</span> <span class="info-value">${fmt(indPeriodoInicio)} a ${fmt(indPeriodoFim)} (${indSessoes} sessões)</span></div>
       </div>
 
       <div class="section">
-        <div class="section-title">1. Diagnóstico e Atendimento</div>
+        <div class="section-title">1. Diagnóstico e Contexto Clínico</div>
         <div class="field">
-          <span class="field-label">CID-10:</span>
+          <span class="field-label">Diagnóstico (CID-10):</span>
           <div class="field-value"><strong>${indDiagCid}</strong> ${indCidDesc ? ` — ${indCidDesc}` : ""}</div>
         </div>
-        ${indCif ? `<div class="field"><span class="field-label">CIF:</span><div class="field-value">${indCif}</div></div>` : ""}
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
-          <div><strong>Período de Acompanhamento:</strong> ${fmt(indPeriodoInicio)} a ${fmt(indPeriodoFim)}</div>
-          <div><strong>Sessões Realizadas:</strong> ${indSessoes}</div>
-        </div>
+        ${indQueixa ? `<div class="field"><span class="field-label">Queixa/Motivo:</span><div class="field-value">${indQueixa}</div></div>` : ""}
+        ${indCif ? `<div class="field"><span class="field-label">Diagnóstico Funcional:</span><div class="field-value">${indCif}</div></div>` : ""}
       </div>
 
       <div class="section">
-        <div class="section-title">2. Evolução Clínica e Funcional</div>
-        ${indObjetivos ? `<div class="field"><span class="field-label">Objetivos Terapêuticos:</span><div class="field-value">${indObjetivos}</div></div>` : ""}
-        ${indIntervencoes ? `<div class="field"><span class="field-label">Intervenções / Procedimentos:</span><div class="field-value">${indIntervencoes}</div></div>` : ""}
-        ${indEvolucao ? `<div class="field"><span class="field-label">Evolução Clínica e Funcional:</span><div class="field-value">${indEvolucao}</div></div>` : ""}
+        <div class="section-title">2. Evolução Clínica e Terapêutica</div>
+        ${indObjetivos ? `<div class="field"><span class="field-label">Objetivos Iniciais:</span><div class="field-value">${indObjetivos}</div></div>` : ""}
+        ${indIntervencoes ? `<div class="field"><span class="field-label">Intervenções Realizadas:</span><div class="field-value">${indIntervencoes}</div></div>` : ""}
+        ${indEvolucao ? `<div class="field"><span class="field-label">Evolução e Resposta Terapêutica:</span><div class="field-value">${indEvolucao}</div></div>` : ""}
         <div class="field">
-          <span class="field-label">Metas:</span>
+          <span class="field-label">Status das Metas:</span>
           <div class="field-value">
-            ${indMetas === "totalmente" ? "Totalmente atingidas" : indMetas === "parcialmente" ? "Parcialmente atingidas" : "Não atingidas"}
+            ${METAS_STATUS_OPCOES.find(m => m.value === indMetas)?.label || indMetas}
             ${indMetasJust ? `<br/><small>Justificativa: ${indMetasJust}</small>` : ""}
           </div>
         </div>
-        ${indTA ? `<div class="field"><span class="field-label">Tecnologia Assistiva:</span><div class="field-value">${indTA}</div></div>` : ""}
+        ${indIntercorrencias.length > 0 ? `<div class="field"><span class="field-label">Intercorrências:</span><div class="field-value">${indIntercorrencias.join(", ")}</div></div>` : ""}
+        ${indTA ? `<div class="field"><span class="field-label">Tecnologia Assistiva / Órteses:</span><div class="field-value">${indTA}</div></div>` : ""}
       </div>
 
       <div class="section">
-        <div class="section-title">3. Conclusão e Orientações</div>
+        <div class="section-title">3. Conclusão e Plano Pós-Alta</div>
         <div class="field">
           <span class="field-label">Motivo da Alta:</span>
           <div class="field-value">${motivoLabel}${indMotivoDet ? ` — ${indMotivoDet}` : ""}</div>
         </div>
-        ${indOrientacoes ? `<div class="field"><span class="field-label">Orientações:</span><div class="field-value">${indOrientacoes}</div></div>` : ""}
-        ${indEncaminhamento ? `<div class="field"><span class="field-label">Encaminhamentos:</span><div class="field-value">${indEncaminhamento}</div></div>` : ""}
+        ${indOrientacoes ? `<div class="field"><span class="field-label">Orientações Finais:</span><div class="field-value">${indOrientacoes}</div></div>` : ""}
+        ${indEncaminhamento ? `<div class="field"><span class="field-label">Encaminhamentos / Plano de Cuidados:</span><div class="field-value">${indEncaminhamento}</div></div>` : ""}
       </div>
 
       <div class="doc-sign-footer" style="margin-top: 60px; display: flex; justify-content: space-between; align-items: flex-end;">
@@ -551,6 +549,7 @@ const RelatorioAlta: React.FC = () => {
       </div>
     `;
   };
+
 
   const handlePrint = async (type: "multi" | "individual") => {
     if (type === "multi") {
