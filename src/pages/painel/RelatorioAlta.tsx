@@ -30,7 +30,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 interface ProfSection {
   profissional_id: string;
   profissional_nome: string;
-
   profissao: string;
   conselho: string;
   periodo_inicio: string;
@@ -44,7 +43,11 @@ interface ProfSection {
   tecnologia_assistiva: string;
   adesao: "excelente" | "boa" | "regular" | "baixa";
   intercorrencias: string[];
+  status: "pendente" | "preenchendo" | "concluido";
+  orientacoes_especificas?: string;
+  encaminhamentos_especificos?: string;
 }
+
 
 type ModoRelatorio = "selector" | "multiprofissional" | "individual";
 
