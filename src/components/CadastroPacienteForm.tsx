@@ -724,6 +724,51 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                     </SelectContent>
                   </Select>
                   {errors.raca_cor && <p className="text-xs text-destructive mt-1">{errors.raca_cor}</p>}
+                </div>
+
+                {/* Etnia: obrigatória apenas se Raça/Cor = Indígena */}
+                {form.raca_cor === "indigena" && (
+                  <div className="md:col-span-2">
+                    <Label>Etnia (povo indígena) *</Label>
+                    <Select value={cd.etnia || ""} onValueChange={(v) => setCustom("etnia", v)}>
+                      <SelectTrigger><SelectValue placeholder="Selecione a etnia" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="X101">X101 — Apalai</SelectItem>
+                        <SelectItem value="X117">X117 — Arara do Pará</SelectItem>
+                        <SelectItem value="X238">X238 — Mundurukú</SelectItem>
+                        <SelectItem value="X298">X298 — Wai-Wai</SelectItem>
+                        <SelectItem value="X305">X305 — Tiriyó</SelectItem>
+                        <SelectItem value="X313">X313 — Yanomami</SelectItem>
+                        <SelectItem value="X999">X999 — Outra (especificar)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {cd.etnia === "X999" && (
+                      <Input
+                        className="mt-2"
+                        placeholder="Especifique a etnia"
+                        value={cd.etniaOutra || ""}
+                        onChange={(e) => setCustom("etniaOutra", sanitizeUpper(e.target.value))}
+                      />
+                    )}
+                  </div>
+                )}
+
+                {/* País de nascimento: obrigatório se estrangeiro */}
+                {form.nacionalidade === "Estrangeiro" && (
+                  <div className="md:col-span-2">
+                    <Label>País de nascimento *</Label>
+                    <Input
+                      value={cd.paisNascimento || ""}
+                      onChange={(e) => setCustom("paisNascimento", sanitizeUpper(e.target.value))}
+                      placeholder="EX: VENEZUELA"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <p className="text-[11px] text-muted-foreground">
+                Esses campos são exigidos pelo SIA/SUS na geração do arquivo BPA-I mensal.
+              </p>
             </div>
 
             {/* ── Bloco Social / Educacional ── */}
@@ -772,7 +817,7 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                   <Input
                     value={cd.ocupacao || ""}
                     onChange={(e) => setCustom("ocupacao", sanitizeUpper(e.target.value))}
-                    placeholder="EX: AUXILIAR DE SERVIÇOS GERAIS"
+                    placeholder="EX: PROFESSOR, PEDREIRO, ETC"
                   />
                 </div>
 
@@ -793,52 +838,6 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                   </Select>
                 </div>
               </div>
-            </div>
-
-                {/* Etnia: obrigatória apenas se Raça/Cor = Indígena */}
-                {form.raca_cor === "indigena" && (
-                  <div className="md:col-span-2">
-                    <Label>Etnia (povo indígena) *</Label>
-                    <Select value={cd.etnia || ""} onValueChange={(v) => setCustom("etnia", v)}>
-
-                      <SelectTrigger><SelectValue placeholder="Selecione a etnia" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="X101">X101 — Apalai</SelectItem>
-                        <SelectItem value="X117">X117 — Arara do Pará</SelectItem>
-                        <SelectItem value="X238">X238 — Mundurukú</SelectItem>
-                        <SelectItem value="X298">X298 — Wai-Wai</SelectItem>
-                        <SelectItem value="X305">X305 — Tiriyó</SelectItem>
-                        <SelectItem value="X313">X313 — Yanomami</SelectItem>
-                        <SelectItem value="X999">X999 — Outra (especificar)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    {cd.etnia === "X999" && (
-                      <Input
-                        className="mt-2"
-                        placeholder="Especifique a etnia"
-                        value={cd.etniaOutra || ""}
-                        onChange={(e) => setCustom("etniaOutra", sanitizeUpper(e.target.value))}
-                      />
-                    )}
-                  </div>
-                )}
-
-                {/* País de nascimento: obrigatório se estrangeiro */}
-                {cd.nacionalidade === "estrangeiro" && (
-                  <div className="md:col-span-2">
-                    <Label>País de nascimento *</Label>
-                    <Input
-                      value={cd.paisNascimento || ""}
-                      onChange={(e) => setCustom("paisNascimento", sanitizeUpper(e.target.value))}
-                      placeholder="EX: VENEZUELA"
-                    />
-                  </div>
-                )}
-              </div>
-
-              <p className="text-[11px] text-muted-foreground">
-                Esses campos são exigidos pelo SIA/SUS na geração do arquivo BPA-I mensal.
-              </p>
             </div>
 
             {/* Encaminhamento (UBS) - NOVO HISTÓRICO ORGANIZADO */}
