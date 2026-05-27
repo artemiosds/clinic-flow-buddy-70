@@ -100,6 +100,7 @@ export const PTSDetails: React.FC = () => {
     try {
       await ptsService.updatePTS(id, editForm);
       
+      // Update Metas
       for (const meta of editMetas) {
         if (meta.id) {
           const { id: metaId, ...cleanMeta } = meta as any;
@@ -107,6 +108,36 @@ export const PTSDetails: React.FC = () => {
         } else {
           await supabase.from('pts_metas').insert({ ...meta, pts_id: id });
         }
+      }
+
+      // Update SIGTAP
+      // Delete removed ones
+      const currentSigtapIds = editSigtap.map(s => s.id).filter(Boolean);
+      if (pts.sigtap && pts.sigtap.length > 0) {
+        const toDelete = pts.sigtap.filter(s => !currentSigtapIds.includes(s.id)).map(s => s.id);
+        if (toDelete.length > 0) {
+          await supabase.from('pts_sigtap').delete().in('id', toDelete);
+        }
+      }
+      // Insert new ones
+      const newSigtap = editSigtap.filter(s => !s.id);
+      if (newSigtap.length > 0) {
+        await supabase.from('pts_sigtap').insert(newSigtap.map(s => ({ ...s, pts_id: id })));
+      }
+
+      // Update CIDs
+      // Delete removed ones
+      const currentCidIds = editCids.map(c => c.id).filter(Boolean);
+      if (pts.cids && pts.cids.length > 0) {
+        const toDelete = pts.cids.filter(c => !currentCidIds.includes(c.id)).map(c => c.id);
+        if (toDelete.length > 0) {
+          await supabase.from('pts_cid').delete().in('id', toDelete);
+        }
+      }
+      // Insert new ones
+      const newCids = editCids.filter(c => !c.id);
+      if (newCids.length > 0) {
+        await supabase.from('pts_cid').insert(newCids.map(c => ({ ...c, pts_id: id })));
       }
 
       await logAction({
