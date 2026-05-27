@@ -30,7 +30,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 interface ProfSection {
   profissional_id: string;
   profissional_nome: string;
-
   profissao: string;
   conselho: string;
   periodo_inicio: string;
@@ -44,7 +43,11 @@ interface ProfSection {
   tecnologia_assistiva: string;
   adesao: "excelente" | "boa" | "regular" | "baixa";
   intercorrencias: string[];
+  status: "pendente" | "preenchendo" | "concluido";
+  orientacoes_especificas?: string;
+  encaminhamentos_especificos?: string;
 }
+
 
 type ModoRelatorio = "selector" | "multiprofissional" | "individual";
 
@@ -120,21 +123,31 @@ const RelatorioAlta: React.FC = () => {
   const [modalidades, setModalidades] = useState<string[]>([]);
   const [cid10, setCid10] = useState("");
   const [cidDesc, setCidDesc] = useState("");
+  const [cidSecundario, setCidSecundario] = useState("");
+  const [cidSecDesc, setCidSecDesc] = useState("");
+  const [diagClinico, setDiagClinico] = useState("");
   const [cifFuncoes, setCifFuncoes] = useState("");
   const [cifAtividades, setCifAtividades] = useState("");
   const [cifFatores, setCifFatores] = useState("");
   const [profSections, setProfSections] = useState<ProfSection[]>([]);
   const [motivoAlta, setMotivoAlta] = useState("");
   const [motivoDetalhe, setMotivoDetalhe] = useState("");
+  const [tipoAlta, setTipoAlta] = useState<string>("");
+  const [condicaoAdmissao, setCondicaoAdmissao] = useState("");
   const [condicaoFuncional, setCondicaoFuncional] = useState("");
   const [nivelIndep, setNivelIndep] = useState("");
   const [orientacoesUsuario, setOrientacoesUsuario] = useState("");
   const [orientacoesUbs, setOrientacoesUbs] = useState("");
+  const [orientacoesEscola, setOrientacoesEscola] = useState("");
   const [encaminhamentos, setEncaminhamentos] = useState<string[]>([]);
   const [freqAps, setFreqAps] = useState("");
   const [dataAlta, setDataAlta] = useState(new Date().toISOString().split("T")[0]);
   const [tabProf, setTabProf] = useState("");
-  const [status, setStatus] = useState<"rascunho" | "validado" | "emitido">("rascunho");
+  const [status, setStatus] = useState<"rascunho" | "preenchendo" | "aguardando" | "validado" | "emitido">("rascunho");
+  const [adesaoGlobal, setAdesaoGlobal] = useState<string>("boa");
+  const [objetivosGerais, setObjetivosGerais] = useState("");
+  const [metasMultiprofissionais, setMetasMultiprofissionais] = useState("");
+
 
   /* ── individual state ─── */
   const [indDiagCid, setIndDiagCid] = useState("");
@@ -240,6 +253,15 @@ const RelatorioAlta: React.FC = () => {
       .eq("status", "ativo")
       .maybeSingle();
 
+    if (pts) {
+      setObjetivosGerais(pts.objetivos_terapeuticos || "");
+      setMetasMultiprofissionais(
+        `${pts.metas_curto_prazo || ""} ${pts.metas_medio_prazo || ""} ${pts.metas_longo_prazo || ""}`.trim()
+      );
+      setCondicaoAdmissao(pts.contextos_afetados?.join(", ") || "");
+      setCondicaoFuncional(pts.diagnostico_funcional || "");
+    }
+
     const sections: ProfSection[] = [];
     profMap.forEach((val, profId) => {
       const func = funcionarios.find(f => f.id === profId);
@@ -259,7 +281,10 @@ const RelatorioAlta: React.FC = () => {
         metas_justificativa: "",
         tecnologia_assistiva: "",
         adesao: "boa",
-        intercorrencias: []
+        intercorrencias: [],
+        status: "pendente",
+        orientacoes_especificas: "",
+        encaminhamentos_especificos: ""
       });
     });
 
@@ -270,7 +295,6 @@ const RelatorioAlta: React.FC = () => {
     const pat = pacientes.find(p => p.id === pid);
     if (pat?.cid) {
       setCid10(pat.cid);
-      // Try to find description
       const { data } = await supabase
         .from('cid10_codigos')
         .select('descricao')
@@ -278,11 +302,8 @@ const RelatorioAlta: React.FC = () => {
         .maybeSingle();
       if (data) setCidDesc(data.descricao);
     }
-
-    if (pts?.diagnostico_funcional) {
-        setCondicaoFuncional(pts.diagnostico_funcional);
-    }
   };
+
 
   const loadIndividualData = async (pid: string) => {
     if (!user?.id) return;
@@ -349,13 +370,22 @@ const RelatorioAlta: React.FC = () => {
     if (!motivoAlta) errors.push("Selecione o motivo da alta");
     if (!nivelIndep) errors.push("Selecione o nível de independência");
     if (modalidades.length === 0) errors.push("Selecione pelo menos uma modalidade");
+    if (!condicaoFuncional) errors.push("Preencha a condição funcional na alta");
+    
+    const concluidoCount = profSections.filter(s => s.status === "concluido").length;
+    if (concluidoCount === 0) errors.push("Pelo menos um profissional deve concluir sua contribuição");
+
     profSections.forEach(s => {
-      if (s.metas_status !== "totalmente" && !s.metas_justificativa) {
-        errors.push(`Justificativa obrigatória para ${s.profissional_nome}`);
+      if (s.status === "concluido") {
+        if (s.metas_status !== "totalmente" && !s.metas_justificativa) {
+          errors.push(`Justificativa obrigatória para ${s.profissional_nome}`);
+        }
+        if (!s.evolucao) errors.push(`Evolução obrigatória para ${s.profissional_nome}`);
       }
     });
     return errors;
   };
+
 
   const validateInd = (): string[] => {
     const errors: string[] = [];
@@ -373,10 +403,11 @@ const RelatorioAlta: React.FC = () => {
     let html = `
       <div class="info-grid">
         <div><span class="info-label">Paciente:</span> <span class="info-value">${p.nome}</span></div>
-        <div><span class="info-label">CNS:</span> <span class="info-value">${p.cns || "—"}</span></div>
-        <div><span class="info-label">CPF:</span> <span class="info-value">${p.cpf || "—"}</span></div>
+        <div><span class="info-label">CNS/CPF:</span> <span class="info-value">${p.cns || p.cpf || "—"}</span></div>
         <div><span class="info-label">Data Nasc:</span> <span class="info-value">${fmt(p.dataNascimento)} (${calcIdade(p.dataNascimento)})</span></div>
         <div><span class="info-label">Mãe/Resp:</span> <span class="info-value">${p.nomeMae || "—"}</span></div>
+        <div><span class="info-label">Endereço:</span> <span class="info-value">${p.endereco || "—"}</span></div>
+
         <div><span class="info-label">Data Alta:</span> <span class="info-value">${fmt(dataAlta)}</span></div>
         <div style="grid-column: span 2;"><span class="info-label">Modalidades:</span> <span class="info-value">${modalidades.join(", ") || "—"}</span></div>
       </div>
@@ -384,16 +415,37 @@ const RelatorioAlta: React.FC = () => {
       <div class="section">
         <div class="section-title">1. Diagnóstico e Funcionalidade</div>
         <div class="field">
-          <span class="field-label">CID-10:</span>
+          <span class="field-label">Diagnóstico Clínico:</span>
+          <div class="field-value">${diagClinico || "—"}</div>
+        </div>
+        <div class="field">
+          <span class="field-label">CID-10 Principal:</span>
           <div class="field-value"><strong>${cid10}</strong> ${cidDesc ? ` — ${cidDesc}` : ""}</div>
+        </div>
+        ${cidSecundario ? `
+        <div class="field">
+          <span class="field-label">CID-10 Secundário:</span>
+          <div class="field-value"><strong>${cidSecundario}</strong> ${cidSecDesc ? ` — ${cidSecDesc}` : ""}</div>
+        </div>` : ""}
+        <div class="field">
+          <span class="field-label">Condição Funcional na Admissão:</span>
+          <div class="field-value">${condicaoAdmissao || "—"}</div>
         </div>
         ${cifFuncoes ? `<div class="field"><span class="field-label">CIF — Funções do Corpo:</span><div class="field-value">${cifFuncoes}</div></div>` : ""}
         ${cifAtividades ? `<div class="field"><span class="field-label">CIF — Atividades e Participação:</span><div class="field-value">${cifAtividades}</div></div>` : ""}
         ${cifFatores ? `<div class="field"><span class="field-label">CIF — Fatores Ambientais:</span><div class="field-value">${cifFatores}</div></div>` : ""}
       </div>
 
-      <div class="section-title">2. Evolução por Área / Especialidade</div>
+      <div class="section">
+        <div class="section-title">2. Percurso Terapêutico Multiprofissional</div>
+        <div class="field"><span class="field-label">Objetivos Gerais:</span><div class="field-value">${objetivosGerais}</div></div>
+        <div class="field"><span class="field-label">Metas Multiprofissionais (PTS):</span><div class="field-value">${metasMultiprofissionais}</div></div>
+        <div class="field"><span class="field-label">Adesão Global:</span><div class="field-value">${ADESAO_OPCOES.find(a => a.value === adesaoGlobal)?.label || adesaoGlobal}</div></div>
+      </div>
+
+      <div class="section-title">3. Evolução por Área / Especialidade</div>
     `;
+
 
     const sectionsWithStamps = await Promise.all(profSections.map(async (s) => {
       const carimbo = await fetchProfessionalCarimbo(supabase, s.profissional_id);
@@ -424,7 +476,9 @@ const RelatorioAlta: React.FC = () => {
             </div>
           </div>
           ${s.tecnologia_assistiva ? `<div class="field"><span class="field-label">Tecnologia Assistiva Concedida:</span><div class="field-value">${s.tecnologia_assistiva}</div></div>` : ""}
-          
+          ${s.orientacoes_especificas ? `<div class="field"><span class="field-label">Orientações Específicas:</span><div class="field-value">${s.orientacoes_especificas}</div></div>` : ""}
+          ${s.encaminhamentos_especificos ? `<div class="field"><span class="field-label">Encaminhamentos Específicos:</span><div class="field-value">${s.encaminhamentos_especificos}</div></div>` : ""}
+
           <div class="doc-sign-footer" style="margin-top: 15px; display: flex; justify-content: space-between; align-items: flex-end;">
             <div class="signature" style="flex: 1; text-align: left;">
               <div class="signature-line" style="width: 200px; border-top: 1px solid #000; margin-bottom: 3px;"></div>
@@ -442,7 +496,11 @@ const RelatorioAlta: React.FC = () => {
     const motivoLabel = MOTIVOS_ALTA.find(m => m.value === motivoAlta)?.label || motivoAlta;
     html += `
       <div class="section">
-        <div class="section-title">3. Motivo da Alta e Condição Final</div>
+        <div class="section-title">4. Conclusão Multiprofissional e Condição na Alta</div>
+        <div class="field">
+          <span class="field-label">Tipo de Alta:</span>
+          <div class="field-value">${tipoAlta || "—"}</div>
+        </div>
         <div class="field">
           <span class="field-label">Motivo da Alta:</span>
           <div class="field-value">${motivoLabel}${motivoDetalhe ? ` — ${motivoDetalhe}` : ""}</div>
@@ -458,10 +516,14 @@ const RelatorioAlta: React.FC = () => {
       </div>
 
       <div class="section">
-        <div class="section-title">4. Orientações e Encaminhamentos</div>
+        <div class="section-title">5. Plano de Cuidados e Orientações Pós-Alta</div>
         ${orientacoesUsuario ? `<div class="field"><span class="field-label">Orientações ao Usuário/Família:</span><div class="field-value">${orientacoesUsuario}</div></div>` : ""}
         ${orientacoesUbs ? `<div class="field"><span class="field-label">Orientações para UBS/ESF:</span><div class="field-value">${orientacoesUbs}</div></div>` : ""}
+        ${orientacoesEscola ? `<div class="field"><span class="field-label">Orientações para Escola/Outros:</span><div class="field-value">${orientacoesEscola}</div></div>` : ""}
         ${encaminhamentos.length > 0 ? `<div class="field"><span class="field-label">Encaminhamentos Efetuados:</span><div class="field-value">${encaminhamentos.join(", ")}</div></div>` : ""}
+        ${freqAps ? `<div class="field"><span class="field-label">Frequência Recomendada na APS:</span><div class="field-value">${freqAps}</div></div>` : ""}
+      </div>
+
         ${freqAps ? `<div class="field"><span class="field-label">Frequência Recomendada na APS:</span><div class="field-value">${freqAps}</div></div>` : ""}
       </div>
 
@@ -586,15 +648,18 @@ const RelatorioAlta: React.FC = () => {
     const dataAlt = type === "multi" ? dataAlta : indDataAlta;
 
     const dataObj = type === "multi" ? {
-      modalidades, cid10, cidDesc, cifFuncoes, cifAtividades, cifFatores,
-      profissionais: profSections, motivoAlta, motivoDetalhe,
-      condicaoFuncional, nivelIndep, orientacoesUsuario, orientacoesUbs,
-      encaminhamentos, freqAps, dataAlta, status,
+      modalidades, cid10, cidDesc, cidSecundario, cidSecDesc, diagClinico,
+      cifFuncoes, cifAtividades, cifFatores,
+      profissionais: profSections, motivoAlta, motivoDetalhe, tipoAlta,
+      condicaoAdmissao, condicaoFuncional, nivelIndep, orientacoesUsuario, orientacoesUbs,
+      orientacoesEscola, encaminhamentos, freqAps, dataAlta, status,
+      adesaoGlobal, objetivosGerais, metasMultiprofissionais,
       pacienteNome: paciente?.nome,
       pacienteCns: paciente?.cns,
       pacienteCpf: paciente?.cpf,
       dataNascimento: paciente?.dataNascimento,
     } : {
+
       diagCid: indDiagCid, cidDesc: indCidDesc, cif: indCif, objetivos: indObjetivos,
       intervencoes: indIntervencoes, evolucao: indEvolucao,
       metas: indMetas, metasJust: indMetasJust, ta: indTA,
@@ -801,30 +866,123 @@ const RelatorioAlta: React.FC = () => {
         </Card>
 
 
-        {/* Diagnosis */}
-        <Card>
-          <CardHeader className="pb-3"><CardTitle className="text-sm flex items-center gap-2"><Stethoscope className="w-4 h-4" /> 2. Diagnóstico</CardTitle></CardHeader>
-          <CardContent className="space-y-3">
-            <BuscaCIDField 
-              value={cid10} 
-              onChange={setCid10} 
-              descValue={cidDesc} 
-              onDescChange={setCidDesc} 
-            />
+        {/* Diagnosis & Global Context */}
+        <Card className="border-primary/20 shadow-sm">
+          <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
+            <CardTitle className="text-sm flex items-center gap-2"><Stethoscope className="w-4 h-4 text-primary" /> 2. Diagnóstico e Contexto Biopsicossocial</CardTitle>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Sparkles className="w-4 h-4 text-primary cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent>Sugestões baseadas no histórico clínico</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div>
-              <Label className="text-xs">CIF — Funções do Corpo</Label>
-              <Textarea value={cifFuncoes} onChange={e => setCifFuncoes(e.target.value)} rows={2} className="text-sm" />
+              <Label className="text-xs font-semibold">Diagnóstico Clínico Resumido</Label>
+              <Input value={diagClinico} onChange={e => setDiagClinico(e.target.value)} placeholder="Ex: Paralisia Cerebral Espástica, TEA Nível 2..." className="h-8 text-sm" />
             </div>
-            <div>
-              <Label className="text-xs">CIF — Atividades e Participação</Label>
-              <Textarea value={cifAtividades} onChange={e => setCifAtividades(e.target.value)} rows={2} className="text-sm" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <BuscaCIDField 
+                value={cid10} 
+                onChange={setCid10} 
+                descValue={cidDesc} 
+                onDescChange={setCidDesc} 
+              />
+              <div className="space-y-1">
+                <Label className="text-xs">CID-10 Secundário</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-between h-8 text-sm font-normal px-2">
+                      <span className="truncate">{cidSecundario ? `${cidSecundario} - ${cidSecDesc || '...'}` : "Buscar CID-10..."}</span>
+                      <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[400px] p-0" align="start">
+                    <Command shouldFilter={false}>
+                      <div className="flex items-center border-b px-3">
+                        <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                        <input 
+                          className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground"
+                          placeholder="Código ou descrição..." 
+                          onChange={(e) => setCidSearch(e.target.value)}
+                        />
+                      </div>
+                      <CommandList>
+                        {isSearchingCid && <div className="p-4 text-center text-sm text-muted-foreground">Buscando...</div>}
+                        <CommandGroup>
+                          {cidOptions.map((opt) => (
+                            <CommandItem
+                              key={opt.codigo}
+                              onSelect={() => {
+                                setCidSecundario(opt.codigo);
+                                setCidSecDesc(opt.descricao);
+                                setCidSearch("");
+                              }}
+                            >
+                              <span className="font-bold mr-2">{opt.codigo}</span>
+                              <span className="truncate">{opt.descricao}</span>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
-            <div>
-              <Label className="text-xs">CIF — Fatores Ambientais</Label>
-              <Textarea value={cifFatores} onChange={e => setCifFatores(e.target.value)} rows={2} className="text-sm" />
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <Label className="text-xs font-semibold">CIF — Funções do Corpo</Label>
+                <Textarea value={cifFuncoes} onChange={e => setCifFuncoes(e.target.value)} rows={2} className="text-sm" placeholder="Limitações orgânicas..." />
+              </div>
+              <div>
+                <Label className="text-xs font-semibold">CIF — Atividades e Participação</Label>
+                <Textarea value={cifAtividades} onChange={e => setCifAtividades(e.target.value)} rows={2} className="text-sm" placeholder="Restrições de vida diária..." />
+              </div>
+              <div>
+                <Label className="text-xs font-semibold">CIF — Fatores Ambientais</Label>
+                <Textarea value={cifFatores} onChange={e => setCifFatores(e.target.value)} rows={2} className="text-sm" placeholder="Barreiras e facilitadores..." />
+              </div>
             </div>
           </CardContent>
         </Card>
+
+        {/* Treatment Summary */}
+        <Card className="border-primary/20 shadow-sm">
+          <CardHeader className="pb-3"><CardTitle className="text-sm flex items-center gap-2"><History className="w-4 h-4 text-primary" /> 3. Percurso Terapêutico e Adesão</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-xs font-semibold">Objetivos Terapêuticos Gerais</Label>
+                <Textarea value={objetivosGerais} onChange={e => setObjetivosGerais(e.target.value)} rows={2} className="text-sm" placeholder="Consolidação dos objetivos do PTS..." />
+              </div>
+              <div>
+                <Label className="text-xs font-semibold">Metas Multiprofissionais Alcançadas</Label>
+                <Textarea value={metasMultiprofissionais} onChange={e => setMetasMultiprofissionais(e.target.value)} rows={2} className="text-sm" placeholder="Resumo das metas do projeto terapêutico..." />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+               <div>
+                  <Label className="text-xs font-semibold">Adesão Global ao Tratamento</Label>
+                  <Select value={adesaoGlobal} onValueChange={setAdesaoGlobal}>
+                    <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {ADESAO_OPCOES.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+               </div>
+               <div>
+                 <Label className="text-xs font-semibold">Condição Funcional na Admissão</Label>
+                 <Input value={condicaoAdmissao} onChange={e => setCondicaoAdmissao(e.target.value)} className="h-8 text-sm" placeholder="Estado inicial para comparação..." />
+               </div>
+            </div>
+          </CardContent>
+        </Card>
+
 
         {/* Professional sections */}
         {profSections.length > 0 && (
@@ -841,32 +999,46 @@ const RelatorioAlta: React.FC = () => {
                 </TabsList>
                 {profSections.map(s => (
                   <TabsContent key={s.profissional_id} value={s.profissional_id} className="space-y-4 pt-4">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 bg-muted/30 p-3 rounded-lg text-sm border border-border/50">
-                      <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">Profissional</span><strong>{s.profissional_nome}</strong></div>
-                      <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">Profissão</span>{s.profissao || "—"}</div>
-                      <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">Período</span>{fmt(s.periodo_inicio)} a {fmt(s.periodo_fim)}</div>
-                      <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">Sessões</span><Badge variant="secondary" className="h-5 px-1.5">{s.sessoes}</Badge></div>
+                    <div className="flex items-center justify-between bg-muted/30 p-3 rounded-lg border border-border/50">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 flex-1">
+                        <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">Profissional</span><strong>{s.profissional_nome}</strong></div>
+                        <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">Profissão</span>{s.profissao || "—"}</div>
+                        <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">Período</span>{fmt(s.periodo_inicio)} a {fmt(s.periodo_fim)}</div>
+                        <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">Sessões</span><Badge variant="secondary" className="h-5 px-1.5">{s.sessoes}</Badge></div>
+                      </div>
+                      <div className="ml-4">
+                        <Select value={s.status} onValueChange={v => updateProfSection(s.profissional_id, "status", v)}>
+                          <SelectTrigger className={`h-8 w-32 text-xs ${s.status === 'concluido' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'}`}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="pendente">Não iniciado</SelectItem>
+                            <SelectItem value="preenchendo">Preenchendo</SelectItem>
+                            <SelectItem value="concluido">Concluído</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label className="text-xs font-semibold">Objetivos Terapêuticos Iniciais</Label>
+                        <Label className="text-xs font-semibold">Avaliação / Objetivos Específicos</Label>
                         <Textarea value={s.objetivos} onChange={e => updateProfSection(s.profissional_id, "objetivos", e.target.value)} rows={3} className="text-sm" />
                       </div>
                       <div>
-                        <Label className="text-xs font-semibold">Intervenções/Procedimentos Realizados</Label>
+                        <Label className="text-xs font-semibold">Intervenções e Recursos Utilizados</Label>
                         <Textarea value={s.intervencoes} onChange={e => updateProfSection(s.profissional_id, "intervencoes", e.target.value)} rows={3} className="text-sm" />
                       </div>
                     </div>
 
                     <div>
-                      <Label className="text-xs font-semibold">Evolução Clínica e Funcional</Label>
-                      <Textarea value={s.evolucao} onChange={e => updateProfSection(s.profissional_id, "evolucao", e.target.value)} rows={3} className="text-sm" />
+                      <Label className="text-xs font-semibold">Evolução Clínica e Funcional da Área</Label>
+                      <Textarea value={s.evolucao} onChange={e => updateProfSection(s.profissional_id, "evolucao", e.target.value)} rows={3} className="text-sm" placeholder="Principais avanços e limitações observadas..." />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                       <div>
-                        <Label className="text-xs font-semibold">Metas Atingidas</Label>
+                        <Label className="text-xs font-semibold">Status das Metas</Label>
                         <Select value={s.metas_status} onValueChange={v => updateProfSection(s.profissional_id, "metas_status", v)}>
                           <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
                           <SelectContent>
@@ -882,20 +1054,19 @@ const RelatorioAlta: React.FC = () => {
                           />
                         )}
                       </div>
-                      <div>
-                        <Label className="text-xs font-semibold">Adesão ao Tratamento</Label>
-                        <Select value={s.adesao} onValueChange={v => updateProfSection(s.profissional_id, "adesao", v)}>
-                          <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                             {ADESAO_OPCOES.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label className="text-xs font-semibold block mb-2">Intercorrências</Label>
+                      <div className="md:col-span-2">
+                        <Label className="text-xs font-semibold block mb-2">Intercorrências e Adesão</Label>
+                        <div className="flex items-center gap-4 mb-2">
+                           <Select value={s.adesao} onValueChange={v => updateProfSection(s.profissional_id, "adesao", v)}>
+                             <SelectTrigger className="h-8 w-40 text-sm"><SelectValue placeholder="Adesão..." /></SelectTrigger>
+                             <SelectContent>
+                               {ADESAO_OPCOES.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                             </SelectContent>
+                           </Select>
+                        </div>
                         <div className="flex flex-wrap gap-2 p-2 border border-border/50 rounded-md bg-muted/20">
-                          {INTERCORRENCIAS_OPCOES.slice(0, 4).map(opt => (
-                            <label key={opt} className="flex items-center gap-1.5 text-[10px] cursor-pointer">
+                          {INTERCORRENCIAS_OPCOES.map(opt => (
+                            <label key={opt} className="flex items-center gap-1.5 text-[10px] cursor-pointer hover:bg-muted/50 p-1 rounded transition-colors">
                               <Checkbox 
                                 checked={s.intercorrencias?.includes(opt)}
                                 onCheckedChange={(checked) => {
@@ -910,17 +1081,24 @@ const RelatorioAlta: React.FC = () => {
                       </div>
                     </div>
 
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                       <div>
+                         <Label className="text-xs font-semibold">Orientações Específicas da Área</Label>
+                         <Textarea value={s.orientacoes_especificas} onChange={e => updateProfSection(s.profissional_id, "orientacoes_especificas", e.target.value)} rows={2} className="text-sm" />
+                       </div>
+                       <div>
+                         <Label className="text-xs font-semibold">Encaminhamentos Específicos</Label>
+                         <Textarea value={s.encaminhamentos_especificos} onChange={e => updateProfSection(s.profissional_id, "encaminhamentos_especificos", e.target.value)} rows={2} className="text-sm" />
+                       </div>
+                    </div>
+
                     <div>
                       <Label className="text-xs font-semibold">Tecnologia Assistiva Concedida</Label>
-                      <Input value={s.tecnologia_assistiva} onChange={e => updateProfSection(s.profissional_id, "tecnologia_assistiva", e.target.value)} placeholder="Órteses, próteses, AASI, cadeira de rodas..." className="h-8 text-sm" />
-                    </div>
-                    
-                    <div className="flex items-center gap-2 p-2 bg-primary/5 border border-primary/10 rounded text-[10px] text-primary font-medium">
-                      <CheckCircle className="w-3.5 h-3.5" />
-                      Documento assinado digitalmente: {s.profissional_nome} — {s.conselho}
+                      <Input value={s.tecnologia_assistiva} onChange={e => updateProfSection(s.profissional_id, "tecnologia_assistiva", e.target.value)} placeholder="Órteses, próteses, cadeira de rodas..." className="h-8 text-sm" />
                     </div>
                   </TabsContent>
                 ))}
+
 
               </Tabs>
             </CardContent>
