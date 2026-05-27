@@ -1000,24 +1000,49 @@ const RelatorioAlta: React.FC = () => {
         </Card>
 
         {/* Actions */}
-        <div className="flex flex-wrap gap-3 sticky bottom-0 bg-background py-3 border-t border-border">
-          <Button variant="outline" onClick={() => {
-            const errs = validateMulti();
-            if (errs.length > 0) { errs.forEach(e => toast.error(e)); return; }
-            toast.success("Todos os campos obrigatórios estão preenchidos");
-          }}>
-            <CheckCircle className="w-4 h-4 mr-1" /> Validar
-          </Button>
-          <Button variant="outline" onClick={() => handlePrint("multi")}>
-            <Printer className="w-4 h-4 mr-1" /> Imprimir
-          </Button>
-          <Button variant="outline" onClick={() => handlePrint("multi")}>
-            <FileDown className="w-4 h-4 mr-1" /> Gerar PDF
-          </Button>
-          <Button onClick={() => handleSave("multi")}>
-            <Save className="w-4 h-4 mr-1" /> Salvar no Prontuário
-          </Button>
+        <div className="flex flex-wrap items-center justify-between gap-3 sticky bottom-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-4 border-t border-border z-10">
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => {
+              const errs = validateMulti();
+              if (errs.length > 0) { errs.forEach(e => toast.error(e)); return; }
+              setStatus("validado");
+              toast.success("Relatório multiprofissional validado com sucesso");
+            }}>
+              <CheckSquare className="w-4 h-4 mr-1.5 text-green-600" /> Validar
+            </Button>
+            
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="sm" onClick={() => handleSave("multi")}>
+                    <Save className="w-4 h-4 mr-1.5 text-muted-foreground" /> Salvar Rascunho
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Salva o estado atual sem emitir definitivamente</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => handlePrint("multi")}>
+              <Printer className="w-4 h-4 mr-1.5" /> Imprimir
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => handlePrint("multi")}>
+              <FileDown className="w-4 h-4 mr-1.5" /> Gerar PDF
+            </Button>
+            <Button size="sm" className="bg-primary hover:bg-primary/90" onClick={() => {
+               const errs = validateMulti();
+               if (errs.length > 0) {
+                 toast.error("Por favor, preencha os campos obrigatórios e valide o relatório antes de emitir.");
+                 return;
+               }
+               handleSave("multi");
+            }}>
+              <CheckCircle className="w-4 h-4 mr-1.5" /> Finalizar e Salvar no Prontuário
+            </Button>
+          </div>
         </div>
+
       </div>
     );
   }
