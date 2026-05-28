@@ -440,6 +440,7 @@ const BpaProducao: React.FC = () => {
     const uni = unidades.find(u => u.id === l.unidade_id);
     return normalizeBpaData({
       ...l,
+      id: l.key, // Garante que o ID exista para a normalização e exportação
       paciente_custom: (pac as any)?.custom_data || {},
       paciente_sexo: (pac as any)?.sexo || '',
       paciente_nascimento: pac?.data_nascimento || '',
@@ -736,13 +737,18 @@ const BpaProducao: React.FC = () => {
             <Button
               variant="outline"
               onClick={() => {
-                const bpaLines: BpaLine[] = linhasFiltradas.map(toBpaLine);
-                if (bpaLines.length === 0) {
-                  toast.error('Não há dados para exportar com os filtros atuais.');
-                  return;
+                try {
+                  const bpaLines: BpaLine[] = linhasFiltradas.map(toBpaLine);
+                  if (bpaLines.length === 0) {
+                    toast.error('Não há dados para exportar com os filtros atuais.');
+                    return;
+                  }
+                  exportBpaToXlsx(bpaLines, competencia);
+                  toast.success(`Excel gerado com sucesso (${bpaLines.length} registros).`);
+                } catch (error) {
+                  console.error('Erro ao exportar XLSX:', error);
+                  toast.error('Ocorreu um erro ao gerar o arquivo Excel.');
                 }
-                exportBpaToXlsx(bpaLines, competencia);
-                toast.success(`Excel gerado com sucesso (${bpaLines.length} registros).`);
               }}
               className="gap-2 border-emerald-600 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 w-full"
               disabled={linhasFiltradas.length === 0}
@@ -1028,9 +1034,15 @@ const BpaProducao: React.FC = () => {
             <Button 
               variant="outline" 
               onClick={() => {
-                const bpaLines: BpaLine[] = linhasFiltradas.map(toBpaLine);
-                exportBpaToXlsx(bpaLines, modalCompetencia);
-              }} 
+                try {
+                  const bpaLines: BpaLine[] = linhasFiltradas.map(toBpaLine);
+                  exportBpaToXlsx(bpaLines, modalCompetencia);
+                  toast.success('Excel gerado com sucesso.');
+                } catch (error) {
+                  console.error('Erro ao exportar XLSX:', error);
+                  toast.error('Ocorreu um erro ao gerar o arquivo Excel.');
+                }
+              }}
               disabled={generating || modalPreview.total === 0}
               className="gap-2 border-emerald-600 text-emerald-700 hover:bg-emerald-50 w-full sm:w-auto"
             >
