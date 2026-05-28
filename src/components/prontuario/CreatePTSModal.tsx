@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, Plus, AlertTriangle, Trash2, ClipboardList, Target, Zap, CheckCircle2, Info, Search, Tag, FileText } from 'lucide-react';
 import { BuscaProcedimento } from '../BuscaProcedimento';
 import { BuscaCID } from '../BuscaCID';
+import { BuscaPaciente } from '../BuscaPaciente';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { ptsService, type PTSMeta } from '@/services/ptsService';
@@ -51,10 +52,18 @@ export const CreatePTSModal: React.FC<CreatePTSModalProps> = ({
   onSuccess
 }) => {
   const { user } = useAuth();
-  const { logAction, funcionarios } = useData();
+  const { logAction, funcionarios, pacientes } = useData();
   const [saving, setSaving] = useState(false);
   const [loadingProcs, setLoadingProcs] = useState(false);
   const [activeTab, setActiveTab] = useState('contexto');
+  
+  const [selectedPacienteId, setSelectedPacienteId] = useState(pacienteId);
+  const [selectedPacienteNome, setSelectedPacienteNome] = useState(pacienteNome);
+
+  useEffect(() => {
+    setSelectedPacienteId(pacienteId);
+    setSelectedPacienteNome(pacienteNome);
+  }, [pacienteId, pacienteNome, open]);
   
   const [form, setForm] = useState({
     diagnostico_funcional: '',
@@ -199,8 +208,8 @@ export const CreatePTSModal: React.FC<CreatePTSModalProps> = ({
   };
 
   const handleSave = async () => {
-    if (!pacienteId || !form.diagnostico_funcional || !form.objetivos_terapeuticos) {
-      toast.error('Preencha os campos obrigatórios (Diagnóstico e Objetivos).');
+    if (!selectedPacienteId || !form.diagnostico_funcional || !form.objetivos_terapeuticos) {
+      toast.error('Preencha os campos obrigatórios (Paciente, Diagnóstico e Objetivos).');
       setActiveTab('contexto');
       return;
     }
@@ -216,7 +225,7 @@ export const CreatePTSModal: React.FC<CreatePTSModalProps> = ({
       const ptsId = await ptsService.createPTS(
         {
           ...form,
-          patient_id: pacienteId,
+          patient_id: selectedPacienteId,
           professional_id: user?.id,
           unit_id: user?.unidadeId,
           status: 'ativo'
@@ -228,8 +237,8 @@ export const CreatePTSModal: React.FC<CreatePTSModalProps> = ({
 
       // Prontuario entry for audit/history
       await supabase.from('prontuarios').insert({
-        paciente_id: pacienteId,
-        paciente_nome: pacienteNome,
+        paciente_id: selectedPacienteId,
+        paciente_nome: selectedPacienteNome,
         profissional_id: user?.id,
         profissional_nome: user?.nome,
         unidade_id: user?.unidadeId,
@@ -248,7 +257,7 @@ export const CreatePTSModal: React.FC<CreatePTSModalProps> = ({
         entidadeId: ptsId,
         modulo: 'pts',
         user,
-        detalhes: { paciente_id: pacienteId, metas_count: metas.length }
+        detalhes: { paciente_id: selectedPacienteId, metas_count: metas.length }
       });
 
       toast.success('Projeto Terapêutico Singular criado com sucesso!');
@@ -296,9 +305,22 @@ export const CreatePTSModal: React.FC<CreatePTSModalProps> = ({
             <TabsContent value="contexto" className="space-y-6 mt-0">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
-                  <div className="p-3 bg-primary/5 rounded-lg border border-primary/10">
-                    <Label className="text-[10px] uppercase font-black text-primary tracking-widest">Paciente</Label>
-                    <p className="font-bold text-lg">{pacienteNome}</p>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-bold">Paciente</Label>
+                    {pacienteId ? (
+                      <div className="p-3 bg-primary/5 rounded-lg border border-primary/10">
+                        <p className="font-bold text-lg">{pacienteNome}</p>
+                      </div>
+                    ) : (
+                      <BuscaPaciente 
+                        pacientes={pacientes} 
+                        value={selectedPacienteId} 
+                        onChange={(id, nome) => {
+                          setSelectedPacienteId(id);
+                          setSelectedPacienteNome(nome);
+                        }} 
+                      />
+                    )}
                   </div>
 
                   <div className="space-y-2">
