@@ -247,53 +247,99 @@ export const normalizeBpaData = (raw: any): BpaLine => {
 };
 
 /**
- * Exporta os dados para XLSX no formato de conferência BPA-I
+ * Exporta os dados para XLSX no formato de conferência BPA-I profissional e organizado
  */
 export const exportBpaToXlsx = (lines: BpaLine[], competencia: string) => {
-  const data = lines.map(l => {
+  // 1. Dados Detalhados
+  const detailedData = lines.map(l => {
     const v = validateBpaLine(l);
     return {
-      'STATUS': v.isValid ? 'OK' : 'PENDENTE',
-      'PENDÊNCIAS': v.errors.join('; '),
-      'FONTE PROC': l.fonte_procedimento,
-      'FONTE CID': l.fonte_cid || '—',
-      'DATA ATENDIMENTO': l.data,
-      'PACIENTE': l.paciente_nome,
-      'CNS PACIENTE': l.paciente_cns,
-      'CPF PACIENTE': l.paciente_cpf,
-      'NASCIMENTO': l.paciente_nascimento,
+      'STATUS': v.isValid ? '✅ OK' : '⚠️ PENDENTE',
+      'PENDÊNCIAS / ALERTAS': v.errors.join('; ') || 'Nenhuma pendência',
+      'FONTE PROCEDIMENTO': l.fonte_procedimento?.toUpperCase() || 'N/A',
+      'FONTE CID': l.fonte_cid?.toUpperCase() || '—',
+      'DATA ATENDIMENTO': l.data ? new Date(l.data).toLocaleDateString('pt-BR') : '—',
+      'PACIENTE': l.paciente_nome?.toUpperCase(),
+      'CNS PACIENTE': l.paciente_cns || '—',
+      'CPF PACIENTE': l.paciente_cpf || '—',
+      'NASCIMENTO': l.paciente_nascimento ? new Date(l.paciente_nascimento).toLocaleDateString('pt-BR') : '—',
       'SEXO': l.paciente_sexo,
-      'MUNICIPIO IBGE': l.paciente_municipio_ibge,
-      'PROFISSIONAL': l.profissional_nome,
-      'PROFISSÃO': l.profissao_profissional,
+      'CÓDIGO IBGE (MUNICÍPIO)': l.paciente_municipio_ibge || '—',
+      'PROFISSIONAL': l.profissional_nome?.toUpperCase(),
+      'VÍNCULO / PROFISSÃO': l.profissao_profissional?.toUpperCase(),
       'CBO': l.cbo_profissional,
-      'É MÉDICO?': l.is_medico ? 'Sim' : 'Não',
-      'PROCEDIMENTO': l.procedimento_nome,
-      'SIGTAP': l.codigo_sigtap,
-      'MOTIVO DISPENSA PROC': l.procedimento_dispensa_motivo || '—',
-      'CID': l.cid,
+      'CATEGORIA MÉDICA': l.is_medico ? 'SIM' : 'NÃO',
+      'PROCEDIMENTO': l.procedimento_nome?.toUpperCase(),
+      'CÓDIGO SIGTAP': l.codigo_sigtap,
+      'MOTIVO DISPENSA PROC.': l.procedimento_dispensa_motivo || '—',
+      'CID': l.cid?.toUpperCase() || '—',
       'MOTIVO DISPENSA CID': l.cid_dispensa_motivo || '—',
       'CNES UNIDADE': l.cnes_unidade,
-      'UNIDADE': l.unidade_nome,
-      'PRONTUARIO_ID': l.id.split('_')[0], 
+      'UNIDADE EXECUTORA': l.unidade_nome?.toUpperCase(),
+      'ID REGISTRO': l.id.split('_')[0], 
     };
   });
 
-  const ws = XLSX.utils.json_to_sheet(data);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Produção BPA-I");
-
-  // Ajusta largura das colunas
-  const colWidths = [
-    { wch: 10 }, { wch: 30 }, { wch: 15 }, { wch: 15 }, { wch: 12 },
-    { wch: 30 }, { wch: 15 }, { wch: 15 }, { wch: 12 }, { wch: 6 },
-    { wch: 15 }, { wch: 25 }, { wch: 20 }, { wch: 10 }, { wch: 10 },
-    { wch: 30 }, { wch: 12 }, { wch: 30 }, { wch: 8 }, { wch: 30 },
-    { wch: 15 }, { wch: 20 }, { wch: 20 }
+  // 2. Dados de Resumo (Stats)
+  const total = lines.length;
+  const validos = lines.filter(l => validateBpaLine(l).isValid).length;
+  const pendentes = total - validos;
+  
+  const summaryData = [
+    { 'MÉTRICA': 'Competência', 'VALOR': competencia },
+    { 'MÉTRICA': 'Total de Registros', 'VALOR': total },
+    { 'MÉTRICA': 'Registros Válidos', 'VALOR': validos },
+    { 'MÉTRICA': 'Registros com Pendência', 'VALOR': pendentes },
+    { 'MÉTRICA': 'Aproveitamento', 'VALOR': total > 0 ? `${((validos/total)*100).toFixed(1)}%` : '0%' },
+    {},
+    { 'MÉTRICA': 'Data da Exportação', 'VALOR': new Date().toLocaleString('pt-BR') }
   ];
-  ws['!cols'] = colWidths;
 
-  XLSX.writeFile(wb, `CONFERENCIA_BPA_${competencia}.xlsx`);
+  // Criar Workbook
+  const wb = XLSX.utils.book_new();
+  
+  // Sheet 1: Detalhes
+  const wsDetailed = XLSX.utils.json_to_sheet(detailedData);
+  XLSX.utils.book_append_sheet(wb, wsDetailed, "Produção Detalhada");
+
+  // Sheet 2: Resumo
+  const wsSummary = XLSX.utils.json_to_sheet(summaryData);
+  XLSX.utils.book_append_sheet(wb, wsSummary, "Resumo Executivo");
+
+  // Ajuste de colunas na aba detalhada
+  const colWidths = [
+    { wch: 12 }, // Status
+    { wch: 45 }, // Pendências
+    { wch: 20 }, // Fonte Proc
+    { wch: 15 }, // Fonte CID
+    { wch: 18 }, // Data
+    { wch: 35 }, // Paciente
+    { wch: 18 }, // CNS
+    { wch: 18 }, // CPF
+    { wch: 15 }, // Nascimento
+    { wch: 8 },  // Sexo
+    { wch: 20 }, // IBGE
+    { wch: 30 }, // Profissional
+    { wch: 25 }, // Profissão
+    { wch: 10 }, // CBO
+    { wch: 18 }, // Categoria Médica
+    { wch: 40 }, // Procedimento
+    { wch: 15 }, // SIGTAP
+    { wch: 30 }, // Dispensa Proc
+    { wch: 8 },  // CID
+    { wch: 30 }, // Dispensa CID
+    { wch: 15 }, // CNES
+    { wch: 30 }, // Unidade
+    { wch: 15 }  // ID
+  ];
+  wsDetailed['!cols'] = colWidths;
+
+  // Ajuste de colunas na aba resumo
+  wsSummary['!cols'] = [{ wch: 30 }, { wch: 25 }];
+
+  // Gerar arquivo
+  const filename = `PRODUCAO_BPA_${competencia}_${new Date().getTime()}.xlsx`;
+  XLSX.writeFile(wb, filename);
 };
 
 
