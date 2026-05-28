@@ -210,7 +210,7 @@ export const normalizeBpaData = (raw: any): BpaLine => {
   const cidFinal = (raw.cid || cd.cid || '').replace(/[^A-Z0-9]/g, '').slice(0, 4);
 
   return {
-    id: raw.id,
+    id: raw.id || raw.key || raw.prontuario_id || 'unknown',
     data: raw.data_atendimento || raw.data,
     paciente_id: raw.paciente_id,
     paciente_nome: raw.paciente_nome,
@@ -276,7 +276,7 @@ export const exportBpaToXlsx = (lines: BpaLine[], competencia: string) => {
       'MOTIVO DISPENSA CID': l.cid_dispensa_motivo || '—',
       'CNES UNIDADE': l.cnes_unidade,
       'UNIDADE EXECUTORA': l.unidade_nome?.toUpperCase(),
-      'ID REGISTRO': l.id.split('_')[0], 
+      'ID REGISTRO': (l.id || '').split('_')[0] || '—', 
     };
   });
 
