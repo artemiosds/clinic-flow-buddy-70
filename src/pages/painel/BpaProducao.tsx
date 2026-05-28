@@ -440,6 +440,7 @@ const BpaProducao: React.FC = () => {
     const uni = unidades.find(u => u.id === l.unidade_id);
     return normalizeBpaData({
       ...l,
+      id: l.key, // Garante que o ID exista para a normalização e exportação
       paciente_custom: (pac as any)?.custom_data || {},
       paciente_sexo: (pac as any)?.sexo || '',
       paciente_nascimento: pac?.data_nascimento || '',
