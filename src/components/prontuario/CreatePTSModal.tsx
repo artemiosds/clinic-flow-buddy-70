@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, Plus, AlertTriangle, Trash2, ClipboardList, Target, Zap, CheckCircle2, Info, Search, Tag, FileText } from 'lucide-react';
 import { BuscaProcedimento } from '../BuscaProcedimento';
 import { BuscaCID } from '../BuscaCID';
+import { BuscaPaciente } from '../BuscaPaciente';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { ptsService, type PTSMeta } from '@/services/ptsService';
@@ -51,10 +52,18 @@ export const CreatePTSModal: React.FC<CreatePTSModalProps> = ({
   onSuccess
 }) => {
   const { user } = useAuth();
-  const { logAction, funcionarios } = useData();
+  const { logAction, funcionarios, pacientes } = useData();
   const [saving, setSaving] = useState(false);
   const [loadingProcs, setLoadingProcs] = useState(false);
   const [activeTab, setActiveTab] = useState('contexto');
+  
+  const [selectedPacienteId, setSelectedPacienteId] = useState(pacienteId);
+  const [selectedPacienteNome, setSelectedPacienteNome] = useState(pacienteNome);
+
+  useEffect(() => {
+    setSelectedPacienteId(pacienteId);
+    setSelectedPacienteNome(pacienteNome);
+  }, [pacienteId, pacienteNome, open]);
   
   const [form, setForm] = useState({
     diagnostico_funcional: '',
