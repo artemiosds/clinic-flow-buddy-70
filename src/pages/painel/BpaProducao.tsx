@@ -732,7 +732,7 @@ const BpaProducao: React.FC = () => {
               placeholder="Nome do paciente"
             />
           </div>
-          <div className="flex items-end gap-2">
+          <div className="flex flex-col sm:flex-row items-end gap-2 lg:col-span-1">
             <Button
               variant="outline"
               onClick={() => {
@@ -742,13 +742,13 @@ const BpaProducao: React.FC = () => {
                   return;
                 }
                 exportBpaToXlsx(bpaLines, competencia);
-                toast.success(`XLSX gerado (${bpaLines.length} linha(s) filtradas).`);
+                toast.success(`Excel gerado com sucesso (${bpaLines.length} registros).`);
               }}
-              className="gap-2 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 w-full"
+              className="gap-2 border-emerald-600 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 w-full"
               disabled={linhasFiltradas.length === 0}
             >
               <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
-              Conferência (XLSX)
+              Exportar Produção (XLSX)
             </Button>
           </div>
         </CardContent>
