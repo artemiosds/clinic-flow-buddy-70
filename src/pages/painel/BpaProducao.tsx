@@ -1024,14 +1024,28 @@ const BpaProducao: React.FC = () => {
               )}
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setModalOpen(false)} disabled={generating}>
-              Cancelar
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                const bpaLines: BpaLine[] = linhasFiltradas.map(toBpaLine);
+                exportBpaToXlsx(bpaLines, modalCompetencia);
+              }} 
+              disabled={generating || modalPreview.total === 0}
+              className="gap-2 border-emerald-600 text-emerald-700 hover:bg-emerald-50 w-full sm:w-auto"
+            >
+              <FileSpreadsheet className="w-4 h-4" />
+              Exportar XLSX
             </Button>
-            <Button onClick={handleGenerate} disabled={generating} className="bg-primary text-primary-foreground gap-2">
-              {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-              Gerar Arquivo
-            </Button>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button variant="outline" onClick={() => setModalOpen(false)} disabled={generating} className="flex-1 sm:flex-none">
+                Cancelar
+              </Button>
+              <Button onClick={handleGenerate} disabled={generating} className="bg-primary text-primary-foreground gap-2 flex-1 sm:flex-none">
+                {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                Gerar TXT
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
