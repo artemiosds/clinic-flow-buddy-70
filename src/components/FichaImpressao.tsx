@@ -34,8 +34,10 @@ export type { FichaPrintMode } from '@/components/pacientes/PacienteFichaDocumen
  * documentos do sistema (prontuário, receituário, exames, etc.).
  */
 export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'completa' }) => {
+  const { user } = useAuth();
   const [config, setConfig] = useState<DocumentConfig | null>(null);
   const [customHtml, setCustomHtml] = useState<string>('');
+
 
   useEffect(() => {
     let active = true;
