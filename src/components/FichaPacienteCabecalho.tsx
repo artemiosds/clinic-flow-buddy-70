@@ -7,8 +7,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import {
   Pencil, Save, X, Lock, Search, User, CreditCard, Heart, Activity,
-  FileText, Stethoscope, MapPin, Users, Phone, Mail, AlertCircle, ChevronDown, ChevronUp, Paperclip
+  FileText, Stethoscope, MapPin, Users, Phone, Mail, AlertCircle, ChevronDown, ChevronUp, Paperclip,
+  Calendar
 } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 import PacienteDocumentos from "./PacienteDocumentos";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
