@@ -62,8 +62,12 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
 
   const previewHtml = useMemo(() => {
     if (!config) return '';
-    const { title, body, meta } = buildFichaBody(data, mode, { extraBeforeSignature: customHtml });
+    const { title, body, meta } = buildFichaBody(data, mode, { 
+      extraBeforeSignature: customHtml,
+      emitente: user?.nome 
+    });
     const css = buildInstitutionalCSS({ pageSize: 'A4', extraCSS: FICHA_EXTRA_CSS }, config);
+
     return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
