@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Loader2, Printer } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import {
   loadDocumentConfig,
@@ -33,8 +34,10 @@ export type { FichaPrintMode } from '@/components/pacientes/PacienteFichaDocumen
  * documentos do sistema (prontuário, receituário, exames, etc.).
  */
 export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'completa' }) => {
+  const { user } = useAuth();
   const [config, setConfig] = useState<DocumentConfig | null>(null);
   const [customHtml, setCustomHtml] = useState<string>('');
+
 
   useEffect(() => {
     let active = true;
@@ -59,8 +62,12 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
 
   const previewHtml = useMemo(() => {
     if (!config) return '';
-    const { title, body, meta } = buildFichaBody(data, mode, { extraBeforeSignature: customHtml });
+    const { title, body, meta } = buildFichaBody(data, mode, { 
+      extraBeforeSignature: customHtml,
+      emitente: user?.nome 
+    });
     const css = buildInstitutionalCSS({ pageSize: 'A4', extraCSS: FICHA_EXTRA_CSS }, config);
+
     return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -90,8 +97,12 @@ export const FichaImpressao: React.FC<FichaImpressaoProps> = ({ data, mode = 'co
         unidadeId: data?.unidadeId,
         titulo: 'Campos Personalizados do Paciente',
       }).catch(() => '');
-      const { title, body, meta } = buildFichaBody(data, mode, { extraBeforeSignature: extra });
+      const { title, body, meta } = buildFichaBody(data, mode, { 
+        extraBeforeSignature: extra,
+        emitente: user?.nome 
+      });
       await openPrintDocument(title, body, meta, { pageSize: 'A4', extraCSS: FICHA_EXTRA_CSS });
+
     } catch (err: any) {
       if (err?.message === 'POPUP_BLOCKED') {
         toast.error('Pop-up bloqueado. Permita pop-ups para imprimir a ficha.');
