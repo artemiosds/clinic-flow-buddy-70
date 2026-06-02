@@ -77,10 +77,20 @@ const PatientHeader: React.FC<PatientHeaderProps> = ({
                 </Button>
               )}
             </div>
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground font-medium">
-              <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> {idade} ({dataNasc || '—'})</span>
-              <span className="flex items-center gap-1"><User className="w-3.5 h-3.5" /> {sexo}</span>
-              <span className="flex items-center gap-1 text-primary/80 font-mono">ID: {numeroProntuario || '—'}</span>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mt-2">
+              <div className="flex items-center gap-1.5 bg-primary/5 px-2.5 py-1 rounded-full border border-primary/10 shadow-sm group hover:bg-primary/10 transition-colors">
+                <Calendar className="w-4 h-4 text-primary animate-pulse group-hover:scale-110 transition-transform" />
+                <span className="text-sm font-bold text-primary tracking-tight">
+                  {idade} 
+                  <span className="ml-1.5 text-xs font-semibold opacity-70">({dataNasc || '—'})</span>
+                </span>
+              </div>
+              <Badge variant="secondary" className="bg-muted/50 text-muted-foreground border-none px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider">
+                <User className="w-3 h-3 mr-1" /> {sexo}
+              </Badge>
+              <span className="text-[10px] font-mono font-bold text-muted-foreground bg-muted/30 px-2 py-0.5 rounded border border-border/50">
+                ID: {numeroProntuario || '—'}
+              </span>
             </div>
           </div>
         </div>
