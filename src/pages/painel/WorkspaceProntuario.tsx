@@ -836,6 +836,7 @@ const WorkspaceProntuario: React.FC = () => {
                   onEdit={() => setEditPatientOpen(true)}
                   nome={pacienteData?.nome || pacienteNome || 'Paciente'}
                   idade={pacienteData?.data_nascimento ? calcularIdade(pacienteData.data_nascimento) : '—'}
+                  dataNasc={pacienteData?.data_nascimento ? new Date(pacienteData.data_nascimento + 'T12:00:00').toLocaleDateString('pt-BR') : undefined}
                   sexo={pacienteData?.sexo || '—'}
                   cpf={pacienteData?.cpf || '—'}
                   cns={pacienteData?.cns || '—'}
