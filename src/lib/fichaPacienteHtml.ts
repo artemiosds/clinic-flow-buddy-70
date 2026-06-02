@@ -173,7 +173,7 @@ export interface BuiltFicha {
 export function buildFichaBody(
   data: PacienteFichaDocumentData,
   mode: FichaPrintMode,
-  opts: { extraBeforeSignature?: string } = {},
+  opts: { extraBeforeSignature?: string; emitente?: string } = {},
 ): BuiltFicha {
   const somenteDados = mode === 'dados_pessoais';
   const p = data.paciente;
