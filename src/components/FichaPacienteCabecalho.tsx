@@ -342,27 +342,41 @@ const FichaPacienteCabecalho: React.FC<FichaPacienteCabecalhoProps> = ({
           /* ── READ MODE ── */
           <div className="space-y-4">
             {/* Patient name row */}
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary/8 border border-primary/15 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <User className="w-5 h-5 text-primary/70" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-base font-semibold text-foreground leading-tight truncate">
-                  {paciente.nome}
-                  {paciente.is_tfd && <Badge variant="outline" className="ml-2 text-[10px] border-warning text-warning">TFD</Badge>}
-                  {paciente.possui_ordem_judicial && <Badge variant="outline" className="ml-2 text-[10px] border-warning text-warning">JUDICIAL</Badge>}
-                  {absenceInfo?.status_falta === 'BLOQUEADO' && !(paciente.is_tfd || paciente.possui_ordem_judicial) && (
-                    <Badge variant="destructive" className="ml-2 text-[10px]">🚫 BLOQUEADO P/ ESTE PROFISSIONAL</Badge>
-                  )}
-                  {absenceInfo?.status_falta === 'FALTOSO' && (
-                    <Badge variant="outline" className="ml-2 text-[10px] border-warning text-warning font-bold">⚠️ FALTOSO ({absenceInfo.total_faltas} faltas)</Badge>
-                  )}
-                </p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {paciente.data_nascimento
-                    ? `${new Date(paciente.data_nascimento + "T12:00:00").toLocaleDateString("pt-BR")} · ${idade}`
-                    : "Data de nascimento não informada"}
-                </p>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-primary/5 p-4 rounded-xl border border-primary/10 shadow-sm">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/15 flex items-center justify-center flex-shrink-0 shadow-inner">
+                  <User className="w-6 h-6 text-primary/80" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="text-xl font-bold text-foreground tracking-tight truncate">
+                      {paciente.nome}
+                    </h2>
+                    {paciente.is_tfd && <Badge variant="outline" className="text-[10px] border-warning/50 bg-warning/5 text-warning font-bold uppercase">TFD</Badge>}
+                    {paciente.possui_ordem_judicial && <Badge variant="outline" className="text-[10px] border-rose-400/50 bg-rose-50 text-rose-600 font-bold uppercase">JUDICIAL</Badge>}
+                    {absenceInfo?.status_falta === 'BLOQUEADO' && !(paciente.is_tfd || paciente.possui_ordem_judicial) && (
+                      <Badge variant="destructive" className="text-[10px] font-bold uppercase">🚫 BLOQUEADO</Badge>
+                    )}
+                    {absenceInfo?.status_falta === 'FALTOSO' && (
+                      <Badge variant="outline" className="text-[10px] border-amber-400/50 bg-amber-50 text-amber-600 font-bold uppercase">⚠️ FALTOSO ({absenceInfo.total_faltas} faltas)</Badge>
+                    )}
+                  </div>
+                  
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-2">
+                    <div className="flex items-center gap-1.5 bg-background/80 px-3 py-1 rounded-full border border-primary/10 shadow-sm">
+                      <Calendar className="w-4 h-4 text-primary animate-pulse" />
+                      <span className="text-sm font-bold text-primary tracking-tight">
+                        {idade}
+                      </span>
+                      <Separator orientation="vertical" className="h-3 mx-1 bg-primary/20" />
+                      <span className="text-xs font-semibold text-muted-foreground">
+                        {paciente.data_nascimento
+                          ? new Date(paciente.data_nascimento + "T12:00:00").toLocaleDateString("pt-BR")
+                          : "Não informada"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
