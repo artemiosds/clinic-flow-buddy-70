@@ -331,7 +331,14 @@ export function buildFichaBody(
 
     body.push(`
       <div class="ficha-signature-block">
-        <div class="ficha-signature-date">Oriximiná — PA, ____ / ____ / ________</div>
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
+          <div class="ficha-signature-date" style="margin-bottom: 0;">Oriximiná — PA, ____ / ____ / ________</div>
+          ${opts.emitente ? `
+          <div style="text-align: right; font-size: 8pt; color: #475569; font-weight: 500;">
+            <span style="text-transform: uppercase; font-size: 7pt; display: block; margin-bottom: 1px; opacity: 0.8;">Emitido por:</span>
+            ${esc(opts.emitente)}
+          </div>` : ''}
+        </div>
         
         <div style="display: flex; justify-content: space-around; gap: 30px; margin-top: 15px;">
           <div style="flex: 1;">
