@@ -487,7 +487,13 @@ export const PacienteFichaDocument: React.FC<PacienteFichaDocumentProps> = ({
           </section>
 
           <section className="patient-sheet-signature-block">
-            <div className="patient-sheet-signature-date">Oriximiná — PA, ____ / ____ / ________</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '20px' }}>
+              <div className="patient-sheet-signature-date" style={{ marginBottom: 0 }}>Oriximiná — PA, ____ / ____ / ________</div>
+              <div style={{ textAlign: 'right', fontSize: '8pt', color: '#475569', fontWeight: 500 }}>
+                <span style={{ textTransform: 'uppercase', fontSize: '7pt', display: block, marginBottom: '1px', opacity: 0.8 }}>Emitido por:</span>
+                {institutionalConfig.linha2 || 'SISTEMA'}
+              </div>
+            </div>
             <div className="patient-sheet-signature-line" />
             <div className="patient-sheet-signature-name">{textValue(data.profissional.nome, 'Profissional responsável')}</div>
             <div className="patient-sheet-signature-meta">
