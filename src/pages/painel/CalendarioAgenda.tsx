@@ -412,7 +412,7 @@ export const CalendarioAgenda: React.FC<CalendarioAgendaProps> = ({
                       className={cn(
                         'group relative flex flex-col items-start p-3 min-h-[100px] transition-all border-r border-b hover:z-10 text-left',
                         !info.isCurrentMonth && 'bg-muted/10 opacity-40',
-                        info.isSelected ? 'ring-2 ring-primary ring-inset bg-primary/5 z-20' : 'hover:bg-muted/50',
+                        info.isSelected ? 'ring-2 ring-primary ring-inset bg-primary/10 z-20 shadow-md border-primary/30' : 'hover:bg-muted/50',
                         isDisabled && 'cursor-not-allowed bg-slate-50/50',
                         index % 7 === 6 && 'border-r-0'
                       )}
