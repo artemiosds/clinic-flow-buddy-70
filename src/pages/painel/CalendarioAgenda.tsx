@@ -151,6 +151,8 @@ export const CalendarioAgenda: React.FC<CalendarioAgendaProps> = ({
       let totalVagas = 0;
       let hasDisponibilidade = false;
       let allBlocked = profissionaisFiltrados.length > 0;
+      const profissionaisDisponiveis: string[] = [];
+
 
       const dateEntry = agendamentosByDate.get(dateStr);
       const isCurrentMonth = day.getUTCMonth() === currentMonthNum && day.getUTCFullYear() === currentYear;
