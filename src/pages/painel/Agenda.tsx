@@ -1707,7 +1707,7 @@ const Agenda: React.FC = () => {
                                       className="flex flex-col items-start gap-0.5 py-2 cursor-pointer"
                                     >
                                       <div className="flex items-center w-full justify-between">
-                                        <span className="font-medium truncate max-w-[200px]" title={p.nome}>
+                                        <span className="font-medium truncate flex-1" title={p.nome}>
                                           {p.nome}
                                         </span>
                                         {filterProf === p.id && <Check className="h-4 w-4 text-primary shrink-0" />}
