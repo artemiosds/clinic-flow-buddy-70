@@ -16,6 +16,7 @@ interface AgendaVisaoDiaProps {
   profissionais: any[];
   getAvailableSlots: (profId: string, unidadeId: string, date: string) => string[];
   unidades: any[];
+  onNewAgendamento?: () => void;
 }
 
 export const AgendaVisaoDia: React.FC<AgendaVisaoDiaProps> = ({
