@@ -1585,8 +1585,105 @@ const Agenda: React.FC = () => {
       )}
 
       {abaAtiva === "agenda" && (
-        <>
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 flex-wrap">
+        <div className="space-y-6">
+          <div className="bg-card p-6 rounded-2xl border shadow-sm space-y-6">
+            <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 border-b pb-6">
+              <div className="space-y-1">
+                <h2 className="text-2xl font-bold font-display tracking-tight text-foreground">Agenda Inteligente</h2>
+                <p className="text-muted-foreground text-sm">Visualize a ocupação e gerencie seus atendimentos de forma moderna.</p>
+              </div>
+              
+              <div className="flex flex-wrap gap-2">
+                {!isProfissional && showUnitSelector && (
+                  <Select
+                    value={filterUnit}
+                    onValueChange={(v) => {
+                      setFilterUnit(v);
+                      setFilterProf("all");
+                    }}
+                  >
+                    <SelectTrigger className="w-full sm:w-48 bg-background border-muted-foreground/20">
+                      <Building2 className="w-4 h-4 mr-2 text-muted-foreground" />
+                      <SelectValue placeholder="Unidade" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas Unidades</SelectItem>
+                      {unidadesVisiveis.map((u) => (
+                        <SelectItem key={u.id} value={u.id}>
+                          {u.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                {!isProfissional && (
+                  <Select value={filterProf} onValueChange={setFilterProf}>
+                    <SelectTrigger className="w-full sm:w-52 bg-background border-muted-foreground/20">
+                      <Stethoscope className="w-4 h-4 mr-2 text-muted-foreground" />
+                      <SelectValue placeholder="Profissional" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos Profissionais</SelectItem>
+                      {filteredProfissionais.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                
+                <Select value={filterStatus} onValueChange={setFilterStatus}>
+                  <SelectTrigger className="w-full sm:w-52 bg-background border-muted-foreground/20">
+                    <Filter className="w-4 h-4 mr-2 text-muted-foreground" />
+                    <SelectValue placeholder="Situação" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos Status</SelectItem>
+                    {Object.entries(STATUS_GROUP_LABELS).filter(([k]) => k !== 'all').map(([key, label]) => (
+                      <SelectItem key={key} value={key}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={filterTipo} onValueChange={setFilterTipo}>
+                  <SelectTrigger className="w-full sm:w-52 bg-background border-muted-foreground/20">
+                    <Stethoscope className="w-4 h-4 mr-2 text-muted-foreground" />
+                    <SelectValue placeholder="Tipo de atendimento" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Todos">Todos os tipos</SelectItem>
+                    <SelectItem value="Consulta">Avaliação/TR</SelectItem>
+                    <SelectItem value="Retorno">Retorno</SelectItem>
+                    <SelectItem value="Exame">Exame</SelectItem>
+                    <SelectItem value="Procedimento">Procedimento</SelectItem>
+                    <SelectItem value="Sessão de Tratamento">Sessão de Tratamento</SelectItem>
+                    <SelectItem value="Urgência">Urgência</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {(filterUnit !== "all" || filterProf !== "all" || filterStatus !== "all" || searchTerm) && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => {
+                      setFilterUnit("all");
+                      setFilterProf("all");
+                      setFilterStatus("all");
+                      setFilterTipo("Todos");
+                      setSearchTerm("");
+                    }}
+                    className="h-9 px-3 text-muted-foreground hover:text-foreground"
+                  >
+                    <FilterX className="w-4 h-4 mr-1" />
+                    Limpar
+                  </Button>
+                )}
+              </div>
+            </div>
+
             <CalendarioAgenda
               selectedDate={selectedDate}
               onDateChange={(date) => setSelectedDate(date)}
@@ -1600,116 +1697,51 @@ const Agenda: React.FC = () => {
               getAvailableDates={getAvailableDates}
               unidades={unidades}
             />
-
-            {!isProfissional && showUnitSelector && (
-              <Select
-                value={filterUnit}
-                onValueChange={(v) => {
-                  setFilterUnit(v);
-                  setFilterProf("all");
-                }}
-              >
-                <SelectTrigger className="w-full sm:w-48">
-                  <SelectValue placeholder="Unidade" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas Unidades</SelectItem>
-                  {unidadesVisiveis.map((u) => (
-                    <SelectItem key={u.id} value={u.id}>
-                      {u.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-            {!isProfissional && (
-              <Select value={filterProf} onValueChange={setFilterProf}>
-                <SelectTrigger className="w-full sm:w-52">
-                  <SelectValue placeholder="Profissional" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos Profissionais</SelectItem>
-                  {filteredProfissionais.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-            
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-full sm:w-52">
-                <Filter className="w-4 h-4 mr-2 text-muted-foreground" />
-                <SelectValue placeholder="Situação" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos Status</SelectItem>
-                {Object.entries(STATUS_GROUP_LABELS).filter(([k]) => k !== 'all').map(([key, label]) => (
-                  <SelectItem key={key} value={key}>
-                    {label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={filterTipo} onValueChange={setFilterTipo}>
-              <SelectTrigger className="w-full sm:w-52">
-                <Stethoscope className="w-4 h-4 mr-2 text-muted-foreground" />
-                <SelectValue placeholder="Tipo de atendimento" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Todos">Todos os tipos</SelectItem>
-                <SelectItem value="Consulta">Avaliação/TR</SelectItem>
-                <SelectItem value="Retorno">Retorno</SelectItem>
-                <SelectItem value="Exame">Exame</SelectItem>
-                <SelectItem value="Procedimento">Procedimento</SelectItem>
-                <SelectItem value="Sessão de Tratamento">Sessão de Tratamento</SelectItem>
-                <SelectItem value="Urgência">Urgência</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <div className="relative w-full sm:w-72">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Paciente, CPF, CNS ou TFD/JUDICIAL..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 h-9"
-              />
-            </div>
-
-            {(filterUnit !== "all" || filterProf !== "all" || filterStatus !== "all" || searchTerm) && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => {
-                  setFilterUnit("all");
-                  setFilterProf("all");
-                  setFilterStatus("all");
-                  setFilterTipo("Todos");
-                  setSearchTerm("");
-                }}
-                className="h-9 px-2 text-muted-foreground hover:text-foreground"
-              >
-                <FilterX className="w-4 h-4 mr-1" />
-                Limpar
-              </Button>
-            )}
           </div>
 
-          <div className="flex flex-wrap gap-2 mb-2">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mt-10 border-b pb-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-primary/10 rounded-2xl text-primary shadow-sm ring-1 ring-primary/20">
+                <CalendarIcon className="w-7 h-7" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-2xl font-bold font-display tracking-tight text-foreground">
+                  {isSameDay(new Date(selectedDate + "T12:00:00"), new Date()) ? "Atendimentos de Hoje" : `Atendimentos em ${new Date(selectedDate + "T12:00:00").toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}`}
+                </h3>
+                <p className="text-sm font-medium text-muted-foreground">Exibindo registros filtrados por data e status.</p>
+              </div>
+            </div>
+            
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative group">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                <Input
+                  placeholder="Pesquisar paciente..."
+                  className="pl-10 w-72 bg-background border-muted-foreground/20 focus-visible:ring-primary shadow-sm"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              {canCreate && (
+                <Button onClick={() => setDialogOpen(true)} className="gap-2 h-10 px-5 shadow-lg bg-primary hover:bg-primary/90 font-bold">
+                  <Plus className="w-4 h-4" /> Novo Agendamento
+                </Button>
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2 py-2">
             <button
               onClick={() => setFilterStatus("all")}
               className={cn(
-                "px-3 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1.5 border",
+                "px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border shadow-sm",
                 filterStatus === "all" 
                   ? "bg-primary text-primary-foreground border-primary" 
                   : "bg-background text-muted-foreground border-border hover:bg-muted"
               )}
             >
-              Todos
-              <Badge variant="secondary" className="px-1 h-4 min-w-[1.25rem] text-[10px] bg-white/20 text-inherit border-none">
+              Todos Atendimentos
+              <Badge variant="secondary" className="px-1.5 h-5 min-w-[1.25rem] text-[10px] bg-white/20 text-inherit border-none">
                 {statusCounts.all || 0}
               </Badge>
             </button>
@@ -1721,9 +1753,9 @@ const Agenda: React.FC = () => {
                   key={key}
                   onClick={() => setFilterStatus(key)}
                   className={cn(
-                    "px-3 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1.5 border",
+                    "px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border shadow-sm",
                     filterStatus === key 
-                      ? "bg-primary text-primary-foreground border-primary shadow-sm" 
+                      ? "bg-primary text-primary-foreground border-primary" 
                       : "bg-background text-muted-foreground border-border hover:bg-muted"
                   )}
                 >
@@ -1731,7 +1763,7 @@ const Agenda: React.FC = () => {
                   <Badge 
                     variant="secondary" 
                     className={cn(
-                      "px-1 h-4 min-w-[1.25rem] text-[10px] border-none",
+                      "px-1.5 h-5 min-w-[1.25rem] text-[10px] border-none",
                       filterStatus === key ? "bg-white/20 text-white" : "bg-muted-foreground/10 text-muted-foreground"
                     )}
                   >
@@ -1801,6 +1833,7 @@ const Agenda: React.FC = () => {
           )}
 
           {agendamentosPendentesRevisao.length > 0 && (
+
             <Card className="shadow-card border-0 bg-warning/10 ring-1 ring-warning/30 animate-pulse">
               <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
@@ -2034,7 +2067,7 @@ const Agenda: React.FC = () => {
             <div className="flex items-center gap-2 text-xs text-muted-foreground"><div className="w-2.5 h-2.5 rounded-full bg-destructive/20 ring-1 ring-destructive/40" /> Faltou</div>
             <div className="flex items-center gap-2 text-xs text-warning-foreground font-semibold"><div className="w-2.5 h-2.5 rounded-full bg-warning/20 ring-1 ring-warning/40 animate-pulse" /> Pendente de Revisão</div>
           </div>
-        </>
+        </div>
       )}
 
       <Dialog open={!!rejeicaoTarget} onOpenChange={(o) => { if (!o) { setRejeicaoTarget(null); setRejeicaoMotivo(""); } }}>
