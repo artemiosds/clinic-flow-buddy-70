@@ -152,7 +152,8 @@ export const CalendarioAgenda: React.FC<CalendarioAgendaProps> = ({
       let hasDisponibilidade = false;
       let allBlocked = profissionaisFiltrados.length > 0;
 
-      const dateAgMap = agendamentosByDate.get(dateStr);
+      const dateEntry = agendamentosByDate.get(dateStr);
+      const isCurrentMonth = day.getUTCMonth() === currentMonthNum && day.getUTCFullYear() === currentYear;
 
       if (useDetailedSlots) {
         // Single professional — use detailed slot calculation (fast for 1 prof)
@@ -164,21 +165,25 @@ export const CalendarioAgenda: React.FC<CalendarioAgendaProps> = ({
             return matchesBlock(bloqueio, prof.id, profUnit);
           });
           allBlocked = isBlocked;
-          hasDisponibilidade = dispIndex.some((disp) => (
+          const profHasDisponibilidade = dispIndex.some((disp) => (
             disp.profissionalId === prof.id &&
             disp.unidadeId === profUnit &&
             dateStr >= disp.dataInicio &&
             dateStr <= disp.dataFim &&
             disp.diasSemana.includes(dayOfWeek)
           ));
+          hasDisponibilidade = profHasDisponibilidade;
 
           if (!isBlocked && profUnit) {
-            agendamentosConfirmados = dateAgMap?.get(prof.id) || 0;
+            agendamentosConfirmados = dateEntry?.counts.get(prof.id) || 0;
             if (!isPast) {
               const slots = getAvailableSlots(prof.id, profUnit, dateStr);
               totalVagas = slots.length + agendamentosConfirmados;
             } else {
               totalVagas = agendamentosConfirmados || 1; // past days: show count
+            }
+            if (profHasDisponibilidade) {
+              profissionaisDisponiveis.push(prof.nome);
             }
           }
         }
@@ -190,8 +195,7 @@ export const CalendarioAgenda: React.FC<CalendarioAgendaProps> = ({
             if (dateStr < bloqueio.dataInicio || dateStr > bloqueio.dataFim) return false;
             return matchesBlock(bloqueio, prof.id, profUnit);
           });
-          allBlocked = allBlocked && isBlocked;
-
+          
           const profHasDisponibilidade = dispIndex.some((disp) => (
             disp.profissionalId === prof.id &&
             disp.unidadeId === profUnit &&
@@ -199,12 +203,18 @@ export const CalendarioAgenda: React.FC<CalendarioAgendaProps> = ({
             dateStr <= disp.dataFim &&
             disp.diasSemana.includes(dayOfWeek)
           ));
+          
+          allBlocked = allBlocked && isBlocked;
           hasDisponibilidade = hasDisponibilidade || profHasDisponibilidade;
 
           if (isBlocked || !profUnit) continue;
 
-          const profAgCount = dateAgMap?.get(prof.id) || 0;
+          const profAgCount = dateEntry?.counts.get(prof.id) || 0;
           agendamentosConfirmados += profAgCount;
+
+          if (profHasDisponibilidade) {
+            profissionaisDisponiveis.push(prof.nome);
+          }
 
           // Use vagasPorDia from disponibilidade as totalVagas estimate
           const profDisp = dispIndex.find((disp) => (
@@ -221,28 +231,40 @@ export const CalendarioAgenda: React.FC<CalendarioAgendaProps> = ({
       }
 
       let status: DiaInfo["status"] = "empty";
+      let occupancyPercent = 0;
+
+      if (totalVagas > 0) {
+        occupancyPercent = Math.min(100, Math.round((agendamentosConfirmados / totalVagas) * 100));
+      }
+
       if (allBlocked) {
         status = "blocked";
       } else if (isPast) {
-        // Past dates: show as "past" but still clickable with appointment counts
-        status = agendamentosConfirmados > 0 ? "past" : "past";
+        status = "past";
       } else if (totalVagas > 0) {
-        const percent = (agendamentosConfirmados / totalVagas) * 100;
-        if (agendamentosConfirmados >= totalVagas) status = "full";
-        else if (percent >= 70) status = "almostFull";
+        if (agendamentosConfirmados > totalVagas) status = "exceeded";
+        else if (agendamentosConfirmados === totalVagas) status = "full";
+        else if (occupancyPercent >= 70) status = "almostFull";
         else status = "available";
       } else if (hasDisponibilidade) {
         status = "full";
       }
+
+      const hasPendencias = dateEntry?.statusSet.has("pendente") || dateEntry?.statusSet.has("pendente_revisao") || false;
 
       map.set(dateStr, {
         date: dateStr,
         dayNumber: day.getUTCDate(),
         isToday,
         isSelected,
+        isCurrentMonth,
         status,
         agendamentosCount: agendamentosConfirmados,
         totalVagas,
+        occupancyPercent,
+        profissionaisDisponiveis,
+        tiposAtendimento: Array.from(dateEntry?.types || []),
+        hasPendencias,
       });
     }
 
@@ -257,6 +279,7 @@ export const CalendarioAgenda: React.FC<CalendarioAgendaProps> = ({
     getAvailableSlots,
     profissionais,
     selectedDate,
+    currentMonth,
   ]);
 
   const monthNames = [
