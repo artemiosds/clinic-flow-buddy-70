@@ -70,6 +70,8 @@ import { BuscaPaciente } from "@/components/BuscaPaciente";
 import { useUnidadeFilter } from "@/hooks/useUnidadeFilter";
 import { SlotInfoBadge } from "@/components/SlotInfoBadge";
 import { CalendarioAgenda } from "./CalendarioAgenda";
+import { AgendaVisaoSemana } from "./AgendaVisaoSemana";
+import { AgendaVisaoDia } from "./AgendaVisaoDia";
 import { getManchesterBadgeStyle } from "@/lib/manchesterProtocol";
 import { whatsappService } from "@/services/whatsappService";
 import { AgendaNotificacaoIndividual, AgendaNotificacoesMassa } from "@/components/AgendaNotificacoes";
