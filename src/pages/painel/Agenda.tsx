@@ -1689,30 +1689,48 @@ const Agenda: React.FC = () => {
                   </Button>
                 )}
               </div>
-              <div className="flex bg-muted/40 p-1 rounded-xl border border-muted-foreground/10 self-center">
+              <div className="flex bg-slate-100 dark:bg-slate-800/50 p-1 rounded-xl border border-slate-200 dark:border-slate-700 self-center shadow-sm">
                 <Button
-                  variant={agendaView === "day" ? "secondary" : "ghost"}
+                  variant="ghost"
                   size="sm"
                   onClick={() => setAgendaView("day")}
-                  className={cn("px-4 rounded-lg text-xs font-bold transition-all", agendaView === "day" && "shadow-sm bg-background")}
+                  className={cn(
+                    "px-4 h-9 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center gap-2",
+                    agendaView === "day" 
+                      ? "bg-teal-600 text-white shadow-md hover:bg-teal-700 hover:text-white" 
+                      : "text-slate-600 dark:text-slate-400 hover:bg-white/80 dark:hover:bg-slate-700/80 hover:text-slate-900 dark:hover:text-slate-200"
+                  )}
                 >
-                  Dia
+                  <CalendarIcon className={cn("w-4 h-4", agendaView === "day" ? "text-white" : "text-teal-600")} />
+                  <span className="hidden sm:inline">Dia</span>
                 </Button>
                 <Button
-                  variant={agendaView === "week" ? "secondary" : "ghost"}
+                  variant="ghost"
                   size="sm"
                   onClick={() => setAgendaView("week")}
-                  className={cn("px-4 rounded-lg text-xs font-bold transition-all", agendaView === "week" && "shadow-sm bg-background")}
+                  className={cn(
+                    "px-4 h-9 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center gap-2",
+                    agendaView === "week" 
+                      ? "bg-teal-600 text-white shadow-md hover:bg-teal-700 hover:text-white" 
+                      : "text-slate-600 dark:text-slate-400 hover:bg-white/80 dark:hover:bg-slate-700/80 hover:text-slate-900 dark:hover:text-slate-200"
+                  )}
                 >
-                  Semana
+                  <Columns className={cn("w-4 h-4", agendaView === "week" ? "text-white" : "text-teal-600")} />
+                  <span className="hidden sm:inline">Semana</span>
                 </Button>
                 <Button
-                  variant={agendaView === "month" ? "secondary" : "ghost"}
+                  variant="ghost"
                   size="sm"
                   onClick={() => setAgendaView("month")}
-                  className={cn("px-4 rounded-lg text-xs font-bold transition-all", agendaView === "month" && "shadow-sm bg-background")}
+                  className={cn(
+                    "px-4 h-9 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center gap-2",
+                    agendaView === "month" 
+                      ? "bg-teal-600 text-white shadow-md hover:bg-teal-700 hover:text-white" 
+                      : "text-slate-600 dark:text-slate-400 hover:bg-white/80 dark:hover:bg-slate-700/80 hover:text-slate-900 dark:hover:text-slate-200"
+                  )}
                 >
-                  Mês
+                  <LayoutGrid className={cn("w-4 h-4", agendaView === "month" ? "text-white" : "text-teal-600")} />
+                  <span className="hidden sm:inline">Mês</span>
                 </Button>
               </div>
             </div>
