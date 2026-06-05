@@ -70,6 +70,8 @@ import { BuscaPaciente } from "@/components/BuscaPaciente";
 import { useUnidadeFilter } from "@/hooks/useUnidadeFilter";
 import { SlotInfoBadge } from "@/components/SlotInfoBadge";
 import { CalendarioAgenda } from "./CalendarioAgenda";
+import { AgendaVisaoSemana } from "./AgendaVisaoSemana";
+import { AgendaVisaoDia } from "./AgendaVisaoDia";
 import { getManchesterBadgeStyle } from "@/lib/manchesterProtocol";
 import { whatsappService } from "@/services/whatsappService";
 import { AgendaNotificacaoIndividual, AgendaNotificacoesMassa } from "@/components/AgendaNotificacoes";
@@ -206,6 +208,7 @@ const Agenda: React.FC = () => {
   const navigate = useNavigate();
   const resolvePaciente = usePacienteNomeResolver();
   const [selectedDate, setSelectedDate] = useState(todayLocalStr());
+  const [agendaView, setAgendaView] = useState<"day" | "week" | "month">("month");
   const [nowTick, setNowTick] = useState(() => Date.now());
   useEffect(() => {
     const id = setInterval(() => setNowTick(Date.now()), 60_000);
@@ -1682,21 +1685,80 @@ const Agenda: React.FC = () => {
                   </Button>
                 )}
               </div>
+              <div className="flex bg-muted/40 p-1 rounded-xl border border-muted-foreground/10 self-center">
+                <Button
+                  variant={agendaView === "day" ? "secondary" : "ghost"}
+                  size="sm"
+                  onClick={() => setAgendaView("day")}
+                  className={cn("px-4 rounded-lg text-xs font-bold transition-all", agendaView === "day" && "shadow-sm bg-background")}
+                >
+                  Dia
+                </Button>
+                <Button
+                  variant={agendaView === "week" ? "secondary" : "ghost"}
+                  size="sm"
+                  onClick={() => setAgendaView("week")}
+                  className={cn("px-4 rounded-lg text-xs font-bold transition-all", agendaView === "week" && "shadow-sm bg-background")}
+                >
+                  Semana
+                </Button>
+                <Button
+                  variant={agendaView === "month" ? "secondary" : "ghost"}
+                  size="sm"
+                  onClick={() => setAgendaView("month")}
+                  className={cn("px-4 rounded-lg text-xs font-bold transition-all", agendaView === "month" && "shadow-sm bg-background")}
+                >
+                  Mês
+                </Button>
+              </div>
             </div>
 
-            <CalendarioAgenda
-              selectedDate={selectedDate}
-              onDateChange={(date) => setSelectedDate(date)}
-              agendamentos={agendamentos}
-              bloqueios={bloqueios}
-              disponibilidades={disponibilidades}
-              filterProf={filterProf}
-              filterUnit={filterUnit}
-              profissionais={profissionais}
-              getAvailableSlots={getAvailableSlots}
-              getAvailableDates={getAvailableDates}
-              unidades={unidades}
-            />
+            {agendaView === "month" && (
+              <CalendarioAgenda
+                selectedDate={selectedDate}
+                onDateChange={(date) => setSelectedDate(date)}
+                agendamentos={agendamentos}
+                bloqueios={bloqueios}
+                disponibilidades={disponibilidades}
+                filterProf={filterProf}
+                filterUnit={filterUnit}
+                profissionais={profissionais}
+                getAvailableSlots={getAvailableSlots}
+                getAvailableDates={getAvailableDates}
+                unidades={unidades}
+              />
+            )}
+
+            {agendaView === "week" && (
+              <AgendaVisaoSemana
+                selectedDate={selectedDate}
+                onDateChange={(date) => setSelectedDate(date)}
+                agendamentos={agendamentos}
+                bloqueios={bloqueios}
+                disponibilidades={disponibilidades}
+                filterProf={filterProf}
+                filterUnit={filterUnit}
+                profissionais={profissionais}
+                getAvailableSlots={getAvailableSlots}
+                unidades={unidades}
+              />
+            )}
+
+            {agendaView === "day" && (
+              <AgendaVisaoDia
+                selectedDate={selectedDate}
+                onDateChange={(date) => setSelectedDate(date)}
+                agendamentos={agendamentos}
+                bloqueios={bloqueios}
+                disponibilidades={disponibilidades}
+                filterProf={filterProf}
+                filterUnit={filterUnit}
+                profissionais={profissionais}
+                getAvailableSlots={getAvailableSlots}
+                unidades={unidades}
+                onNewAgendamento={() => setDialogOpen(true)}
+              />
+            )}
           </div>
 
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mt-10 border-b pb-6">
