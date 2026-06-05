@@ -485,9 +485,19 @@ const Agenda: React.FC = () => {
   }, [user, retornoForm.data, getAvailableSlots]);
 
   const filteredProfissionais = React.useMemo(() => {
-    if (filterUnit === "all") return profissionais;
-    return profissionais.filter((p) => p.unidadeId === filterUnit || !p.unidadeId);
+    let list = filterUnit === "all" ? profissionais : profissionais.filter((p) => p.unidadeId === filterUnit || !p.unidadeId);
+    return [...list].sort((a, b) => a.nome.localeCompare(b.nome));
   }, [profissionais, filterUnit]);
+
+  const groupedProfissionais = React.useMemo(() => {
+    const groups: Record<string, typeof filteredProfissionais> = {};
+    filteredProfissionais.forEach((p) => {
+      const spec = p.profissao || "Outros";
+      if (!groups[spec]) groups[spec] = [];
+      groups[spec].push(p);
+    });
+    return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
+  }, [filteredProfissionais]);
 
   const baseAgendamentos = useMemo(() => {
     return agendamentos.filter((a) => {
