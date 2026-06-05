@@ -39,6 +39,8 @@ export const AgendaVisaoDia: React.FC<AgendaVisaoDiaProps> = ({
     const today = todayLocalStr();
     const isPast = selectedDate < today;
 
+    const useDetailedSlots = filterProf !== "all" && profs.length === 1;
+
     profs.forEach(p => {
       const pUnit = filterUnit !== "all" ? filterUnit : p.unidadeId;
       if (!pUnit) return;
@@ -55,7 +57,7 @@ export const AgendaVisaoDia: React.FC<AgendaVisaoDiaProps> = ({
       if (blocked) return;
 
       const count = dayAgs.filter(a => a.profissionalId === p.id && a.status !== "cancelado" && a.status !== "falta").length;
-      if (!isPast) {
+      if (useDetailedSlots && !isPast) {
         const slots = getAvailableSlots(p.id, pUnit, selectedDate);
         totalCapacity += (slots.length + count);
       } else {
@@ -67,7 +69,7 @@ export const AgendaVisaoDia: React.FC<AgendaVisaoDiaProps> = ({
           selectedDate <= d.dataFim && 
           d.diasSemana.includes(dayOfWeek)
         );
-        totalCapacity += (disp?.vagasPorDia || count || 1);
+        totalCapacity += (disp?.vagasPorDia || count || 0);
       }
     });
 
