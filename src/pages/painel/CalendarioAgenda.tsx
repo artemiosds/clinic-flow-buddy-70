@@ -1,16 +1,28 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Info, AlertCircle, CheckCircle2, Users, Stethoscope } from "lucide-react";
 import { cn, dateStrToUtcDate, isoDayOfWeek, localDateStr, todayLocalStr } from "@/lib/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Progress } from "@/components/ui/progress";
 
 interface DiaInfo {
   date: string;
   dayNumber: number;
   isToday: boolean;
   isSelected: boolean;
-  status: "blocked" | "past" | "full" | "almostFull" | "available" | "empty";
+  isCurrentMonth: boolean;
+  status: "blocked" | "past" | "full" | "almostFull" | "available" | "empty" | "exceeded";
   agendamentosCount: number;
   totalVagas: number;
+  occupancyPercent: number;
+  profissionaisDisponiveis: string[];
+  tiposAtendimento: string[];
+  hasPendencias: boolean;
 }
 
 interface CalendarioAgendaProps {
