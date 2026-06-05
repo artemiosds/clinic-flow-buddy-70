@@ -1647,20 +1647,85 @@ const Agenda: React.FC = () => {
                   </Select>
                 )}
                 {!isProfissional && (
-                  <Select value={filterProf} onValueChange={setFilterProf}>
-                    <SelectTrigger className="w-full sm:w-52 bg-background border-muted-foreground/20">
-                      <Stethoscope className="w-4 h-4 mr-2 text-muted-foreground" />
-                      <SelectValue placeholder="Profissional" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos Profissionais</SelectItem>
-                      {filteredProfissionais.map((p) => (
-                        <SelectItem key={p.id} value={p.id}>
-                          {p.nome}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Popover open={profPopoverOpen} onOpenChange={setProfPopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={profPopoverOpen}
+                        className="w-full sm:w-64 justify-between bg-background border-muted-foreground/20 font-normal"
+                      >
+                        <div className="flex items-center truncate">
+                          <Stethoscope className="w-4 h-4 mr-2 text-muted-foreground shrink-0" />
+                          <span className="truncate">
+                            {filterProf === "all"
+                              ? "Todos Profissionais"
+                              : profissionais.find((p) => p.id === filterProf)?.nome || "Profissional"}
+                          </span>
+                        </div>
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[300px] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Buscar profissional ou especialidade..." />
+                        <CommandList>
+                          <CommandEmpty>Nenhum profissional encontrado.</CommandEmpty>
+                          <CommandGroup>
+                            <CommandItem
+                              value="all-profissionais"
+                              onSelect={() => {
+                                setFilterProf("all");
+                                setProfPopoverOpen(false);
+                              }}
+                              className="flex items-center gap-2"
+                            >
+                              <div className={cn(
+                                "flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                                filterProf === "all" ? "bg-primary text-primary-foreground" : "opacity-50"
+                              )}>
+                                {filterProf === "all" && <Check className="h-3 w-3" />}
+                              </div>
+                              <span className="font-medium">Todos Profissionais</span>
+                            </CommandItem>
+                          </CommandGroup>
+                          
+                          <ScrollArea className="h-[300px]">
+                            {groupedProfissionais.map(([especialidade, profs]) => (
+                              <React.Fragment key={especialidade}>
+                                <CommandSeparator />
+                                <CommandGroup heading={especialidade}>
+                                  {profs.map((p) => (
+                                    <CommandItem
+                                      key={p.id}
+                                      value={`${p.nome} ${p.profissao || ""}`}
+                                      onSelect={() => {
+                                        setFilterProf(p.id);
+                                        setProfPopoverOpen(false);
+                                      }}
+                                      className="flex flex-col items-start gap-0.5 py-2 cursor-pointer"
+                                    >
+                                      <div className="flex items-center w-full justify-between">
+                                        <span className="font-medium truncate max-w-[200px]" title={p.nome}>
+                                          {p.nome}
+                                        </span>
+                                        {filterProf === p.id && <Check className="h-4 w-4 text-primary shrink-0" />}
+                                      </div>
+                                      {p.profissao && (
+                                        <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                                          {p.profissao}
+                                        </span>
+                                      )}
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </React.Fragment>
+                            ))}
+                          </ScrollArea>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 )}
                 
                 <Select value={filterStatus} onValueChange={setFilterStatus}>
