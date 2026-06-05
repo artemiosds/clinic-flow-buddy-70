@@ -28,6 +28,7 @@ export const AgendaVisaoDia: React.FC<AgendaVisaoDiaProps> = ({
   filterUnit,
   profissionais,
   getAvailableSlots,
+  onNewAgendamento,
 }) => {
   const stats = useMemo(() => {
     const dayAgs = agendamentos.filter(a => a.data === selectedDate);
