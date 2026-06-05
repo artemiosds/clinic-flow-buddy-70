@@ -35,7 +35,8 @@ serve(async (req) => {
     const isMaster = func && (func.role?.toLowerCase() === 'master' || func.usuario === 'admin.sms');
     if (!isMaster) throw new Error("Apenas administradores podem gerar backup");
 
-    const { action } = await req.json();
+    const body = await req.json();
+    const action = body.action;
 
     if (action === "generate-full-backup") {
       const zip = new JSZip();
@@ -43,12 +44,13 @@ serve(async (req) => {
       const now = new Date();
       const timestamp = now.toISOString().replace(/[:.]/g, "-");
 
-      // 1. Exportar Tabelas
-      const { data: tables } = await supabaseAdmin.rpc('get_tables_list'); // Idealmente ter uma RPC, senão usar lista fixa
-      const tablesToExport = tables || [
+      // Tabelas para exportar
+      const tablesToExport = [
         'pacientes', 'agendamentos', 'prontuarios', 'funcionarios', 'unidades', 
         'configuracoes', 'procedimentos', 'atendimentos', 'especialidades',
-        'whatsapp_config', 'whatsapp_templates', 'system_config', 'prontuario_config'
+        'whatsapp_config', 'whatsapp_templates', 'system_config', 'prontuario_config',
+        'salas', 'especialidades_config', 'cbo_codigos', 'cid10_codigos',
+        'fila_espera', 'logs_auditoria'
       ];
 
       const dbFolder = zip.folder("database");
@@ -59,7 +61,10 @@ serve(async (req) => {
       for (const table of tablesToExport) {
         try {
           const { data, error } = await supabaseAdmin.from(table).select("*");
-          if (error) throw error;
+          if (error) {
+             exportLog.push(`[AVISO] Tabela ${table} ignorada: ${error.message}`);
+             continue;
+          }
 
           if (data && data.length > 0) {
             // JSON
@@ -78,7 +83,7 @@ serve(async (req) => {
             });
             csvFolder.addFile(`${table}.csv`, csvRows.join("\n"));
 
-            // SQL (Simulado - INSERT INTO)
+            // SQL
             const sqlRows = data.map(row => {
               const keys = Object.keys(row).join(", ");
               const vals = Object.values(row).map(v => {
@@ -86,7 +91,7 @@ serve(async (req) => {
                 if (typeof v === 'string') return `'${v.replace(/'/g, "''")}'`;
                 return v;
               }).join(", ");
-              return `INSERT INTO ${table} (${keys}) VALUES (${vals});`;
+              return `INSERT INTO public.${table} (${keys}) VALUES (${vals});`;
             });
             sqlFolder.addFile(`${table}.sql`, sqlRows.join("\n"));
 
@@ -99,31 +104,44 @@ serve(async (req) => {
         }
       }
 
-      // 2. Exportar Secrets (Lista de nomes apenas)
+      // Storage (Simulado - listagem de arquivos se houver permissão)
+      try {
+        const { data: buckets } = await supabaseAdmin.storage.listBuckets();
+        if (buckets) {
+          const storageLog = ["BUCKETS ENCONTRADOS:\n"];
+          for (const bucket of buckets) {
+            storageLog.push(`- ${bucket.id} (${bucket.public ? 'Público' : 'Privado'})`);
+          }
+          zip.addFile("storage/bucket_list.txt", storageLog.join("\n"));
+        }
+      } catch (e) {
+        exportLog.push(`[AVISO] Não foi possível listar buckets de storage`);
+      }
+
+      // Secrets
       const secretsNames = [
         "SUPABASE_URL", "SUPABASE_ANON_KEY", "LOVABLE_API_KEY", 
         "WHATSAPP_API_KEY", "GOOGLE_CLIENT_ID", "AUTENTIQUE_TOKEN"
       ];
-      zip.addFile("config/secrets_required.txt", "Secrets necessárias (valores mascarados):\n" + 
-        secretsNames.map(s => `${s}=********`).join("\n"));
+      zip.addFile("config/secrets_required.txt", "Configurações necessárias:\n" + 
+        secretsNames.map(s => `${s}=******** (Mascarado por segurança)`).join("\n"));
 
-      // 3. README e Metadados
+      // README
       const readme = `
 # Backup Lovable Cloud - Sistema de Gestão de Saúde
 Data: ${now.toLocaleString('pt-BR')}
-Versão do Backup: 1.0.0
 Gerado por: ${func?.usuario || user.email}
 
 ## Estrutura do Backup
-- /database: Dados exportados em SQL, JSON e CSV
-- /config: Lista de configurações e secrets necessárias
+- /database: Dados em SQL, JSON e CSV
+- /config: Lista de secrets necessárias
 - /logs: Relatório da exportação
+- /storage: Listagem de buckets
 
-## Como Restaurar
-Este backup é destinado para recuperação de desastre ou migração de dados.
-1. Database: Execute os arquivos .sql no console do Supabase ou importe os .csv
-2. Storage: Faça o upload manual dos arquivos para os respectivos buckets
-3. Edge Functions: O código fonte está disponível no repositório do projeto
+## Restauração
+1. Crie as tabelas no novo banco.
+2. Importe os arquivos SQL ou CSV.
+3. Configure as Secrets listadas em /config.
 `;
       zip.addFile("README_RESTAURACAO.md", readme);
       zip.addFile("logs/export_log.txt", exportLog.join("\n"));
