@@ -40,6 +40,9 @@ import {
   Trash2,
   CalendarOff,
   Calendar as CalendarIcon,
+  CalendarDays,
+  CalendarRange,
+  Columns,
   Eye,
   FileText,
   CheckCircle2,
@@ -56,6 +59,7 @@ import {
   Phone,
   RefreshCw,
   Info,
+  LayoutGrid,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import DetalheDrawer, { Secao, Campo, StatusBadge, calcularIdade, formatarData } from "@/components/DetalheDrawer";
