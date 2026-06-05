@@ -206,6 +206,7 @@ const Agenda: React.FC = () => {
   const navigate = useNavigate();
   const resolvePaciente = usePacienteNomeResolver();
   const [selectedDate, setSelectedDate] = useState(todayLocalStr());
+  const [agendaView, setAgendaView] = useState<"day" | "week" | "month">("month");
   const [nowTick, setNowTick] = useState(() => Date.now());
   useEffect(() => {
     const id = setInterval(() => setNowTick(Date.now()), 60_000);
