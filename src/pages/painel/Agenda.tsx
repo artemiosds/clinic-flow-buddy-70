@@ -1756,6 +1756,7 @@ const Agenda: React.FC = () => {
                 profissionais={profissionais}
                 getAvailableSlots={getAvailableSlots}
                 unidades={unidades}
+                onNewAgendamento={() => setDialogOpen(true)}
               />
             )}
           </div>
