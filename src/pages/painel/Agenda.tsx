@@ -60,8 +60,20 @@ import {
   RefreshCw,
   Info,
   LayoutGrid,
+  ChevronsUpDown,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+} from "@/components/ui/command";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import DetalheDrawer, { Secao, Campo, StatusBadge, calcularIdade, formatarData } from "@/components/DetalheDrawer";
 import ContactActionButton from "@/components/ContactActionButton";
 import { addDaysToDateStr, cn, isoDayOfWeek, nowMinutesInBrazil, todayLocalStr } from "@/lib/utils";
