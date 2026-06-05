@@ -1654,7 +1654,7 @@ const Agenda: React.FC = () => {
                         role="combobox"
                         aria-expanded={profPopoverOpen}
                         title={filterProf === "all" ? "Todos Profissionais" : profissionais.find((p) => p.id === filterProf)?.nome}
-                        className="w-full sm:w-64 justify-between bg-background border-muted-foreground/20 font-normal"
+                        className="w-full sm:w-80 justify-between bg-background border-muted-foreground/20 font-normal"
                       >
                         <div className="flex items-center min-w-0 flex-1">
                           <Stethoscope className="w-4 h-4 mr-2 text-muted-foreground shrink-0" />
@@ -1667,7 +1667,7 @@ const Agenda: React.FC = () => {
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[300px] p-0" align="start">
+                    <PopoverContent className="w-[350px] p-0" align="start">
                       <Command>
                         <CommandInput placeholder="Buscar profissional ou especialidade..." />
                         <CommandList>
@@ -1707,7 +1707,7 @@ const Agenda: React.FC = () => {
                                       className="flex flex-col items-start gap-0.5 py-2 cursor-pointer"
                                     >
                                       <div className="flex items-center w-full justify-between">
-                                        <span className="font-medium truncate max-w-[200px]" title={p.nome}>
+                                        <span className="font-medium truncate flex-1" title={p.nome}>
                                           {p.nome}
                                         </span>
                                         {filterProf === p.id && <Check className="h-4 w-4 text-primary shrink-0" />}
