@@ -326,6 +326,7 @@ const Agenda: React.FC = () => {
   }>({ open: false, pacienteId: "", modo: "agendamento", onConfirm: () => {} });
 
   const [pacientesConferidos, setPacientesConferidos] = useState<Set<string>>(new Set());
+  const [profPopoverOpen, setProfPopoverOpen] = useState(false);
 
   const handlePacienteSelecionadoNovoAg = (pacienteId: string) => {
     if (!pacienteId) {
