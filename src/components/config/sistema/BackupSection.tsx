@@ -69,7 +69,68 @@ export const BackupSection: React.FC<Props> = ({ value, onChange }) => {
     }
     setExporting(true);
     setProgress(10);
-...
+    try {
+      const queries = TABELAS.map(t => supabase.from(t).select('*'));
+      setProgress(40);
+      const responses = await Promise.all(queries);
+      setProgress(70);
+      const results: Record<string, any[]> = {};
+      TABELAS.forEach((t, i) => { results[t] = (responses[i].data as any[]) || []; });
+
+      let blob: Blob;
+      let filename: string;
+      const dateStr = new Date().toISOString().slice(0, 10);
+
+      if (formato === 'json') {
+        blob = new Blob([JSON.stringify(results, null, 2)], { type: 'application/json' });
+        filename = `backup_${dateStr}.json`;
+      } else if (formato === 'csv') {
+        const lines: string[] = [];
+        TABELAS.forEach(t => {
+          const rows = results[t];
+          lines.push(`# ${t.toUpperCase()}`);
+          if (rows.length === 0) { lines.push(''); return; }
+          const headers = Object.keys(rows[0]);
+          lines.push(headers.join(','));
+          rows.forEach(r => {
+            lines.push(headers.map(h => {
+              const v = r[h];
+              if (v === null || v === undefined) return '';
+              const s = typeof v === 'object' ? JSON.stringify(v) : String(v);
+              return `"${s.replace(/"/g, '""')}"`;
+            }).join(','));
+          });
+          lines.push('');
+        });
+        blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+        filename = `backup_${dateStr}.csv`;
+      } else {
+        const lines = [
+          'RELATÓRIO DE BACKUP',
+          '====================',
+          `Data: ${new Date().toLocaleString('pt-BR')}`,
+          '',
+          ...TABELAS.map(t => `${t}: ${results[t].length} registros`),
+        ];
+        blob = new Blob([lines.join('\n')], { type: 'application/pdf' });
+        filename = `backup_${dateStr}.pdf`;
+      }
+
+      setProgress(95);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+      setProgress(100);
+
+      onChange({ ...value, ultimoBackup: new Date().toISOString() });
+      toast.success('Backup exportado com sucesso!');
+      setTimeout(() => { setExportOpen(false); setProgress(0); setExporting(false); }, 800);
+    } catch (e) {
+      toast.error('Erro ao exportar backup');
+      setExporting(false);
+      setProgress(0);
     }
   };
 
