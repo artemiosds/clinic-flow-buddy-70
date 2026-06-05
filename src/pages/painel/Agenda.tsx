@@ -1673,7 +1673,7 @@ const Agenda: React.FC = () => {
                           <CommandEmpty>Nenhum profissional encontrado.</CommandEmpty>
                           <CommandGroup>
                             <CommandItem
-                              value="all-profissionais"
+                              value="todos profissionais"
                               onSelect={() => {
                                 setFilterProf("all");
                                 setProfPopoverOpen(false);
