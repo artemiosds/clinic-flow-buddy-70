@@ -84,16 +84,20 @@ export const CalendarioAgenda: React.FC<CalendarioAgendaProps> = ({
 
   // Pre-index agendamentos by date for O(1) lookup instead of filtering per day
   const agendamentosByDate = useMemo(() => {
-    const map = new Map<string, Map<string, number>>();
+    const map = new Map<string, { counts: Map<string, number>, types: Set<string>, statusSet: Set<string> }>();
     for (const a of agendamentos) {
       if (a.status === "cancelado" || a.status === "falta") continue;
-      const profKey = a.profissionalId;
-      let dateMap = map.get(a.data);
-      if (!dateMap) {
-        dateMap = new Map();
-        map.set(a.data, dateMap);
+      
+      let entry = map.get(a.data);
+      if (!entry) {
+        entry = { counts: new Map(), types: new Set(), statusSet: new Set() };
+        map.set(a.data, entry);
       }
-      dateMap.set(profKey, (dateMap.get(profKey) || 0) + 1);
+      
+      const profKey = a.profissionalId;
+      entry.counts.set(profKey, (entry.counts.get(profKey) || 0) + 1);
+      if (a.tipo) entry.types.add(a.tipo);
+      if (a.status) entry.statusSet.add(a.status);
     }
     return map;
   }, [agendamentos]);
@@ -114,6 +118,8 @@ export const CalendarioAgenda: React.FC<CalendarioAgendaProps> = ({
   const dayInfoMap = useMemo(() => {
     const map = new Map<string, DiaInfo>();
     const todayStr = todayLocalStr();
+    const currentYear = currentMonth.getUTCFullYear();
+    const currentMonthNum = currentMonth.getUTCMonth();
 
     const profissionaisFiltrados = filterProf !== "all"
       ? profissionais.filter((prof) => prof.id === filterProf)
