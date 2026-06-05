@@ -80,6 +80,8 @@ export const AgendaVisaoSemana: React.FC<AgendaVisaoSemanaProps> = ({
 
       const dateEntry = agendamentosByDate.get(dateStr);
 
+      const useDetailedSlots = filterProf !== "all" && profs.length === 1;
+
       profs.forEach(p => {
         const pUnit = filterUnit !== "all" ? filterUnit : p.unidadeId;
         if (!pUnit) return;
@@ -108,11 +110,12 @@ export const AgendaVisaoSemana: React.FC<AgendaVisaoSemanaProps> = ({
         if (!blocked) {
           const count = agendamentos.filter(a => a.data === dateStr && a.profissionalId === p.id && a.status !== "cancelado" && a.status !== "falta").length;
           agendamentosCount += count;
-          if (!isPast) {
+          
+          if (useDetailedSlots && !isPast) {
             const slots = getAvailableSlots(p.id, pUnit, dateStr);
             totalVagas += (slots.length + count);
           } else {
-            totalVagas += (disp?.vagasPorDia || count || 1);
+            totalVagas += (disp?.vagasPorDia || count || 0);
           }
         }
       });
