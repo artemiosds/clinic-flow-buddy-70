@@ -302,103 +302,228 @@ export const CalendarioAgenda: React.FC<CalendarioAgendaProps> = ({
     setCurrentMonth(newDate);
   };
 
-  const getDotClass = (status: DiaInfo["status"]) => {
-    switch (status) {
-      case "past":
-      case "blocked":
-        return "bg-muted-foreground/60";
-      case "full":
-        return "bg-primary";
-      case "almostFull":
-        return "bg-warning";
-      case "available":
-        return "bg-success";
-      default:
-        return "bg-muted-foreground/30";
-    }
+  const getStatusVisuals = (info: DiaInfo) => {
+    if (info.status === "blocked") return {
+      label: "Bloqueado",
+      color: "bg-slate-100 text-slate-500 border-slate-200",
+      barColor: "bg-slate-300"
+    };
+    if (info.status === "past") return {
+      label: "Passado",
+      color: "bg-slate-50 text-slate-400 border-slate-100",
+      barColor: "bg-slate-200"
+    };
+    if (info.status === "exceeded") return {
+      label: "Excedido",
+      color: "bg-red-100 text-red-700 border-red-200",
+      barColor: "bg-red-500"
+    };
+    if (info.status === "full") return {
+      label: "Lotado",
+      color: "bg-blue-100 text-blue-700 border-blue-200",
+      barColor: "bg-blue-500"
+    };
+    if (info.status === "almostFull") return {
+      label: "Quase cheio",
+      color: "bg-orange-100 text-orange-700 border-orange-200",
+      barColor: "bg-orange-500"
+    };
+    if (info.status === "available" || info.status === "empty") return {
+      label: "Com vagas",
+      color: "bg-emerald-100 text-emerald-700 border-emerald-200",
+      barColor: "bg-emerald-500"
+    };
+    return {
+      label: "Sem vagas",
+      color: "bg-slate-100 text-slate-500 border-slate-200",
+      barColor: "bg-slate-300"
+    };
   };
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <Button variant="outline" size="icon" onClick={goToPrevMonth}>
-          <ChevronLeft className="w-4 h-4" />
-        </Button>
-        <h3 className="text-base font-medium">
-          {monthNames[currentMonth.getUTCMonth()]} {currentMonth.getUTCFullYear()}
-        </h3>
-        <Button variant="outline" size="icon" onClick={goToNextMonth}>
-          <ChevronRight className="w-4 h-4" />
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-7 gap-1 text-center text-xs text-muted-foreground">
-        {weekDays.map((day, index) => (
-          <div key={index} className="py-1">{day}</div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-7 gap-1">
-        {daysInMonth.map((day, index) => {
-          const dateStr = localDateStr(day);
-          const info = dayInfoMap.get(dateStr);
-          if (!info) return null;
-
-          const isCurrentMonth =
-            day.getUTCMonth() === currentMonth.getUTCMonth() &&
-            day.getUTCFullYear() === currentMonth.getUTCFullYear();
-
-          const isDisabled = info.status === "blocked";
-
-          return (
-            <button
-              key={index}
-              type="button"
-              disabled={isDisabled}
-              onClick={() => !isDisabled && onDateChange(info.date)}
-              className={cn(
-                'relative flex flex-col items-center justify-center py-2 rounded-md transition-colors',
-                !isCurrentMonth && 'opacity-40',
-                info.isSelected && 'bg-primary text-primary-foreground shadow-sm',
-                !info.isSelected && !isDisabled && 'hover:bg-muted/50',
-                isDisabled && 'cursor-not-allowed'
-              )}
-            >
-              <span className="text-sm font-medium">{info.dayNumber}</span>
-              {info.agendamentosCount > 0 && (
-                <span
-                  className={cn(
-                    'absolute top-1 right-1 text-[10px] font-semibold',
-                    info.isSelected ? 'text-primary-foreground/80' : 'text-muted-foreground'
-                  )}
-                >
-                  {info.agendamentosCount}
-                </span>
-              )}
-              <div className={cn('w-1.5 h-1.5 rounded-full mt-1', getDotClass(info.status))} />
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="flex flex-wrap gap-4 justify-center text-xs text-muted-foreground pt-2 border-t">
-        <div className="flex items-center gap-1">
-          <div className="w-2 h-2 rounded-full bg-success" />
-          <span>Com vagas</span>
+    <TooltipProvider>
+      <div className="space-y-6 w-full max-w-5xl mx-auto">
+        <div className="flex items-center justify-between bg-card p-4 rounded-xl border shadow-sm">
+          <div className="flex items-center gap-4">
+            <h3 className="text-xl font-bold font-display text-foreground">
+              {monthNames[currentMonth.getUTCMonth()]} {currentMonth.getUTCFullYear()}
+            </h3>
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="icon" onClick={goToPrevMonth} className="h-8 w-8">
+                <ChevronLeft className="w-5 h-5" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={goToNextMonth} className="h-8 w-8">
+                <ChevronRight className="w-5 h-5" />
+              </Button>
+            </div>
+          </div>
+          
+          <div className="flex flex-wrap gap-4 items-center">
+            <div className="flex items-center gap-6 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded-sm bg-emerald-500" />
+                <span>Com vagas</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded-sm bg-orange-500" />
+                <span>Quase cheio</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded-sm bg-blue-500" />
+                <span>Lotado</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded-sm bg-red-500" />
+                <span>Excedido</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded-sm bg-slate-300" />
+                <span>Bloqueado</span>
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center gap-1">
-          <div className="w-2 h-2 rounded-full bg-warning" />
-          <span>Quase cheio</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="w-2 h-2 rounded-full bg-primary" />
-          <span>Lotado</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="w-2 h-2 rounded-full bg-muted-foreground/60" />
-          <span>Bloqueado / passado</span>
+
+        <div className="bg-card rounded-2xl border shadow-md overflow-hidden">
+          <div className="grid grid-cols-7 border-b bg-muted/30">
+            {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((day, index) => (
+              <div key={index} className="py-3 text-center text-xs font-bold uppercase tracking-widest text-muted-foreground border-r last:border-r-0">
+                {day}
+              </div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-7 grid-rows-5 auto-rows-fr">
+            {daysInMonth.map((day, index) => {
+              const dateStr = localDateStr(day);
+              const info = dayInfoMap.get(dateStr);
+              if (!info) return null;
+
+              const visuals = getStatusVisuals(info);
+              const isDisabled = info.status === "blocked";
+
+              return (
+                <Tooltip key={index}>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      disabled={isDisabled}
+                      onClick={() => !isDisabled && onDateChange(info.date)}
+                      className={cn(
+                        'group relative flex flex-col items-start p-3 min-h-[100px] transition-all border-r border-b hover:z-10 text-left',
+                        !info.isCurrentMonth && 'bg-muted/10 opacity-40',
+                        info.isSelected ? 'ring-2 ring-primary ring-inset bg-primary/5 z-20' : 'hover:bg-muted/50',
+                        isDisabled && 'cursor-not-allowed bg-slate-50/50',
+                        index % 7 === 6 && 'border-r-0'
+                      )}
+                    >
+                      <div className="flex justify-between items-start w-full mb-2">
+                        <span className={cn(
+                          "text-lg font-bold leading-none",
+                          info.isToday ? "text-primary flex items-center gap-1" : "text-foreground",
+                          !info.isCurrentMonth && "text-muted-foreground"
+                        )}>
+                          {info.dayNumber}
+                          {info.isToday && <div className="w-1.5 h-1.5 rounded-full bg-primary" />}
+                        </span>
+                        
+                        {info.agendamentosCount > 0 && (
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                            {info.agendamentosCount} ATEND.
+                          </span>
+                        )}
+                      </div>
+
+                      {!isDisabled && info.totalVagas > 0 && (
+                        <div className="mt-auto w-full space-y-1.5">
+                          <div className={cn(
+                            "text-[10px] font-bold uppercase tracking-tight px-1.5 py-0.5 rounded-sm inline-block border",
+                            visuals.color
+                          )}>
+                            {visuals.label}
+                          </div>
+                          
+                          <div className="space-y-1">
+                            <div className="flex justify-between text-[9px] font-bold text-muted-foreground uppercase">
+                              <span>Ocupação</span>
+                              <span>{info.occupancyPercent}%</span>
+                            </div>
+                            <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                              <div 
+                                className={cn("h-full transition-all duration-500", visuals.barColor)} 
+                                style={{ width: `${info.occupancyPercent}%` }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {info.hasPendencias && (
+                        <div className="absolute top-2 right-2">
+                          <AlertCircle className="w-3.5 h-3.5 text-orange-500 animate-pulse" />
+                        </div>
+                      )}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="p-4 w-64 space-y-3 z-50 shadow-xl border-primary/20">
+                    <div className="space-y-1 border-b pb-2">
+                      <p className="font-bold text-sm">Resumo do Dia</p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(info.date + "T12:00:00").toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="bg-muted/50 p-2 rounded">
+                        <p className="text-[10px] uppercase font-bold text-muted-foreground">Total Agend.</p>
+                        <p className="text-sm font-bold">{info.agendamentosCount}</p>
+                      </div>
+                      <div className="bg-muted/50 p-2 rounded">
+                        <p className="text-[10px] uppercase font-bold text-muted-foreground">Vagas Livres</p>
+                        <p className="text-sm font-bold text-success">{Math.max(0, info.totalVagas - info.agendamentosCount)}</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div>
+                        <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1 flex items-center gap-1">
+                          <Stethoscope className="w-3 h-3" /> Profissionais Ativos
+                        </p>
+                        <div className="flex flex-wrap gap-1">
+                          {info.profissionaisDisponiveis.length > 0 ? (
+                            info.profissionaisDisponiveis.map((p, i) => (
+                              <span key={i} className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded">{p}</span>
+                            ))
+                          ) : (
+                            <span className="text-[10px] text-muted-foreground italic">Nenhum profissional com agenda</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {info.tiposAtendimento.length > 0 && (
+                        <div>
+                          <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Tipos de Atendimento</p>
+                          <div className="flex flex-wrap gap-1">
+                            {info.tiposAtendimento.map((t, i) => (
+                              <span key={i} className="text-[10px] bg-muted px-1.5 py-0.5 rounded">{t}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {info.hasPendencias && (
+                        <div className="pt-1 border-t flex items-center gap-1.5 text-orange-600 font-bold text-[10px] uppercase">
+                          <AlertCircle className="w-3 h-3" /> Possui pendências de revisão
+                        </div>
+                      )}
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })}
+          </div>
         </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 };
