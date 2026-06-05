@@ -352,6 +352,18 @@ export const CalendarioAgenda: React.FC<CalendarioAgendaProps> = ({
               <Button variant="ghost" size="icon" onClick={goToPrevMonth} className="h-8 w-8">
                 <ChevronLeft className="w-5 h-5" />
               </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => {
+                  const today = new Date();
+                  setCurrentMonth(new Date(Date.UTC(today.getFullYear(), today.getMonth(), 1, 12, 0, 0)));
+                  onDateChange(todayLocalStr());
+                }} 
+                className="h-8 text-xs font-bold px-3"
+              >
+                Hoje
+              </Button>
               <Button variant="ghost" size="icon" onClick={goToNextMonth} className="h-8 w-8">
                 <ChevronRight className="w-5 h-5" />
               </Button>
