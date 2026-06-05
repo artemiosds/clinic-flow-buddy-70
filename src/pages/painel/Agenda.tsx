@@ -1653,11 +1653,12 @@ const Agenda: React.FC = () => {
                         variant="outline"
                         role="combobox"
                         aria-expanded={profPopoverOpen}
+                        title={filterProf === "all" ? "Todos Profissionais" : profissionais.find((p) => p.id === filterProf)?.nome}
                         className="w-full sm:w-64 justify-between bg-background border-muted-foreground/20 font-normal"
                       >
-                        <div className="flex items-center truncate">
+                        <div className="flex items-center min-w-0 flex-1">
                           <Stethoscope className="w-4 h-4 mr-2 text-muted-foreground shrink-0" />
-                          <span className="truncate">
+                          <span className="truncate block">
                             {filterProf === "all"
                               ? "Todos Profissionais"
                               : profissionais.find((p) => p.id === filterProf)?.nome || "Profissional"}
