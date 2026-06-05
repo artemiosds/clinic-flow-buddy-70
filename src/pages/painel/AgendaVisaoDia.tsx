@@ -117,6 +117,14 @@ export const AgendaVisaoDia: React.FC<AgendaVisaoDiaProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
+          {onNewAgendamento && stats.total === 0 && (
+            <button 
+              onClick={onNewAgendamento}
+              className="h-9 px-4 rounded-xl text-xs font-black uppercase bg-primary text-primary-foreground shadow-lg hover:shadow-xl hover:scale-105 transition-all flex items-center gap-2"
+            >
+              <UserPlus className="w-4 h-4" /> Novo Agendamento
+            </button>
+          )}
           <Badge variant="outline" className="h-9 px-4 rounded-xl text-xs font-black uppercase bg-background border-primary/20 text-primary">
             {stats.occupancy}% Ocupado
           </Badge>
