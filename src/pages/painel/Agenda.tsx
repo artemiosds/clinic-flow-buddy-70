@@ -1585,58 +1585,54 @@ const Agenda: React.FC = () => {
       )}
 
       {abaAtiva === "agenda" && (
-        <>
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 flex-wrap">
-            <CalendarioAgenda
-              selectedDate={selectedDate}
-              onDateChange={(date) => setSelectedDate(date)}
-              agendamentos={agendamentos}
-              bloqueios={bloqueios}
-              disponibilidades={disponibilidades}
-              filterProf={filterProf}
-              filterUnit={filterUnit}
-              profissionais={profissionais}
-              getAvailableSlots={getAvailableSlots}
-              getAvailableDates={getAvailableDates}
-              unidades={unidades}
-            />
+        <div className="space-y-6">
+          <div className="bg-card p-6 rounded-2xl border shadow-sm space-y-6">
+            <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 border-b pb-6">
+              <div className="space-y-1">
+                <h2 className="text-2xl font-bold font-display tracking-tight">Agenda de Atendimentos</h2>
+                <p className="text-muted-foreground text-sm">Controle de ocupação e agendamentos.</p>
+              </div>
+              
+              <div className="flex flex-wrap gap-2">
+                {!isProfissional && showUnitSelector && (
+                  <Select
+                    value={filterUnit}
+                    onValueChange={(v) => {
+                      setFilterUnit(v);
+                      setFilterProf("all");
+                    }}
+                  >
+                    <SelectTrigger className="w-full sm:w-48 bg-background border-muted-foreground/20">
+                      <Building2 className="w-4 h-4 mr-2 text-muted-foreground" />
+                      <SelectValue placeholder="Unidade" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas Unidades</SelectItem>
+                      {unidadesVisiveis.map((u) => (
+                        <SelectItem key={u.id} value={u.id}>
+                          {u.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                {!isProfissional && (
+                  <Select value={filterProf} onValueChange={setFilterProf}>
+                    <SelectTrigger className="w-full sm:w-52 bg-background border-muted-foreground/20">
+                      <Stethoscope className="w-4 h-4 mr-2 text-muted-foreground" />
+                      <SelectValue placeholder="Profissional" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos Profissionais</SelectItem>
+                      {filteredProfissionais.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
 
-            {!isProfissional && showUnitSelector && (
-              <Select
-                value={filterUnit}
-                onValueChange={(v) => {
-                  setFilterUnit(v);
-                  setFilterProf("all");
-                }}
-              >
-                <SelectTrigger className="w-full sm:w-48">
-                  <SelectValue placeholder="Unidade" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas Unidades</SelectItem>
-                  {unidadesVisiveis.map((u) => (
-                    <SelectItem key={u.id} value={u.id}>
-                      {u.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-            {!isProfissional && (
-              <Select value={filterProf} onValueChange={setFilterProf}>
-                <SelectTrigger className="w-full sm:w-52">
-                  <SelectValue placeholder="Profissional" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos Profissionais</SelectItem>
-                  {filteredProfissionais.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
             
             <Select value={filterStatus} onValueChange={setFilterStatus}>
               <SelectTrigger className="w-full sm:w-52">
