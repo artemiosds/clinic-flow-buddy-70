@@ -7,8 +7,9 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Download, FileJson, FileSpreadsheet, FileText, CloudUpload, Calendar, Upload, Database } from 'lucide-react';
+import { Download, FileJson, FileSpreadsheet, FileText, CloudUpload, Calendar, Upload, Database, ShieldCheck, Archive } from 'lucide-react';
 import { toast } from 'sonner';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface BackupConfig {
   autoBackup: boolean;
@@ -25,11 +26,47 @@ const TABELAS = ['pacientes', 'agendamentos', 'prontuarios', 'funcionarios'] as 
 
 export const BackupSection: React.FC<Props> = ({ value, onChange }) => {
   const [exportOpen, setExportOpen] = useState(false);
-  const [formato, setFormato] = useState<'json' | 'csv' | 'pdf'>('json');
+  const [formato, setFormato] = useState<'json' | 'csv' | 'pdf' | 'full'>('full');
   const [progress, setProgress] = useState(0);
   const [exporting, setExporting] = useState(false);
 
+  const handleFullBackup = async () => {
+    setExporting(true);
+    setProgress(5);
+    try {
+      const { data, error } = await supabase.functions.invoke('system-backup-export', {
+        body: { action: 'generate-full-backup' }
+      });
+
+      if (error) throw error;
+
+      // O retorno é um Blob do ZIP
+      const blob = new Blob([data], { type: 'application/zip' });
+      const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `backup_completo_${timestamp}.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      onChange({ ...value, ultimoBackup: new Date().toISOString() });
+      toast.success('Backup completo gerado com sucesso!');
+      setExportOpen(false);
+    } catch (e: any) {
+      console.error(e);
+      toast.error('Erro ao gerar backup completo: ' + (e.message || 'Erro desconhecido'));
+    } finally {
+      setExporting(false);
+      setProgress(0);
+    }
+  };
+
   const handleExport = async () => {
+    if (formato === 'full') {
+      await handleFullBackup();
+      return;
+    }
     setExporting(true);
     setProgress(10);
     try {
@@ -48,7 +85,6 @@ export const BackupSection: React.FC<Props> = ({ value, onChange }) => {
         blob = new Blob([JSON.stringify(results, null, 2)], { type: 'application/json' });
         filename = `backup_${dateStr}.json`;
       } else if (formato === 'csv') {
-        // Combine all into a single CSV with section headers
         const lines: string[] = [];
         TABELAS.forEach(t => {
           const rows = results[t];
@@ -69,7 +105,6 @@ export const BackupSection: React.FC<Props> = ({ value, onChange }) => {
         blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
         filename = `backup_${dateStr}.csv`;
       } else {
-        // Simple PDF-like text report
         const lines = [
           'RELATÓRIO DE BACKUP',
           '====================',
@@ -90,7 +125,7 @@ export const BackupSection: React.FC<Props> = ({ value, onChange }) => {
       setProgress(100);
 
       onChange({ ...value, ultimoBackup: new Date().toISOString() });
-      toast.success('Backup exportado com sucesso! Arquivo pronto para download');
+      toast.success('Backup exportado com sucesso!');
       setTimeout(() => { setExportOpen(false); setProgress(0); setExporting(false); }, 800);
     } catch (e) {
       toast.error('Erro ao exportar backup');
@@ -120,10 +155,11 @@ export const BackupSection: React.FC<Props> = ({ value, onChange }) => {
         </div>
 
         {/* Cards de exportação */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
           {[
-            { f: 'json' as const, icon: FileJson, label: 'Exportar JSON', desc: 'Dados completos', color: 'text-amber-600', bg: 'bg-amber-500/10' },
-            { f: 'csv' as const, icon: FileSpreadsheet, label: 'Exportar CSV', desc: 'Apenas registros', color: 'text-emerald-600', bg: 'bg-emerald-500/10' },
+            { f: 'full' as const, icon: Archive, label: 'Backup Completo', desc: 'Sistema + Arquivos (ZIP)', color: 'text-primary', bg: 'bg-primary/10' },
+            { f: 'json' as const, icon: FileJson, label: 'Exportar JSON', desc: 'Dados parciais (Tabelas)', color: 'text-amber-600', bg: 'bg-amber-500/10' },
+            { f: 'csv' as const, icon: FileSpreadsheet, label: 'Exportar CSV', desc: 'Planilhas parciais', color: 'text-emerald-600', bg: 'bg-emerald-500/10' },
             { f: 'pdf' as const, icon: FileText, label: 'Exportar PDF', desc: 'Relatório resumido', color: 'text-rose-600', bg: 'bg-rose-500/10' },
           ].map(opt => {
             const Icon = opt.icon;
@@ -132,9 +168,9 @@ export const BackupSection: React.FC<Props> = ({ value, onChange }) => {
                 key={opt.f}
                 type="button"
                 onClick={() => { setFormato(opt.f); setExportOpen(true); }}
-                className="p-4 rounded-xl border bg-card hover:border-primary/40 hover:shadow-md transition-all text-left"
+                className="p-4 rounded-xl border bg-card hover:border-primary/40 hover:shadow-md transition-all text-left group"
               >
-                <div className={`w-10 h-10 rounded-lg ${opt.bg} flex items-center justify-center mb-2`}>
+                <div className={`w-10 h-10 rounded-lg ${opt.bg} flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}>
                   <Icon className={`w-5 h-5 ${opt.color}`} />
                 </div>
                 <p className="text-sm font-semibold text-foreground">{opt.label}</p>
@@ -200,11 +236,22 @@ export const BackupSection: React.FC<Props> = ({ value, onChange }) => {
                 <Download className="w-5 h-5 text-primary" /> Confirmar Exportação
               </DialogTitle>
             </DialogHeader>
-            <div className="space-y-3 py-2">
-              <p className="text-sm text-muted-foreground">
-                Será exportado o backup completo no formato <strong className="uppercase text-foreground">{formato}</strong>
-                contendo as tabelas: pacientes, agendamentos, prontuários e funcionários.
-              </p>
+            <div className="space-y-4 py-2">
+              {formato === 'full' ? (
+                <Alert className="bg-primary/5 border-primary/20">
+                  <ShieldCheck className="h-4 w-4 text-primary" />
+                  <AlertTitle>Segurança Master</AlertTitle>
+                  <AlertDescription className="text-xs">
+                    Você está prestes a gerar um backup completo do sistema. Isso inclui dados sensíveis de pacientes e configurações globais. 
+                    O arquivo será compactado em um ZIP seguro.
+                  </AlertDescription>
+                </Alert>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Será exportado o backup parcial no formato <strong className="uppercase text-foreground">{formato}</strong>
+                  contendo as tabelas principais: pacientes, agendamentos, prontuários e funcionários.
+                </p>
+              )}
               {exporting && (
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between text-xs">

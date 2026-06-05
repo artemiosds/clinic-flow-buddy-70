@@ -60,7 +60,7 @@ const TABS = [
   { id: 'funcionarios', label: 'Usuários e Permissões', icon: Users, globalOnly: false },
   { id: 'unidades', label: 'Unidades e Setores', icon: Building2, globalOnly: true },
   { id: 'integracoes', label: 'Sistemas Integrados', icon: Network, globalOnly: true },
-  { id: 'sistema', label: 'Sistema', icon: Monitor, globalOnly: true },
+  { id: 'sistema', label: 'Sistema e Backup', icon: Monitor, globalOnly: true },
 ] as const;
 
 type TabId = typeof TABS[number]['id'];

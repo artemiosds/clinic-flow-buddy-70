@@ -1,0 +1,10 @@
+{
+  "functions": {
+    "system-monitoring": {
+      "verify_jwt": true
+    },
+    "system-backup-export": {
+      "verify_jwt": true
+    }
+  }
+}
