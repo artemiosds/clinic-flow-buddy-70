@@ -3700,9 +3700,10 @@ const ProntuarioPage: React.FC = () => {
           id: user?.id,
           nome: user?.nome || '',
           profissao: user?.profissao || '',
-          numero_conselho: user?.numero_conselho || '',
-          tipo_conselho: user?.tipo_conselho || '',
-          uf_conselho: user?.uf_conselho || ''
+          numero_conselho: (user as any)?.numero_conselho || (user as any)?.numeroConselho || '',
+          tipo_conselho: (user as any)?.tipo_conselho || (user as any)?.tipoConselho || '',
+          uf_conselho: (user as any)?.uf_conselho || (user as any)?.ufConselho || ''
+
         }}
         unidade={user?.unidadeId}
       />

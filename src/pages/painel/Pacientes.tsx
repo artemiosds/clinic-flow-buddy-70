@@ -46,6 +46,8 @@ import { FichaImpressao, FichaPrintMode } from '@/components/FichaImpressao';
 import type { PacienteFichaDocumentData } from '@/components/pacientes/PacienteFichaDocument';
 import "@/styles/ficha-impressao.css";
 import { PacienteCard } from "@/components/pacientes/PacienteCard";
+import GerarDocumentoModal from "@/components/GerarDocumentoModal";
+
 
 const Pacientes: React.FC = () => {
   const navigate = useNavigate();
@@ -1259,9 +1261,10 @@ const Pacientes: React.FC = () => {
                     nome: detalhePaciente.nome,
                     cpf: detalhePaciente.cpf,
                     cns: detalhePaciente.cns,
-                    data_nascimento: detalhePaciente.data_nascimento || (detalhePaciente as any).dataNascimento,
-                    cid: detalhePaciente.cid || '',
+                    data_nascimento: (detalhePaciente as any).data_nascimento || (detalhePaciente as any).dataNascimento,
+                    cid: (detalhePaciente as any).cid || '',
                     especialidade_destino: (detalhePaciente as any).especialidade_destino || (detalhePaciente as any).especialidadeDestino || ''
+
                   };
                   setPacienteParaDoc(pData);
                   setGerarDocOpen(true);
@@ -1437,9 +1440,10 @@ const Pacientes: React.FC = () => {
           id: user?.id,
           nome: user?.nome || '',
           profissao: user?.profissao || '',
-          numero_conselho: user?.numero_conselho || '',
-          tipo_conselho: user?.tipo_conselho || '',
-          uf_conselho: user?.uf_conselho || ''
+          numero_conselho: (user as any)?.numero_conselho || (user as any)?.numeroConselho || '',
+          tipo_conselho: (user as any)?.tipo_conselho || (user as any)?.tipoConselho || '',
+          uf_conselho: (user as any)?.uf_conselho || (user as any)?.ufConselho || ''
+
         }}
         unidade={user?.unidadeId}
       />
