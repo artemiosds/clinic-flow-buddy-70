@@ -591,13 +591,12 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loadAgendamentos = useCallback(async () => {
     try {
-      // PERF: reduced window from 30 to 14 days back to keep startup fast.
-      // Older appointments remain accessible through the Histórico/Auditoria pages
-      // which fetch on-demand.
+      // PERF: Increased window to 365 days back to allow checking historical data in Agenda.
+      // For even older records, use the Auditoria/Historico modules.
       const cutoffDate = new Date();
-      cutoffDate.setDate(cutoffDate.getDate() - 14);
+      cutoffDate.setDate(cutoffDate.getDate() - 365);
       const cutoff = localDateStr(cutoffDate);
-
+      
       let allData: any[] = [];
       let from = 0;
       const PAGE = 1000;
