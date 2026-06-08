@@ -340,8 +340,8 @@ const FilaEspera: React.FC = () => {
     // Helper: calculate age from dataNascimento
     const getAge = (pacienteId: string): number => {
       const pac = pacientes.find((p) => p.id === pacienteId);
-      if (!pac?.data_nascimento) return 0;
-      const birth = new Date(pac.data_nascimento);
+      if (!pac?.dataNascimento) return 0;
+      const birth = new Date(pac.dataNascimento);
       if (isNaN(birth.getTime())) return 0;
       const today = new Date();
       let age = today.getFullYear() - birth.getFullYear();
@@ -373,12 +373,12 @@ const FilaEspera: React.FC = () => {
           const bManchester = manchesterOrder[(b as any).classificacaoRisco] ?? 6;
           if (aManchester !== bManchester) return aManchester - bManchester;
 
-          // 2º Clinical priority flags (TEA/Autismo)
+          // 2º Clinical priority flags (Autismo)
           const pacA = pacientes.find(p => p.id === a.pacienteId);
           const pacB = pacientes.find(p => p.id === b.pacienteId);
           
-          const aIsAutista = pacA?.is_autista ? 0 : 1;
-          const bIsAutista = pacB?.is_autista ? 0 : 1;
+          const aIsAutista = pacA?.isAutista ? 0 : 1;
+          const bIsAutista = pacB?.isAutista ? 0 : 1;
           if (aIsAutista !== bIsAutista) return aIsAutista - bIsAutista;
 
           // 3º Special Priority: 80+ years
