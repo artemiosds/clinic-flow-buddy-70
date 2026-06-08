@@ -340,8 +340,8 @@ const FilaEspera: React.FC = () => {
     // Helper: calculate age from dataNascimento
     const getAge = (pacienteId: string): number => {
       const pac = pacientes.find((p) => p.id === pacienteId);
-      if (!pac?.dataNascimento) return 0;
-      const birth = new Date(pac.dataNascimento);
+      if (!pac?.data_nascimento) return 0;
+      const birth = new Date(pac.data_nascimento);
       if (isNaN(birth.getTime())) return 0;
       const today = new Date();
       let age = today.getFullYear() - birth.getFullYear();
@@ -350,7 +350,7 @@ const FilaEspera: React.FC = () => {
       return age;
     };
 
-    // Legal priority order (idoso 60+, gestante, pcd, crianca de colo)
+    // Legal priority order
     const legalPrioOrder: Record<string, number> = {
       gestante: 0,
       idoso: 1,
@@ -373,14 +373,22 @@ const FilaEspera: React.FC = () => {
           const bManchester = manchesterOrder[(b as any).classificacaoRisco] ?? 6;
           if (aManchester !== bManchester) return aManchester - bManchester;
 
-          // 2º Prioridade Especial: 80+ years
+          // 2º Clinical priority flags (TEA/Autismo)
+          const pacA = pacientes.find(p => p.id === a.pacienteId);
+          const pacB = pacientes.find(p => p.id === b.pacienteId);
+          
+          const aIsAutista = pacA?.is_autista ? 0 : 1;
+          const bIsAutista = pacB?.is_autista ? 0 : 1;
+          if (aIsAutista !== bIsAutista) return aIsAutista - bIsAutista;
+
+          // 3º Special Priority: 80+ years
           const aAge = getAge(a.pacienteId);
           const bAge = getAge(b.pacienteId);
           const aIs80Plus = aAge >= 80 ? 0 : 1;
           const bIs80Plus = bAge >= 80 ? 0 : 1;
           if (aIs80Plus !== bIs80Plus) return aIs80Plus - bIs80Plus;
 
-          // 3º Prioridade Legal: idoso 60+, gestante, PCD, criança de colo
+          // 4º Legal Priority: idoso 60+, gestante, PCD, criança de colo
           const aHasLegal = ['gestante', 'idoso', 'pcd', 'crianca'].includes(a.prioridade);
           const bHasLegal = ['gestante', 'idoso', 'pcd', 'crianca'].includes(b.prioridade);
           if (aHasLegal !== bHasLegal) return aHasLegal ? -1 : 1;
@@ -390,8 +398,8 @@ const FilaEspera: React.FC = () => {
             if (aLegal !== bLegal) return aLegal - bLegal;
           }
 
-          // 4º Horário de chegada
-          return (a.criadoEm || a.horaChegada).localeCompare(b.criadoEm || b.horaChegada);
+          // 5º Time of arrival
+          return (a.criadoEm || a.horaChegada || '').localeCompare(b.criadoEm || b.horaChegada || '');
         }
         if (sortField === "tempo") {
           const aMin = getWaitMinutes(a, now);
@@ -403,9 +411,9 @@ const FilaEspera: React.FC = () => {
             return a.dataSolicitacaoOriginal.localeCompare(b.dataSolicitacaoOriginal);
           if (a.dataSolicitacaoOriginal) return -1;
           if (b.dataSolicitacaoOriginal) return 1;
-          return (a.criadoEm || a.horaChegada).localeCompare(b.criadoEm || b.horaChegada);
+          return (a.criadoEm || a.horaChegada || '').localeCompare(b.criadoEm || b.horaChegada || '');
         }
-        return (a.criadoEm || a.horaChegada).localeCompare(b.criadoEm || b.horaChegada);
+        return (a.criadoEm || a.horaChegada || '').localeCompare(b.criadoEm || b.horaChegada || '');
       });
   }, [fila, pacientes, filterUnidade, filterProf, filterStatus, filterEspecialidade, sortField, now, debouncedSearchQuery]);
 
