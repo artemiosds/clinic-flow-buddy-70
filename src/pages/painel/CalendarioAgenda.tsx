@@ -86,7 +86,9 @@ export const CalendarioAgenda: React.FC<CalendarioAgendaProps> = ({
   const agendamentosByDate = useMemo(() => {
     const map = new Map<string, { counts: Map<string, number>, types: Set<string>, statusSet: Set<string> }>();
     for (const a of agendamentos) {
-      if (a.status === "cancelado" || a.status === "falta") continue;
+      // Don't count cancellations as occupancy, but keep them for historical view if needed
+      // Actually, we'll exclude cancellations from the occupancy count to avoid >100% on re-bookings
+      if (a.status === "cancelado") continue;
       
       let entry = map.get(a.data);
       if (!entry) {
@@ -182,7 +184,15 @@ export const CalendarioAgenda: React.FC<CalendarioAgendaProps> = ({
               const slots = getAvailableSlots(prof.id, profUnit, dateStr);
               totalVagas = slots.length + agendamentosConfirmados;
             } else {
-              totalVagas = agendamentosConfirmados || 1; // past days: show count
+              // For past days, we use the estimated capacity from disponibilidade or at least show the count
+              const profDisp = dispIndex.find((disp) => (
+                disp.profissionalId === prof.id &&
+                disp.unidadeId === profUnit &&
+                dateStr >= disp.dataInicio &&
+                dateStr <= disp.dataFim &&
+                disp.diasSemana.includes(dayOfWeek)
+              ));
+              totalVagas = profDisp?.vagasPorDia || agendamentosConfirmados || 1;
             }
             if (profHasDisponibilidade) {
               profissionaisDisponiveis.push(prof.nome);
@@ -241,13 +251,13 @@ export const CalendarioAgenda: React.FC<CalendarioAgendaProps> = ({
 
       if (allBlocked) {
         status = "blocked";
-      } else if (isPast) {
-        status = "past";
       } else if (totalVagas > 0) {
         if (agendamentosConfirmados > totalVagas) status = "exceeded";
         else if (agendamentosConfirmados === totalVagas) status = "full";
         else if (occupancyPercent >= 70) status = "almostFull";
         else status = "available";
+      } else if (isPast) {
+        status = "past";
       } else if (hasDisponibilidade) {
         status = "full";
       }

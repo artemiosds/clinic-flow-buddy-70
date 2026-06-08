@@ -47,7 +47,7 @@ export const AgendaVisaoSemana: React.FC<AgendaVisaoSemanaProps> = ({
   const agendamentosByDate = useMemo(() => {
     const map = new Map<string, { count: number; types: Set<string>; statusSet: Set<string> }>();
     agendamentos.forEach(a => {
-      if (a.status === "cancelado" || a.status === "falta") return;
+      if (a.status === "cancelado") return;
       let entry = map.get(a.data);
       if (!entry) {
         entry = { count: 0, types: new Set(), statusSet: new Set() };
@@ -108,13 +108,14 @@ export const AgendaVisaoSemana: React.FC<AgendaVisaoSemanaProps> = ({
         if (disp) hasDisponibilidade = true;
 
         if (!blocked) {
-          const count = agendamentos.filter(a => a.data === dateStr && a.profissionalId === p.id && a.status !== "cancelado" && a.status !== "falta").length;
+          const count = agendamentos.filter(a => a.data === dateStr && a.profissionalId === p.id && a.status !== "cancelado").length;
           agendamentosCount += count;
           
           if (useDetailedSlots && !isPast) {
             const slots = getAvailableSlots(p.id, pUnit, dateStr);
             totalVagas += (slots.length + count);
           } else {
+            // For past days or multiple profs, use vacancies from availability if exists
             totalVagas += (disp?.vagasPorDia || count || 0);
           }
         }
@@ -124,12 +125,12 @@ export const AgendaVisaoSemana: React.FC<AgendaVisaoSemanaProps> = ({
       
       let status: "full" | "almostFull" | "available" | "blocked" | "past" | "empty" = "available";
       if (isBlocked) status = "blocked";
-      else if (isPast) status = "past";
       else if (totalVagas > 0) {
         if (occupancyPercent >= 100) status = "full";
         else if (occupancyPercent >= 70) status = "almostFull";
         else status = "available";
-      } else if (hasDisponibilidade) status = "full";
+      } else if (isPast) status = "past";
+      else if (hasDisponibilidade) status = "full";
       else status = "empty";
 
       return {

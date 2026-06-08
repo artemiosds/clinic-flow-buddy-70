@@ -58,7 +58,7 @@ export const AgendaVisaoDia: React.FC<AgendaVisaoDiaProps> = ({
 
       if (blocked) return;
 
-      const count = dayAgs.filter(a => a.profissionalId === p.id && a.status !== "cancelado" && a.status !== "falta").length;
+      const count = dayAgs.filter(a => a.profissionalId === p.id && a.status !== "cancelado").length;
       if (useDetailedSlots && !isPast) {
         const slots = getAvailableSlots(p.id, pUnit, selectedDate);
         totalCapacity += (slots.length + count);
@@ -75,7 +75,7 @@ export const AgendaVisaoDia: React.FC<AgendaVisaoDiaProps> = ({
       }
     });
 
-    const activeAgs = dayAgs.filter(a => a.status !== "cancelado" && a.status !== "falta");
+    const activeAgs = dayAgs.filter(a => a.status !== "cancelado");
     const occupancyPercent = totalCapacity > 0 ? Math.min(100, Math.round((activeAgs.length / totalCapacity) * 100)) : 0;
 
     return {
