@@ -125,12 +125,12 @@ export const AgendaVisaoSemana: React.FC<AgendaVisaoSemanaProps> = ({
       
       let status: "full" | "almostFull" | "available" | "blocked" | "past" | "empty" = "available";
       if (isBlocked) status = "blocked";
-      else if (isPast) status = "past";
       else if (totalVagas > 0) {
         if (occupancyPercent >= 100) status = "full";
         else if (occupancyPercent >= 70) status = "almostFull";
         else status = "available";
-      } else if (hasDisponibilidade) status = "full";
+      } else if (isPast) status = "past";
+      else if (hasDisponibilidade) status = "full";
       else status = "empty";
 
       return {
