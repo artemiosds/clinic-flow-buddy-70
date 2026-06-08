@@ -1281,11 +1281,11 @@ const Pacientes: React.FC = () => {
             open={detalheOpen}
             onOpenChange={setDetalheOpen}
             nome={detalhePaciente.nome}
-            prontuarioNumero={(detalhePaciente as any).numeroProntuario || detalhePaciente.id?.slice(0, 8)}
             dataNascimento={detalhePaciente.dataNascimento}
             badges={badges}
             footer={actions}
           >
+
 
             <PSecao titulo="Dados Pessoais">
               <PCampo label={L('nome', 'Nome completo')} valor={detalhePaciente.nome} />
