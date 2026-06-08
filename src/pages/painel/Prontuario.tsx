@@ -3715,6 +3715,8 @@ const ProntuarioPage: React.FC = () => {
   );
 };
 
+const ProntuarioPage = Prontuario;
 export default ProntuarioPage;
+
 
 
