@@ -13,7 +13,7 @@ import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { FileText, Plus, Pencil, Trash2, Eye, Copy, Loader2, Printer, Search, Globe, Building2, UserIcon, Filter, RefreshCw, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { FileText, Plus, Pencil, Trash2, Eye, Copy, Loader2, Printer, Search, Globe, Building2, UserIcon, Filter, RefreshCw, AlertTriangle, CheckCircle2, Info } from 'lucide-react';
 import { openPrintDocument } from '@/lib/printLayout';
 import { MODELOS_BASE, getBaseTemplate } from '@/constants/modelosBase';
 import { ScrollArea } from '@/components/ui/scroll-area';
