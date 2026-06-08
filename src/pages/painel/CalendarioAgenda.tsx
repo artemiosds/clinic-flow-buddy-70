@@ -249,13 +249,13 @@ export const CalendarioAgenda: React.FC<CalendarioAgendaProps> = ({
 
       if (allBlocked) {
         status = "blocked";
-      } else if (isPast) {
-        status = "past";
       } else if (totalVagas > 0) {
         if (agendamentosConfirmados > totalVagas) status = "exceeded";
         else if (agendamentosConfirmados === totalVagas) status = "full";
         else if (occupancyPercent >= 70) status = "almostFull";
         else status = "available";
+      } else if (isPast) {
+        status = "past";
       } else if (hasDisponibilidade) {
         status = "full";
       }
