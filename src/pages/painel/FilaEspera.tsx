@@ -350,7 +350,7 @@ const FilaEspera: React.FC = () => {
       return age;
     };
 
-    // Legal priority order (idoso 60+, gestante, pcd, crianca de colo)
+    // Legal priority order
     const legalPrioOrder: Record<string, number> = {
       gestante: 0,
       idoso: 1,
@@ -373,14 +373,22 @@ const FilaEspera: React.FC = () => {
           const bManchester = manchesterOrder[(b as any).classificacaoRisco] ?? 6;
           if (aManchester !== bManchester) return aManchester - bManchester;
 
-          // 2º Prioridade Especial: 80+ years
+          // 2º Clinical priority flags (Autismo)
+          const pacA = pacientes.find(p => p.id === a.pacienteId);
+          const pacB = pacientes.find(p => p.id === b.pacienteId);
+          
+          const aIsAutista = pacA?.isAutista ? 0 : 1;
+          const bIsAutista = pacB?.isAutista ? 0 : 1;
+          if (aIsAutista !== bIsAutista) return aIsAutista - bIsAutista;
+
+          // 3º Special Priority: 80+ years
           const aAge = getAge(a.pacienteId);
           const bAge = getAge(b.pacienteId);
           const aIs80Plus = aAge >= 80 ? 0 : 1;
           const bIs80Plus = bAge >= 80 ? 0 : 1;
           if (aIs80Plus !== bIs80Plus) return aIs80Plus - bIs80Plus;
 
-          // 3º Prioridade Legal: idoso 60+, gestante, PCD, criança de colo
+          // 4º Legal Priority: idoso 60+, gestante, PCD, criança de colo
           const aHasLegal = ['gestante', 'idoso', 'pcd', 'crianca'].includes(a.prioridade);
           const bHasLegal = ['gestante', 'idoso', 'pcd', 'crianca'].includes(b.prioridade);
           if (aHasLegal !== bHasLegal) return aHasLegal ? -1 : 1;
@@ -390,8 +398,8 @@ const FilaEspera: React.FC = () => {
             if (aLegal !== bLegal) return aLegal - bLegal;
           }
 
-          // 4º Horário de chegada
-          return (a.criadoEm || a.horaChegada).localeCompare(b.criadoEm || b.horaChegada);
+          // 5º Time of arrival
+          return (a.criadoEm || a.horaChegada || '').localeCompare(b.criadoEm || b.horaChegada || '');
         }
         if (sortField === "tempo") {
           const aMin = getWaitMinutes(a, now);
@@ -403,9 +411,9 @@ const FilaEspera: React.FC = () => {
             return a.dataSolicitacaoOriginal.localeCompare(b.dataSolicitacaoOriginal);
           if (a.dataSolicitacaoOriginal) return -1;
           if (b.dataSolicitacaoOriginal) return 1;
-          return (a.criadoEm || a.horaChegada).localeCompare(b.criadoEm || b.horaChegada);
+          return (a.criadoEm || a.horaChegada || '').localeCompare(b.criadoEm || b.horaChegada || '');
         }
-        return (a.criadoEm || a.horaChegada).localeCompare(b.criadoEm || b.horaChegada);
+        return (a.criadoEm || a.horaChegada || '').localeCompare(b.criadoEm || b.horaChegada || '');
       });
   }, [fila, pacientes, filterUnidade, filterProf, filterStatus, filterEspecialidade, sortField, now, debouncedSearchQuery]);
 
@@ -1898,6 +1906,46 @@ const FilaEspera: React.FC = () => {
                     <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <p className="font-semibold text-foreground">{resolvePaciente(f.pacienteId, f.pacienteNome)}</p>
+                      
+                      {/* Clinical Badges */}
+                      {(() => {
+                        const pac = pacientes.find(p => p.id === f.pacienteId);
+                        const age = pac?.dataNascimento ? (() => {
+                          const birth = new Date(pac.dataNascimento);
+                          if (isNaN(birth.getTime())) return 0;
+                          const today = new Date();
+                          let a = today.getFullYear() - birth.getFullYear();
+                          const m = today.getMonth() - birth.getMonth();
+                          if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) a--;
+                          return a;
+                        })() : 0;
+                        
+                        return (
+                          <>
+                            {pac?.isAutista && (
+                              <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/30 text-[10px] px-1.5 py-0 font-bold">
+                                🧩 TEA
+                              </Badge>
+                            )}
+                            {age >= 60 && (
+                              <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/30 text-[10px] px-1.5 py-0 font-bold">
+                                👴 {age >= 80 ? 'Idoso 80+' : 'Idoso'}
+                              </Badge>
+                            )}
+                            {pac?.isPne && (
+                              <Badge variant="outline" className="bg-purple-500/10 text-purple-600 border-purple-500/30 text-[10px] px-1.5 py-0 font-bold">
+                                ♿ PCD
+                              </Badge>
+                            )}
+                            {pac?.isGestante && (
+                              <Badge variant="outline" className="bg-pink-500/10 text-pink-600 border-pink-500/30 text-[10px] px-1.5 py-0 font-bold">
+                                🤰 GESTANTE
+                              </Badge>
+                            )}
+                          </>
+                        );
+                      })()}
+
                       {f.origemCadastro === "demanda_reprimida" && (
                         <Badge
                           variant="outline"
