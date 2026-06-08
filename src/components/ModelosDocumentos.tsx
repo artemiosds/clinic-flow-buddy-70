@@ -512,15 +512,16 @@ const ModelosDocumentos: React.FC = () => {
               </div>
 
               {/* Version History */}
-              {current.versoes && current.versoes.length > 0 && (
+              {current.historico_edicoes && current.historico_edicoes.length > 0 && (
                 <div className="space-y-1.5">
-                  <Label className="text-[13px] font-bold">Histórico ({current.versoes.length})</Label>
+                  <Label className="text-[13px] font-bold">Histórico ({current.historico_edicoes.length})</Label>
                   <div className="space-y-2 max-h-[150px] overflow-y-auto">
-                    {current.versoes.map((v, i) => (
+                    {current.historico_edicoes.map((v, i) => (
                       <div key={i} className="flex items-center justify-between border rounded p-2 bg-muted/30 text-xs">
                         <div>
-                          <span className="font-medium">V{current.versoes.length - i}</span>
-                          <span className="text-muted-foreground ml-2">{new Date(v.salvo_em).toLocaleString('pt-BR')}</span>
+                          <Badge variant="outline" className="text-[10px] mr-2">v{v.version}</Badge>
+                          <span className="text-muted-foreground">{new Date(v.salvo_em).toLocaleString('pt-BR')}</span>
+                          {v.salvo_por && <span className="text-muted-foreground ml-1">por {v.salvo_por}</span>}
                         </div>
                         <Button
                           variant="outline"
@@ -528,9 +529,21 @@ const ModelosDocumentos: React.FC = () => {
                           className="text-xs h-7"
                           onClick={() => {
                             if (confirm('Restaurar esta versão?')) {
-                              const versoes = [...(current.versoes || [])];
-                              versoes.unshift({ conteudo: current.conteudo, salvo_em: current.updated_at });
-                              setCurrent({ ...current, conteudo: v.conteudo, versoes: versoes.slice(0, 5) });
+                              const historico = [...(current.historico_edicoes || [])];
+                              // Push current as a version before restoring
+                              historico.unshift({ 
+                                conteudo: current.conteudo, 
+                                salvo_em: new Date().toISOString(),
+                                version: current.version,
+                                salvo_por: user?.nome
+                              });
+                              setCurrent({ 
+                                ...current, 
+                                conteudo: v.conteudo, 
+                                version: v.version,
+                                historico_edicoes: historico.slice(0, 20) 
+                              });
+                              toast.info('Versão restaurada no editor. Salve para confirmar.');
                             }
                           }}
                         >
@@ -541,6 +554,7 @@ const ModelosDocumentos: React.FC = () => {
                   </div>
                 </div>
               )}
+
             </div>
           )}
 
