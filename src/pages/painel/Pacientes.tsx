@@ -1216,7 +1216,7 @@ const Pacientes: React.FC = () => {
           .filter((s) => s && String(s).trim() !== '')
           .join(' — ');
 
-        return (
+        const actions = (
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-2">
               <Button
@@ -1264,7 +1264,6 @@ const Pacientes: React.FC = () => {
                     data_nascimento: (detalhePaciente as any).data_nascimento || (detalhePaciente as any).dataNascimento,
                     cid: (detalhePaciente as any).cid || '',
                     especialidade_destino: (detalhePaciente as any).especialidade_destino || (detalhePaciente as any).especialidadeDestino || ''
-
                   };
                   setPacienteParaDoc(pData);
                   setGerarDocOpen(true);
@@ -1277,7 +1276,6 @@ const Pacientes: React.FC = () => {
           </div>
         );
 
-
         return (
           <PacienteDetalheModal
             open={detalheOpen}
@@ -1286,8 +1284,9 @@ const Pacientes: React.FC = () => {
             prontuarioNumero={(detalhePaciente as any).numeroProntuario || detalhePaciente.id?.slice(0, 8)}
             dataNascimento={detalhePaciente.dataNascimento}
             badges={badges}
-            footer={footer}
+            footer={actions}
           >
+
             <PSecao titulo="Dados Pessoais">
               <PCampo label={L('nome', 'Nome completo')} valor={detalhePaciente.nome} />
               <PCampo 
