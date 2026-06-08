@@ -19,9 +19,11 @@ import { openPrintDocument } from '@/lib/printLayout';
 const RichTextEditor = lazy(() => import('@/components/editor/RichTextEditor'));
 
 export interface TemplateVersion {
+  id?: string;
   conteudo: string;
   salvo_em: string;
   salvo_por?: string;
+  version: number;
 }
 
 export interface DocumentTemplate {
@@ -35,20 +37,37 @@ export interface DocumentTemplate {
   unidade_id: string;
   criado_por: string;
   criado_por_nome: string;
-  versoes: TemplateVersion[];
+  version: number;
+  is_default: boolean;
+  especialidade_id?: string;
+  profissao_id?: string;
+  historico_edicoes: TemplateVersion[];
   blocos_clinicos: any[];
   created_at: string;
   updated_at: string;
 }
 
-const TIPOS_DOCUMENTO = [
-  'Atestado Médico',
+export const TIPOS_DOCUMENTO = [
   'Declaração de Comparecimento',
-  'Encaminhamento',
+  'Declaração de Acompanhante',
+  'Atestado Médico',
   'Receituário',
-  'Laudo Clínico',
-  'Relatório de Evolução',
+  'Encaminhamento',
+  'Solicitação de Exames',
+  'Relatório de Evolução Clínica',
+  'Relatório Multiprofissional',
+  'Relatório de Alta',
+  'Parecer Técnico',
+  'Laudo',
+  'Plano Terapêutico',
+  'Termo de Consentimento',
+  'Termo de Responsabilidade',
+  'Autorização',
+  'Guia de Referência',
+  'Guia de Contrarreferência',
+  'Documento personalizado'
 ];
+
 
 const PERFIS = [
   { value: 'master', label: 'Master' },
@@ -72,36 +91,26 @@ const substituirVariaveis = (conteudo: string): string => {
     .replace(/\{\{cpf\}\}/g, '123.456.789-00')
     .replace(/\{\{cns\}\}/g, '123 4567 8901 2345')
     .replace(/\{\{data_nascimento\}\}/g, '01/01/1990')
+    .replace(/\{\{idade\}\}/g, '34')
+    .replace(/\{\{telefone\}\}/g, '(93) 98888-7777')
+    .replace(/\{\{endereco\}\}/g, 'Rua das Flores, 123 - Centro')
     .replace(/\{\{data_atendimento\}\}/g, hoje)
+    .replace(/\{\{hora_atendimento\}\}/g, '08:30')
     .replace(/\{\{profissional\}\}/g, 'Dr. Maria Santos')
-    .replace(/\{\{cid\}\}/g, 'F84.0')
     .replace(/\{\{especialidade\}\}/g, 'Fisioterapia')
+    .replace(/\{\{conselho\}\}/g, 'CREFITO')
+    .replace(/\{\{numero_conselho\}\}/g, '12345/PA')
     .replace(/\{\{unidade\}\}/g, 'CAPS II Oriximiná')
-    .replace(/\{\{data_hoje\}\}/g, hoje)
-    .replace(/\{\{dias_afastamento\}\}/g, '3')
-    .replace(/\{\{data_inicio\}\}/g, hoje)
-    .replace(/\{\{data_fim\}\}/g, hoje)
-    .replace(/\{\{hora_entrada\}\}/g, '08:00')
-    .replace(/\{\{hora_saida\}\}/g, '09:30')
+    .replace(/\{\{queixa_principal\}\}/g, 'Dor lombar crônica')
+    .replace(/\{\{evolucao\}\}/g, 'Paciente apresenta melhora no quadro álgico...')
+    .replace(/\{\{conduta\}\}/g, 'Manter exercícios terapêuticos e reavaliação em 15 dias.')
+    .replace(/\{\{cid\}\}/g, 'M54.5')
     .replace(/\{\{medicamentos\}\}/g, '1. Paracetamol 500mg — Oral, 8/8h, 5 dias')
-    .replace(/\{\{especialidade_destino\}\}/g, 'Neurologia')
-    .replace(/\{\{unidade_destino\}\}/g, 'Hospital Regional')
-    .replace(/\{\{motivo\}\}/g, 'Avaliação complementar')
-    .replace(/\{\{observacoes\}\}/g, 'Sem observações adicionais')
-    .replace(/\{\{prioridade\}\}/g, 'Eletivo')
-    .replace(/\{\{validade_receita\}\}/g, hoje)
-    .replace(/\{\{objetivo\}\}/g, 'Avaliação funcional')
-    .replace(/\{\{historico\}\}/g, 'Histórico relevante do paciente')
-    .replace(/\{\{exame_fisico\}\}/g, 'Exame físico normal')
-    .replace(/\{\{conclusao\}\}/g, 'Paciente apto')
-    .replace(/\{\{recomendacoes\}\}/g, 'Manter acompanhamento')
-    .replace(/\{\{queixa_principal\}\}/g, 'Dor lombar')
-    .replace(/\{\{evolucao_clinica\}\}/g, 'Melhora progressiva')
-    .replace(/\{\{conduta\}\}/g, 'Exercícios terapêuticos')
-    .replace(/\{\{plano\}\}/g, 'Continuar tratamento semanal')
-    .replace(/\{\{orientacoes\}\}/g, 'Tomar conforme prescrição')
-    .replace(/\{\{finalidade\}\}/g, 'Consulta');
+    .replace(/\{\{exames\}\}/g, '1. Raio-X de Coluna Lombar')
+    .replace(/\{\{assinatura_profissional\}\}/g, '<div style="border-top:1px solid #000; width:200px; margin-top:40px; text-align:center;">Assinatura do Profissional</div>')
+    .replace(/\{\{data_hoje\}\}/g, hoje);
 };
+
 
 const ModelosDocumentos: React.FC = () => {
   const { user, isGlobalAdmin } = useAuth();
@@ -146,7 +155,9 @@ const ModelosDocumentos: React.FC = () => {
       unidade_id: user?.unidadeId || '',
       criado_por: user?.id || '',
       criado_por_nome: user?.nome || '',
-      versoes: [],
+      version: 1,
+      is_default: false,
+      historico_edicoes: [],
       blocos_clinicos: [],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -155,9 +166,10 @@ const ModelosDocumentos: React.FC = () => {
   };
 
   const openEdit = (m: DocumentTemplate) => {
-    setCurrent({ ...m, versoes: m.versoes || [] });
+    setCurrent({ ...m, historico_edicoes: m.historico_edicoes || [] });
     setEditOpen(true);
   };
+
 
   const handleSave = async () => {
     if (!current) return;
@@ -166,7 +178,7 @@ const ModelosDocumentos: React.FC = () => {
     setSaving(true);
     try {
       const isNew = !current.id || !modelos.some(m => m.id === current.id);
-      const payload = {
+      let payload: any = {
         nome: current.nome,
         tipo: current.tipo,
         conteudo: current.conteudo,
@@ -176,24 +188,34 @@ const ModelosDocumentos: React.FC = () => {
         unidade_id: current.tipo_modelo === 'GLOBAL' ? '' : (current.unidade_id || user?.unidadeId || ''),
         criado_por: current.criado_por || user?.id || '',
         criado_por_nome: current.criado_por_nome || user?.nome || '',
-        versoes: current.versoes as any,
+        is_default: current.is_default,
+        especialidade_id: current.especialidade_id,
+        profissao_id: current.profissao_id,
         blocos_clinicos: current.blocos_clinicos as any,
       };
 
       if (isNew) {
+        payload.version = 1;
+        payload.historico_edicoes = [];
         const { error } = await supabase.from('document_templates').insert(payload);
         if (error) throw error;
       } else {
-        // Version history
         const old = modelos.find(m => m.id === current.id);
         if (old && old.conteudo !== current.conteudo) {
-          const versoes = [...(current.versoes || [])];
-          versoes.unshift({ conteudo: old.conteudo, salvo_em: old.updated_at });
-          payload.versoes = versoes.slice(0, 5) as any;
+          const historico = [...(current.historico_edicoes || [])];
+          historico.unshift({ 
+            conteudo: old.conteudo, 
+            salvo_em: old.updated_at, 
+            version: old.version || 1,
+            salvo_por: user?.nome
+          });
+          payload.historico_edicoes = historico.slice(0, 20); // Maintain more history
+          payload.version = (old.version || 1) + 1;
         }
         const { error } = await supabase.from('document_templates').update(payload).eq('id', current.id);
         if (error) throw error;
       }
+
       toast.success('Modelo salvo!');
       setEditOpen(false);
       loadModelos();
@@ -224,7 +246,10 @@ const ModelosDocumentos: React.FC = () => {
       criado_por: user?.id || '',
       criado_por_nome: user?.nome || '',
       tipo_modelo: 'PROFISSIONAL',
-      versoes: [],
+      version: 1,
+      historico_edicoes: [],
+      is_default: false,
+
     });
     setEditOpen(true);
   };
