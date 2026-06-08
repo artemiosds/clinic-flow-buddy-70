@@ -108,7 +108,7 @@ export const AgendaVisaoSemana: React.FC<AgendaVisaoSemanaProps> = ({
         if (disp) hasDisponibilidade = true;
 
         if (!blocked) {
-          const count = agendamentos.filter(a => a.data === dateStr && a.profissionalId === p.id && a.status !== "cancelado" && a.status !== "falta").length;
+          const count = agendamentos.filter(a => a.data === dateStr && a.profissionalId === p.id && a.status !== "cancelado").length;
           agendamentosCount += count;
           
           if (useDetailedSlots && !isPast) {
