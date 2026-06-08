@@ -13,12 +13,14 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { FileText, Printer, Save, ShieldCheck, Plus, Trash2, Loader2, Send } from 'lucide-react';
+import { FileText, Printer, Save, ShieldCheck, Plus, Trash2, Loader2, Send, Info } from 'lucide-react';
 import { openPrintDocument, loadDocumentConfig, docHeader, docFooter, buildInstitutionalCSS, type DocumentConfig } from '@/lib/printLayout';
 import { salvarEncaminhamento } from '@/services/encaminhamentoService';
 import { generateSignature, formatSignatureBlock, formatCarimboBlock, type CarimboData, type SignatureData } from '@/lib/documentSignature';
 import type { DocumentTemplate } from '@/components/ModelosDocumentos';
 import AutentiqueSignatureActions from '@/components/pacientes/AutentiqueSignatureActions';
+import { getBaseTemplate } from '@/constants/modelosBase';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface Props {
   open: boolean;
@@ -557,6 +559,44 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
           <FieldArea label="Conduta realizada" value={campos.conduta} onChange={v => updateCampo('conduta', v)} />
           <FieldArea label="Plano terapêutico" value={campos.plano} onChange={v => updateCampo('plano', v)} />
           <Field label="Próximo atendimento" value={campos.proximo_atendimento} onChange={v => updateCampo('proximo_atendimento', v)} type="date" />
+        </div>
+      );
+    }
+
+    // GENERIC SMART FIELDS based on variables in template
+    const base = getBaseTemplate(selected.tipo);
+    const variables = base?.variaveis || [];
+    const existingKeys = ['especialidade_destino', 'unidade_destino', 'profissional_destino', 'cid', 'prioridade', 'motivo', 'observacoes', 'dias_afastamento', 'data_inicio', 'data_fim', 'situacao', 'horario_entrada', 'horario_saida', 'finalidade', 'data_falta', 'profissional_agendado', 'motivo_falta', 'medicamentos', 'orientacoes', 'validade_receita', 'objetivo', 'historico', 'exame_fisico', 'conclusao', 'recomendacoes', 'data_evolucao', 'queixa_principal', 'evolucao_clinica', 'conduta', 'plano', 'proximo_atendimento'];
+    const systemVars = ['nome_paciente', 'cpf', 'cns', 'data_nascimento', 'idade', 'data_atendimento', 'carimbo_profissional', 'profissional', 'unidade', 'numero_conselho', 'conselho', 'data_hoje'];
+    
+    const missingVars = variables.filter(v => !existingKeys.includes(v) && !systemVars.includes(v));
+
+    if (missingVars.length > 0) {
+      return (
+        <div className="space-y-3 border rounded-lg p-4 bg-primary/5 border-primary/20">
+          <div className="flex items-center justify-between">
+            <h4 className="font-semibold text-xs uppercase text-primary">Informações Adicionais</h4>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="w-3.5 h-3.5 text-primary cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">Campos detectados automaticamente do modelo</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {missingVars.map(v => (
+              <Field 
+                key={v} 
+                label={v.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} 
+                value={campos[v] || ''} 
+                onChange={val => updateCampo(v, val)} 
+              />
+            ))}
+          </div>
         </div>
       );
     }
