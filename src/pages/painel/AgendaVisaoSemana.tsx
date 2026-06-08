@@ -115,6 +115,7 @@ export const AgendaVisaoSemana: React.FC<AgendaVisaoSemanaProps> = ({
             const slots = getAvailableSlots(p.id, pUnit, dateStr);
             totalVagas += (slots.length + count);
           } else {
+            // For past days or multiple profs, use vacancies from availability if exists
             totalVagas += (disp?.vagasPorDia || count || 0);
           }
         }
