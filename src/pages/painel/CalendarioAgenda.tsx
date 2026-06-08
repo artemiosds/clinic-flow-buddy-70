@@ -86,7 +86,9 @@ export const CalendarioAgenda: React.FC<CalendarioAgendaProps> = ({
   const agendamentosByDate = useMemo(() => {
     const map = new Map<string, { counts: Map<string, number>, types: Set<string>, statusSet: Set<string> }>();
     for (const a of agendamentos) {
-      if (a.status === "cancelado" || a.status === "falta") continue;
+      // Don't count cancellations as occupancy, but keep them for historical view if needed
+      // Actually, we'll exclude cancellations from the occupancy count to avoid >100% on re-bookings
+      if (a.status === "cancelado") continue;
       
       let entry = map.get(a.data);
       if (!entry) {
