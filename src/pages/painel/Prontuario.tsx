@@ -3708,13 +3708,8 @@ const ProntuarioPage: React.FC = () => {
         unidade={user?.unidadeId}
       />
     </div>
-
-            </>
-          )}
-        </SheetContent>
-      </Sheet>
-    </div>
   );
 };
 
 export default ProntuarioPage;
+
