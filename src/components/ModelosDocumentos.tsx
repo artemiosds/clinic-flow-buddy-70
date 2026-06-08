@@ -527,7 +527,7 @@ const ModelosDocumentos: React.FC = () => {
                           <p className="font-bold mb-1">Use {{ }} para variáveis:</p>
                           <div className="flex flex-wrap gap-1">
                             {getBaseTemplate(current.tipo)?.variaveis.map(v => (
-                              <Badge key={v} variant="outline" className="text-[9px]">{{{v}}}</Badge>
+                              <Badge key={v} variant="outline" className="text-[9px]">{`{{${v}}}`}</Badge>
                             ))}
                           </div>
                         </TooltipContent>
@@ -571,7 +571,7 @@ const ModelosDocumentos: React.FC = () => {
                     return (
                       <Badge key={v} variant={exists ? "secondary" : "outline"} className={`text-[9px] gap-1 ${exists ? 'bg-green-100 text-green-700 border-green-200' : 'text-amber-600 border-amber-200 opacity-70'}`}>
                         {exists ? <CheckCircle2 className="w-2.5 h-2.5" /> : <AlertTriangle className="w-2.5 h-2.5" />}
-                        {{{v}}}
+                        {`{{${v}}}`}
                       </Badge>
                     );
                   })}
