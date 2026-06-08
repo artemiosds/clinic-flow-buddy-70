@@ -694,13 +694,18 @@ export type Database = {
           created_at: string
           criado_por: string
           criado_por_nome: string
+          especialidade_id: string | null
+          historico_edicoes: Json | null
           id: string
+          is_default: boolean | null
           nome: string
           perfis_permitidos: string[]
+          profissao_id: string | null
           tipo: string
           tipo_modelo: string
           unidade_id: string | null
           updated_at: string
+          version: number | null
           versoes: Json
         }
         Insert: {
@@ -710,13 +715,18 @@ export type Database = {
           created_at?: string
           criado_por?: string
           criado_por_nome?: string
+          especialidade_id?: string | null
+          historico_edicoes?: Json | null
           id?: string
+          is_default?: boolean | null
           nome?: string
           perfis_permitidos?: string[]
+          profissao_id?: string | null
           tipo?: string
           tipo_modelo?: string
           unidade_id?: string | null
           updated_at?: string
+          version?: number | null
           versoes?: Json
         }
         Update: {
@@ -726,13 +736,18 @@ export type Database = {
           created_at?: string
           criado_por?: string
           criado_por_nome?: string
+          especialidade_id?: string | null
+          historico_edicoes?: Json | null
           id?: string
+          is_default?: boolean | null
           nome?: string
           perfis_permitidos?: string[]
+          profissao_id?: string | null
           tipo?: string
           tipo_modelo?: string
           unidade_id?: string | null
           updated_at?: string
+          version?: number | null
           versoes?: Json
         }
         Relationships: []
@@ -915,7 +930,9 @@ export type Database = {
           hash_assinatura: string
           id: string
           ip_assinatura: string
+          metadata: Json | null
           modelo_id: string
+          modelo_versao: number | null
           motivo_cancelamento: string
           paciente_id: string
           paciente_nome: string
@@ -937,7 +954,9 @@ export type Database = {
           hash_assinatura?: string
           id?: string
           ip_assinatura?: string
+          metadata?: Json | null
           modelo_id?: string
+          modelo_versao?: number | null
           motivo_cancelamento?: string
           paciente_id?: string
           paciente_nome?: string
@@ -959,7 +978,9 @@ export type Database = {
           hash_assinatura?: string
           id?: string
           ip_assinatura?: string
+          metadata?: Json | null
           modelo_id?: string
+          modelo_versao?: number | null
           motivo_cancelamento?: string
           paciente_id?: string
           paciente_nome?: string
