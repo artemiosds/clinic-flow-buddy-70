@@ -182,7 +182,15 @@ export const CalendarioAgenda: React.FC<CalendarioAgendaProps> = ({
               const slots = getAvailableSlots(prof.id, profUnit, dateStr);
               totalVagas = slots.length + agendamentosConfirmados;
             } else {
-              totalVagas = agendamentosConfirmados || 1; // past days: show count
+              // For past days, we use the estimated capacity from disponibilidade or at least show the count
+              const profDisp = dispIndex.find((disp) => (
+                disp.profissionalId === prof.id &&
+                disp.unidadeId === profUnit &&
+                dateStr >= disp.dataInicio &&
+                dateStr <= disp.dataFim &&
+                disp.diasSemana.includes(dayOfWeek)
+              ));
+              totalVagas = profDisp?.vagasPorDia || agendamentosConfirmados || 1;
             }
             if (profHasDisponibilidade) {
               profissionaisDisponiveis.push(prof.nome);
