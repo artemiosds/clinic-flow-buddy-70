@@ -1214,65 +1214,66 @@ const Pacientes: React.FC = () => {
           .filter((s) => s && String(s).trim() !== '')
           .join(' — ');
 
-        const footer = (
-          <div className="grid grid-cols-2 gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full min-w-0"
-              onClick={() => {
-                setDetalheOpen(false);
-                navigate(
-                  `/painel/workspace-prontuario?pacienteId=${detalhePaciente.id}&pacienteNome=${encodeURIComponent(detalhePaciente.nome)}&tipo=retorno`,
-                );
-              }}
-            >
-              <FileText className="w-4 h-4 mr-1.5" />
-              <span className="truncate">Ver Prontuários</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full min-w-0"
-              onClick={() => handleOpenFicha(detalhePaciente, 'completa')}
-            >
-              <Printer className="w-4 h-4 mr-1.5" />
-              <span className="truncate">Ficha Completa</span>
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full col-span-2 min-w-0"
-              onClick={() => handleOpenFicha(detalhePaciente, 'dados_pessoais')}
-            >
-              <Printer className="w-4 h-4 mr-1.5" />
-              <span className="truncate">Imprimir Só Dados</span>
-            </Button>
+        return (
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full min-w-0"
+                onClick={() => {
+                  setDetalheOpen(false);
+                  navigate(
+                    `/painel/workspace-prontuario?pacienteId=${detalhePaciente.id}&pacienteNome=${encodeURIComponent(detalhePaciente.nome)}&tipo=retorno`,
+                  );
+                }}
+              >
+                <FileText className="w-4 h-4 mr-1.5" />
+                <span className="truncate">Ver Prontuários</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full min-w-0"
+                onClick={() => handleOpenFicha(detalhePaciente, 'completa')}
+              >
+                <Printer className="w-4 h-4 mr-1.5" />
+                <span className="truncate">Ficha Completa</span>
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full col-span-2 min-w-0"
+                onClick={() => handleOpenFicha(detalhePaciente, 'dados_pessoais')}
+              >
+                <Printer className="w-4 h-4 mr-1.5" />
+                <span className="truncate">Imprimir Só Dados</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full col-span-2 min-w-0"
+                onClick={() => {
+                  const pData = {
+                    id: detalhePaciente.id,
+                    nome: detalhePaciente.nome,
+                    cpf: detalhePaciente.cpf,
+                    cns: detalhePaciente.cns,
+                    data_nascimento: detalhePaciente.data_nascimento || (detalhePaciente as any).dataNascimento,
+                    cid: detalhePaciente.cid || '',
+                    especialidade_destino: (detalhePaciente as any).especialidade_destino || (detalhePaciente as any).especialidadeDestino || ''
+                  };
+                  setPacienteParaDoc(pData);
+                  setGerarDocOpen(true);
+                }}
+              >
+                <FilePlus className="w-4 h-4 mr-1.5" />
+                <span className="truncate">Gerar Documento</span>
+              </Button>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full col-span-2 min-w-0"
-              onClick={() => {
-                const pData = {
-                  id: detalhePaciente.id,
-                  nome: detalhePaciente.nome,
-                  cpf: detalhePaciente.cpf,
-                  cns: detalhePaciente.cns,
-                  data_nascimento: detalhePaciente.data_nascimento || detalhePaciente.dataNascimento,
-                  cid: detalhePaciente.cid || '',
-                  especialidade_destino: detalhePaciente.especialidade_destino || ''
-                };
-                setPacienteParaDoc(pData);
-                setGerarDocOpen(true);
-              }}
-            >
-              <FilePlus className="w-4 h-4 mr-1.5" />
-              <span className="truncate">Gerar Documento</span>
-            </Button>
           </div>
-
         );
+
 
         return (
           <PacienteDetalheModal

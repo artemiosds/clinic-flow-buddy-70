@@ -3684,6 +3684,14 @@ const ProntuarioPage: React.FC = () => {
                 >
                   <History className="w-3.5 h-3.5 mr-1" /> Histórico completo
                 </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => openGerarDocumento((viewerProntuario as any).pacientes || { id: viewerProntuario.paciente_id, nome: viewerProntuario.paciente_nome }, viewerProntuario)}
+                >
+                  <FilePlus className="w-3.5 h-3.5 mr-1" /> Gerar Documento
+                </Button>
+
       <GerarDocumentoModal 
         open={gerarDocOpen} 
         onOpenChange={setGerarDocOpen}
