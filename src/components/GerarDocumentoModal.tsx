@@ -141,15 +141,18 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
       .replace(/\{\{cpf\}\}/g, paciente?.cpf || '—')
       .replace(/\{\{cns\}\}/g, paciente?.cns || '—')
       .replace(/\{\{data_nascimento\}\}/g, paciente?.data_nascimento || '—')
+      .replace(/\{\{idade\}\}/g, paciente?.data_nascimento ? (new Date().getFullYear() - new Date(paciente.data_nascimento).getFullYear()).toString() : '—')
       .replace(/\{\{data_atendimento\}\}/g, dataAtendimento || hoje)
       .replace(/\{\{carimbo_profissional\}\}/g, carimboInlineHtml)
       .replace(/\{\{profissional\}\}/g, profissional?.nome || '—')
       .replace(/\{\{cid\}\}/g, paciente?.cid || '—')
       .replace(/\{\{especialidade\}\}/g, paciente?.especialidade_destino || '—')
       .replace(/\{\{unidade\}\}/g, unidade || 'CAPS II Oriximiná')
+      .replace(/\{\{numero_conselho\}\}/g, profissional?.numero_conselho || '—')
+      .replace(/\{\{conselho\}\}/g, profissional?.tipo_conselho || '—')
       .replace(/\{\{data_hoje\}\}/g, hoje);
 
-    // Extended variables from campos (datas yyyy-mm-dd → dd/mm/yyyy)
+    // Extended variables from campos
     const formatIfDate = (val: string) => {
       if (val && /^\d{4}-\d{2}-\d{2}$/.test(val)) {
         const [y, m, d] = val.split('-');
@@ -173,6 +176,7 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
 
     return text;
   };
+
 
   const handleSelect = (id: string) => {
     setSelectedId(id);
@@ -266,7 +270,9 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
         campos_formulario: { ...campos, medicamentos } as any,
         modelo_id: selected.id,
         unidade_id: unidade || '',
+        modelo_versao: selected.version || 1,
         status: 'rascunho',
+
       }).select('id').single();
 
       if (error) throw error;
@@ -343,8 +349,10 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
         ip_assinatura: sig.ip,
         assinado_em: sig.timestamp,
         modelo_id: selected.id,
+        modelo_versao: selected.version || 1,
         unidade_id: unidade || '',
         status: 'assinado',
+
       });
 
       // Print

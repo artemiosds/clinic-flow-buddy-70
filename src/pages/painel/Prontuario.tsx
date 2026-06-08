@@ -31,7 +31,8 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Plus, FileText, Printer, Pencil, Search, CheckCircle, History, Trash2, Activity, ClipboardList, Heart, AlertTriangle, Clock, ChevronDown, Settings, X, Tag, Pencil as PencilIcon, Eye, MoreVertical, Download, Link2, Send } from "lucide-react";
+import { Loader2, Plus, FileText, Printer, Pencil, Search, CheckCircle, History, Trash2, Activity, ClipboardList, Heart, AlertTriangle, Clock, ChevronDown, Settings, X, Tag, Pencil as PencilIcon, Eye, MoreVertical, Download, Link2, Send, FilePlus } from "lucide-react";
+
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
@@ -560,11 +561,17 @@ const ProntuarioPage: React.FC = () => {
     try {
       let query = (supabase as any)
         .from("prontuarios")
-        .select("*")
+        .select(`
+          *,
+          pacientes (
+            id, nome, cpf, cns, data_nascimento, telefone, email, endereco, cidade, uf
+          )
+        `)
         .eq("status", "finalizado")
         .order("data_atendimento", { ascending: false })
         .order("hora_atendimento", { ascending: false })
         .limit(100);
+
       
       if (pacienteId) {
         query = query.eq("paciente_id", pacienteId);
@@ -1043,7 +1050,25 @@ const ProntuarioPage: React.FC = () => {
     setDialogOpen(true);
   };
 
+  const [gerarDocOpen, setGerarDocOpen] = useState(false);
+  const [pacienteParaDoc, setPacienteParaDoc] = useState<any>(null);
+
+  const openGerarDocumento = (p: any, prontuario?: any) => {
+    const dataNasc = p.data_nascimento || p.dataNascimento;
+    setPacienteParaDoc({
+      id: p.id,
+      nome: p.nome,
+      cpf: p.cpf,
+      cns: p.cns,
+      data_nascimento: dataNasc,
+      cid: prontuario?.hipotese || p.cid || '',
+      especialidade_destino: p.especialidade_destino || ''
+    });
+    setGerarDocOpen(true);
+  };
+
   const openEdit = (p: ProntuarioDB) => {
+
     setEditId(p.id);
     setActiveAtendimento(null);
     setSessionRegistrationRequested(false);
@@ -3659,13 +3684,39 @@ const ProntuarioPage: React.FC = () => {
                 >
                   <History className="w-3.5 h-3.5 mr-1" /> Histórico completo
                 </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => openGerarDocumento((viewerProntuario as any).pacientes || { id: viewerProntuario.paciente_id, nome: viewerProntuario.paciente_nome }, viewerProntuario)}
+                >
+                  <FilePlus className="w-3.5 h-3.5 mr-1" /> Gerar Documento
+                </Button>
               </div>
             </>
           )}
         </SheetContent>
       </Sheet>
+
+      <GerarDocumentoModal 
+        open={gerarDocOpen} 
+        onOpenChange={setGerarDocOpen}
+        paciente={pacienteParaDoc}
+        profissional={{
+          id: user?.id,
+          nome: user?.nome || '',
+          profissao: user?.profissao || '',
+          numero_conselho: (user as any)?.numero_conselho || (user as any)?.numeroConselho || '',
+          tipo_conselho: (user as any)?.tipo_conselho || (user as any)?.tipoConselho || '',
+          uf_conselho: (user as any)?.uf_conselho || (user as any)?.ufConselho || ''
+        }}
+        unidade={user?.unidadeId}
+      />
     </div>
   );
 };
 
 export default ProntuarioPage;
+
+
+
+

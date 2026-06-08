@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Phone, Mail, Pencil, Trash2, FileDown, Users, Clock, FileUp, Eye, FileText, Printer, Loader2, Paperclip, AlertTriangle } from "lucide-react";
+import { Plus, Search, Phone, Mail, Pencil, Trash2, FileDown, Users, Clock, FileUp, Eye, FileText, Printer, Loader2, Paperclip, AlertTriangle, FilePlus } from "lucide-react";
 import PacienteDocumentos from "@/components/PacienteDocumentos";
 import ContactActionButton from "@/components/ContactActionButton";
 import DetalheDrawer, { Secao, Campo, calcularIdade, formatarData } from "@/components/DetalheDrawer";
@@ -46,6 +46,8 @@ import { FichaImpressao, FichaPrintMode } from '@/components/FichaImpressao';
 import type { PacienteFichaDocumentData } from '@/components/pacientes/PacienteFichaDocument';
 import "@/styles/ficha-impressao.css";
 import { PacienteCard } from "@/components/pacientes/PacienteCard";
+import GerarDocumentoModal from "@/components/GerarDocumentoModal";
+
 
 const Pacientes: React.FC = () => {
   const navigate = useNavigate();
@@ -99,6 +101,9 @@ const Pacientes: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [detalheOpen, setDetalheOpen] = useState(false);
   const [detalhePaciente, setDetalhePaciente] = useState<(typeof pacientes)[0] | null>(null);
+  const [gerarDocOpen, setGerarDocOpen] = useState(false);
+  const [pacienteParaDoc, setPacienteParaDoc] = useState<any>(null);
+
 
   // Print ficha state
   const [fichaOpen, setFichaOpen] = useState(false);
@@ -1211,40 +1216,63 @@ const Pacientes: React.FC = () => {
           .filter((s) => s && String(s).trim() !== '')
           .join(' — ');
 
-        const footer = (
-          <div className="grid grid-cols-2 gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full min-w-0"
-              onClick={() => {
-                setDetalheOpen(false);
-                navigate(
-                  `/painel/workspace-prontuario?pacienteId=${detalhePaciente.id}&pacienteNome=${encodeURIComponent(detalhePaciente.nome)}&tipo=retorno`,
-                );
-              }}
-            >
-              <FileText className="w-4 h-4 mr-1.5" />
-              <span className="truncate">Ver Prontuários</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full min-w-0"
-              onClick={() => handleOpenFicha(detalhePaciente, 'completa')}
-            >
-              <Printer className="w-4 h-4 mr-1.5" />
-              <span className="truncate">Ficha Completa</span>
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full col-span-2 min-w-0"
-              onClick={() => handleOpenFicha(detalhePaciente, 'dados_pessoais')}
-            >
-              <Printer className="w-4 h-4 mr-1.5" />
-              <span className="truncate">Imprimir Só Dados</span>
-            </Button>
+        const actions = (
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full min-w-0"
+                onClick={() => {
+                  setDetalheOpen(false);
+                  navigate(
+                    `/painel/workspace-prontuario?pacienteId=${detalhePaciente.id}&pacienteNome=${encodeURIComponent(detalhePaciente.nome)}&tipo=retorno`,
+                  );
+                }}
+              >
+                <FileText className="w-4 h-4 mr-1.5" />
+                <span className="truncate">Ver Prontuários</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full min-w-0"
+                onClick={() => handleOpenFicha(detalhePaciente, 'completa')}
+              >
+                <Printer className="w-4 h-4 mr-1.5" />
+                <span className="truncate">Ficha Completa</span>
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full col-span-2 min-w-0"
+                onClick={() => handleOpenFicha(detalhePaciente, 'dados_pessoais')}
+              >
+                <Printer className="w-4 h-4 mr-1.5" />
+                <span className="truncate">Imprimir Só Dados</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full col-span-2 min-w-0"
+                onClick={() => {
+                  const pData = {
+                    id: detalhePaciente.id,
+                    nome: detalhePaciente.nome,
+                    cpf: detalhePaciente.cpf,
+                    cns: detalhePaciente.cns,
+                    data_nascimento: (detalhePaciente as any).data_nascimento || (detalhePaciente as any).dataNascimento,
+                    cid: (detalhePaciente as any).cid || '',
+                    especialidade_destino: (detalhePaciente as any).especialidade_destino || (detalhePaciente as any).especialidadeDestino || ''
+                  };
+                  setPacienteParaDoc(pData);
+                  setGerarDocOpen(true);
+                }}
+              >
+                <FilePlus className="w-4 h-4 mr-1.5" />
+                <span className="truncate">Gerar Documento</span>
+              </Button>
+            </div>
           </div>
         );
 
@@ -1253,11 +1281,12 @@ const Pacientes: React.FC = () => {
             open={detalheOpen}
             onOpenChange={setDetalheOpen}
             nome={detalhePaciente.nome}
-            prontuarioNumero={(detalhePaciente as any).numeroProntuario || detalhePaciente.id?.slice(0, 8)}
             dataNascimento={detalhePaciente.dataNascimento}
             badges={badges}
-            footer={footer}
+            footer={actions}
           >
+
+
             <PSecao titulo="Dados Pessoais">
               <PCampo label={L('nome', 'Nome completo')} valor={detalhePaciente.nome} />
               <PCampo 
@@ -1402,7 +1431,23 @@ const Pacientes: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
+      <GerarDocumentoModal 
+        open={gerarDocOpen} 
+        onOpenChange={setGerarDocOpen}
+        paciente={pacienteParaDoc}
+        profissional={{
+          id: user?.id,
+          nome: user?.nome || '',
+          profissao: user?.profissao || '',
+          numero_conselho: (user as any)?.numero_conselho || (user as any)?.numeroConselho || '',
+          tipo_conselho: (user as any)?.tipo_conselho || (user as any)?.tipoConselho || '',
+          uf_conselho: (user as any)?.uf_conselho || (user as any)?.ufConselho || ''
+
+        }}
+        unidade={user?.unidadeId}
+      />
     </div>
+
   );
 };
 
