@@ -3691,6 +3691,11 @@ const ProntuarioPage: React.FC = () => {
                 >
                   <FilePlus className="w-3.5 h-3.5 mr-1" /> Gerar Documento
                 </Button>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
 
       <GerarDocumentoModal 
         open={gerarDocOpen} 
@@ -3703,7 +3708,6 @@ const ProntuarioPage: React.FC = () => {
           numero_conselho: (user as any)?.numero_conselho || (user as any)?.numeroConselho || '',
           tipo_conselho: (user as any)?.tipo_conselho || (user as any)?.tipoConselho || '',
           uf_conselho: (user as any)?.uf_conselho || (user as any)?.ufConselho || ''
-
         }}
         unidade={user?.unidadeId}
       />
@@ -3712,4 +3716,5 @@ const ProntuarioPage: React.FC = () => {
 };
 
 export default ProntuarioPage;
+
 
