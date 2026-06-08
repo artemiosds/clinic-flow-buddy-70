@@ -1050,7 +1050,25 @@ const ProntuarioPage: React.FC = () => {
     setDialogOpen(true);
   };
 
+  const [gerarDocOpen, setGerarDocOpen] = useState(false);
+  const [pacienteParaDoc, setPacienteParaDoc] = useState<any>(null);
+
+  const openGerarDocumento = (p: any, prontuario?: any) => {
+    const dataNasc = p.data_nascimento || p.dataNascimento;
+    setPacienteParaDoc({
+      id: p.id,
+      nome: p.nome,
+      cpf: p.cpf,
+      cns: p.cns,
+      data_nascimento: dataNasc,
+      cid: prontuario?.hipotese || p.cid || '',
+      especialidade_destino: p.especialidade_destino || ''
+    });
+    setGerarDocOpen(true);
+  };
+
   const openEdit = (p: ProntuarioDB) => {
+
     setEditId(p.id);
     setActiveAtendimento(null);
     setSessionRegistrationRequested(false);
@@ -3666,7 +3684,22 @@ const ProntuarioPage: React.FC = () => {
                 >
                   <History className="w-3.5 h-3.5 mr-1" /> Histórico completo
                 </Button>
-              </div>
+      <GerarDocumentoModal 
+        open={gerarDocOpen} 
+        onOpenChange={setGerarDocOpen}
+        paciente={pacienteParaDoc}
+        profissional={{
+          id: user?.id,
+          nome: user?.nome || '',
+          profissao: user?.profissao || '',
+          numero_conselho: user?.numero_conselho || '',
+          tipo_conselho: user?.tipo_conselho || '',
+          uf_conselho: user?.uf_conselho || ''
+        }}
+        unidade={user?.unidadeId}
+      />
+    </div>
+
             </>
           )}
         </SheetContent>

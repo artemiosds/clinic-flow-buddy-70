@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Phone, Mail, Pencil, Trash2, FileDown, Users, Clock, FileUp, Eye, FileText, Printer, Loader2, Paperclip, AlertTriangle } from "lucide-react";
+import { Plus, Search, Phone, Mail, Pencil, Trash2, FileDown, Users, Clock, FileUp, Eye, FileText, Printer, Loader2, Paperclip, AlertTriangle, FilePlus } from "lucide-react";
 import PacienteDocumentos from "@/components/PacienteDocumentos";
 import ContactActionButton from "@/components/ContactActionButton";
 import DetalheDrawer, { Secao, Campo, calcularIdade, formatarData } from "@/components/DetalheDrawer";
@@ -99,6 +99,9 @@ const Pacientes: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [detalheOpen, setDetalheOpen] = useState(false);
   const [detalhePaciente, setDetalhePaciente] = useState<(typeof pacientes)[0] | null>(null);
+  const [gerarDocOpen, setGerarDocOpen] = useState(false);
+  const [pacienteParaDoc, setPacienteParaDoc] = useState<any>(null);
+
 
   // Print ficha state
   const [fichaOpen, setFichaOpen] = useState(false);
@@ -1245,7 +1248,30 @@ const Pacientes: React.FC = () => {
               <Printer className="w-4 h-4 mr-1.5" />
               <span className="truncate">Imprimir Só Dados</span>
             </Button>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full col-span-2 min-w-0"
+              onClick={() => {
+                const pData = {
+                  id: detalhePaciente.id,
+                  nome: detalhePaciente.nome,
+                  cpf: detalhePaciente.cpf,
+                  cns: detalhePaciente.cns,
+                  data_nascimento: detalhePaciente.data_nascimento || detalhePaciente.dataNascimento,
+                  cid: detalhePaciente.cid || '',
+                  especialidade_destino: detalhePaciente.especialidade_destino || ''
+                };
+                setPacienteParaDoc(pData);
+                setGerarDocOpen(true);
+              }}
+            >
+              <FilePlus className="w-4 h-4 mr-1.5" />
+              <span className="truncate">Gerar Documento</span>
+            </Button>
           </div>
+
         );
 
         return (
@@ -1402,7 +1428,22 @@ const Pacientes: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
+      <GerarDocumentoModal 
+        open={gerarDocOpen} 
+        onOpenChange={setGerarDocOpen}
+        paciente={pacienteParaDoc}
+        profissional={{
+          id: user?.id,
+          nome: user?.nome || '',
+          profissao: user?.profissao || '',
+          numero_conselho: user?.numero_conselho || '',
+          tipo_conselho: user?.tipo_conselho || '',
+          uf_conselho: user?.uf_conselho || ''
+        }}
+        unidade={user?.unidadeId}
+      />
     </div>
+
   );
 };
 
