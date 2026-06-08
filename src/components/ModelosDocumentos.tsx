@@ -524,7 +524,7 @@ const ModelosDocumentos: React.FC = () => {
                           </div>
                         </TooltipTrigger>
                         <TooltipContent className="max-w-[300px]">
-                          <p className="font-bold mb-1">Use {{ }} para variáveis:</p>
+                          <p className="font-bold mb-1">Use {`{{ }}`} para variáveis:</p>
                           <div className="flex flex-wrap gap-1">
                             {getBaseTemplate(current.tipo)?.variaveis.map(v => (
                               <Badge key={v} variant="outline" className="text-[9px]">{`{{${v}}}`}</Badge>
