@@ -47,7 +47,7 @@ export const AgendaVisaoSemana: React.FC<AgendaVisaoSemanaProps> = ({
   const agendamentosByDate = useMemo(() => {
     const map = new Map<string, { count: number; types: Set<string>; statusSet: Set<string> }>();
     agendamentos.forEach(a => {
-      if (a.status === "cancelado" || a.status === "falta") return;
+      if (a.status === "cancelado") return;
       let entry = map.get(a.data);
       if (!entry) {
         entry = { count: 0, types: new Set(), statusSet: new Set() };
