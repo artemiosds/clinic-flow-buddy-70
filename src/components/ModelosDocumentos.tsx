@@ -13,8 +13,11 @@ import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { FileText, Plus, Pencil, Trash2, Eye, Copy, Loader2, Printer, Search, Globe, Building2, UserIcon, Filter } from 'lucide-react';
+import { FileText, Plus, Pencil, Trash2, Eye, Copy, Loader2, Printer, Search, Globe, Building2, UserIcon, Filter, RefreshCw, AlertTriangle, CheckCircle2, Info } from 'lucide-react';
 import { openPrintDocument } from '@/lib/printLayout';
+import { MODELOS_BASE, getBaseTemplate } from '@/constants/modelosBase';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const RichTextEditor = lazy(() => import('@/components/editor/RichTextEditor'));
 
@@ -448,7 +451,26 @@ const ModelosDocumentos: React.FC = () => {
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-[13px] font-bold">Tipo de documento</Label>
-                  <Select value={current.tipo} onValueChange={v => setCurrent({ ...current, tipo: v })}>
+                  <Select 
+                    value={current.tipo} 
+                    onValueChange={v => {
+                      const base = getBaseTemplate(v);
+                      const shouldUpdate = !current.id && (!current.conteudo || current.conteudo === '<p><br></p>' || current.conteudo === '');
+                      
+                      if (shouldUpdate && base) {
+                        setCurrent({ 
+                          ...current, 
+                          tipo: v, 
+                          nome: base.nome, 
+                          conteudo: base.conteudo,
+                          perfis_permitidos: base.perfis_permitidos
+                        });
+                        toast.info(`Carregado modelo-base para ${v}`);
+                      } else {
+                        setCurrent({ ...current, tipo: v });
+                      }
+                    }}
+                  >
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {TIPOS_DOCUMENTO.map(t => (
@@ -473,16 +495,87 @@ const ModelosDocumentos: React.FC = () => {
                 </div>
               </div>
 
-              {/* Rich Editor */}
-              <div className="space-y-1.5">
-                <Label className="text-[13px] font-bold">Conteúdo do documento</Label>
-                <Suspense fallback={<div className="h-[200px] flex items-center justify-center text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin mr-2" />Carregando editor...</div>}>
-                  <RichTextEditor
-                    content={current.conteudo}
-                    onChange={html => setCurrent(prev => prev ? { ...prev, conteudo: html } : prev)}
-                    placeholder="Digite o conteúdo do documento ou insira variáveis..."
-                  />
-                </Suspense>
+              {/* Rich Editor with Smart Preview and Variables */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-[13px] font-bold">Conteúdo do documento</Label>
+                  <div className="flex items-center gap-2">
+                    {current.id && (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="h-7 text-[10px] gap-1"
+                        onClick={() => {
+                          const base = getBaseTemplate(current.tipo);
+                          if (base && confirm('Deseja restaurar o conteúdo para o padrão deste tipo de documento? Todas as alterações atuais serão perdidas no editor.')) {
+                            setCurrent({ ...current, conteudo: base.conteudo });
+                            toast.success('Modelo padrão restaurado no editor');
+                          }
+                        }}
+                      >
+                        <RefreshCw className="w-3 h-3" /> Restaurar Padrão
+                      </Button>
+                    )}
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="flex items-center gap-1 text-[10px] text-muted-foreground bg-muted px-2 py-1 rounded cursor-help">
+                            <Info className="w-3 h-3" /> Variáveis Sugeridas
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-[300px]">
+                          <p className="font-bold mb-1">Use {`{{ }}`} para variáveis:</p>
+                          <div className="flex flex-wrap gap-1">
+                            {getBaseTemplate(current.tipo)?.variaveis.map(v => (
+                              <Badge key={v} variant="outline" className="text-[9px]">{`{{${v}}}`}</Badge>
+                            ))}
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 border rounded-xl overflow-hidden bg-muted/20">
+                  <div className="bg-background min-h-[400px] border-r">
+                    <Suspense fallback={<div className="h-[200px] flex items-center justify-center text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin mr-2" />Carregando editor...</div>}>
+                      <RichTextEditor
+                        content={current.conteudo}
+                        onChange={html => setCurrent(prev => prev ? { ...prev, conteudo: html } : prev)}
+                        placeholder="Digite o conteúdo do documento ou insira variáveis..."
+                      />
+                    </Suspense>
+                  </div>
+                  
+                  <div className="bg-white p-6 shadow-inner overflow-y-auto max-h-[600px] hidden lg:block">
+                    <div className="sticky top-0 right-0 float-right mb-2">
+                      <Badge variant="secondary" className="text-[9px] gap-1">
+                        <Eye className="w-3 h-3" /> Preview A4 (Simulado)
+                      </Badge>
+                    </div>
+                    <div className="clear-both">
+                      <div className="text-center mb-6">
+                        <h4 className="font-bold text-[10px] uppercase text-primary">Secretaria Municipal de Saúde de Oriximiná</h4>
+                        <p className="text-[9px] text-muted-foreground">CAPS II — Sistema de Gestão em Saúde</p>
+                      </div>
+                      <Separator className="mb-4" />
+                      <div className="text-[12px] leading-relaxed min-h-[500px]" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(substituirVariaveis(current.conteudo)) }} />
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Variable Validation */}
+                <div className="flex flex-wrap gap-2">
+                  {getBaseTemplate(current.tipo)?.variaveis.map(v => {
+                    const exists = current.conteudo.includes(`{{${v}}}`);
+                    return (
+                      <Badge key={v} variant={exists ? "secondary" : "outline"} className={`text-[9px] gap-1 ${exists ? 'bg-green-100 text-green-700 border-green-200' : 'text-amber-600 border-amber-200 opacity-70'}`}>
+                        {exists ? <CheckCircle2 className="w-2.5 h-2.5" /> : <AlertTriangle className="w-2.5 h-2.5" />}
+                        {`{{${v}}}`}
+                      </Badge>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Perfis */}
