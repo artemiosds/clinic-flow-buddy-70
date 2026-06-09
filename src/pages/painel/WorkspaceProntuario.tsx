@@ -333,6 +333,7 @@ const WorkspaceProntuario: React.FC = () => {
 
           if (agendamentoId) {
             loadTriagem(agendamentoId);
+            // Busca o prontuário vinculado ao agendamento
             const { data: pList } = await supabase.from('prontuarios')
               .select('*')
               .eq('agendamento_id', agendamentoId)
@@ -342,7 +343,8 @@ const WorkspaceProntuario: React.FC = () => {
             if (pList && pList.length > 0) {
               processProntuario(pList[0]);
             } else if (targetPacienteId) {
-              // Fallback: se não achou por agendamento, tenta o rascunho mais recente deste paciente
+              // Fallback: se não encontrou por agendamento (ex: prontuário gerado sem vínculo direto ou erro de link),
+              // tenta localizar o rascunho mais recente do paciente.
               const { data: recentDraft } = await supabase.from('prontuarios')
                 .select('*')
                 .eq('paciente_id', targetPacienteId)
