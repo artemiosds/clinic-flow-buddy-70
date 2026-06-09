@@ -395,28 +395,93 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
   const renderTypeSpecificFields = () => {
     if (!selected) return null;
 
-    // ENCAMINHAMENTO
-    if (tipoLower.includes('encaminhamentos')) {
-      return (
-        <div className="space-y-3 border rounded-lg p-4 bg-muted/30">
-          <h4 className="font-semibold text-xs uppercase text-primary">Campos do Encaminhamento</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <Field label="Especialidade destino *" value={campos.especialidade_destino} onChange={v => updateCampo('especialidade_destino', v)} />
-            <Field label="Unidade destino" value={campos.unidade_destino} onChange={v => updateCampo('unidade_destino', v)} />
-            <Field label="Profissional destino" value={campos.profissional_destino} onChange={v => updateCampo('profissional_destino', v)} />
-            <Field label="CID relacionado" value={campos.cid || paciente?.cid || ''} onChange={v => updateCampo('cid', v)} />
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold">Prioridade</Label>
-            <RadioGroup value={campos.prioridade || 'eletivo'} onValueChange={v => updateCampo('prioridade', v)} className="flex gap-4">
-              {['eletivo', 'prioritário', 'urgência'].map(p => (
-                <div key={p} className="flex items-center gap-1.5">
-                  <RadioGroupItem value={p} id={`pri-${p}`} />
-                  <Label htmlFor={`pri-${p}`} className="text-xs capitalize">{p}</Label>
+    const base = getBaseTemplate(selected.tipo);
+    const manualFields = base?.campos_manuais || [];
+
+    if (manualFields.length === 0) return null;
+
+    return (
+      <div className="space-y-4 border rounded-lg p-4 bg-muted/30">
+        <div className="flex items-center gap-2 mb-2">
+          <Info className="w-4 h-4 text-primary" />
+          <h4 className="font-semibold text-xs uppercase text-primary">Campos de Preenchimento Manual</h4>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {manualFields.map(field => {
+            const label = field.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+            
+            // Especial types for some fields
+            if (field.includes('corpo') || field.includes('orientações') || field.includes('resumo') || field.includes('motivo') || field.includes('justificativa') || field.includes('histórico') || field.includes('avaliação') || field.includes('diagnóstico') || field.includes('conclusão') || field.includes('objetivo') || field.includes('intervenções')) {
+               return (
+                <div key={field} className="md:col-span-2">
+                  <FieldArea 
+                    label={label} 
+                    value={campos[field]} 
+                    onChange={v => updateCampo(field, v)} 
+                  />
                 </div>
-              ))}
-            </RadioGroup>
-          </div>
+              );
+            }
+
+            if (field.includes('data')) {
+              return (
+                <Field 
+                  key={field} 
+                  label={label} 
+                  type="date" 
+                  value={campos[field]} 
+                  onChange={v => updateCampo(field, v)} 
+                />
+              );
+            }
+
+            if (field.includes('horario')) {
+              return (
+                <Field 
+                  key={field} 
+                  label={label} 
+                  type="time" 
+                  value={campos[field]} 
+                  onChange={v => updateCampo(field, v)} 
+                />
+              );
+            }
+
+            if (field === 'prioridade') {
+              return (
+                <div key={field} className="space-y-1.5">
+                  <Label className="text-xs font-semibold">Prioridade</Label>
+                  <RadioGroup 
+                    value={campos.prioridade || 'eletivo'} 
+                    onValueChange={v => updateCampo('prioridade', v)} 
+                    className="flex gap-4"
+                  >
+                    {['eletivo', 'prioritário', 'urgência'].map(p => (
+                      <div key={p} className="flex items-center gap-1.5">
+                        <RadioGroupItem value={p} id={`pri-${p}`} />
+                        <Label htmlFor={`pri-${p}`} className="text-xs capitalize">{p}</Label>
+                      </div>
+                    ))}
+                  </RadioGroup>
+                </div>
+              );
+            }
+
+            return (
+              <Field 
+                key={field} 
+                label={label} 
+                value={campos[field]} 
+                onChange={v => updateCampo(field, v)} 
+              />
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
           <FieldArea label="Motivo do encaminhamento *" value={campos.motivo} onChange={v => updateCampo('motivo', v)} />
           <FieldArea label="Observações clínicas relevantes" value={campos.observacoes} onChange={v => updateCampo('observacoes', v)} />
         </div>
