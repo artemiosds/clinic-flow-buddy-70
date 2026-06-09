@@ -561,6 +561,13 @@ const ProntuarioPage: React.FC = () => {
 
   const loadProntuarios = async (pacienteId?: string) => {
     setLoading(true);
+    console.log("[Prontuario] Iniciando loadProntuarios", { 
+      pacienteId, 
+      search, 
+      userUnidade: user?.unidadeId, 
+      userRole: user?.role, 
+      userUsuario: user?.usuario 
+    });
     try {
       let query = (supabase as any)
         .from("prontuarios")
@@ -575,7 +582,6 @@ const ProntuarioPage: React.FC = () => {
         .order("hora_atendimento", { ascending: false })
         .limit(100);
 
-      
       if (pacienteId) {
         query = query.eq("paciente_id", pacienteId);
       } else if (search) {
@@ -585,12 +591,27 @@ const ProntuarioPage: React.FC = () => {
 
       // Administradores globais (admin.sms) e perfis Master não devem ter o filtro de unidade_id aplicado,
       // permitindo que visualizem todos os prontuários do sistema.
-      if (user?.unidadeId && user?.usuario !== 'admin.sms' && user?.role !== 'master' && !pacienteId) {
+      const isGlobalAdmin = user?.usuario === 'admin.sms';
+      const isMaster = user?.role === 'master';
+      const shouldFilterUnidade = user?.unidadeId && !isGlobalAdmin && !isMaster && !pacienteId;
+
+      console.log("[Prontuario] Filtro de unidade:", { shouldFilterUnidade, isMaster, isGlobalAdmin });
+
+      if (shouldFilterUnidade) {
         query = query.eq("unidade_id", user.unidadeId);
       }
       
-      const { data, error } = await query;
-      if (data) setProntuarios(data);
+      const { data, error, count } = await query;
+      console.log("[Prontuario] Resultado da query:", { 
+        count, 
+        dataLength: data?.length, 
+        error 
+      });
+
+      if (data) {
+        setProntuarios(data);
+        console.log("[Prontuario] IDs dos prontuários carregados:", data.map((p: any) => p.id));
+      }
       if (error) console.error("Error loading prontuarios:", error);
     } catch (err) {
       console.error("Error:", err);
