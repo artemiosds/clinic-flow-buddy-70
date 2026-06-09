@@ -336,6 +336,13 @@ const ModelosDocumentos: React.FC = () => {
   }
 
 
+  const filtered = modelos.filter(m => {
+    if (search && !m.nome.toLowerCase().includes(search.toLowerCase()) && !m.tipo.toLowerCase().includes(search.toLowerCase())) return false;
+    if (filterTipo !== 'todos' && m.tipo !== filterTipo) return false;
+    if (filterTipoModelo !== 'todos' && m.tipo_modelo !== filterTipoModelo) return false;
+    return true;
+  });
+
   return (
     <>
       <Card className="shadow-card border-0">
@@ -366,7 +373,6 @@ const ModelosDocumentos: React.FC = () => {
                 Em Branco
               </Button>
             </div>
-
           </div>
 
           {/* Search & Filters */}
@@ -414,6 +420,9 @@ const ModelosDocumentos: React.FC = () => {
               {filtered.map(m => {
                 const tipoInfo = TIPO_MODELO_LABELS[m.tipo_modelo] || TIPO_MODELO_LABELS.UNIDADE;
                 const TipoIcon = tipoInfo.icon;
+                const base = getBaseTemplate(m.tipo);
+                const isOutdated = base && m.conteudo !== base.conteudo;
+
                 return (
                   <div
                     key={m.id}
@@ -429,6 +438,15 @@ const ModelosDocumentos: React.FC = () => {
                             {tipoInfo.label}
                           </Badge>
                           {!m.ativo && <Badge variant="secondary" className="text-xs">Inativo</Badge>}
+                          {isOutdated && (
+                            <Badge 
+                              variant="outline" 
+                              className="text-[10px] bg-amber-50 text-amber-600 border-amber-200 cursor-pointer hover:bg-amber-100 transition-colors"
+                              onClick={() => handleApplyBase(m)}
+                            >
+                              <RefreshCw className="w-3 h-3 mr-1" /> Atualização disponível
+                            </Badge>
+                          )}
                         </div>
                         <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                           {m.conteudo.replace(/<[^>]*>/g, '').slice(0, 120)}...
@@ -442,6 +460,7 @@ const ModelosDocumentos: React.FC = () => {
                           </div>
                         </div>
                       </div>
+
                       <div className="flex items-center gap-1 shrink-0">
                         {canEdit(m) && <Switch checked={m.ativo} onCheckedChange={v => handleToggle(m.id, v)} />}
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePreview(m)} title="Preview">
