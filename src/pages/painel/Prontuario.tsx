@@ -3176,7 +3176,14 @@ const ProntuarioPage: React.FC = () => {
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-semibold text-foreground">{p.paciente_nome}</p>
+                        <p className="font-semibold text-foreground flex items-center gap-2">
+                          {p.paciente_nome}
+                          {p.tipo_registro && (
+                            <Badge variant="secondary" className="text-[10px] font-normal py-0 px-1.5 h-4 bg-primary/10 text-primary border-primary/20">
+                              {TIPOS_REGISTRO.find(t => t.value === p.tipo_registro)?.label?.replace(/^[🟢🔵🟡🔴🟣]\s*/, '') || p.tipo_registro}
+                            </Badge>
+                          )}
+                        </p>
                         <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
                           {new Date(p.data_atendimento + "T12:00:00").toLocaleDateString("pt-BR")}
                         </span>
