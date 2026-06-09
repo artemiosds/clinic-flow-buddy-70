@@ -333,10 +333,24 @@ const WorkspaceProntuario: React.FC = () => {
 
           if (agendamentoId) {
             loadTriagem(agendamentoId);
-            const { data: pList } = await supabase.from('prontuarios').select('*').eq('agendamento_id', agendamentoId).order('status', { ascending: false }).order('criado_em', { ascending: false });
+            const { data: pList } = await supabase.from('prontuarios')
+              .select('*')
+              .eq('agendamento_id', agendamentoId)
+              .order('status', { ascending: false })
+              .order('criado_em', { ascending: false });
+            
             if (pList && pList.length > 0) {
-              // Se houver mais de um, pegamos o primeiro (mais recente) para editar, mas idealmente não deveria haver
               processProntuario(pList[0]);
+            } else if (targetPacienteId) {
+              // Fallback: se não achou por agendamento, tenta o rascunho mais recente deste paciente
+              const { data: recentDraft } = await supabase.from('prontuarios')
+                .select('*')
+                .eq('paciente_id', targetPacienteId)
+                .eq('status', 'rascunho')
+                .order('criado_em', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+              if (recentDraft) processProntuario(recentDraft);
             }
           } else if (editId) {
             const { data: p } = await supabase.from('prontuarios').select('*').eq('id', editId).single();

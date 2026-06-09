@@ -568,7 +568,7 @@ const ProntuarioPage: React.FC = () => {
             id, nome, cpf, cns, data_nascimento, telefone, email, endereco, cidade, uf
           )
         `)
-        .eq("status", "finalizado")
+        .in("status", ["finalizado", "rascunho"])
         .order("data_atendimento", { ascending: false })
         .order("hora_atendimento", { ascending: false })
         .limit(100);
@@ -581,7 +581,7 @@ const ProntuarioPage: React.FC = () => {
         query = query.or(`paciente_nome.ilike.%${q}%,profissional_nome.ilike.%${q}%`);
       }
 
-      if (user?.unidadeId && user?.usuario !== 'admin.sms' && user?.role !== 'master') {
+      if (user?.unidadeId && user?.usuario !== 'admin.sms' && user?.role !== 'master' && user?.role !== 'admin') {
         query = query.eq("unidade_id", user.unidadeId);
       }
       
@@ -889,7 +889,12 @@ const ProntuarioPage: React.FC = () => {
 
       loadTriagem(agendamentoId);
       loadEpisodios(pacienteId);
-      const existingForAgendamento = prontuarios.find((p) => p.agendamento_id === agendamentoId);
+      // Procura primeiro por agendamento, senão por paciente e data (para prontuários sem agendamento vinculado)
+      const existingForAgendamento = prontuarios.find((p) => 
+        p.agendamento_id === agendamentoId || 
+        (p.paciente_id === pacienteId && p.data_atendimento === data && p.status === 'rascunho')
+      );
+      
       if (existingForAgendamento) {
         openEdit(existingForAgendamento);
       } else {
