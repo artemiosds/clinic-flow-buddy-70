@@ -360,19 +360,25 @@ const ModelosDocumentos: React.FC = () => {
             </div>
             <div className="flex gap-2">
               <Select onValueChange={(v) => openNew(v)}>
-                <SelectTrigger className="w-[180px] h-9 gap-2">
+                <SelectTrigger className="w-[200px] h-9 gap-2">
                   <Plus className="w-4 h-4" />
-                  <span>Criar por Tipo</span>
+                  <span>Novo por Modelo-Base</span>
                 </SelectTrigger>
                 <SelectContent>
                   {TIPOS_DOCUMENTO.map(t => (
-                    <SelectItem key={t} value={t}>{t}</SelectItem>
+                    <SelectItem key={t} value={t}>
+                      <div className="flex flex-col">
+                        <span>{t}</span>
+                        <span className="text-[10px] text-muted-foreground">Usar padrão profissional</span>
+                      </div>
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <Button onClick={() => openNew()} size="sm" variant="outline" className="gap-1.5">
+              <Button onClick={() => openNew()} size="sm" variant="outline" className="gap-1.5 h-9">
                 Em Branco
               </Button>
+
             </div>
           </div>
 
@@ -565,22 +571,25 @@ const ModelosDocumentos: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <Label className="text-[13px] font-bold">Conteúdo do documento</Label>
                   <div className="flex items-center gap-2">
-                    {current.id && (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="h-7 text-[10px] gap-1"
-                        onClick={() => {
-                          const base = getBaseTemplate(current.tipo);
-                          if (base && confirm('Deseja restaurar o conteúdo para o padrão deste tipo de documento? Todas as alterações atuais serão perdidas no editor.')) {
-                            setCurrent({ ...current, conteudo: base.conteudo });
-                            toast.success('Modelo padrão restaurado no editor');
-                          }
-                        }}
-                      >
-                        <RefreshCw className="w-3 h-3" /> Restaurar Padrão
-                      </Button>
-                    )}
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="h-7 text-[10px] gap-1"
+                      onClick={() => {
+                        const base = getBaseTemplate(current.tipo);
+                        if (base && confirm('Deseja restaurar o conteúdo para o padrão deste tipo de documento? Todas as alterações atuais serão perdidas no editor.')) {
+                          setCurrent({ 
+                            ...current, 
+                            conteudo: base.conteudo,
+                            perfis_permitidos: base.perfis_permitidos
+                          });
+                          toast.success('Modelo padrão restaurado no editor');
+                        }
+                      }}
+                    >
+                      <RefreshCw className="w-3 h-3" /> Restaurar Padrão
+                    </Button>
+
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
