@@ -78,7 +78,7 @@ export const MODELOS_BASE: BaseTemplate[] = [
   {
     tipo: 'Receituário',
     nome: 'Receituário Padrão',
-    variaveis: ['nome_paciente', 'cpf', 'medicamentos', 'orientacoes', 'validade', 'profissional', 'conselho', 'numero_conselho'],
+    variaveis: ['nome_paciente', 'cpf', 'medicamentos', 'orientacoes', 'validade_receita', 'profissional', 'conselho', 'numero_conselho'],
     campos_manuais: ['medicamentos', 'orientacoes', 'validade_receita'],
     perfis_permitidos: ['master', 'profissional'],
     conteudo: `
@@ -197,6 +197,92 @@ export const MODELOS_BASE: BaseTemplate[] = [
     `
   },
   {
+    tipo: 'Relatório Multiprofissional',
+    nome: 'Relatório Multiprofissional Padrão',
+    variaveis: ['nome_paciente', 'cpf', 'data_atendimento', 'histórico', 'avaliação', 'plano_terapêutico', 'profissional'],
+    campos_manuais: ['histórico', 'avaliação', 'plano_terapêutico'],
+    perfis_permitidos: ['master', 'profissional', 'gestao'],
+    conteudo: `
+      <h1 style="text-align: center; font-size: 18px; margin-bottom: 30px;">RELATÓRIO MULTIPROFISSIONAL</h1>
+      <p><strong>Paciente:</strong> {{nome_paciente}} (CPF: {{cpf}})</p>
+      
+      <div style="margin-top: 20px;">
+        <h3 style="font-size: 15px;">Histórico:</h3>
+        <p style="white-space: pre-wrap;">{{histórico}}</p>
+        
+        <h3 style="font-size: 15px; margin-top: 15px;">Avaliação:</h3>
+        <p style="white-space: pre-wrap;">{{avaliação}}</p>
+        
+        <h3 style="font-size: 15px; margin-top: 15px;">Plano Terapêutico:</h3>
+        <p style="white-space: pre-wrap;">{{plano_terapêutico}}</p>
+      </div>
+
+      <p style="text-align: right; margin-top: 50px;">
+        {{unidade}}, {{data_hoje}}.
+      </p>
+      <div style="margin-top: 80px; text-align: center;">
+        {{carimbo_profissional}}
+      </div>
+    `
+  },
+  {
+    tipo: 'Relatório de Alta',
+    nome: 'Relatório de Alta Padrão',
+    variaveis: ['nome_paciente', 'cpf', 'data_admissão', 'data_alta', 'motivo_alta', 'resumo_clinico', 'orientações', 'profissional'],
+    campos_manuais: ['data_admissão', 'data_alta', 'motivo_alta', 'resumo_clinico', 'orientações'],
+    perfis_permitidos: ['master', 'profissional', 'gestao'],
+    conteudo: `
+      <h1 style="text-align: center; font-size: 18px; margin-bottom: 30px;">RELATÓRIO DE ALTA</h1>
+      <p><strong>Paciente:</strong> {{nome_paciente}} (CPF: {{cpf}})</p>
+      
+      <div style="margin-top: 20px;">
+        <p><strong>Data de Admissão:</strong> {{data_admissão}}</p>
+        <p><strong>Data de Alta:</strong> {{data_alta}}</p>
+        <p><strong>Motivo da Alta:</strong> {{motivo_alta}}</p>
+        
+        <h3 style="font-size: 15px; margin-top: 15px;">Resumo Clínico:</h3>
+        <p style="white-space: pre-wrap;">{{resumo_clinico}}</p>
+        
+        <h3 style="font-size: 15px; margin-top: 15px;">Orientações pós-alta:</h3>
+        <p style="white-space: pre-wrap;">{{orientações}}</p>
+      </div>
+
+      <p style="text-align: right; margin-top: 50px;">
+        {{unidade}}, {{data_hoje}}.
+      </p>
+      <div style="margin-top: 80px; text-align: center;">
+        {{carimbo_profissional}}
+      </div>
+    `
+  },
+  {
+    tipo: 'Parecer Técnico',
+    nome: 'Parecer Técnico Padrão',
+    variaveis: ['nome_paciente', 'cpf', 'solicitante', 'descrição', 'conclusão', 'profissional'],
+    campos_manuais: ['solicitante', 'descrição', 'conclusão'],
+    perfis_permitidos: ['master', 'profissional', 'gestao'],
+    conteudo: `
+      <h1 style="text-align: center; font-size: 18px; margin-bottom: 30px;">PARECER TÉCNICO</h1>
+      <p><strong>Paciente:</strong> {{nome_paciente}} (CPF: {{cpf}})</p>
+      <p><strong>Solicitante:</strong> {{solicitante}}</p>
+      
+      <div style="margin-top: 20px;">
+        <h3 style="font-size: 15px;">Análise/Descrição:</h3>
+        <p style="white-space: pre-wrap;">{{descrição}}</p>
+        
+        <h3 style="font-size: 15px; margin-top: 15px;">Conclusão:</h3>
+        <p style="white-space: pre-wrap;">{{conclusão}}</p>
+      </div>
+
+      <p style="text-align: right; margin-top: 50px;">
+        {{unidade}}, {{data_hoje}}.
+      </p>
+      <div style="margin-top: 80px; text-align: center;">
+        {{carimbo_profissional}}
+      </div>
+    `
+  },
+  {
     tipo: 'Laudo',
     nome: 'Laudo Técnico Padrão',
     variaveis: ['nome_paciente', 'cpf', 'cns', 'data_atendimento', 'cid', 'diagnostico', 'prognostico', 'conduta', 'profissional'],
@@ -227,6 +313,62 @@ export const MODELOS_BASE: BaseTemplate[] = [
       </p>
       <div style="margin-top: 80px; text-align: center;">
         {{carimbo_profissional}}
+      </div>
+    `
+  },
+  {
+    tipo: 'Plano Terapêutico',
+    nome: 'Plano Terapêutico Singular (PTS)',
+    variaveis: ['nome_paciente', 'cpf', 'diagnóstico', 'objetivos', 'intervenções', 'periodicidade', 'profissional'],
+    campos_manuais: ['diagnóstico', 'objetivos', 'intervenções', 'periodicidade'],
+    perfis_permitidos: ['master', 'profissional', 'gestao'],
+    conteudo: `
+      <h1 style="text-align: center; font-size: 18px; margin-bottom: 30px;">PLANO TERAPÊUTICO SINGULAR</h1>
+      <p><strong>Paciente:</strong> {{nome_paciente}} (CPF: {{cpf}})</p>
+      
+      <div style="margin-top: 20px;">
+        <h3 style="font-size: 15px;">Diagnóstico Situacional/Clínico:</h3>
+        <p style="white-space: pre-wrap;">{{diagnóstico}}</p>
+        
+        <h3 style="font-size: 15px; margin-top: 15px;">Objetivos Terapêuticos:</h3>
+        <p style="white-space: pre-wrap;">{{objetivos}}</p>
+        
+        <h3 style="font-size: 15px; margin-top: 15px;">Intervenções Propostas:</h3>
+        <p style="white-space: pre-wrap;">{{intervenções}}</p>
+        
+        <h3 style="font-size: 15px; margin-top: 15px;">Periodicidade/Duração:</h3>
+        <p style="white-space: pre-wrap;">{{periodicidade}}</p>
+      </div>
+
+      <p style="text-align: right; margin-top: 50px;">
+        {{unidade}}, {{data_hoje}}.
+      </p>
+      <div style="margin-top: 80px; text-align: center;">
+        {{carimbo_profissional}}
+      </div>
+    `
+  },
+  {
+    tipo: 'Termo de Consentimento',
+    nome: 'Termo de Consentimento Livre e Esclarecido',
+    variaveis: ['nome_paciente', 'cpf', 'procedimento', 'riscos', 'profissional'],
+    campos_manuais: ['procedimento', 'riscos'],
+    perfis_permitidos: ['master', 'profissional'],
+    conteudo: `
+      <h1 style="text-align: center; font-size: 18px; margin-bottom: 30px;">TERMO DE CONSENTIMENTO LIVRE E ESCLARECIDO</h1>
+      <p style="text-align: justify; line-height: 1.6;">
+        Eu, <strong>{{nome_paciente}}</strong>, inscrito(a) no CPF nº <strong>{{cpf}}</strong>, declaro ter sido devidamente informado(a) pelo profissional <strong>{{profissional}}</strong> sobre o procedimento/tratamento <strong>{{procedimento}}</strong>, seus benefícios, riscos potenciais ({{riscos}}) e alternativas.
+      </p>
+      <p style="text-align: justify; line-height: 1.6; margin-top: 15px;">
+        Estou ciente de que posso revogar este consentimento a qualquer momento. Assim, autorizo a realização do referido procedimento.
+      </p>
+
+      <p style="text-align: right; margin-top: 50px;">
+        {{unidade}}, {{data_hoje}}.
+      </p>
+      <div style="margin-top: 80px; display: flex; justify-content: space-around; text-align: center;">
+        <div style="width: 200px; border-top: 1px solid #000; padding-top: 5px;">Assinatura do Paciente</div>
+        <div>{{carimbo_profissional}}</div>
       </div>
     `
   },
