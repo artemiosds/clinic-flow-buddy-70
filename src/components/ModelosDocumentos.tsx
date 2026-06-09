@@ -20,6 +20,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const RichTextEditor = lazy(() => import('@/components/editor/RichTextEditor'));
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
 
 export interface TemplateVersion {
   id?: string;
@@ -146,14 +149,15 @@ const ModelosDocumentos: React.FC = () => {
     setLoading(false);
   };
 
-  const openNew = () => {
+  const openNew = (tipo?: string) => {
+    const base = tipo ? getBaseTemplate(tipo) : undefined;
     setCurrent({
       id: '',
-      nome: '',
-      tipo: TIPOS_DOCUMENTO[0],
-      conteudo: '',
+      nome: base ? `${base.tipo} Padrão` : '',
+      tipo: tipo || TIPOS_DOCUMENTO[0],
+      conteudo: base?.conteudo || '',
       ativo: true,
-      perfis_permitidos: ['master', 'profissional'],
+      perfis_permitidos: base?.perfis_permitidos || ['master', 'profissional'],
       tipo_modelo: user?.role === 'master' || isGlobalAdmin ? 'UNIDADE' : 'PROFISSIONAL',
       unidade_id: user?.unidadeId || '',
       criado_por: user?.id || '',
@@ -167,6 +171,7 @@ const ModelosDocumentos: React.FC = () => {
     });
     setEditOpen(true);
   };
+
 
   const openEdit = (m: DocumentTemplate) => {
     setCurrent({ ...m, historico_edicoes: m.historico_edicoes || [] });
@@ -287,13 +292,38 @@ const ModelosDocumentos: React.FC = () => {
     return m.criado_por === user?.id;
   };
 
-  // Filters
-  const filtered = modelos.filter(m => {
-    if (search && !m.nome.toLowerCase().includes(search.toLowerCase()) && !m.tipo.toLowerCase().includes(search.toLowerCase())) return false;
-    if (filterTipo !== 'todos' && m.tipo !== filterTipo) return false;
-    if (filterTipoModelo !== 'todos' && m.tipo_modelo !== filterTipoModelo) return false;
-    return true;
-  });
+  const handleRestoreBase = () => {
+    if (!current) return;
+    const base = getBaseTemplate(current.tipo);
+    if (base && confirm('Restaurar para o modelo-base padrão? Suas alterações atuais serão perdidas.')) {
+      setCurrent({
+        ...current,
+        conteudo: base.conteudo,
+        perfis_permitidos: base.perfis_permitidos
+      });
+      toast.info('Modelo-base restaurado. Não esqueça de salvar.');
+    }
+  };
+
+  const handleApplyBase = async (m: DocumentTemplate) => {
+    const base = getBaseTemplate(m.tipo);
+    if (base && confirm(`Deseja atualizar "${m.nome}" para o novo modelo-base padrão? Uma nova versão será criada.`)) {
+      const payload = {
+        conteudo: base.conteudo,
+        perfis_permitidos: base.perfis_permitidos,
+        version: (m.version || 1) + 1,
+        updated_at: new Date().toISOString()
+      };
+      
+      const { error } = await supabase.from('document_templates').update(payload).eq('id', m.id);
+      if (error) {
+        toast.error('Erro ao atualizar: ' + error.message);
+      } else {
+        toast.success('Modelo atualizado com sucesso!');
+        loadModelos();
+      }
+    }
+  };
 
   if (loading) {
     return (
@@ -304,6 +334,7 @@ const ModelosDocumentos: React.FC = () => {
       </Card>
     );
   }
+
 
   return (
     <>
@@ -319,9 +350,23 @@ const ModelosDocumentos: React.FC = () => {
                 <p className="text-sm text-muted-foreground">{modelos.length} modelo(s) disponível(is)</p>
               </div>
             </div>
-            <Button onClick={openNew} size="sm" className="gap-1.5">
-              <Plus className="w-4 h-4" /> Novo Modelo
-            </Button>
+            <div className="flex gap-2">
+              <Select onValueChange={(v) => openNew(v)}>
+                <SelectTrigger className="w-[180px] h-9 gap-2">
+                  <Plus className="w-4 h-4" />
+                  <span>Criar por Tipo</span>
+                </SelectTrigger>
+                <SelectContent>
+                  {TIPOS_DOCUMENTO.map(t => (
+                    <SelectItem key={t} value={t}>{t}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button onClick={() => openNew()} size="sm" variant="outline" className="gap-1.5">
+                Em Branco
+              </Button>
+            </div>
+
           </div>
 
           {/* Search & Filters */}
