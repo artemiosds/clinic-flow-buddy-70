@@ -580,7 +580,7 @@ const ProntuarioPage: React.FC = () => {
         query = query.or(`paciente_nome.ilike.%${q}%,profissional_nome.ilike.%${q}%`);
       }
 
-      if (user?.unidadeId && user?.usuario !== 'admin.sms') {
+      if (user?.unidadeId && user?.usuario !== 'admin.sms' && user?.role !== 'master') {
         query = query.eq("unidade_id", user.unidadeId);
       }
       
