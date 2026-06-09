@@ -164,10 +164,14 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
       }
       return val;
     };
+
+    // Replace all keys in campos
     Object.entries(campos).forEach(([k, v]) => {
       const out = v ? formatIfDate(v) : '—';
-      text = text.replace(new RegExp(`\\{\\{${k}\\}\\}`, 'g'), out);
+      const regex = new RegExp(`\\{\\{${k}\\}\\}`, 'g');
+      text = text.replace(regex, out);
     });
+
 
     // Medicamentos
     if (medicamentos.length > 0 && medicamentos[0].medicamento) {

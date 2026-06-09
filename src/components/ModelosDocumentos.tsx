@@ -153,7 +153,7 @@ const ModelosDocumentos: React.FC = () => {
     const base = tipo ? getBaseTemplate(tipo) : undefined;
     setCurrent({
       id: '',
-      nome: base ? `${base.tipo} Padrão` : '',
+      nome: base ? base.nome : (tipo ? `${tipo} Padrão` : ''),
       tipo: tipo || TIPOS_DOCUMENTO[0],
       conteudo: base?.conteudo || '',
       ativo: true,
@@ -171,6 +171,7 @@ const ModelosDocumentos: React.FC = () => {
     });
     setEditOpen(true);
   };
+
 
 
   const openEdit = (m: DocumentTemplate) => {
