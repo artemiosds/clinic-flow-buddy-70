@@ -108,6 +108,7 @@ interface ProntuarioDB {
   atualizado_em: string;
   dados_acolhimento?: any;
   status?: string;
+  tipo_registro?: string;
 }
 
 interface ProcedimentoDB {
