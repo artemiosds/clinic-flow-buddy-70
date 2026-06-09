@@ -113,9 +113,36 @@ const substituirVariaveis = (conteudo: string): string => {
     .replace(/\{\{cid\}\}/g, 'M54.5')
     .replace(/\{\{medicamentos\}\}/g, '1. Paracetamol 500mg — Oral, 8/8h, 5 dias')
     .replace(/\{\{exames\}\}/g, '1. Raio-X de Coluna Lombar')
+    .replace(/\{\{carimbo_profissional\}\}/g, '<div style="border:1px solid #000; padding:10px; width:200px; margin:20px auto; text-align:center;">[CARIMBO DO PROFISSIONAL]</div>')
     .replace(/\{\{assinatura_profissional\}\}/g, '<div style="border-top:1px solid #000; width:200px; margin-top:40px; text-align:center;">Assinatura do Profissional</div>')
-    .replace(/\{\{data_hoje\}\}/g, hoje);
+    .replace(/\{\{data_hoje\}\}/g, hoje)
+    // Add dummy values for all base template variables to avoid {{var}} appearing in preview
+    .replace(/\{\{finalidade\}\}/g, 'Consulta Clínica')
+    .replace(/\{\{horario_entrada\}\}/g, '08:30')
+    .replace(/\{\{horario_saida\}\}/g, '09:15')
+    .replace(/\{\{dias_afastamento\}\}/g, '3')
+    .replace(/\{\{data_inicio\}\}/g, hoje)
+    .replace(/\{\{data_fim\}\}/g, hoje)
+    .replace(/\{\{especialidade_destino\}\}/g, 'Cardiologia')
+    .replace(/\{\{unidade_destino\}\}/g, 'Hospital Municipal')
+    .replace(/\{\{motivo\}\}/g, 'Avaliação pré-operatória')
+    .replace(/\{\{prioridade\}\}/g, 'Eletivo')
+    .replace(/\{\{resumo_clinico\}\}/g, 'Paciente com histórico de hipertensão...')
+    .replace(/\{\{orientacoes\}\}/g, 'Tomar medicação em jejum...')
+    .replace(/\{\{validade_receita\}\}/g, '30 dias')
+    .replace(/\{\{histórico\}\}/g, 'Paciente acompanhado há 6 meses...')
+    .replace(/\{\{avaliação\}\}/g, 'Apresenta melhora gradual...')
+    .replace(/\{\{plano_terapêutico\}\}/g, 'Manter sessões semanais...')
+    .replace(/\{\{diagnóstico\}\}/g, 'Transtorno de ansiedade...')
+    .replace(/\{\{objetivos\}\}/g, 'Redução de sintomas...')
+    .replace(/\{\{intervenções\}\}/g, 'Terapia cognitivo-comportamental...')
+    .replace(/\{\{periodicidade\}\}/g, 'Semanal')
+    .replace(/\{\{procedimento\}\}/g, 'Aplicação de medicação IM')
+    .replace(/\{\{riscos\}\}/g, 'Leve dor local')
+    .replace(/\{\{titulo_documento\}\}/g, 'DOCUMENTO CLÍNICO')
+    .replace(/\{\{corpo_documento\}\}/g, 'Texto livre para o documento personalizado...');
 };
+
 
 
 const ModelosDocumentos: React.FC = () => {
@@ -153,7 +180,7 @@ const ModelosDocumentos: React.FC = () => {
     const base = tipo ? getBaseTemplate(tipo) : undefined;
     setCurrent({
       id: '',
-      nome: base ? `${base.tipo} Padrão` : '',
+      nome: base ? base.nome : (tipo ? `${tipo} Padrão` : ''),
       tipo: tipo || TIPOS_DOCUMENTO[0],
       conteudo: base?.conteudo || '',
       ativo: true,
@@ -171,6 +198,7 @@ const ModelosDocumentos: React.FC = () => {
     });
     setEditOpen(true);
   };
+
 
 
   const openEdit = (m: DocumentTemplate) => {
@@ -359,19 +387,25 @@ const ModelosDocumentos: React.FC = () => {
             </div>
             <div className="flex gap-2">
               <Select onValueChange={(v) => openNew(v)}>
-                <SelectTrigger className="w-[180px] h-9 gap-2">
+                <SelectTrigger className="w-[200px] h-9 gap-2">
                   <Plus className="w-4 h-4" />
-                  <span>Criar por Tipo</span>
+                  <span>Novo por Modelo-Base</span>
                 </SelectTrigger>
                 <SelectContent>
                   {TIPOS_DOCUMENTO.map(t => (
-                    <SelectItem key={t} value={t}>{t}</SelectItem>
+                    <SelectItem key={t} value={t}>
+                      <div className="flex flex-col">
+                        <span>{t}</span>
+                        <span className="text-[10px] text-muted-foreground">Usar padrão profissional</span>
+                      </div>
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <Button onClick={() => openNew()} size="sm" variant="outline" className="gap-1.5">
+              <Button onClick={() => openNew()} size="sm" variant="outline" className="gap-1.5 h-9">
                 Em Branco
               </Button>
+
             </div>
           </div>
 
@@ -519,7 +553,13 @@ const ModelosDocumentos: React.FC = () => {
                     value={current.tipo} 
                     onValueChange={v => {
                       const base = getBaseTemplate(v);
-                      const shouldUpdate = !current.id && (!current.conteudo || current.conteudo === '<p><br></p>' || current.conteudo === '');
+                      // If it's a new document and editor is empty or content is very short/default, load base
+                      const isEditorEmpty = !current.conteudo || 
+                                          current.conteudo === '<p><br></p>' || 
+                                          current.conteudo === '' || 
+                                          current.conteudo === '<p></p>';
+                      
+                      const shouldUpdate = !current.id && isEditorEmpty;
                       
                       if (shouldUpdate && base) {
                         setCurrent({ 
@@ -529,11 +569,12 @@ const ModelosDocumentos: React.FC = () => {
                           conteudo: base.conteudo,
                           perfis_permitidos: base.perfis_permitidos
                         });
-                        toast.info(`Carregado modelo-base para ${v}`);
+                        toast.info(`Biblioteca: Modelo Profissional de "${v}" carregado.`);
                       } else {
                         setCurrent({ ...current, tipo: v });
                       }
                     }}
+
                   >
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -564,22 +605,25 @@ const ModelosDocumentos: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <Label className="text-[13px] font-bold">Conteúdo do documento</Label>
                   <div className="flex items-center gap-2">
-                    {current.id && (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="h-7 text-[10px] gap-1"
-                        onClick={() => {
-                          const base = getBaseTemplate(current.tipo);
-                          if (base && confirm('Deseja restaurar o conteúdo para o padrão deste tipo de documento? Todas as alterações atuais serão perdidas no editor.')) {
-                            setCurrent({ ...current, conteudo: base.conteudo });
-                            toast.success('Modelo padrão restaurado no editor');
-                          }
-                        }}
-                      >
-                        <RefreshCw className="w-3 h-3" /> Restaurar Padrão
-                      </Button>
-                    )}
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="h-7 text-[10px] gap-1"
+                      onClick={() => {
+                        const base = getBaseTemplate(current.tipo);
+                        if (base && confirm('Deseja restaurar o conteúdo para o padrão deste tipo de documento? Todas as alterações atuais serão perdidas no editor.')) {
+                          setCurrent({ 
+                            ...current, 
+                            conteudo: base.conteudo,
+                            perfis_permitidos: base.perfis_permitidos
+                          });
+                          toast.success('Modelo padrão restaurado no editor');
+                        }
+                      }}
+                    >
+                      <RefreshCw className="w-3 h-3" /> Restaurar Padrão
+                    </Button>
+
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>

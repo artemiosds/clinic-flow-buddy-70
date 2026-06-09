@@ -13,12 +13,11 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { FileText, Printer, Save, ShieldCheck, Plus, Trash2, Loader2, Send, Info } from 'lucide-react';
+import { FileText, Printer, Save, ShieldCheck, Plus, Trash2, Loader2, Info } from 'lucide-react';
 import { openPrintDocument, loadDocumentConfig, docHeader, docFooter, buildInstitutionalCSS, type DocumentConfig } from '@/lib/printLayout';
 import { salvarEncaminhamento } from '@/services/encaminhamentoService';
-import { generateSignature, formatSignatureBlock, formatCarimboBlock, type CarimboData, type SignatureData } from '@/lib/documentSignature';
+import { generateSignature, formatSignatureBlock, formatCarimboBlock, type CarimboData } from '@/lib/documentSignature';
 import type { DocumentTemplate } from '@/components/ModelosDocumentos';
-import AutentiqueSignatureActions from '@/components/pacientes/AutentiqueSignatureActions';
 import { getBaseTemplate } from '@/constants/modelosBase';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -56,7 +55,6 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
   const [profDestinoId, setProfDestinoId] = useState('');
   const [salvando, setSalvando] = useState(false);
   const [carimbo, setCarimbo] = useState<CarimboData | null>(null);
-  const [savedDocId, setSavedDocId] = useState<string | null>(null);
 
   // Type-specific fields
   const [campos, setCampos] = useState<Record<string, string>>({});
@@ -111,10 +109,8 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
 
   const hoje = new Date().toLocaleDateString('pt-BR');
 
-  // Build the {{carimbo_profissional}} replacement (HTML block matching the configured carimbo)
   const carimboInlineHtml = (() => {
     if (!carimbo) {
-      // Fallback: build a minimal carimbo from professional cadastre
       const nome = profissional?.nome || user?.nome || '—';
       const consName = profissional?.tipo_conselho || '';
       const consNum = profissional?.numero_conselho || '';
@@ -155,8 +151,6 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
       .replace(/\{\{conselho\}\}/g, profissional?.tipo_conselho || '—')
       .replace(/\{\{data_hoje\}\}/g, hoje);
 
-
-    // Extended variables from campos
     const formatIfDate = (val: string) => {
       if (val && /^\d{4}-\d{2}-\d{2}$/.test(val)) {
         const [y, m, d] = val.split('-');
@@ -164,12 +158,13 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
       }
       return val;
     };
+
     Object.entries(campos).forEach(([k, v]) => {
       const out = v ? formatIfDate(v) : '—';
-      text = text.replace(new RegExp(`\\{\\{${k}\\}\\}`, 'g'), out);
+      const regex = new RegExp(`\\{\\{${k}\\}\\}`, 'g');
+      text = text.replace(regex, out);
     });
 
-    // Medicamentos
     if (medicamentos.length > 0 && medicamentos[0].medicamento) {
       const medList = medicamentos
         .filter(m => m.medicamento)
@@ -181,7 +176,6 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
     return text;
   };
 
-
   const handleSelect = (id: string) => {
     setSelectedId(id);
     setProfDestinoId('');
@@ -189,56 +183,35 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
     setMedicamentos([emptyMedicamento()]);
     const m = modelos.find(x => x.id === id);
     if (m) {
-      // Pre-fill type-specific defaults
-      const tLower = m.tipo.toLowerCase();
       const base = getBaseTemplate(m.tipo);
       const defaults: Record<string, string> = {};
       
-      // Load manual fields from base template if defined
       if (base?.campos_manuais) {
         base.campos_manuais.forEach(field => {
           defaults[field] = '';
         });
       }
 
-      if (tLower.includes('atestado')) {
-        defaults.dias_afastamento = defaults.dias_afastamento || '1';
-        defaults.data_inicio = defaults.data_inicio || new Date().toISOString().split('T')[0];
-      }
-      if (tLower.includes('receitu')) {
-        defaults.validade_receita = defaults.validade_receita || '30 dias';
-      }
-      if (tLower.includes('declaraç') || tLower.includes('comparecimento')) {
-        const now = new Date();
-        const hh = String(now.getHours()).padStart(2, '0');
-        const mm = String(now.getMinutes()).padStart(2, '0');
-        defaults.situacao = defaults.situacao || 'compareceu';
-        defaults.horario_entrada = defaults.horario_entrada || `${hh}:${mm}`;
-        defaults.horario_saida = defaults.horario_saida || `${hh}:${mm}`;
-        defaults.finalidade = defaults.finalidade || 'consulta';
+      if (m.tipo.toLowerCase().includes('atestado')) {
+        defaults.dias_afastamento = '1';
+        defaults.data_inicio = new Date().toISOString().split('T')[0];
       }
       
-      setCampos(prev => ({ ...defaults, ...prev }));
+      setCampos(defaults);
       setConteudoFinal(substituir(m.conteudo));
-
-
     }
   };
 
-  // Update conteudo when campos change
   useEffect(() => {
     const m = modelos.find(x => x.id === selectedId);
     if (!m) return;
     setConteudoFinal(substituir(m.conteudo));
   }, [campos, medicamentos, carimbo, selectedId]);
 
-
   const selected = modelos.find(x => x.id === selectedId);
   const isEncaminhamento = selected && ENCAMINHAMENTO_TIPOS.includes(selected.tipo.toLowerCase());
-  const tipoLower = selected?.tipo.toLowerCase() || '';
 
   const buildHtmlBody = (signatureHtml: string) => {
-    // Content may already be rich HTML from TipTap or plain text
     const html = conteudoFinal.includes('<') ? conteudoFinal : conteudoFinal.replace(/\n/g, '<br/>');
     const carimboHtml = formatCarimboBlock(carimbo);
     return `
@@ -252,45 +225,10 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
     `;
   };
 
-  const handleSaveDraft = async () => {
-    if (!selected) return null;
-    setSalvando(true);
-    let newId = null;
-    try {
-      const body = buildHtmlBody('');
-      const { data, error } = await supabase.from('documentos_gerados').insert({
-        paciente_id: paciente?.id || '',
-        paciente_nome: paciente?.nome || '',
-        profissional_id: profissional?.id || user?.id || '',
-        profissional_nome: profissional?.nome || user?.nome || '',
-        tipo_documento: selected.tipo,
-        conteudo_original: conteudoFinal,
-        conteudo_html: body,
-        campos_formulario: { ...campos, medicamentos } as any,
-        modelo_id: selected.id,
-        unidade_id: unidade || '',
-        modelo_versao: selected.version || 1,
-        status: 'rascunho',
-
-      }).select('id').single();
-
-      if (error) throw error;
-      newId = data.id;
-      setSavedDocId(newId);
-      toast.success('📝 Rascunho salvo!');
-    } catch (e: any) {
-      toast.error('Erro: ' + e.message);
-    }
-    setSalvando(false);
-    return newId;
-  };
-
   const handleSignAndFinalize = async () => {
     if (!selected) return;
     setSalvando(true);
-
     try {
-      // Generate signature
       const sig = await generateSignature(
         conteudoFinal,
         profissional?.id || user?.id || '',
@@ -303,10 +241,9 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
       const signatureHtml = formatSignatureBlock(sig);
       const body = buildHtmlBody(signatureHtml);
 
-      // Save encaminhamento if needed
       if (isEncaminhamento && profDestinoId) {
         const conselho = profissional ? `${profissional.tipo_conselho} ${profissional.numero_conselho}/${profissional.uf_conselho}` : '';
-        const result = await salvarEncaminhamento({
+        await salvarEncaminhamento({
           paciente_id: paciente?.id || '',
           paciente_nome: paciente?.nome || '',
           paciente_cpf: paciente?.cpf || '',
@@ -327,14 +264,8 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
           unidade: unidade || 'CAPS II Oriximiná',
           tipo_documento: selected.tipo,
         });
-        if (!result.success) {
-          toast.error('Erro ao salvar encaminhamento: ' + (result.error || ''));
-          setSalvando(false);
-          return;
-        }
       }
 
-      // Save to documentos_gerados
       await supabase.from('documentos_gerados').insert({
         paciente_id: paciente?.id || '',
         paciente_nome: paciente?.nome || '',
@@ -351,10 +282,8 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
         modelo_versao: selected.version || 1,
         unidade_id: unidade || '',
         status: 'assinado',
-
       });
 
-      // Print
       openPrintDocument(selected.tipo, body, {
         'Paciente': paciente?.nome || '',
         'CPF': paciente?.cpf || '',
@@ -371,7 +300,6 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
 
   const updateCampo = (key: string, value: string) => setCampos(prev => ({ ...prev, [key]: value }));
 
-  // Auto-calculate data_fim for atestado
   useEffect(() => {
     if (campos.dias_afastamento && campos.data_inicio) {
       const start = new Date(campos.data_inicio);
@@ -391,214 +319,106 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
   const renderTypeSpecificFields = () => {
     if (!selected) return null;
 
-    // ENCAMINHAMENTO
-    if (tipoLower.includes('encaminhamentos')) {
-      return (
-        <div className="space-y-3 border rounded-lg p-4 bg-muted/30">
-          <h4 className="font-semibold text-xs uppercase text-primary">Campos do Encaminhamento</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <Field label="Especialidade destino *" value={campos.especialidade_destino} onChange={v => updateCampo('especialidade_destino', v)} />
-            <Field label="Unidade destino" value={campos.unidade_destino} onChange={v => updateCampo('unidade_destino', v)} />
-            <Field label="Profissional destino" value={campos.profissional_destino} onChange={v => updateCampo('profissional_destino', v)} />
-            <Field label="CID relacionado" value={campos.cid || paciente?.cid || ''} onChange={v => updateCampo('cid', v)} />
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold">Prioridade</Label>
-            <RadioGroup value={campos.prioridade || 'eletivo'} onValueChange={v => updateCampo('prioridade', v)} className="flex gap-4">
-              {['eletivo', 'prioritário', 'urgência'].map(p => (
-                <div key={p} className="flex items-center gap-1.5">
-                  <RadioGroupItem value={p} id={`pri-${p}`} />
-                  <Label htmlFor={`pri-${p}`} className="text-xs capitalize">{p}</Label>
+    const base = getBaseTemplate(selected.tipo);
+    const manualFields = base?.campos_manuais || [];
+
+    if (manualFields.length === 0 && !selected.tipo.toLowerCase().includes('receitu')) return null;
+
+    return (
+      <div className="space-y-4 border rounded-lg p-4 bg-muted/30">
+        <div className="flex items-center gap-2 mb-2">
+          <Info className="w-4 h-4 text-primary" />
+          <h4 className="font-semibold text-xs uppercase text-primary">Campos de Preenchimento</h4>
+        </div>
+        
+        {selected.tipo.toLowerCase().includes('receitu') && (
+          <div className="space-y-3 mb-4">
+             {medicamentos.map((med, i) => (
+                <div key={i} className="grid grid-cols-2 md:grid-cols-6 gap-2 items-end border-b pb-2">
+                  <div className="space-y-1"><Label className="text-[10px]">Medicamento</Label><Input value={med.medicamento} onChange={e => updateMedicamento(i, 'medicamento', e.target.value)} className="h-8 text-xs" /></div>
+                  <div className="space-y-1"><Label className="text-[10px]">Dosagem</Label><Input value={med.dosagem} onChange={e => updateMedicamento(i, 'dosagem', e.target.value)} className="h-8 text-xs" /></div>
+                  <div className="space-y-1"><Label className="text-[10px]">Via</Label><Input value={med.via} onChange={e => updateMedicamento(i, 'via', e.target.value)} className="h-8 text-xs" /></div>
+                  <div className="space-y-1"><Label className="text-[10px]">Frequência</Label><Input value={med.frequencia} onChange={e => updateMedicamento(i, 'frequencia', e.target.value)} className="h-8 text-xs" /></div>
+                  <div className="space-y-1"><Label className="text-[10px]">Duração</Label><Input value={med.duracao} onChange={e => updateMedicamento(i, 'duracao', e.target.value)} className="h-8 text-xs" /></div>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => removeMedicamento(i)}><Trash2 className="w-3.5 h-3.5 text-destructive" /></Button>
                 </div>
               ))}
-            </RadioGroup>
+              <Button variant="outline" size="sm" onClick={addMedicamento} className="gap-1"><Plus className="w-3.5 h-3.5" /> Adicionar medicamento</Button>
           </div>
-          <FieldArea label="Motivo do encaminhamento *" value={campos.motivo} onChange={v => updateCampo('motivo', v)} />
-          <FieldArea label="Observações clínicas relevantes" value={campos.observacoes} onChange={v => updateCampo('observacoes', v)} />
-        </div>
-      );
-    }
+        )}
 
-    // ATESTADO
-    if (tipoLower.includes('atestado')) {
-      return (
-        <div className="space-y-3 border rounded-lg p-4 bg-muted/30">
-          <h4 className="font-semibold text-xs uppercase text-primary">Campos do Atestado</h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <Field label="Dias de afastamento" value={campos.dias_afastamento} onChange={v => updateCampo('dias_afastamento', v)} type="number" />
-            <Field label="Data início" value={campos.data_inicio} onChange={v => updateCampo('data_inicio', v)} type="date" />
-            <Field label="Data fim (auto)" value={campos.data_fim} onChange={v => updateCampo('data_fim', v)} type="date" disabled />
-          </div>
-          <div className="flex items-center gap-2">
-            <Checkbox checked={exibirCid} onCheckedChange={v => setExibirCid(!!v)} id="exibir-cid" />
-            <Label htmlFor="exibir-cid" className="text-xs">Exibir CID no documento</Label>
-          </div>
-          {exibirCid && <Field label="CID" value={campos.cid || paciente?.cid || ''} onChange={v => updateCampo('cid', v)} />}
-          <FieldArea label="Motivo" value={campos.motivo} onChange={v => updateCampo('motivo', v)} />
-          <FieldArea label="Observações" value={campos.observacoes} onChange={v => updateCampo('observacoes', v)} />
-        </div>
-      );
-    }
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {manualFields.map(field => {
+            const label = field.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+            
+            if (field.includes('corpo') || field.includes('orientações') || field.includes('resumo') || field.includes('motivo') || field.includes('justificativa') || field.includes('histórico') || field.includes('avaliação') || field.includes('diagnóstico') || field.includes('conclusão') || field.includes('objetivo') || field.includes('intervenções')) {
+               return (
+                <div key={field} className="md:col-span-2">
+                  <FieldArea 
+                    label={label} 
+                    value={campos[field]} 
+                    onChange={v => updateCampo(field, v)} 
+                  />
+                </div>
+              );
+            }
 
-    // DECLARAÇÃO DE COMPARECIMENTO / FALTA
-    if (tipoLower.includes('declaraç') || tipoLower.includes('comparecimento')) {
-      const situacao = campos.situacao || 'compareceu';
-      return (
-        <div className="space-y-3 border rounded-lg p-4 bg-muted/30">
-          <h4 className="font-semibold text-xs uppercase text-primary">Campos da Declaração</h4>
+            if (field.includes('data')) {
+              return (
+                <Field 
+                  key={field} 
+                  label={label} 
+                  type="date" 
+                  value={campos[field]} 
+                  onChange={v => updateCampo(field, v)} 
+                />
+              );
+            }
 
-          {/* Situação da Agenda */}
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold">Situação da Agenda *</Label>
-            <RadioGroup
-              value={situacao}
-              onValueChange={v => updateCampo('situacao', v)}
-              className="flex gap-4"
-            >
-              <div className="flex items-center gap-1.5">
-                <RadioGroupItem value="compareceu" id="sit-compareceu" />
-                <Label htmlFor="sit-compareceu" className="text-xs">Compareceu</Label>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <RadioGroupItem value="faltou" id="sit-faltou" />
-                <Label htmlFor="sit-faltou" className="text-xs">Faltou</Label>
-              </div>
-            </RadioGroup>
-          </div>
+            if (field.includes('horario')) {
+              return (
+                <Field 
+                  key={field} 
+                  label={label} 
+                  type="time" 
+                  value={campos[field]} 
+                  onChange={v => updateCampo(field, v)} 
+                />
+              );
+            }
 
-          {situacao === 'compareceu' ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <Field label="Horário de entrada" value={campos.horario_entrada} onChange={v => updateCampo('horario_entrada', v)} type="time" />
-              <Field label="Horário de saída" value={campos.horario_saida} onChange={v => updateCampo('horario_saida', v)} type="time" />
-              <div className="space-y-1.5">
-                <Label className="text-xs font-semibold">Finalidade</Label>
-                <Select value={campos.finalidade || 'consulta'} onValueChange={v => updateCampo('finalidade', v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {['consulta', 'exame', 'procedimento', 'outro'].map(f => (
-                      <SelectItem key={f} value={f}>{f.charAt(0).toUpperCase() + f.slice(1)}</SelectItem>
+            if (field === 'prioridade') {
+              return (
+                <div key={field} className="space-y-1.5">
+                  <Label className="text-xs font-semibold">Prioridade</Label>
+                  <RadioGroup 
+                    value={campos.prioridade || 'eletivo'} 
+                    onValueChange={v => updateCampo('prioridade', v)} 
+                    className="flex gap-4"
+                  >
+                    {['eletivo', 'prioritário', 'urgência'].map(p => (
+                      <div key={p} className="flex items-center gap-1.5">
+                        <RadioGroupItem value={p} id={`pri-${p}`} />
+                        <Label htmlFor={`pri-${p}`} className="text-xs capitalize">{p}</Label>
+                      </div>
                     ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <Field
-                  label="Data da Falta *"
-                  value={campos.data_falta}
-                  onChange={v => updateCampo('data_falta', v)}
-                  type="date"
-                />
-                <Field
-                  label="Profissional Agendado *"
-                  value={campos.profissional_agendado}
-                  onChange={v => updateCampo('profissional_agendado', v)}
-                />
-              </div>
-              <FieldArea
-                label="Motivo da Falta *"
-                value={campos.motivo_falta}
-                onChange={v => updateCampo('motivo_falta', v)}
-              />
-            </div>
-          )}
-        </div>
-      );
-    }
+                  </RadioGroup>
+                </div>
+              );
+            }
 
-    // RECEITUÁRIO
-    if (tipoLower.includes('receitu') || tipoLower.includes('receita') || tipoLower.includes('prescriç')) {
-      return (
-        <div className="space-y-3 border rounded-lg p-4 bg-muted/30">
-          <h4 className="font-semibold text-xs uppercase text-primary">Receituário</h4>
-          {medicamentos.map((med, i) => (
-            <div key={i} className="grid grid-cols-2 md:grid-cols-6 gap-2 items-end border-b pb-2">
-              <div className="space-y-1"><Label className="text-[10px]">Medicamento</Label><Input value={med.medicamento} onChange={e => updateMedicamento(i, 'medicamento', e.target.value)} className="h-8 text-xs" /></div>
-              <div className="space-y-1"><Label className="text-[10px]">Dosagem</Label><Input value={med.dosagem} onChange={e => updateMedicamento(i, 'dosagem', e.target.value)} className="h-8 text-xs" /></div>
-              <div className="space-y-1"><Label className="text-[10px]">Via</Label><Input value={med.via} onChange={e => updateMedicamento(i, 'via', e.target.value)} className="h-8 text-xs" /></div>
-              <div className="space-y-1"><Label className="text-[10px]">Frequência</Label><Input value={med.frequencia} onChange={e => updateMedicamento(i, 'frequencia', e.target.value)} className="h-8 text-xs" /></div>
-              <div className="space-y-1"><Label className="text-[10px]">Duração</Label><Input value={med.duracao} onChange={e => updateMedicamento(i, 'duracao', e.target.value)} className="h-8 text-xs" /></div>
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => removeMedicamento(i)}><Trash2 className="w-3.5 h-3.5 text-destructive" /></Button>
-            </div>
-          ))}
-          <Button variant="outline" size="sm" onClick={addMedicamento} className="gap-1"><Plus className="w-3.5 h-3.5" /> Adicionar medicamento</Button>
-          <FieldArea label="Orientações gerais" value={campos.orientacoes} onChange={v => updateCampo('orientacoes', v)} />
-          <Field label="Validade da receita" value={campos.validade_receita} onChange={v => updateCampo('validade_receita', v)} type="date" />
-        </div>
-      );
-    }
-
-    // LAUDO TÉCNICO/CLÍNICO
-    if (tipoLower.includes('laudo')) {
-      return (
-        <div className="space-y-3 border rounded-lg p-4 bg-muted/30">
-          <h4 className="font-semibold text-xs uppercase text-primary">Campos do Laudo</h4>
-          <FieldArea label="Objetivo do laudo" value={campos.objetivo} onChange={v => updateCampo('objetivo', v)} />
-          <FieldArea label="Histórico relevante" value={campos.historico} onChange={v => updateCampo('historico', v)} />
-          <FieldArea label="Exame físico / avaliação" value={campos.exame_fisico} onChange={v => updateCampo('exame_fisico', v)} />
-          <FieldArea label="Conclusão / parecer" value={campos.conclusao} onChange={v => updateCampo('conclusao', v)} />
-          <FieldArea label="Recomendações" value={campos.recomendacoes} onChange={v => updateCampo('recomendacoes', v)} />
-          <Field label="CID" value={campos.cid || paciente?.cid || ''} onChange={v => updateCampo('cid', v)} />
-        </div>
-      );
-    }
-
-    // RELATÓRIO DE EVOLUÇÃO
-    if (tipoLower.includes('evoluç') || tipoLower.includes('relatório')) {
-      return (
-        <div className="space-y-3 border rounded-lg p-4 bg-muted/30">
-          <h4 className="font-semibold text-xs uppercase text-primary">Campos do Relatório</h4>
-          <Field label="Data da evolução" value={campos.data_evolucao || new Date().toISOString().split('T')[0]} onChange={v => updateCampo('data_evolucao', v)} type="date" />
-          <FieldArea label="Queixa principal" value={campos.queixa_principal} onChange={v => updateCampo('queixa_principal', v)} />
-          <FieldArea label="Evolução clínica" value={campos.evolucao_clinica} onChange={v => updateCampo('evolucao_clinica', v)} />
-          <FieldArea label="Conduta realizada" value={campos.conduta} onChange={v => updateCampo('conduta', v)} />
-          <FieldArea label="Plano terapêutico" value={campos.plano} onChange={v => updateCampo('plano', v)} />
-          <Field label="Próximo atendimento" value={campos.proximo_atendimento} onChange={v => updateCampo('proximo_atendimento', v)} type="date" />
-        </div>
-      );
-    }
-
-    // GENERIC SMART FIELDS based on variables in template
-    const base = getBaseTemplate(selected.tipo);
-    const variables = base?.variaveis || [];
-    const existingKeys = ['especialidade_destino', 'unidade_destino', 'profissional_destino', 'cid', 'prioridade', 'motivo', 'observacoes', 'dias_afastamento', 'data_inicio', 'data_fim', 'situacao', 'horario_entrada', 'horario_saida', 'finalidade', 'data_falta', 'profissional_agendado', 'motivo_falta', 'medicamentos', 'orientacoes', 'validade_receita', 'objetivo', 'historico', 'exame_fisico', 'conclusao', 'recomendacoes', 'data_evolucao', 'queixa_principal', 'evolucao_clinica', 'conduta', 'plano', 'proximo_atendimento'];
-    const systemVars = ['nome_paciente', 'cpf', 'cns', 'data_nascimento', 'idade', 'data_atendimento', 'carimbo_profissional', 'profissional', 'unidade', 'numero_conselho', 'conselho', 'data_hoje'];
-    
-    const missingVars = variables.filter(v => !existingKeys.includes(v) && !systemVars.includes(v));
-
-    if (missingVars.length > 0) {
-      return (
-        <div className="space-y-3 border rounded-lg p-4 bg-primary/5 border-primary/20">
-          <div className="flex items-center justify-between">
-            <h4 className="font-semibold text-xs uppercase text-primary">Informações Adicionais</h4>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Info className="w-3.5 h-3.5 text-primary cursor-help" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="text-xs">Campos detectados automaticamente do modelo</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {missingVars.map(v => (
+            return (
               <Field 
-                key={v} 
-                label={v.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} 
-                value={campos[v] || ''} 
-                onChange={val => updateCampo(v, val)} 
+                key={field} 
+                label={label} 
+                value={campos[field]} 
+                onChange={v => updateCampo(field, v)} 
               />
-            ))}
-          </div>
+            );
+          })}
         </div>
-      );
-    }
-
-    return null;
+      </div>
+    );
   };
 
   return (
@@ -615,7 +435,6 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
         </DialogHeader>
 
         <div className="space-y-4 overflow-y-auto flex-1 px-6 py-4">
-          {/* Model selector */}
           <div className="space-y-1.5">
             <Label className="text-[13px] font-bold">Selecionar modelo</Label>
             {modelos.length === 0 ? (
@@ -634,13 +453,11 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
 
           {selected && (
             <>
-              {/* Type badge */}
               <div className="flex items-center gap-2">
                 <Badge variant="outline" className="text-xs">{selected.tipo}</Badge>
                 {paciente?.nome && <span className="text-sm font-medium">{paciente.nome}</span>}
               </div>
 
-              {/* Encaminhamento destination */}
               {isEncaminhamento && (
                 <div className="space-y-1.5">
                   <Label className="text-[13px] font-bold">Profissional destino (fila interna)</Label>
@@ -655,24 +472,10 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
                 </div>
               )}
 
-              {/* Type-specific fields */}
               {renderTypeSpecificFields()}
 
               <Separator />
 
-              {/* Editable raw HTML — hidden for cleaner UX on Declaração/Relatório de Evolução */}
-              {!(tipoLower.includes('declaraç') || tipoLower.includes('comparecimento') || tipoLower.includes('evoluç') || tipoLower.includes('relatório')) && (
-                <div className="space-y-1.5">
-                  <Label className="text-[13px] font-bold">Conteúdo do documento (editável)</Label>
-                  <Textarea
-                    value={conteudoFinal}
-                    onChange={e => setConteudoFinal(e.target.value)}
-                    className="min-h-[180px] text-sm font-serif"
-                  />
-                </div>
-              )}
-
-              {/* Preview */}
               <div className="space-y-1.5">
                 <Label className="text-[13px] font-bold">Preview</Label>
                 <div className="border rounded-lg bg-white max-h-[400px] overflow-y-auto">
@@ -690,23 +493,13 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
                     <div className="p-5 text-center text-muted-foreground text-sm">Carregando preview...</div>
                   )}
 
-                  {/* Carimbo preview */}
                   {carimbo && (
-                    <div className="mt-6 text-right">
-                      {carimbo.tipo === 'digital' ? (
-                        <div className="inline-block border border-foreground rounded-md px-4 py-2 text-center text-xs">
-                          <div className="font-bold text-sm">{carimbo.nome}</div>
-                          <div>{carimbo.conselho} / {carimbo.numero_registro}-{carimbo.uf}</div>
-                          <div>{carimbo.especialidade}</div>
-                        </div>
-                      ) : carimbo.imagem_url ? (
-                        <img src={carimbo.imagem_url} alt="Carimbo" className="inline-block max-w-[200px] max-h-[80px]" />
-                      ) : null}
+                    <div className="mt-6 text-right px-4">
+                       <div dangerouslySetInnerHTML={{ __html: formatCarimboBlock(carimbo) }} />
                     </div>
                   )}
 
-                  {/* Signature preview placeholder */}
-                  <div className="mt-4 border border-dashed border-muted-foreground/30 rounded p-3 text-center text-xs text-muted-foreground">
+                  <div className="mt-4 border border-dashed border-muted-foreground/30 rounded p-3 text-center text-xs text-muted-foreground mx-4 mb-4">
                     <ShieldCheck className="w-4 h-4 mx-auto mb-1" />
                     Bloco de assinatura eletrônica será inserido ao assinar
                   </div>
@@ -716,60 +509,20 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
           )}
         </div>
 
-        <DialogFooter className="gap-2 flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between w-full border-t p-4 shrink-0 bg-background">
-          <div className="flex gap-2 flex-wrap w-full sm:w-auto">
-            <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1 sm:flex-none">Fechar</Button>
-            {selected && !savedDocId && (
-              <Button variant="secondary" onClick={handleSaveDraft} disabled={salvando} className="gap-1.5 flex-1 sm:flex-none">
-                <Save className="w-4 h-4" /> Salvar Rascunho
+        <DialogFooter className="gap-2 border-t p-4 shrink-0 bg-background">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+            {selected && (
+              <Button onClick={handleSignAndFinalize} disabled={salvando} className="gap-1.5">
+                {salvando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Printer className="w-4 h-4" />}
+                Assinar e Imprimir
               </Button>
             )}
-          </div>
-          
-          <div className="flex gap-2 items-center flex-wrap w-full sm:w-auto justify-end">
-            {selected && (
-              <>
-                {!savedDocId ? (
-                  <Button
-                    onClick={handleSignAndFinalize}
-                    disabled={salvando || (isEncaminhamento && !profDestinoId)}
-                    className="gap-1.5 w-full sm:w-auto whitespace-nowrap"
-                  >
-                    {salvando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Printer className="w-4 h-4" />}
-                    Imprimir e Finalizar
-                  </Button>
-                ) : (
-                  <div className="flex items-center gap-2 bg-muted/50 p-1 px-2 rounded-lg border border-primary/20 flex-wrap w-full sm:w-auto">
-                    <span className="text-[10px] font-bold text-primary uppercase">Assinatura:</span>
-                    <AutentiqueSignatureActions 
-                      documentoId={savedDocId}
-                      paciente={paciente}
-                      profissional={profissional || user}
-                      unidadeId={unidade}
-                      titulo={`${selected.nome} - ${paciente?.nome}`}
-                    />
-                    <Separator orientation="vertical" className="h-6 hidden sm:block" />
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleSignAndFinalize}
-                      disabled={salvando}
-                      className="gap-1.5 h-8 text-[11px] whitespace-nowrap"
-                    >
-                      <Printer className="w-3.5 h-3.5" /> Finalizar s/ Digital
-                    </Button>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 };
 
-// Helper components
 type FieldProps = {
   label: string;
   value?: string;
@@ -791,7 +544,6 @@ const Field = React.forwardRef<HTMLInputElement, FieldProps>(({ label, value, on
     />
   </div>
 ));
-
 Field.displayName = 'Field';
 
 type FieldAreaProps = {
@@ -806,7 +558,6 @@ const FieldArea = React.forwardRef<HTMLTextAreaElement, FieldAreaProps>(({ label
     <Textarea ref={ref} value={value || ''} onChange={e => onChange(e.target.value)} className="min-h-[60px] text-xs" />
   </div>
 ));
-
 FieldArea.displayName = 'FieldArea';
 
 export default GerarDocumentoModal;
