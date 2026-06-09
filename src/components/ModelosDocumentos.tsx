@@ -13,23 +13,15 @@ import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { FileText, Plus, Pencil, Trash2, Eye, Copy, Loader2, Printer, Search, Globe, Building2, UserIcon, Filter, RefreshCw, AlertTriangle, CheckCircle2, Info } from 'lucide-react';
+import { FileText, Plus, Pencil, Trash2, Eye, Copy, Loader2, Printer, Search, Globe, Building2, UserIcon, Filter } from 'lucide-react';
 import { openPrintDocument } from '@/lib/printLayout';
-import { MODELOS_BASE, getBaseTemplate } from '@/constants/modelosBase';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const RichTextEditor = lazy(() => import('@/components/editor/RichTextEditor'));
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
 
 export interface TemplateVersion {
-  id?: string;
   conteudo: string;
   salvo_em: string;
   salvo_por?: string;
-  version: number;
 }
 
 export interface DocumentTemplate {
@@ -43,37 +35,20 @@ export interface DocumentTemplate {
   unidade_id: string;
   criado_por: string;
   criado_por_nome: string;
-  version: number;
-  is_default: boolean;
-  especialidade_id?: string;
-  profissao_id?: string;
-  historico_edicoes: TemplateVersion[];
+  versoes: TemplateVersion[];
   blocos_clinicos: any[];
   created_at: string;
   updated_at: string;
 }
 
-export const TIPOS_DOCUMENTO = [
-  'Declaração de Comparecimento',
-  'Declaração de Acompanhante',
+const TIPOS_DOCUMENTO = [
   'Atestado Médico',
-  'Receituário',
+  'Declaração de Comparecimento',
   'Encaminhamento',
-  'Solicitação de Exames',
-  'Relatório de Evolução Clínica',
-  'Relatório Multiprofissional',
-  'Relatório de Alta',
-  'Parecer Técnico',
-  'Laudo',
-  'Plano Terapêutico',
-  'Termo de Consentimento',
-  'Termo de Responsabilidade',
-  'Autorização',
-  'Guia de Referência',
-  'Guia de Contrarreferência',
-  'Documento personalizado'
+  'Receituário',
+  'Laudo Clínico',
+  'Relatório de Evolução',
 ];
-
 
 const PERFIS = [
   { value: 'master', label: 'Master' },
@@ -97,53 +72,36 @@ const substituirVariaveis = (conteudo: string): string => {
     .replace(/\{\{cpf\}\}/g, '123.456.789-00')
     .replace(/\{\{cns\}\}/g, '123 4567 8901 2345')
     .replace(/\{\{data_nascimento\}\}/g, '01/01/1990')
-    .replace(/\{\{idade\}\}/g, '34')
-    .replace(/\{\{telefone\}\}/g, '(93) 98888-7777')
-    .replace(/\{\{endereco\}\}/g, 'Rua das Flores, 123 - Centro')
     .replace(/\{\{data_atendimento\}\}/g, hoje)
-    .replace(/\{\{hora_atendimento\}\}/g, '08:30')
     .replace(/\{\{profissional\}\}/g, 'Dr. Maria Santos')
+    .replace(/\{\{cid\}\}/g, 'F84.0')
     .replace(/\{\{especialidade\}\}/g, 'Fisioterapia')
-    .replace(/\{\{conselho\}\}/g, 'CREFITO')
-    .replace(/\{\{numero_conselho\}\}/g, '12345/PA')
     .replace(/\{\{unidade\}\}/g, 'CAPS II Oriximiná')
-    .replace(/\{\{queixa_principal\}\}/g, 'Dor lombar crônica')
-    .replace(/\{\{evolucao\}\}/g, 'Paciente apresenta melhora no quadro álgico...')
-    .replace(/\{\{conduta\}\}/g, 'Manter exercícios terapêuticos e reavaliação em 15 dias.')
-    .replace(/\{\{cid\}\}/g, 'M54.5')
-    .replace(/\{\{medicamentos\}\}/g, '1. Paracetamol 500mg — Oral, 8/8h, 5 dias')
-    .replace(/\{\{exames\}\}/g, '1. Raio-X de Coluna Lombar')
-    .replace(/\{\{carimbo_profissional\}\}/g, '<div style="border:1px solid #000; padding:10px; width:200px; margin:20px auto; text-align:center;">[CARIMBO DO PROFISSIONAL]</div>')
-    .replace(/\{\{assinatura_profissional\}\}/g, '<div style="border-top:1px solid #000; width:200px; margin-top:40px; text-align:center;">Assinatura do Profissional</div>')
     .replace(/\{\{data_hoje\}\}/g, hoje)
-    // Add dummy values for all base template variables to avoid {{var}} appearing in preview
-    .replace(/\{\{finalidade\}\}/g, 'Consulta Clínica')
-    .replace(/\{\{horario_entrada\}\}/g, '08:30')
-    .replace(/\{\{horario_saida\}\}/g, '09:15')
     .replace(/\{\{dias_afastamento\}\}/g, '3')
     .replace(/\{\{data_inicio\}\}/g, hoje)
     .replace(/\{\{data_fim\}\}/g, hoje)
-    .replace(/\{\{especialidade_destino\}\}/g, 'Cardiologia')
-    .replace(/\{\{unidade_destino\}\}/g, 'Hospital Municipal')
-    .replace(/\{\{motivo\}\}/g, 'Avaliação pré-operatória')
+    .replace(/\{\{hora_entrada\}\}/g, '08:00')
+    .replace(/\{\{hora_saida\}\}/g, '09:30')
+    .replace(/\{\{medicamentos\}\}/g, '1. Paracetamol 500mg — Oral, 8/8h, 5 dias')
+    .replace(/\{\{especialidade_destino\}\}/g, 'Neurologia')
+    .replace(/\{\{unidade_destino\}\}/g, 'Hospital Regional')
+    .replace(/\{\{motivo\}\}/g, 'Avaliação complementar')
+    .replace(/\{\{observacoes\}\}/g, 'Sem observações adicionais')
     .replace(/\{\{prioridade\}\}/g, 'Eletivo')
-    .replace(/\{\{resumo_clinico\}\}/g, 'Paciente com histórico de hipertensão...')
-    .replace(/\{\{orientacoes\}\}/g, 'Tomar medicação em jejum...')
-    .replace(/\{\{validade_receita\}\}/g, '30 dias')
-    .replace(/\{\{histórico\}\}/g, 'Paciente acompanhado há 6 meses...')
-    .replace(/\{\{avaliação\}\}/g, 'Apresenta melhora gradual...')
-    .replace(/\{\{plano_terapêutico\}\}/g, 'Manter sessões semanais...')
-    .replace(/\{\{diagnóstico\}\}/g, 'Transtorno de ansiedade...')
-    .replace(/\{\{objetivos\}\}/g, 'Redução de sintomas...')
-    .replace(/\{\{intervenções\}\}/g, 'Terapia cognitivo-comportamental...')
-    .replace(/\{\{periodicidade\}\}/g, 'Semanal')
-    .replace(/\{\{procedimento\}\}/g, 'Aplicação de medicação IM')
-    .replace(/\{\{riscos\}\}/g, 'Leve dor local')
-    .replace(/\{\{titulo_documento\}\}/g, 'DOCUMENTO CLÍNICO')
-    .replace(/\{\{corpo_documento\}\}/g, 'Texto livre para o documento personalizado...');
+    .replace(/\{\{validade_receita\}\}/g, hoje)
+    .replace(/\{\{objetivo\}\}/g, 'Avaliação funcional')
+    .replace(/\{\{historico\}\}/g, 'Histórico relevante do paciente')
+    .replace(/\{\{exame_fisico\}\}/g, 'Exame físico normal')
+    .replace(/\{\{conclusao\}\}/g, 'Paciente apto')
+    .replace(/\{\{recomendacoes\}\}/g, 'Manter acompanhamento')
+    .replace(/\{\{queixa_principal\}\}/g, 'Dor lombar')
+    .replace(/\{\{evolucao_clinica\}\}/g, 'Melhora progressiva')
+    .replace(/\{\{conduta\}\}/g, 'Exercícios terapêuticos')
+    .replace(/\{\{plano\}\}/g, 'Continuar tratamento semanal')
+    .replace(/\{\{orientacoes\}\}/g, 'Tomar conforme prescrição')
+    .replace(/\{\{finalidade\}\}/g, 'Consulta');
 };
-
-
 
 const ModelosDocumentos: React.FC = () => {
   const { user, isGlobalAdmin } = useAuth();
@@ -176,22 +134,19 @@ const ModelosDocumentos: React.FC = () => {
     setLoading(false);
   };
 
-  const openNew = (tipo?: string) => {
-    const base = tipo ? getBaseTemplate(tipo) : undefined;
+  const openNew = () => {
     setCurrent({
       id: '',
-      nome: base ? base.nome : (tipo ? `${tipo} Padrão` : ''),
-      tipo: tipo || TIPOS_DOCUMENTO[0],
-      conteudo: base?.conteudo || '',
+      nome: '',
+      tipo: TIPOS_DOCUMENTO[0],
+      conteudo: '',
       ativo: true,
-      perfis_permitidos: base?.perfis_permitidos || ['master', 'profissional'],
+      perfis_permitidos: ['master', 'profissional'],
       tipo_modelo: user?.role === 'master' || isGlobalAdmin ? 'UNIDADE' : 'PROFISSIONAL',
       unidade_id: user?.unidadeId || '',
       criado_por: user?.id || '',
       criado_por_nome: user?.nome || '',
-      version: 1,
-      is_default: false,
-      historico_edicoes: [],
+      versoes: [],
       blocos_clinicos: [],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -199,13 +154,10 @@ const ModelosDocumentos: React.FC = () => {
     setEditOpen(true);
   };
 
-
-
   const openEdit = (m: DocumentTemplate) => {
-    setCurrent({ ...m, historico_edicoes: m.historico_edicoes || [] });
+    setCurrent({ ...m, versoes: m.versoes || [] });
     setEditOpen(true);
   };
-
 
   const handleSave = async () => {
     if (!current) return;
@@ -214,7 +166,7 @@ const ModelosDocumentos: React.FC = () => {
     setSaving(true);
     try {
       const isNew = !current.id || !modelos.some(m => m.id === current.id);
-      let payload: any = {
+      const payload = {
         nome: current.nome,
         tipo: current.tipo,
         conteudo: current.conteudo,
@@ -224,34 +176,24 @@ const ModelosDocumentos: React.FC = () => {
         unidade_id: current.tipo_modelo === 'GLOBAL' ? '' : (current.unidade_id || user?.unidadeId || ''),
         criado_por: current.criado_por || user?.id || '',
         criado_por_nome: current.criado_por_nome || user?.nome || '',
-        is_default: current.is_default,
-        especialidade_id: current.especialidade_id,
-        profissao_id: current.profissao_id,
+        versoes: current.versoes as any,
         blocos_clinicos: current.blocos_clinicos as any,
       };
 
       if (isNew) {
-        payload.version = 1;
-        payload.historico_edicoes = [];
         const { error } = await supabase.from('document_templates').insert(payload);
         if (error) throw error;
       } else {
+        // Version history
         const old = modelos.find(m => m.id === current.id);
         if (old && old.conteudo !== current.conteudo) {
-          const historico = [...(current.historico_edicoes || [])];
-          historico.unshift({ 
-            conteudo: old.conteudo, 
-            salvo_em: old.updated_at, 
-            version: old.version || 1,
-            salvo_por: user?.nome
-          });
-          payload.historico_edicoes = historico.slice(0, 20); // Maintain more history
-          payload.version = (old.version || 1) + 1;
+          const versoes = [...(current.versoes || [])];
+          versoes.unshift({ conteudo: old.conteudo, salvo_em: old.updated_at });
+          payload.versoes = versoes.slice(0, 5) as any;
         }
         const { error } = await supabase.from('document_templates').update(payload).eq('id', current.id);
         if (error) throw error;
       }
-
       toast.success('Modelo salvo!');
       setEditOpen(false);
       loadModelos();
@@ -282,10 +224,7 @@ const ModelosDocumentos: React.FC = () => {
       criado_por: user?.id || '',
       criado_por_nome: user?.nome || '',
       tipo_modelo: 'PROFISSIONAL',
-      version: 1,
-      historico_edicoes: [],
-      is_default: false,
-
+      versoes: [],
     });
     setEditOpen(true);
   };
@@ -320,38 +259,13 @@ const ModelosDocumentos: React.FC = () => {
     return m.criado_por === user?.id;
   };
 
-  const handleRestoreBase = () => {
-    if (!current) return;
-    const base = getBaseTemplate(current.tipo);
-    if (base && confirm('Restaurar para o modelo-base padrão? Suas alterações atuais serão perdidas.')) {
-      setCurrent({
-        ...current,
-        conteudo: base.conteudo,
-        perfis_permitidos: base.perfis_permitidos
-      });
-      toast.info('Modelo-base restaurado. Não esqueça de salvar.');
-    }
-  };
-
-  const handleApplyBase = async (m: DocumentTemplate) => {
-    const base = getBaseTemplate(m.tipo);
-    if (base && confirm(`Deseja atualizar "${m.nome}" para o novo modelo-base padrão? Uma nova versão será criada.`)) {
-      const payload = {
-        conteudo: base.conteudo,
-        perfis_permitidos: base.perfis_permitidos,
-        version: (m.version || 1) + 1,
-        updated_at: new Date().toISOString()
-      };
-      
-      const { error } = await supabase.from('document_templates').update(payload).eq('id', m.id);
-      if (error) {
-        toast.error('Erro ao atualizar: ' + error.message);
-      } else {
-        toast.success('Modelo atualizado com sucesso!');
-        loadModelos();
-      }
-    }
-  };
+  // Filters
+  const filtered = modelos.filter(m => {
+    if (search && !m.nome.toLowerCase().includes(search.toLowerCase()) && !m.tipo.toLowerCase().includes(search.toLowerCase())) return false;
+    if (filterTipo !== 'todos' && m.tipo !== filterTipo) return false;
+    if (filterTipoModelo !== 'todos' && m.tipo_modelo !== filterTipoModelo) return false;
+    return true;
+  });
 
   if (loading) {
     return (
@@ -362,14 +276,6 @@ const ModelosDocumentos: React.FC = () => {
       </Card>
     );
   }
-
-
-  const filtered = modelos.filter(m => {
-    if (search && !m.nome.toLowerCase().includes(search.toLowerCase()) && !m.tipo.toLowerCase().includes(search.toLowerCase())) return false;
-    if (filterTipo !== 'todos' && m.tipo !== filterTipo) return false;
-    if (filterTipoModelo !== 'todos' && m.tipo_modelo !== filterTipoModelo) return false;
-    return true;
-  });
 
   return (
     <>
@@ -385,28 +291,9 @@ const ModelosDocumentos: React.FC = () => {
                 <p className="text-sm text-muted-foreground">{modelos.length} modelo(s) disponível(is)</p>
               </div>
             </div>
-            <div className="flex gap-2">
-              <Select onValueChange={(v) => openNew(v)}>
-                <SelectTrigger className="w-[200px] h-9 gap-2">
-                  <Plus className="w-4 h-4" />
-                  <span>Novo por Modelo-Base</span>
-                </SelectTrigger>
-                <SelectContent>
-                  {TIPOS_DOCUMENTO.map(t => (
-                    <SelectItem key={t} value={t}>
-                      <div className="flex flex-col">
-                        <span>{t}</span>
-                        <span className="text-[10px] text-muted-foreground">Usar padrão profissional</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button onClick={() => openNew()} size="sm" variant="outline" className="gap-1.5 h-9">
-                Em Branco
-              </Button>
-
-            </div>
+            <Button onClick={openNew} size="sm" className="gap-1.5">
+              <Plus className="w-4 h-4" /> Novo Modelo
+            </Button>
           </div>
 
           {/* Search & Filters */}
@@ -454,9 +341,6 @@ const ModelosDocumentos: React.FC = () => {
               {filtered.map(m => {
                 const tipoInfo = TIPO_MODELO_LABELS[m.tipo_modelo] || TIPO_MODELO_LABELS.UNIDADE;
                 const TipoIcon = tipoInfo.icon;
-                const base = getBaseTemplate(m.tipo);
-                const isOutdated = base && m.conteudo !== base.conteudo;
-
                 return (
                   <div
                     key={m.id}
@@ -472,15 +356,6 @@ const ModelosDocumentos: React.FC = () => {
                             {tipoInfo.label}
                           </Badge>
                           {!m.ativo && <Badge variant="secondary" className="text-xs">Inativo</Badge>}
-                          {isOutdated && (
-                            <Badge 
-                              variant="outline" 
-                              className="text-[10px] bg-amber-50 text-amber-600 border-amber-200 cursor-pointer hover:bg-amber-100 transition-colors"
-                              onClick={() => handleApplyBase(m)}
-                            >
-                              <RefreshCw className="w-3 h-3 mr-1" /> Atualização disponível
-                            </Badge>
-                          )}
                         </div>
                         <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                           {m.conteudo.replace(/<[^>]*>/g, '').slice(0, 120)}...
@@ -494,7 +369,6 @@ const ModelosDocumentos: React.FC = () => {
                           </div>
                         </div>
                       </div>
-
                       <div className="flex items-center gap-1 shrink-0">
                         {canEdit(m) && <Switch checked={m.ativo} onCheckedChange={v => handleToggle(m.id, v)} />}
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePreview(m)} title="Preview">
@@ -549,33 +423,7 @@ const ModelosDocumentos: React.FC = () => {
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-[13px] font-bold">Tipo de documento</Label>
-                  <Select 
-                    value={current.tipo} 
-                    onValueChange={v => {
-                      const base = getBaseTemplate(v);
-                      // If it's a new document and editor is empty or content is very short/default, load base
-                      const isEditorEmpty = !current.conteudo || 
-                                          current.conteudo === '<p><br></p>' || 
-                                          current.conteudo === '' || 
-                                          current.conteudo === '<p></p>';
-                      
-                      const shouldUpdate = !current.id && isEditorEmpty;
-                      
-                      if (shouldUpdate && base) {
-                        setCurrent({ 
-                          ...current, 
-                          tipo: v, 
-                          nome: base.nome, 
-                          conteudo: base.conteudo,
-                          perfis_permitidos: base.perfis_permitidos
-                        });
-                        toast.info(`Biblioteca: Modelo Profissional de "${v}" carregado.`);
-                      } else {
-                        setCurrent({ ...current, tipo: v });
-                      }
-                    }}
-
-                  >
+                  <Select value={current.tipo} onValueChange={v => setCurrent({ ...current, tipo: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {TIPOS_DOCUMENTO.map(t => (
@@ -600,90 +448,16 @@ const ModelosDocumentos: React.FC = () => {
                 </div>
               </div>
 
-              {/* Rich Editor with Smart Preview and Variables */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label className="text-[13px] font-bold">Conteúdo do documento</Label>
-                  <div className="flex items-center gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="h-7 text-[10px] gap-1"
-                      onClick={() => {
-                        const base = getBaseTemplate(current.tipo);
-                        if (base && confirm('Deseja restaurar o conteúdo para o padrão deste tipo de documento? Todas as alterações atuais serão perdidas no editor.')) {
-                          setCurrent({ 
-                            ...current, 
-                            conteudo: base.conteudo,
-                            perfis_permitidos: base.perfis_permitidos
-                          });
-                          toast.success('Modelo padrão restaurado no editor');
-                        }
-                      }}
-                    >
-                      <RefreshCw className="w-3 h-3" /> Restaurar Padrão
-                    </Button>
-
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div className="flex items-center gap-1 text-[10px] text-muted-foreground bg-muted px-2 py-1 rounded cursor-help">
-                            <Info className="w-3 h-3" /> Variáveis Sugeridas
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-[300px]">
-                          <p className="font-bold mb-1">Use {`{{ }}`} para variáveis:</p>
-                          <div className="flex flex-wrap gap-1">
-                            {getBaseTemplate(current.tipo)?.variaveis.map(v => (
-                              <Badge key={v} variant="outline" className="text-[9px]">{`{{${v}}}`}</Badge>
-                            ))}
-                          </div>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 border rounded-xl overflow-hidden bg-muted/20">
-                  <div className="bg-background min-h-[400px] border-r">
-                    <Suspense fallback={<div className="h-[200px] flex items-center justify-center text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin mr-2" />Carregando editor...</div>}>
-                      <RichTextEditor
-                        content={current.conteudo}
-                        onChange={html => setCurrent(prev => prev ? { ...prev, conteudo: html } : prev)}
-                        placeholder="Digite o conteúdo do documento ou insira variáveis..."
-                      />
-                    </Suspense>
-                  </div>
-                  
-                  <div className="bg-white p-6 shadow-inner overflow-y-auto max-h-[600px] hidden lg:block">
-                    <div className="sticky top-0 right-0 float-right mb-2">
-                      <Badge variant="secondary" className="text-[9px] gap-1">
-                        <Eye className="w-3 h-3" /> Preview A4 (Simulado)
-                      </Badge>
-                    </div>
-                    <div className="clear-both">
-                      <div className="text-center mb-6">
-                        <h4 className="font-bold text-[10px] uppercase text-primary">Secretaria Municipal de Saúde de Oriximiná</h4>
-                        <p className="text-[9px] text-muted-foreground">CAPS II — Sistema de Gestão em Saúde</p>
-                      </div>
-                      <Separator className="mb-4" />
-                      <div className="text-[12px] leading-relaxed min-h-[500px]" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(substituirVariaveis(current.conteudo)) }} />
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Variable Validation */}
-                <div className="flex flex-wrap gap-2">
-                  {getBaseTemplate(current.tipo)?.variaveis.map(v => {
-                    const exists = current.conteudo.includes(`{{${v}}}`);
-                    return (
-                      <Badge key={v} variant={exists ? "secondary" : "outline"} className={`text-[9px] gap-1 ${exists ? 'bg-green-100 text-green-700 border-green-200' : 'text-amber-600 border-amber-200 opacity-70'}`}>
-                        {exists ? <CheckCircle2 className="w-2.5 h-2.5" /> : <AlertTriangle className="w-2.5 h-2.5" />}
-                        {`{{${v}}}`}
-                      </Badge>
-                    );
-                  })}
-                </div>
+              {/* Rich Editor */}
+              <div className="space-y-1.5">
+                <Label className="text-[13px] font-bold">Conteúdo do documento</Label>
+                <Suspense fallback={<div className="h-[200px] flex items-center justify-center text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin mr-2" />Carregando editor...</div>}>
+                  <RichTextEditor
+                    content={current.conteudo}
+                    onChange={html => setCurrent(prev => prev ? { ...prev, conteudo: html } : prev)}
+                    placeholder="Digite o conteúdo do documento ou insira variáveis..."
+                  />
+                </Suspense>
               </div>
 
               {/* Perfis */}
@@ -713,16 +487,15 @@ const ModelosDocumentos: React.FC = () => {
               </div>
 
               {/* Version History */}
-              {current.historico_edicoes && current.historico_edicoes.length > 0 && (
+              {current.versoes && current.versoes.length > 0 && (
                 <div className="space-y-1.5">
-                  <Label className="text-[13px] font-bold">Histórico ({current.historico_edicoes.length})</Label>
+                  <Label className="text-[13px] font-bold">Histórico ({current.versoes.length})</Label>
                   <div className="space-y-2 max-h-[150px] overflow-y-auto">
-                    {current.historico_edicoes.map((v, i) => (
+                    {current.versoes.map((v, i) => (
                       <div key={i} className="flex items-center justify-between border rounded p-2 bg-muted/30 text-xs">
                         <div>
-                          <Badge variant="outline" className="text-[10px] mr-2">v{v.version}</Badge>
-                          <span className="text-muted-foreground">{new Date(v.salvo_em).toLocaleString('pt-BR')}</span>
-                          {v.salvo_por && <span className="text-muted-foreground ml-1">por {v.salvo_por}</span>}
+                          <span className="font-medium">V{current.versoes.length - i}</span>
+                          <span className="text-muted-foreground ml-2">{new Date(v.salvo_em).toLocaleString('pt-BR')}</span>
                         </div>
                         <Button
                           variant="outline"
@@ -730,21 +503,9 @@ const ModelosDocumentos: React.FC = () => {
                           className="text-xs h-7"
                           onClick={() => {
                             if (confirm('Restaurar esta versão?')) {
-                              const historico = [...(current.historico_edicoes || [])];
-                              // Push current as a version before restoring
-                              historico.unshift({ 
-                                conteudo: current.conteudo, 
-                                salvo_em: new Date().toISOString(),
-                                version: current.version,
-                                salvo_por: user?.nome
-                              });
-                              setCurrent({ 
-                                ...current, 
-                                conteudo: v.conteudo, 
-                                version: v.version,
-                                historico_edicoes: historico.slice(0, 20) 
-                              });
-                              toast.info('Versão restaurada no editor. Salve para confirmar.');
+                              const versoes = [...(current.versoes || [])];
+                              versoes.unshift({ conteudo: current.conteudo, salvo_em: current.updated_at });
+                              setCurrent({ ...current, conteudo: v.conteudo, versoes: versoes.slice(0, 5) });
                             }
                           }}
                         >
@@ -755,7 +516,6 @@ const ModelosDocumentos: React.FC = () => {
                   </div>
                 </div>
               )}
-
             </div>
           )}
 

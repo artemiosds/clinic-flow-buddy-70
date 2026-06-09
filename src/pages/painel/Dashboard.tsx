@@ -8,7 +8,6 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { cn, todayLocalStr } from '@/lib/utils';
-import { getManchesterConfig } from '@/lib/manchesterProtocol';
 import { DashboardSkeleton } from '@/components/skeletons';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
@@ -43,7 +42,7 @@ interface AtendimentoDB {
 }
 
 const Dashboard: React.FC = () => {
-  const { agendamentos, fila, funcionarios, unidades, disponibilidades, salas, pacientes } = useData();
+  const { agendamentos, fila, funcionarios, unidades, disponibilidades, salas } = useData();
   const resolvePaciente = usePacienteNomeResolver();
   const { user } = useAuth();
   const isGlobalAdmin = user?.usuario === 'admin.sms';
@@ -259,45 +258,14 @@ const Dashboard: React.FC = () => {
             {todayAg.length === 0 ? (
               <p className="text-muted-foreground text-sm">Nenhum agendamento para hoje.</p>
             ) : (
-              todayAg.sort((a, b) => {
-                // Priority ordering for Dashboard too
-                const manchesterOrder: Record<string, number> = { vermelho: 1, laranja: 2, amarelo: 3, verde: 4, azul: 5 };
-                const aManchester = manchesterOrder[(a as any).classificacaoRisco] ?? 6;
-                const bManchester = manchesterOrder[(b as any).classificacaoRisco] ?? 6;
-                if (aManchester !== bManchester) return aManchester - bManchester;
-                
-                const pacA = pacientes.find(p => p.id === a.pacienteId);
-                const pacB = pacientes.find(p => p.id === b.pacienteId);
-                const aIsAutista = pacA?.isAutista ? 0 : 1;
-                const bIsAutista = pacB?.isAutista ? 0 : 1;
-                if (aIsAutista !== bIsAutista) return aIsAutista - bIsAutista;
-
-                return a.hora.localeCompare(b.hora);
-              }).map(ag => {
+              todayAg.sort((a, b) => a.hora.localeCompare(b.hora)).map(ag => {
                 const tipoLabel = ag.tipo === 'Retorno' ? '🔄' : ag.tipo === 'Exame' ? '🔬' : '🩺';
-                const manchesterRisco = getManchesterConfig((ag as any).classificacaoRisco);
-                const pac = pacientes.find(p => p.id === ag.pacienteId);
-
                 return (
-                  <div key={ag.id} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-3 rounded-lg bg-muted/50 relative overflow-hidden">
-                    {manchesterRisco && (
-                      <div className="absolute left-0 top-0 bottom-0 w-1" style={{ backgroundColor: manchesterRisco.color }} />
-                    )}
+                  <div key={ag.id} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-3 rounded-lg bg-muted/50">
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                       <span className="text-sm font-mono font-medium text-foreground w-14 shrink-0">{ag.hora}</span>
                       <span className="text-sm shrink-0" title={ag.tipo}>{tipoLabel}</span>
-                      <div className="flex flex-col min-w-0">
-                        <span className="text-sm text-foreground font-medium truncate">{resolvePaciente(ag.pacienteId, ag.pacienteNome)}</span>
-                        <div className="flex gap-1 items-center">
-                          {pac?.isAutista && <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1 rounded">🧩 TEA</span>}
-                          {pac?.isPne && <span className="text-[10px] font-bold text-purple-600 bg-purple-50 px-1 rounded">♿ PCD</span>}
-                          {manchesterRisco && (
-                            <span className="text-[10px] font-bold px-1 rounded text-white" style={{ backgroundColor: manchesterRisco.color }}>
-                              {manchesterRisco.subtitle}
-                            </span>
-                          )}
-                        </div>
-                      </div>
+                      <span className="text-sm text-foreground truncate">{resolvePaciente(ag.pacienteId, ag.pacienteNome)}</span>
                     </div>
                     <div className="flex items-center gap-2 flex-wrap pl-0 sm:pl-0">
                       <span className="text-xs text-muted-foreground truncate max-w-[150px]">{ag.profissionalNome}</span>

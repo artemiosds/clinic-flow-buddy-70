@@ -17,9 +17,7 @@ interface DocumentoGerado {
   tipo_documento: string;
   profissional_nome: string;
   status: string;
-  modelo_versao?: number;
   created_at: string;
-
   conteudo_html: string;
   hash_assinatura: string;
   assinado_em: string | null;
@@ -131,11 +129,7 @@ const DocumentosHistorico: React.FC<Props> = ({ pacienteId, pacienteNome }) => {
           <tbody>
             {docs.map(d => (
               <tr key={d.id} className="border-t hover:bg-muted/30">
-                <td className="p-2 capitalize">
-                  {d.tipo_documento}
-                  {d.modelo_versao && <span className="text-[10px] text-muted-foreground ml-1">(v{d.modelo_versao})</span>}
-                </td>
-
+                <td className="p-2 capitalize">{d.tipo_documento}</td>
                 <td className="p-2">{d.profissional_nome}</td>
                 <td className="p-2">{new Date(d.created_at).toLocaleDateString('pt-BR')}</td>
                 <td className="p-2">

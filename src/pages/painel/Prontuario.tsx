@@ -31,8 +31,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Plus, FileText, Printer, Pencil, Search, CheckCircle, History, Trash2, Activity, ClipboardList, Heart, AlertTriangle, Clock, ChevronDown, Settings, X, Tag, Pencil as PencilIcon, Eye, MoreVertical, Download, Link2, Send, FilePlus } from "lucide-react";
-
+import { Loader2, Plus, FileText, Printer, Pencil, Search, CheckCircle, History, Trash2, Activity, ClipboardList, Heart, AlertTriangle, Clock, ChevronDown, Settings, X, Tag, Pencil as PencilIcon, Eye, MoreVertical, Download, Link2, Send } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
@@ -107,8 +106,6 @@ interface ProntuarioDB {
   criado_em: string;
   atualizado_em: string;
   dados_acolhimento?: any;
-  status?: string;
-  tipo_registro?: string;
 }
 
 interface ProcedimentoDB {
@@ -161,7 +158,6 @@ const emptyForm = {
   soap_avaliacao: "",
   soap_plano: "",
   custom_data: {} as any,
-  unidade_id: "",
 };
 
 const classificarIMC = (imc: number): string => {
@@ -227,8 +223,6 @@ const ProntuarioPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [prontuarios, setProntuarios] = useState<ProntuarioDB[]>([]);
-
-
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -563,27 +557,15 @@ const ProntuarioPage: React.FC = () => {
 
   const loadProntuarios = async (pacienteId?: string) => {
     setLoading(true);
-    console.log("[Prontuario] Iniciando loadProntuarios", { 
-      pacienteId, 
-      search, 
-      userUnidade: user?.unidadeId, 
-      userRole: user?.role, 
-      userUsuario: user?.usuario 
-    });
     try {
       let query = (supabase as any)
         .from("prontuarios")
-        .select(`
-          *,
-          pacientes (
-            id, nome, cpf, cns, data_nascimento, telefone, email, endereco, cidade, uf
-          )
-        `)
-        .in("status", ["finalizado", "rascunho"])
+        .select("*")
+        .eq("status", "finalizado")
         .order("data_atendimento", { ascending: false })
         .order("hora_atendimento", { ascending: false })
         .limit(100);
-
+      
       if (pacienteId) {
         query = query.eq("paciente_id", pacienteId);
       } else if (search) {
@@ -591,29 +573,12 @@ const ProntuarioPage: React.FC = () => {
         query = query.or(`paciente_nome.ilike.%${q}%,profissional_nome.ilike.%${q}%`);
       }
 
-      // Administradores globais (admin.sms) e perfis Master não devem ter o filtro de unidade_id aplicado,
-      // permitindo que visualizem todos os prontuários do sistema.
-      const isGlobalAdmin = user?.usuario === 'admin.sms';
-      const isMaster = user?.role === 'master';
-      const shouldFilterUnidade = user?.unidadeId && !isGlobalAdmin && !isMaster && !pacienteId;
-
-      console.log("[Prontuario] Filtro de unidade:", { shouldFilterUnidade, isMaster, isGlobalAdmin });
-
-      if (shouldFilterUnidade) {
+      if (user?.unidadeId && user?.usuario !== 'admin.sms') {
         query = query.eq("unidade_id", user.unidadeId);
       }
       
-      const { data, error, count } = await query;
-      console.log("[Prontuario] Resultado da query:", { 
-        count, 
-        dataLength: data?.length, 
-        error 
-      });
-
-      if (data) {
-        setProntuarios(data);
-        console.log("[Prontuario] IDs dos prontuários carregados:", data.map((p: any) => p.id));
-      }
+      const { data, error } = await query;
+      if (data) setProntuarios(data);
       if (error) console.error("Error loading prontuarios:", error);
     } catch (err) {
       console.error("Error:", err);
@@ -916,12 +881,7 @@ const ProntuarioPage: React.FC = () => {
 
       loadTriagem(agendamentoId);
       loadEpisodios(pacienteId);
-      // Procura primeiro por agendamento, senão por paciente e data (para prontuários sem agendamento vinculado)
-      const existingForAgendamento = prontuarios.find((p) => 
-        p.agendamento_id === agendamentoId || 
-        (p.paciente_id === pacienteId && p.data_atendimento === data && p.status === 'rascunho')
-      );
-      
+      const existingForAgendamento = prontuarios.find((p) => p.agendamento_id === agendamentoId);
       if (existingForAgendamento) {
         openEdit(existingForAgendamento);
       } else {
@@ -1083,25 +1043,7 @@ const ProntuarioPage: React.FC = () => {
     setDialogOpen(true);
   };
 
-  const [gerarDocOpen, setGerarDocOpen] = useState(false);
-  const [pacienteParaDoc, setPacienteParaDoc] = useState<any>(null);
-
-  const openGerarDocumento = (p: any, prontuario?: any) => {
-    const dataNasc = p.data_nascimento || p.dataNascimento;
-    setPacienteParaDoc({
-      id: p.id,
-      nome: p.nome,
-      cpf: p.cpf,
-      cns: p.cns,
-      data_nascimento: dataNasc,
-      cid: prontuario?.hipotese || p.cid || '',
-      especialidade_destino: p.especialidade_destino || ''
-    });
-    setGerarDocOpen(true);
-  };
-
   const openEdit = (p: ProntuarioDB) => {
-
     setEditId(p.id);
     setActiveAtendimento(null);
     setSessionRegistrationRequested(false);
@@ -1134,7 +1076,6 @@ const ProntuarioPage: React.FC = () => {
       soap_avaliacao: (p as any).soap_avaliacao || "",
       soap_plano: (p as any).soap_plano || "",
       custom_data: (p as any).custom_data || {},
-      unidade_id: (p as any).unidade_id || "",
     };
     if (formData.custom_data?.soap_enabled !== undefined) {
       setSoapEnabled(formData.custom_data.soap_enabled);
@@ -1256,7 +1197,7 @@ const ProntuarioPage: React.FC = () => {
         paciente_nome: form.paciente_nome,
         profissional_id: profIdResolvido,
         profissional_nome: profNomeResolvido,
-        unidade_id: user?.unidadeId || form.unidade_id || "",
+        unidade_id: user?.unidadeId || "",
         setor: user?.setor || "",
         agendamento_id: form.agendamento_id,
         data_atendimento: form.data_atendimento,
@@ -1521,7 +1462,7 @@ const ProntuarioPage: React.FC = () => {
         paciente_nome: f.paciente_nome,
         profissional_id: profIdAuto,
         profissional_nome: profNomeAuto,
-        unidade_id: user?.unidadeId || f.unidade_id || "",
+        unidade_id: user?.unidadeId || '',
         setor: user?.setor || '',
         agendamento_id: f.agendamento_id,
         data_atendimento: f.data_atendimento,
@@ -2171,27 +2112,15 @@ const ProntuarioPage: React.FC = () => {
     if (!debouncedSearch) return prontuarios;
     const term = debouncedSearch.toLowerCase();
     const termDigits = term.replace(/[.\-/]/g, "");
-    
-    console.log("[Prontuario] Filtrando prontuários no frontend:", { 
-      term, 
-      totalBefore: prontuarios.length,
-      prontuariosIds: prontuarios.map(p => p.id) 
-    });
-
-    const result = prontuarios.filter((p) => {
+    return prontuarios.filter((p) => {
       const pac = pacientesById.get(p.paciente_id) as any;
-      const match = (
+      return (
         p.paciente_nome.toLowerCase().includes(term) ||
         p.profissional_nome.toLowerCase().includes(term) ||
         (pac?.cpf || "").replace(/[.\-/]/g, "").includes(termDigits) ||
         (pac?.cns || "").includes(term)
       );
-      return match;
     });
-
-    console.log("[Prontuario] Total após filtro frontend:", result.length);
-    return result;
-
   }, [prontuarios, queryPacienteId, debouncedSearch, pacientesById]);
   const queryPacienteNome = searchParams.get("pacienteNome");
 
@@ -3212,14 +3141,7 @@ const ProntuarioPage: React.FC = () => {
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-semibold text-foreground flex items-center gap-2">
-                          {p.paciente_nome}
-                          {p.tipo_registro && (
-                            <Badge variant="secondary" className="text-[10px] font-normal py-0 px-1.5 h-4 bg-primary/10 text-primary border-primary/20">
-                              {TIPOS_REGISTRO.find(t => t.value === p.tipo_registro)?.label?.replace(/^[🟢🔵🟡🔴🟣]\s*/, '') || p.tipo_registro}
-                            </Badge>
-                          )}
-                        </p>
+                        <p className="font-semibold text-foreground">{p.paciente_nome}</p>
                         <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
                           {new Date(p.data_atendimento + "T12:00:00").toLocaleDateString("pt-BR")}
                         </span>
@@ -3737,39 +3659,13 @@ const ProntuarioPage: React.FC = () => {
                 >
                   <History className="w-3.5 h-3.5 mr-1" /> Histórico completo
                 </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => openGerarDocumento((viewerProntuario as any).pacientes || { id: viewerProntuario.paciente_id, nome: viewerProntuario.paciente_nome }, viewerProntuario)}
-                >
-                  <FilePlus className="w-3.5 h-3.5 mr-1" /> Gerar Documento
-                </Button>
               </div>
             </>
           )}
         </SheetContent>
       </Sheet>
-
-      <GerarDocumentoModal 
-        open={gerarDocOpen} 
-        onOpenChange={setGerarDocOpen}
-        paciente={pacienteParaDoc}
-        profissional={{
-          id: user?.id,
-          nome: user?.nome || '',
-          profissao: user?.profissao || '',
-          numero_conselho: (user as any)?.numero_conselho || (user as any)?.numeroConselho || '',
-          tipo_conselho: (user as any)?.tipo_conselho || (user as any)?.tipoConselho || '',
-          uf_conselho: (user as any)?.uf_conselho || (user as any)?.ufConselho || ''
-        }}
-        unidade={user?.unidadeId}
-      />
     </div>
   );
 };
 
 export default ProntuarioPage;
-
-
-
-
