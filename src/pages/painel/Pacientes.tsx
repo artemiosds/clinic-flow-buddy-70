@@ -259,7 +259,7 @@ const Pacientes: React.FC = () => {
 
   const openNew = () => {
     setEditId(null);
-    setForm(emptyPacienteForm);
+    setForm({ ...emptyPacienteForm, nomePai: "" });
     setErrors({});
     setDialogOpen(true);
   };

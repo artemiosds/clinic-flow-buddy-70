@@ -2182,6 +2182,7 @@ export type Database = {
           naturalidade: string | null
           nome: string
           nome_mae: string
+          nome_pai: string | null
           nome_responsavel: string
           numero: string | null
           observacao_equipamentos: string
@@ -2254,6 +2255,7 @@ export type Database = {
           naturalidade?: string | null
           nome: string
           nome_mae?: string
+          nome_pai?: string | null
           nome_responsavel?: string
           numero?: string | null
           observacao_equipamentos?: string
@@ -2326,6 +2328,7 @@ export type Database = {
           naturalidade?: string | null
           nome?: string
           nome_mae?: string
+          nome_pai?: string | null
           nome_responsavel?: string
           numero?: string | null
           observacao_equipamentos?: string
