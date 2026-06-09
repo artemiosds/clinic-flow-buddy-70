@@ -167,6 +167,7 @@ export interface PacienteFormData {
   telefone_secundario: string;
   
   nomeMae: string;
+  nomePai: string;
   descricaoClinica: string;
   // Prioridade especial
   isGestante: boolean;
@@ -194,7 +195,7 @@ export const emptyPacienteForm: PacienteFormData = {
   tipoCondicao: "", mobilidade: "", usaDispositivo: false, tipoDispositivo: "",
   comunicacao: "", comportamento: "", usaEquipamentos: false, equipamentos: [],
   observacaoEquipamentos: "", outroServicoSus: false, transporte: "", turnoPreferido: "",
-  email: "", endereco: "", nomeMae: "", descricaoClinica: "",
+  email: "", endereco: "", nomeMae: "", nomePai: "", descricaoClinica: "",
   cep: "", tipo_logradouro: "", tipo_logradouro_codigo: "", numero: "", complemento: "", bairro: "", uf: "PA",
   telefone_secundario: "",
   isGestante: false, isPne: false, isAutista: false,
@@ -377,6 +378,17 @@ const CadastroPacienteForm: React.FC<Props> = ({ form, onChange, onSave, saving,
                     className={errors.nomeMae ? "border-destructive" : ""}
                   />
                   {errors.nomeMae && <p className="text-xs text-destructive mt-1">{errors.nomeMae}</p>}
+                </div>
+              )}
+
+              {!H("nomePai") && (
+                <div className="md:col-span-2">
+                  <Label>{L("nomePai", "Nome do Pai")}</Label>
+                  <Input
+                    value={form.nomePai}
+                    onChange={(e) => set("nomePai", sanitizeUpper(e.target.value))}
+                    placeholder="NOME DO PAI"
+                  />
                 </div>
               )}
 

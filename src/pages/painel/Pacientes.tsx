@@ -94,7 +94,7 @@ const Pacientes: React.FC = () => {
   }, [search]);
   const [importOpen, setImportOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
-  const [form, setForm] = useState<PacienteFormData>(emptyPacienteForm);
+  const [form, setForm] = useState<PacienteFormData>({ ...emptyPacienteForm, nomePai: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [detalheOpen, setDetalheOpen] = useState(false);
@@ -272,6 +272,7 @@ const Pacientes: React.FC = () => {
       cpf: p.cpf || "",
       cns: maskCNSInput(p.cns || ""),
       nomeMae: p.nome_mae || p.nomeMae || "",
+      nomePai: p.nome_pai || p.nomePai || "",
       telefone: p.telefone || "",
       dataNascimento: p.data_nascimento || p.dataNascimento || "",
       email: p.email || "",
@@ -390,6 +391,7 @@ const Pacientes: React.FC = () => {
       cpf: (form.cpf || "").replace(/\D/g, ""),
       cns: (form.cns || "").replace(/\D/g, "").slice(0, 15),
       nome_mae: form.nomeMae || "",
+      nome_pai: form.nomePai || "",
       telefone: normalizePhone(rawPhone!) || "",
       data_nascimento: form.dataNascimento || "",
       email: form.email || "",
