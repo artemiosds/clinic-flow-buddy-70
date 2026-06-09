@@ -146,13 +146,15 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
       .replace(/\{\{idade\}\}/g, paciente?.data_nascimento ? (new Date().getFullYear() - new Date(paciente.data_nascimento).getFullYear()).toString() : '—')
       .replace(/\{\{data_atendimento\}\}/g, dataAtendimento || hoje)
       .replace(/\{\{carimbo_profissional\}\}/g, carimboInlineHtml)
+      .replace(/\{\{assinatura_profissional\}\}/g, carimboInlineHtml)
       .replace(/\{\{profissional\}\}/g, profissional?.nome || '—')
-      .replace(/\{\{cid\}\}/g, paciente?.cid || '—')
-      .replace(/\{\{especialidade\}\}/g, paciente?.especialidade_destino || '—')
+      .replace(/\{\{cid\}\}/g, campos.cid || paciente?.cid || '—')
+      .replace(/\{\{especialidade\}\}/g, campos.especialidade_destino || paciente?.especialidade_destino || '—')
       .replace(/\{\{unidade\}\}/g, unidade || 'CAPS II Oriximiná')
       .replace(/\{\{numero_conselho\}\}/g, profissional?.numero_conselho || '—')
       .replace(/\{\{conselho\}\}/g, profissional?.tipo_conselho || '—')
       .replace(/\{\{data_hoje\}\}/g, hoje);
+
 
     // Extended variables from campos
     const formatIfDate = (val: string) => {
@@ -188,53 +190,48 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
     const m = modelos.find(x => x.id === id);
     if (m) {
       // Pre-fill type-specific defaults
-      const tipo = m.tipo.toLowerCase();
+      const tLower = m.tipo.toLowerCase();
+      const base = getBaseTemplate(m.tipo);
       const defaults: Record<string, string> = {};
-      if (tipo.includes('atestado')) {
-        defaults.dias_afastamento = '1';
-        defaults.data_inicio = new Date().toISOString().split('T')[0];
+      
+      // Load manual fields from base template if defined
+      if (base?.campos_manuais) {
+        base.campos_manuais.forEach(field => {
+          defaults[field] = '';
+        });
       }
-      if (tipo.includes('receitu')) {
-        defaults.validade_receita = new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0];
+
+      if (tLower.includes('atestado')) {
+        defaults.dias_afastamento = defaults.dias_afastamento || '1';
+        defaults.data_inicio = defaults.data_inicio || new Date().toISOString().split('T')[0];
       }
-      if (tipo.includes('declaraç') || tipo.includes('comparecimento')) {
+      if (tLower.includes('receitu')) {
+        defaults.validade_receita = defaults.validade_receita || '30 dias';
+      }
+      if (tLower.includes('declaraç') || tLower.includes('comparecimento')) {
         const now = new Date();
         const hh = String(now.getHours()).padStart(2, '0');
         const mm = String(now.getMinutes()).padStart(2, '0');
-        defaults.situacao = 'compareceu';
-        defaults.horario_entrada = `${hh}:${mm}`;
-        defaults.horario_saida = `${hh}:${mm}`;
-        defaults.finalidade = 'consulta';
-        defaults.motivo_falta = '';
-        defaults.data_falta = new Date().toISOString().split('T')[0];
-        defaults.profissional_agendado = profissional?.nome || '';
+        defaults.situacao = defaults.situacao || 'compareceu';
+        defaults.horario_entrada = defaults.horario_entrada || `${hh}:${mm}`;
+        defaults.horario_saida = defaults.horario_saida || `${hh}:${mm}`;
+        defaults.finalidade = defaults.finalidade || 'consulta';
       }
-      defaults.motivo = '';
-      defaults.observacoes = '';
-      defaults.especialidade_destino = paciente?.especialidade_destino || '';
-      defaults.unidade_destino = '';
-      defaults.profissional_destino = '';
-      defaults.prioridade = 'eletivo';
-      setCampos(defaults);
+      
+      setCampos(prev => ({ ...defaults, ...prev }));
       setConteudoFinal(substituir(m.conteudo));
+
+
     }
   };
-
-  // Templates dinâmicos para Declaração de Comparecimento
-  const DECL_COMPARECEU_HTML = `<p style='text-align: justify;'>Declaramos, para os devidos fins, que a paciente <strong>{{nome_paciente}}</strong>, CPF nº <strong>{{cpf}}</strong>, inscrita no CNS sob o nº <strong>{{cns}}</strong>, encontra-se em acompanhamento no CAPS II. A referida paciente <strong>COMPARECEU</strong> a esta unidade na data de <strong>{{data_atendimento}}</strong>, no período das <strong>{{horario_entrada}}</strong> às <strong>{{horario_saida}}</strong>. O comparecimento deu-se para fins de: <strong>{{finalidade}}</strong>.</p><p style='text-align: justify;'>Expedimos a presente declaração para fins de justificativa junto às instituições que se fizerem necessárias.</p>`;
-  const DECL_FALTOU_HTML = `<p style='text-align: justify;'>Declaramos, para os devidos fins, que a paciente <strong>{{nome_paciente}}</strong>, CPF nº <strong>{{cpf}}</strong>, inscrita no CNS sob o nº <strong>{{cns}}</strong>, encontra-se em acompanhamento no CAPS II.</p><p style='text-align: justify;'>A referida paciente esteve <strong>AUSENTE</strong> ao atendimento agendado para a data de <strong>{{data_falta}}</strong>, sob responsabilidade do(a) profissional <strong>{{profissional_agendado}}</strong>.</p><p style='text-align: justify;'>A ausência deveu-se a motivo justificado: <strong>{{motivo_falta}}</strong>, impossibilitando seu comparecimento na data supracitada. Expedimos a presente declaração para fins de justificativa junto às instituições que se fizerem necessárias.</p>`;
 
   // Update conteudo when campos change
   useEffect(() => {
     const m = modelos.find(x => x.id === selectedId);
     if (!m) return;
-    const tLower = m.tipo.toLowerCase();
-    let base = m.conteudo;
-    if (tLower.includes('declaraç') || tLower.includes('comparecimento')) {
-      base = campos.situacao === 'faltou' ? DECL_FALTOU_HTML : DECL_COMPARECEU_HTML;
-    }
-    setConteudoFinal(substituir(base));
+    setConteudoFinal(substituir(m.conteudo));
   }, [campos, medicamentos, carimbo, selectedId]);
+
 
   const selected = modelos.find(x => x.id === selectedId);
   const isEncaminhamento = selected && ENCAMINHAMENTO_TIPOS.includes(selected.tipo.toLowerCase());
