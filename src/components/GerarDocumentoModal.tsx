@@ -188,6 +188,7 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
     const m = modelos.find(x => x.id === id);
     if (m) {
       // Pre-fill type-specific defaults
+      const tLower = m.tipo.toLowerCase();
       const base = getBaseTemplate(m.tipo);
       const defaults: Record<string, string> = {};
       
@@ -198,14 +199,14 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
         });
       }
 
-      if (tipo.includes('atestado')) {
+      if (tLower.includes('atestado')) {
         defaults.dias_afastamento = defaults.dias_afastamento || '1';
         defaults.data_inicio = defaults.data_inicio || new Date().toISOString().split('T')[0];
       }
-      if (tipo.includes('receitu')) {
+      if (tLower.includes('receitu')) {
         defaults.validade_receita = defaults.validade_receita || '30 dias';
       }
-      if (tipo.includes('declaraç') || tipo.includes('comparecimento')) {
+      if (tLower.includes('declaraç') || tLower.includes('comparecimento')) {
         const now = new Date();
         const hh = String(now.getHours()).padStart(2, '0');
         const mm = String(now.getMinutes()).padStart(2, '0');
@@ -217,6 +218,7 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
       
       setCampos(prev => ({ ...defaults, ...prev }));
       setConteudoFinal(substituir(m.conteudo));
+
 
     }
   };
