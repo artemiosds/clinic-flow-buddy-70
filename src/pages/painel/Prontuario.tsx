@@ -227,15 +227,7 @@ const ProntuarioPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [prontuarios, setProntuarios] = useState<ProntuarioDB[]>([]);
-  // Usamos um useMemo para garantir que o filtro de busca no front seja reativo
-  const filtered = useMemo(() => {
-    const q = debouncedSearch.trim().toLowerCase();
-    if (!q) return prontuarios;
-    return prontuarios.filter(p => {
-      const hay = `${p.paciente_nome} ${p.profissional_nome} ${p.queixa_principal} ${p.evolucao}`.toLowerCase();
-      return hay.includes(q);
-    });
-  }, [prontuarios, debouncedSearch]);
+
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
