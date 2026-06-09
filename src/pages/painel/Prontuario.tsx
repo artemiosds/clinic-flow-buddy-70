@@ -227,6 +227,8 @@ const ProntuarioPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [prontuarios, setProntuarios] = useState<ProntuarioDB[]>([]);
+
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -561,6 +563,13 @@ const ProntuarioPage: React.FC = () => {
 
   const loadProntuarios = async (pacienteId?: string) => {
     setLoading(true);
+    console.log("[Prontuario] Iniciando loadProntuarios", { 
+      pacienteId, 
+      search, 
+      userUnidade: user?.unidadeId, 
+      userRole: user?.role, 
+      userUsuario: user?.usuario 
+    });
     try {
       let query = (supabase as any)
         .from("prontuarios")
@@ -575,7 +584,6 @@ const ProntuarioPage: React.FC = () => {
         .order("hora_atendimento", { ascending: false })
         .limit(100);
 
-      
       if (pacienteId) {
         query = query.eq("paciente_id", pacienteId);
       } else if (search) {
@@ -585,12 +593,27 @@ const ProntuarioPage: React.FC = () => {
 
       // Administradores globais (admin.sms) e perfis Master não devem ter o filtro de unidade_id aplicado,
       // permitindo que visualizem todos os prontuários do sistema.
-      if (user?.unidadeId && user?.usuario !== 'admin.sms' && user?.role !== 'master' && !pacienteId) {
+      const isGlobalAdmin = user?.usuario === 'admin.sms';
+      const isMaster = user?.role === 'master';
+      const shouldFilterUnidade = user?.unidadeId && !isGlobalAdmin && !isMaster && !pacienteId;
+
+      console.log("[Prontuario] Filtro de unidade:", { shouldFilterUnidade, isMaster, isGlobalAdmin });
+
+      if (shouldFilterUnidade) {
         query = query.eq("unidade_id", user.unidadeId);
       }
       
-      const { data, error } = await query;
-      if (data) setProntuarios(data);
+      const { data, error, count } = await query;
+      console.log("[Prontuario] Resultado da query:", { 
+        count, 
+        dataLength: data?.length, 
+        error 
+      });
+
+      if (data) {
+        setProntuarios(data);
+        console.log("[Prontuario] IDs dos prontuários carregados:", data.map((p: any) => p.id));
+      }
       if (error) console.error("Error loading prontuarios:", error);
     } catch (err) {
       console.error("Error:", err);
@@ -2148,15 +2171,27 @@ const ProntuarioPage: React.FC = () => {
     if (!debouncedSearch) return prontuarios;
     const term = debouncedSearch.toLowerCase();
     const termDigits = term.replace(/[.\-/]/g, "");
-    return prontuarios.filter((p) => {
+    
+    console.log("[Prontuario] Filtrando prontuários no frontend:", { 
+      term, 
+      totalBefore: prontuarios.length,
+      prontuariosIds: prontuarios.map(p => p.id) 
+    });
+
+    const result = prontuarios.filter((p) => {
       const pac = pacientesById.get(p.paciente_id) as any;
-      return (
+      const match = (
         p.paciente_nome.toLowerCase().includes(term) ||
         p.profissional_nome.toLowerCase().includes(term) ||
         (pac?.cpf || "").replace(/[.\-/]/g, "").includes(termDigits) ||
         (pac?.cns || "").includes(term)
       );
+      return match;
     });
+
+    console.log("[Prontuario] Total após filtro frontend:", result.length);
+    return result;
+
   }, [prontuarios, queryPacienteId, debouncedSearch, pacientesById]);
   const queryPacienteNome = searchParams.get("pacienteNome");
 
