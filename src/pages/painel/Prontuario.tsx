@@ -107,6 +107,7 @@ interface ProntuarioDB {
   criado_em: string;
   atualizado_em: string;
   dados_acolhimento?: any;
+  status?: string;
 }
 
 interface ProcedimentoDB {
@@ -568,7 +569,7 @@ const ProntuarioPage: React.FC = () => {
             id, nome, cpf, cns, data_nascimento, telefone, email, endereco, cidade, uf
           )
         `)
-        .eq("status", "finalizado")
+        .in("status", ["finalizado", "rascunho"])
         .order("data_atendimento", { ascending: false })
         .order("hora_atendimento", { ascending: false })
         .limit(100);
@@ -889,7 +890,12 @@ const ProntuarioPage: React.FC = () => {
 
       loadTriagem(agendamentoId);
       loadEpisodios(pacienteId);
-      const existingForAgendamento = prontuarios.find((p) => p.agendamento_id === agendamentoId);
+      // Procura primeiro por agendamento, senão por paciente e data (para prontuários sem agendamento vinculado)
+      const existingForAgendamento = prontuarios.find((p) => 
+        p.agendamento_id === agendamentoId || 
+        (p.paciente_id === pacienteId && p.data_atendimento === data && p.status === 'rascunho')
+      );
+      
       if (existingForAgendamento) {
         openEdit(existingForAgendamento);
       } else {
