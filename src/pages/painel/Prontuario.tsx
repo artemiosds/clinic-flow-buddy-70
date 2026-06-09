@@ -584,7 +584,7 @@ const ProntuarioPage: React.FC = () => {
 
       // Administradores globais (admin.sms) e perfis Master não devem ter o filtro de unidade_id aplicado,
       // permitindo que visualizem todos os prontuários do sistema.
-      if (user?.unidadeId && user?.usuario !== 'admin.sms' && user?.role !== 'master') {
+      if (user?.unidadeId && user?.usuario !== 'admin.sms' && user?.role !== 'master' && !pacienteId) {
         query = query.eq("unidade_id", user.unidadeId);
       }
       
