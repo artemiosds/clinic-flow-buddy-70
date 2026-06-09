@@ -159,6 +159,7 @@ const emptyForm = {
   soap_avaliacao: "",
   soap_plano: "",
   custom_data: {} as any,
+  unidade_id: "",
 };
 
 const classificarIMC = (imc: number): string => {
@@ -580,7 +581,7 @@ const ProntuarioPage: React.FC = () => {
         query = query.or(`paciente_nome.ilike.%${q}%,profissional_nome.ilike.%${q}%`);
       }
 
-      if (user?.unidadeId && user?.usuario !== 'admin.sms') {
+      if (user?.unidadeId && user?.usuario !== 'admin.sms' && user?.role !== 'master') {
         query = query.eq("unidade_id", user.unidadeId);
       }
       
@@ -1101,6 +1102,7 @@ const ProntuarioPage: React.FC = () => {
       soap_avaliacao: (p as any).soap_avaliacao || "",
       soap_plano: (p as any).soap_plano || "",
       custom_data: (p as any).custom_data || {},
+      unidade_id: (p as any).unidade_id || "",
     };
     if (formData.custom_data?.soap_enabled !== undefined) {
       setSoapEnabled(formData.custom_data.soap_enabled);
@@ -1222,7 +1224,7 @@ const ProntuarioPage: React.FC = () => {
         paciente_nome: form.paciente_nome,
         profissional_id: profIdResolvido,
         profissional_nome: profNomeResolvido,
-        unidade_id: user?.unidadeId || "",
+        unidade_id: user?.unidadeId || form.unidade_id || "",
         setor: user?.setor || "",
         agendamento_id: form.agendamento_id,
         data_atendimento: form.data_atendimento,
@@ -1487,7 +1489,7 @@ const ProntuarioPage: React.FC = () => {
         paciente_nome: f.paciente_nome,
         profissional_id: profIdAuto,
         profissional_nome: profNomeAuto,
-        unidade_id: user?.unidadeId || '',
+        unidade_id: user?.unidadeId || f.unidade_id || "",
         setor: user?.setor || '',
         agendamento_id: f.agendamento_id,
         data_atendimento: f.data_atendimento,
