@@ -2171,15 +2171,27 @@ const ProntuarioPage: React.FC = () => {
     if (!debouncedSearch) return prontuarios;
     const term = debouncedSearch.toLowerCase();
     const termDigits = term.replace(/[.\-/]/g, "");
-    return prontuarios.filter((p) => {
+    
+    console.log("[Prontuario] Filtrando prontuários no frontend:", { 
+      term, 
+      totalBefore: prontuarios.length,
+      prontuariosIds: prontuarios.map(p => p.id) 
+    });
+
+    const result = prontuarios.filter((p) => {
       const pac = pacientesById.get(p.paciente_id) as any;
-      return (
+      const match = (
         p.paciente_nome.toLowerCase().includes(term) ||
         p.profissional_nome.toLowerCase().includes(term) ||
         (pac?.cpf || "").replace(/[.\-/]/g, "").includes(termDigits) ||
         (pac?.cns || "").includes(term)
       );
+      return match;
     });
+
+    console.log("[Prontuario] Total após filtro frontend:", result.length);
+    return result;
+
   }, [prontuarios, queryPacienteId, debouncedSearch, pacientesById]);
   const queryPacienteNome = searchParams.get("pacienteNome");
 
