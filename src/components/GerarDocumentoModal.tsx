@@ -146,13 +146,15 @@ const GerarDocumentoModal: React.FC<Props> = ({ open, onOpenChange, paciente, pr
       .replace(/\{\{idade\}\}/g, paciente?.data_nascimento ? (new Date().getFullYear() - new Date(paciente.data_nascimento).getFullYear()).toString() : '—')
       .replace(/\{\{data_atendimento\}\}/g, dataAtendimento || hoje)
       .replace(/\{\{carimbo_profissional\}\}/g, carimboInlineHtml)
+      .replace(/\{\{assinatura_profissional\}\}/g, carimboInlineHtml)
       .replace(/\{\{profissional\}\}/g, profissional?.nome || '—')
-      .replace(/\{\{cid\}\}/g, paciente?.cid || '—')
-      .replace(/\{\{especialidade\}\}/g, paciente?.especialidade_destino || '—')
+      .replace(/\{\{cid\}\}/g, campos.cid || paciente?.cid || '—')
+      .replace(/\{\{especialidade\}\}/g, campos.especialidade_destino || paciente?.especialidade_destino || '—')
       .replace(/\{\{unidade\}\}/g, unidade || 'CAPS II Oriximiná')
       .replace(/\{\{numero_conselho\}\}/g, profissional?.numero_conselho || '—')
       .replace(/\{\{conselho\}\}/g, profissional?.tipo_conselho || '—')
       .replace(/\{\{data_hoje\}\}/g, hoje);
+
 
     // Extended variables from campos
     const formatIfDate = (val: string) => {
