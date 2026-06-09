@@ -1102,6 +1102,7 @@ const ProntuarioPage: React.FC = () => {
       soap_avaliacao: (p as any).soap_avaliacao || "",
       soap_plano: (p as any).soap_plano || "",
       custom_data: (p as any).custom_data || {},
+      unidade_id: (p as any).unidade_id || "",
     };
     if (formData.custom_data?.soap_enabled !== undefined) {
       setSoapEnabled(formData.custom_data.soap_enabled);
