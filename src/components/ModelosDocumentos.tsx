@@ -526,7 +526,13 @@ const ModelosDocumentos: React.FC = () => {
                     value={current.tipo} 
                     onValueChange={v => {
                       const base = getBaseTemplate(v);
-                      const shouldUpdate = !current.id && (!current.conteudo || current.conteudo === '<p><br></p>' || current.conteudo === '');
+                      // If it's a new document and editor is empty or content is very short/default, load base
+                      const isEditorEmpty = !current.conteudo || 
+                                          current.conteudo === '<p><br></p>' || 
+                                          current.conteudo === '' || 
+                                          current.conteudo === '<p></p>';
+                      
+                      const shouldUpdate = !current.id && isEditorEmpty;
                       
                       if (shouldUpdate && base) {
                         setCurrent({ 
@@ -536,11 +542,12 @@ const ModelosDocumentos: React.FC = () => {
                           conteudo: base.conteudo,
                           perfis_permitidos: base.perfis_permitidos
                         });
-                        toast.info(`Carregado modelo-base para ${v}`);
+                        toast.info(`Biblioteca: Modelo Profissional de "${v}" carregado.`);
                       } else {
                         setCurrent({ ...current, tipo: v });
                       }
                     }}
+
                   >
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
