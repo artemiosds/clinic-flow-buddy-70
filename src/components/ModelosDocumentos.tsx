@@ -113,9 +113,36 @@ const substituirVariaveis = (conteudo: string): string => {
     .replace(/\{\{cid\}\}/g, 'M54.5')
     .replace(/\{\{medicamentos\}\}/g, '1. Paracetamol 500mg — Oral, 8/8h, 5 dias')
     .replace(/\{\{exames\}\}/g, '1. Raio-X de Coluna Lombar')
+    .replace(/\{\{carimbo_profissional\}\}/g, '<div style="border:1px solid #000; padding:10px; width:200px; margin:20px auto; text-align:center;">[CARIMBO DO PROFISSIONAL]</div>')
     .replace(/\{\{assinatura_profissional\}\}/g, '<div style="border-top:1px solid #000; width:200px; margin-top:40px; text-align:center;">Assinatura do Profissional</div>')
-    .replace(/\{\{data_hoje\}\}/g, hoje);
+    .replace(/\{\{data_hoje\}\}/g, hoje)
+    // Add dummy values for all base template variables to avoid {{var}} appearing in preview
+    .replace(/\{\{finalidade\}\}/g, 'Consulta Clínica')
+    .replace(/\{\{horario_entrada\}\}/g, '08:30')
+    .replace(/\{\{horario_saida\}\}/g, '09:15')
+    .replace(/\{\{dias_afastamento\}\}/g, '3')
+    .replace(/\{\{data_inicio\}\}/g, hoje)
+    .replace(/\{\{data_fim\}\}/g, hoje)
+    .replace(/\{\{especialidade_destino\}\}/g, 'Cardiologia')
+    .replace(/\{\{unidade_destino\}\}/g, 'Hospital Municipal')
+    .replace(/\{\{motivo\}\}/g, 'Avaliação pré-operatória')
+    .replace(/\{\{prioridade\}\}/g, 'Eletivo')
+    .replace(/\{\{resumo_clinico\}\}/g, 'Paciente com histórico de hipertensão...')
+    .replace(/\{\{orientacoes\}\}/g, 'Tomar medicação em jejum...')
+    .replace(/\{\{validade_receita\}\}/g, '30 dias')
+    .replace(/\{\{histórico\}\}/g, 'Paciente acompanhado há 6 meses...')
+    .replace(/\{\{avaliação\}\}/g, 'Apresenta melhora gradual...')
+    .replace(/\{\{plano_terapêutico\}\}/g, 'Manter sessões semanais...')
+    .replace(/\{\{diagnóstico\}\}/g, 'Transtorno de ansiedade...')
+    .replace(/\{\{objetivos\}\}/g, 'Redução de sintomas...')
+    .replace(/\{\{intervenções\}\}/g, 'Terapia cognitivo-comportamental...')
+    .replace(/\{\{periodicidade\}\}/g, 'Semanal')
+    .replace(/\{\{procedimento\}\}/g, 'Aplicação de medicação IM')
+    .replace(/\{\{riscos\}\}/g, 'Leve dor local')
+    .replace(/\{\{titulo_documento\}\}/g, 'DOCUMENTO CLÍNICO')
+    .replace(/\{\{corpo_documento\}\}/g, 'Texto livre para o documento personalizado...');
 };
+
 
 
 const ModelosDocumentos: React.FC = () => {
