@@ -189,7 +189,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (user) {
       await logAuthAction('logout', user);
     }
+    
+    // Technical validation: Only clear cache if queue is empty
+    const { offlineDb } = await import("@/lib/offline-db");
+    const pendingCount = await offlineDb.operations
+      .where("status")
+      .anyOf(["pendente", "falha", "sincronizando"])
+      .count();
+
+    if (pendingCount > 0) {
+      const confirm = window.confirm(
+        `Existem ${pendingCount} alterações pendentes de sincronização. Se você sair agora, esses dados podem não ser salvos no servidor. Deseja sair mesmo assim?`
+      );
+      if (!confirm) return;
+    }
+
     await supabase.auth.signOut();
+    
+    // Clear persistent query cache on logout ONLY if no pending ops
+    if (pendingCount === 0) {
+      const { del } = await import("idb-keyval");
+      await del("CER_QUERY_CACHE");
+    }
+    
     setUser(null);
   }, [user, logAuthAction]);
 

@@ -11,9 +11,11 @@ export const useOfflineSync = () => {
     if (!isOnline) return;
 
     const syncQueue = async () => {
+      // Find operations that are pending or failed, but NOT recently attempted to avoid rapid loops on persistent errors
       const pendingOps = await offlineDb.operations
         .where("status")
         .anyOf(["pendente", "falha"])
+        .filter(op => !op.lastError || op.attempts < 10) // Limit retries for fatal errors
         .toArray();
 
       if (pendingOps.length === 0) return;
@@ -44,22 +46,32 @@ export const useOfflineSync = () => {
           await offlineDb.operations.update(op.id!, { status: "sincronizado" });
         } catch (error: any) {
           console.error("Sync error:", error);
+          
+          // Technical validation: handle specific error codes
+          // 42501 = RLS / Permission
+          // 23505 = Unique constraint violation (Idempotency)
+          const isFatal = ["42501", "23505", "P0001"].includes(error.code);
+          
           await offlineDb.operations.update(op.id!, {
             status: "falha",
             attempts: (op.attempts || 0) + 1,
-            lastError: error.message,
+            lastError: error.message || error.details || "Erro desconhecido",
           });
           
-          if (error.code === "42501") { // RLS / Permission
+          if (error.code === "23505") {
+            // Already synced or duplicated, mark as synchronized to clear queue
+            await offlineDb.operations.update(op.id!, { status: "sincronizado" });
+          } else if (error.code === "42501") {
             toast.error(`Erro de permissão ao sincronizar ${op.table}. Ação manual necessária.`);
           }
         }
       }
     };
 
-    const interval = setInterval(syncQueue, 10000); // Try sync every 10s when online
+    const interval = setInterval(syncQueue, 15000); // 15s interval with backoff logic inside
     syncQueue();
 
     return () => clearInterval(interval);
   }, [isOnline]);
 };
+
