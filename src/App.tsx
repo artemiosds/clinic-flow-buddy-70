@@ -11,6 +11,7 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { DataProvider } from "@/contexts/DataContext";
 import { PermissionsProvider, usePermissions, ModuleName } from "@/contexts/PermissionsContext";
 import { EspecialidadesProvider } from "@/contexts/EspecialidadesContext";
+import { useOfflineSync } from "@/hooks/useOfflineSync";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import React, { Suspense } from "react";
 
@@ -203,7 +204,9 @@ const ModuleRoute: React.FC<{
 };
 
 // ─── APP ──────────────────────────────────────────────────────────────────────
-const App = () => (
+const App = () => {
+  useOfflineSync();
+  return (
   <PersistQueryClientProvider 
     client={queryClient} 
     persistOptions={{ 
@@ -294,6 +297,7 @@ const App = () => (
     </TooltipProvider>
   </ThemeProvider>
   </PersistQueryClientProvider>
-);
+  );
+};
 
 export default App;
