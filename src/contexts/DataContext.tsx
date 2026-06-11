@@ -1738,7 +1738,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const addBloqueio = useCallback(
     async (b: Omit<BloqueioAgenda, "id">) => {
-      const { data: inserted, error } = await supabase.from("bloqueios" as any).insert({
+      const clientOpId = uuidv4();
+      const payload: any = {
         titulo: b.titulo,
         tipo: b.tipo,
         data_inicio: b.dataInicio,
@@ -1749,7 +1750,28 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         unidade_id: b.unidadeId || '',
         profissional_id: b.profissionalId || '',
         criado_por: b.criadoPor,
-      } as any).select().single();
+        client_operation_id: clientOpId
+      };
+
+      try {
+        const { data: inserted, error } = await supabase.from("bloqueios" as any).insert(payload).select().single();
+        if (error) {
+          if (isNetworkError(error)) {
+            await addToOfflineQueue({
+              clientOperationId: clientOpId,
+              operation: 'INSERT',
+              table: 'bloqueios',
+              payload,
+              userId: authUser?.id || '',
+              unitId: authUser?.unidadeId
+            });
+            toast.info("Sem conexão. Bloqueio salvo localmente.");
+            // For local state consistency since we don't have the ID yet
+            setBloqueios((prev) => [{ ...b, id: clientOpId }, ...prev]);
+            return;
+          }
+          throw error;
+        }
       if (!error && inserted) {
         const id = (inserted as any).id;
         invalidateCache(queryKeys.bloqueios.all);
@@ -1774,10 +1796,28 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (data.horaFim !== undefined) dbData.hora_fim = data.horaFim;
       if (data.unidadeId !== undefined) dbData.unidade_id = data.unidadeId;
       if (data.profissionalId !== undefined) dbData.profissional_id = data.profissionalId;
-      const { error } = await supabase
-        .from("bloqueios" as any)
-        .update(dbData)
-        .eq("id", id);
+      const clientOpId = uuidv4();
+      try {
+        const { error } = await supabase
+          .from("bloqueios" as any)
+          .update({ ...dbData, client_operation_id: clientOpId })
+          .eq("id", id);
+        
+        if (error) {
+          if (isNetworkError(error)) {
+            await addToOfflineQueue({
+              clientOperationId: clientOpId,
+              operation: 'UPDATE',
+              table: 'bloqueios',
+              payload: dbData,
+              userId: authUser?.id || '',
+              unitId: authUser?.unidadeId
+            });
+            toast.info("Sem conexão. Alteração do bloqueio salva localmente.");
+          } else {
+            throw error;
+          }
+        }
       if (!error) {
         invalidateCache(queryKeys.bloqueios.all);
         setBloqueios((prev) => prev.map((b) => (b.id === id ? { ...b, ...data } : b)));
