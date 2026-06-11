@@ -35,12 +35,14 @@ export const useOfflineSync = () => {
         const operation = op.operation.toUpperCase();
         let result;
 
+        // Use a looser type for the table to avoid TS2589
+        const tableQuery = supabase.from(op.table as any);
+
         if (operation === "INSERT") {
-          result = await supabase
-            .from(op.table as any)
-            .insert(payloadWithId);
+          result = await tableQuery.insert(payloadWithId);
         } else if (operation === "UPDATE") {
-          const query = supabase.from(op.table as any).update(cleanPayload);
+          const query = tableQuery.update(cleanPayload);
+
           
           if (__lookupField && __lookupValue) {
             result = await query.eq(__lookupField, __lookupValue);
