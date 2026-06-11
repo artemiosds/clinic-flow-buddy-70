@@ -29,6 +29,7 @@ import { v4 as uuidv4 } from "uuid";
 import { differenceInMinutes } from "date-fns";
 import CustomFieldsRenderer from "@/components/CustomFieldsRenderer";
 import { useCustomFields } from "@/hooks/useCustomFields";
+import { isNetworkError } from "@/lib/utils";
 
 interface Agendamento {
   id: string;
