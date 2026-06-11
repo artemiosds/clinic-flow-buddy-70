@@ -50,7 +50,9 @@ export const useOfflineSync = () => {
           // Technical validation: handle specific error codes
           // 42501 = RLS / Permission
           // 23505 = Unique constraint violation (Idempotency)
-          const isFatal = ["42501", "23505", "P0001"].includes(error.code);
+          
+          const isIdempotencyError = error.code === "23505" && 
+            (error.message?.includes("client_op") || error.details?.includes("client_op"));
           
           await offlineDb.operations.update(op.id!, {
             status: "falha",
@@ -58,8 +60,8 @@ export const useOfflineSync = () => {
             lastError: error.message || error.details || "Erro desconhecido",
           });
           
-          if (error.code === "23505") {
-            // Already synced or duplicated, mark as synchronized to clear queue
+          if (isIdempotencyError) {
+            // Already synced or duplicated by idempotency key, mark as synchronized to clear queue
             await offlineDb.operations.update(op.id!, { status: "sincronizado" });
           } else if (error.code === "42501") {
             toast.error(`Erro de permissão ao sincronizar ${op.table}. Ação manual necessária.`);
