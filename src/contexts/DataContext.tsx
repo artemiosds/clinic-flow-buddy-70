@@ -32,9 +32,11 @@ import { getPublicIp, getDeviceInfo } from "@/lib/clientInfo";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/hooks/queries/queryKeys";
-import { addToOfflineQueue } from "@/lib/offline-db";
+import { offlineDb } from "@/lib/offline-db";
+import { enqueueOfflineMutation } from "@/lib/offline/offlineMutation";
 import { v4 as uuidv4 } from "uuid";
 import { addDaysToDateStr, isoDayOfWeek, localDateStr, nowMinutesInBrazil, todayLocalStr, isNetworkError } from "@/lib/utils";
+
 
 export interface TurnoInfoResult {
   turnoId: string;
@@ -1111,30 +1113,17 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         dbData.lembrete_24h_enviado_em = null;
         dbData.lembrete_proximo_enviado_em = null;
       }
-      const clientOpId = uuidv4();
+      
       try {
-        const { error: updateError } = await supabase
-          .from("agendamentos" as any)
-          .update({ ...dbData, client_operation_id: clientOpId })
-          .eq("id", id);
-        
-        if (updateError) {
-          if (isNetworkError(updateError)) {
-            await addToOfflineQueue({
-              clientOperationId: clientOpId,
-              operation: 'UPDATE',
-              table: 'agendamentos',
-              payload: dbData,
-              userId: authUser?.id || '',
-              unitId: authUser?.unidadeId
-            });
-            toast.info("Sem conexão. Alteração do agendamento salva localmente.");
-          } else {
-            throw updateError;
+        await enqueueOfflineMutation("UPDATE", dbData, {
+          table: "agendamentos",
+          lookupField: "id",
+          lookupValue: id,
+          onSuccess: () => {
+            setAgendamentos((prev) => prev.map((a) => (a.id === id ? { ...a, ...data } : a)));
           }
-        }
+        });
 
-        setAgendamentos((prev) => prev.map((a) => (a.id === id ? { ...a, ...data } : a)));
         await logAction({
           acao: "editar",
           entidade: "agendamento",
@@ -1150,6 +1139,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     },
     [logAction, invalidateCache, authUser],
   );
+
   const cancelAgendamento = useCallback(
     async (id: string): Promise<FilaEspera[]> => {
       const ag = agendamentosRef.current.find((a) => a.id === id);
