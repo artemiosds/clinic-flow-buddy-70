@@ -120,7 +120,7 @@ const queryClient = new QueryClient({
       refetchOnMount: false,
       refetchOnReconnect: 'always',
       retry: 1,
-      // Persist only specific queries
+      // Persist metadata
       meta: {
         persist: true
       }
@@ -131,6 +131,7 @@ const queryClient = new QueryClient({
   },
 });
 
+// Configure cache filter to avoid persisting sensitive data
 const persister = createAsyncStoragePersister({
   storage: {
     getItem: (key) => get(key),
@@ -138,7 +139,22 @@ const persister = createAsyncStoragePersister({
     removeItem: (key) => del(key),
   },
   key: "CER_QUERY_CACHE",
-  serialize: JSON.stringify,
+  serialize: (data: any) => {
+    const filtered = {
+      ...data,
+      clientState: {
+        ...data.clientState,
+        queries: data.clientState.queries.filter((q: any) => {
+          const queryKey = Array.isArray(q.queryKey) ? q.queryKey[0] : q.queryKey;
+          return [
+            'unidades', 'salas', 'especialidades', 'cid10_codigos', 
+            'clinica_config', 'system_config', 'permissions'
+          ].includes(queryKey);
+        })
+      }
+    };
+    return JSON.stringify(filtered);
+  },
   deserialize: JSON.parse,
 });
 

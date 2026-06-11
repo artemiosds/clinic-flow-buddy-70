@@ -51,9 +51,12 @@ export default defineConfig(({ mode }) => ({
         navigateFallback: "index.html",
         runtimeCaching: [
           {
-            // Do NOT cache Supabase API calls or clinical data
+            // CRITICAL: NEVER cache Supabase API calls or clinical data routes
             urlPattern: ({ url }) => 
               url.host.includes("supabase.co") || 
+              url.pathname.includes("/rest/v1/") ||
+              url.pathname.includes("/auth/v1/") ||
+              url.pathname.includes("/storage/v1/") ||
               url.pathname.startsWith("/api/"),
             handler: "NetworkOnly",
           },
@@ -64,7 +67,7 @@ export default defineConfig(({ mode }) => ({
             options: {
               cacheName: "static-assets",
               expiration: {
-                maxEntries: 50,
+                maxEntries: 100,
                 maxAgeSeconds: 30 * 24 * 60 * 60, // 30 Days
               },
             },

@@ -4149,6 +4149,7 @@ export type Database = {
           alergias: string[] | null
           altura: number | null
           classificacao_risco: string
+          client_operation_id: string | null
           confirmado_em: string | null
           criado_em: string | null
           custom_data: Json
@@ -4171,6 +4172,7 @@ export type Database = {
           alergias?: string[] | null
           altura?: number | null
           classificacao_risco?: string
+          client_operation_id?: string | null
           confirmado_em?: string | null
           criado_em?: string | null
           custom_data?: Json
@@ -4193,6 +4195,7 @@ export type Database = {
           alergias?: string[] | null
           altura?: number | null
           classificacao_risco?: string
+          client_operation_id?: string | null
           confirmado_em?: string | null
           criado_em?: string | null
           custom_data?: Json
