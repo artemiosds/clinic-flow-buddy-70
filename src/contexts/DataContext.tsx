@@ -1766,22 +1766,22 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
               unitId: authUser?.unidadeId
             });
             toast.info("Sem conexão. Bloqueio salvo localmente.");
-            // For local state consistency since we don't have the ID yet
             setBloqueios((prev) => [{ ...b, id: clientOpId }, ...prev]);
             return;
           }
           throw error;
         }
-      if (!error && inserted) {
-        const id = (inserted as any).id;
-        invalidateCache(queryKeys.bloqueios.all);
-        setBloqueios((prev) => [{ ...b, id }, ...prev]);
-      } else {
+        if (inserted) {
+          const id = (inserted as any).id;
+          invalidateCache(queryKeys.bloqueios.all);
+          setBloqueios((prev) => [{ ...b, id }, ...prev]);
+        }
+      } catch (error) {
         console.error("Error adding bloqueio:", error);
         throw error;
       }
     },
-    [invalidateCache],
+    [invalidateCache, authUser],
   );
 
   const updateBloqueio = useCallback(
@@ -1796,6 +1796,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (data.horaFim !== undefined) dbData.hora_fim = data.horaFim;
       if (data.unidadeId !== undefined) dbData.unidade_id = data.unidadeId;
       if (data.profissionalId !== undefined) dbData.profissional_id = data.profissionalId;
+      
       const clientOpId = uuidv4();
       try {
         const { error } = await supabase
@@ -1818,12 +1819,15 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             throw error;
           }
         }
-      if (!error) {
-        invalidateCache(queryKeys.bloqueios.all);
-        setBloqueios((prev) => prev.map((b) => (b.id === id ? { ...b, ...data } : b)));
-      } else console.error("Error updating bloqueio:", error);
+        if (!error) {
+          invalidateCache(queryKeys.bloqueios.all);
+          setBloqueios((prev) => prev.map((b) => (b.id === id ? { ...b, ...data } : b)));
+        }
+      } catch (error) {
+        console.error("Error updating bloqueio:", error);
+      }
     },
-    [invalidateCache],
+    [invalidateCache, authUser],
   );
 
   const deleteBloqueio = useCallback(
