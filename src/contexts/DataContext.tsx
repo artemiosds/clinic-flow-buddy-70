@@ -32,6 +32,8 @@ import { getPublicIp, getDeviceInfo } from "@/lib/clientInfo";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/hooks/queries/queryKeys";
+import { addToOfflineQueue } from "@/lib/offline-db";
+import { v4 as uuidv4 } from "uuid";
 import { addDaysToDateStr, isoDayOfWeek, localDateStr, nowMinutesInBrazil, todayLocalStr } from "@/lib/utils";
 
 export interface TurnoInfoResult {
@@ -1042,7 +1044,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           `[addAgendamento] Status "${ag.status}" não permitido na criação. Forçado para "confirmado".`,
         );
       }
-      const { error } = await supabase.from("agendamentos" as any).insert({
+      const clientOpId = uuidv4();
+      const payload: any = {
         id: ag.id,
         paciente_id: ag.pacienteId,
         paciente_nome: ag.pacienteNome,
@@ -1061,7 +1064,26 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         sync_status: ag.syncStatus || "pendente",
         criado_por: ag.criadoPor || "",
         prioridade_perfil: "normal",
-      } as any);
+        client_operation_id: clientOpId
+      };
+
+      if (navigator.onLine) {
+        const { error } = await supabase.from("agendamentos" as any).insert(payload);
+        if (error) {
+          console.error("Error adding agendamento:", error);
+          throw error;
+        }
+      } else {
+        await addToOfflineQueue({
+          clientOperationId: clientOpId,
+          operation: 'INSERT',
+          table: 'agendamentos',
+          payload,
+          userId: authUser?.id || '',
+          unitId: authUser?.unidadeId
+        });
+        toast.info("Sem conexão. Agendamento salvo localmente.");
+      }
       if (!error) {
         setAgendamentos((prev) => [...prev, { ...ag, status: statusInicial as any }]);
         await logAction({
@@ -1098,10 +1120,24 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         dbData.lembrete_24h_enviado_em = null;
         dbData.lembrete_proximo_enviado_em = null;
       }
-      const { error } = await supabase
-        .from("agendamentos" as any)
-        .update(dbData)
-        .eq("id", id);
+      const clientOpId = uuidv4();
+      if (navigator.onLine) {
+        const { error } = await supabase
+          .from("agendamentos" as any)
+          .update({ ...dbData, client_operation_id: clientOpId })
+          .eq("id", id);
+        if (error) throw error;
+      } else {
+        await addToOfflineQueue({
+          clientOperationId: clientOpId,
+          operation: 'UPDATE',
+          table: 'agendamentos',
+          payload: dbData,
+          userId: authUser?.id || '',
+          unitId: authUser?.unidadeId
+        });
+        toast.info("Sem conexão. Alteração do agendamento salva localmente.");
+      }
       if (!error) {
         setAgendamentos((prev) => prev.map((a) => (a.id === id ? { ...a, ...data } : a)));
         await logAction({
@@ -1163,7 +1199,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     async (p: Paciente) => {
       // Auto-inject unidade_id if not set
       const unidadeIdToUse = p.unidadeId || userUnidadeId || '';
-      const { error } = await supabase.from("pacientes" as any).insert({
+      const clientOpId = uuidv4();
+      const payload: any = {
         id: p.id,
         nome: p.nome,
         cpf: p.cpf,
@@ -1178,7 +1215,26 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         cid: p.cid,
         criado_em: p.criadoEm || new Date().toISOString(),
         unidade_id: unidadeIdToUse,
-      } as any);
+        client_operation_id: clientOpId
+      };
+
+      if (navigator.onLine) {
+        const { error } = await supabase.from("pacientes" as any).insert(payload);
+        if (error) {
+          console.error("Error adding paciente:", error);
+          throw error;
+        }
+      } else {
+        await addToOfflineQueue({
+          clientOperationId: clientOpId,
+          operation: 'INSERT',
+          table: 'pacientes',
+          payload,
+          userId: authUser?.id || '',
+          unitId: authUser?.unidadeId
+        });
+        toast.info("Sem conexão. Cadastro de paciente salvo localmente.");
+      }
       if (!error) {
         setPacientes((prev) => [{ ...p, unidadeId: unidadeIdToUse }, ...prev]);
         invalidateCache(queryKeys.pacientes.all);

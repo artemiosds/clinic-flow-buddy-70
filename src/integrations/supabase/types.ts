@@ -17,6 +17,7 @@ export type Database = {
       action_logs: {
         Row: {
           acao: string
+          client_operation_id: string | null
           created_at: string
           detalhes: Json
           entidade: string
@@ -33,6 +34,7 @@ export type Database = {
         }
         Insert: {
           acao: string
+          client_operation_id?: string | null
           created_at?: string
           detalhes?: Json
           entidade: string
@@ -49,6 +51,7 @@ export type Database = {
         }
         Update: {
           acao?: string
+          client_operation_id?: string | null
           created_at?: string
           detalhes?: Json
           entidade?: string
@@ -1358,6 +1361,7 @@ export type Database = {
       fila_espera: {
         Row: {
           cid: string
+          client_operation_id: string | null
           criado_em: string | null
           criado_por: string
           custom_data: Json
@@ -1381,6 +1385,7 @@ export type Database = {
         }
         Insert: {
           cid?: string
+          client_operation_id?: string | null
           criado_em?: string | null
           criado_por?: string
           custom_data?: Json
@@ -1404,6 +1409,7 @@ export type Database = {
         }
         Update: {
           cid?: string
+          client_operation_id?: string | null
           criado_em?: string | null
           criado_por?: string
           custom_data?: Json
