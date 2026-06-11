@@ -152,7 +152,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const loadAgendamentos = useCallback(async () => {
-    const cutoff = localDateStr(addDaysToDateStr(todayLocalStr(), -30));
+    const cutoff = localDateStr(addDaysToDateStr(todayLocalStr(), -30) as any);
     let q = supabase.from("agendamentos").select("*").gte("data", cutoff).order("data", { ascending: false });
     if (!isGlobalAdmin && userUnidadeId) q = q.eq('unidade_id', userUnidadeId);
     const { data } = await q;
@@ -206,7 +206,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [invalidateCache]);
 
   const addAtendimento = useCallback(async (a: Atendimento) => {
-    await enqueueOfflineMutation("INSERT", { ...a, agendamento_id: a.agendamentoId, paciente_id: a.pacienteId, profissional_id: a.professionalId, unidade_id: a.unidadeId, hora_inicio: a.horaInicio }, { table: "atendimentos", onSuccess: () => setAtendimentos(prev => [...prev, a]) });
+    await enqueueOfflineMutation("INSERT", { ...a, agendamento_id: a.agendamentoId, paciente_id: a.pacienteId, profissional_id: (a as any).professionalId || a.profissionalId, unidade_id: a.unidadeId, hora_inicio: a.horaInicio }, { table: "atendimentos", onSuccess: () => setAtendimentos(prev => [...prev, a]) });
     invalidateCache(queryKeys.atendimentos.all);
   }, [invalidateCache]);
 
