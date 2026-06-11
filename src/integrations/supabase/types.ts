@@ -69,6 +69,7 @@ export type Database = {
         Row: {
           agendado_por_externo: string | null
           atualizado_em: string
+          client_operation_id: string | null
           criado_em: string | null
           criado_por: string
           custom_data: Json
@@ -106,6 +107,7 @@ export type Database = {
         Insert: {
           agendado_por_externo?: string | null
           atualizado_em?: string
+          client_operation_id?: string | null
           criado_em?: string | null
           criado_por?: string
           custom_data?: Json
@@ -143,6 +145,7 @@ export type Database = {
         Update: {
           agendado_por_externo?: string | null
           atualizado_em?: string
+          client_operation_id?: string | null
           criado_em?: string | null
           criado_por?: string
           custom_data?: Json
@@ -335,6 +338,7 @@ export type Database = {
       atendimentos: {
         Row: {
           agendamento_id: string
+          client_operation_id: string | null
           criado_em: string | null
           custom_data: Json
           data: string
@@ -355,6 +359,7 @@ export type Database = {
         }
         Insert: {
           agendamento_id?: string
+          client_operation_id?: string | null
           criado_em?: string | null
           custom_data?: Json
           data?: string
@@ -375,6 +380,7 @@ export type Database = {
         }
         Update: {
           agendamento_id?: string
+          client_operation_id?: string | null
           criado_em?: string | null
           custom_data?: Json
           data?: string
@@ -2146,6 +2152,7 @@ export type Database = {
           bairro: string | null
           cep: string | null
           cid: string
+          client_operation_id: string | null
           cns: string
           complemento: string | null
           comportamento: string
@@ -2219,6 +2226,7 @@ export type Database = {
           bairro?: string | null
           cep?: string | null
           cid?: string
+          client_operation_id?: string | null
           cns?: string
           complemento?: string | null
           comportamento?: string
@@ -2292,6 +2300,7 @@ export type Database = {
           bairro?: string | null
           cep?: string | null
           cid?: string
+          client_operation_id?: string | null
           cns?: string
           complemento?: string | null
           comportamento?: string
