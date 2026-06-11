@@ -12,24 +12,21 @@ export const useNetworkStatus = () => {
     window.addEventListener("online", handleOnline);
     window.addEventListener("offline", handleOffline);
 
-    // Health check function
     const checkHealth = async () => {
       if (!navigator.onLine) {
         setIsBackendReachable(false);
         return;
       }
       try {
-        // Simple light check to Supabase
-        const { error } = await supabase.from("_health_check").select("id").limit(1);
-        // If error is 404 it means table doesn't exist but backend responded
-        // If error is network error it means unreachable
+        // Use a simple query that shouldn't fail if reachable
+        const { error } = await supabase.from("pacientes" as any).select("id").limit(1);
         setIsBackendReachable(true);
       } catch (err) {
         setIsBackendReachable(false);
       }
     };
 
-    const interval = setInterval(checkHealth, 30000); // Every 30s
+    const interval = setInterval(checkHealth, 30000);
     checkHealth();
 
     return () => {
