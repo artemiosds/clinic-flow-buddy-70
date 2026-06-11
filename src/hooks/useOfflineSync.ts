@@ -52,7 +52,11 @@ export const useOfflineSync = () => {
           // 23505 = Unique constraint violation (Idempotency)
           
           const isIdempotencyError = error.code === "23505" && 
-            (error.message?.includes("client_op") || error.details?.includes("client_op"));
+            (
+              error.message?.includes("client_operation_id") || 
+              error.details?.includes("client_operation_id") ||
+              (error.message?.includes("unique_") && error.message?.includes("_client_op"))
+            );
           
           await offlineDb.operations.update(op.id!, {
             status: "falha",
@@ -61,6 +65,7 @@ export const useOfflineSync = () => {
           });
           
           if (isIdempotencyError) {
+            console.info(`Operação ${op.clientOperationId} já sincronizada (Idempotência).`);
             // Already synced or duplicated by idempotency key, mark as synchronized to clear queue
             await offlineDb.operations.update(op.id!, { status: "sincronizado" });
           } else if (error.code === "42501") {
@@ -76,4 +81,3 @@ export const useOfflineSync = () => {
     return () => clearInterval(interval);
   }, [isOnline]);
 };
-

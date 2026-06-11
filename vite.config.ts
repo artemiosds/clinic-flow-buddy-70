@@ -53,7 +53,8 @@ export default defineConfig(({ mode }) => ({
           {
             // CRITICAL: NEVER cache Supabase API calls or clinical data routes
             urlPattern: ({ url }) => 
-              url.host.includes("supabase.co") || 
+              url.hostname.endsWith("supabase.co") || 
+              url.hostname.includes("supabase.net") ||
               url.pathname.includes("/rest/v1/") ||
               url.pathname.includes("/auth/v1/") ||
               url.pathname.includes("/storage/v1/") ||
