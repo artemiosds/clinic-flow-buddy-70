@@ -1323,30 +1323,16 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (data.pacienteId !== undefined) dbData.paciente_id = data.pacienteId;
       if (data.setor !== undefined) dbData.setor = data.setor;
       
-      const clientOpId = uuidv4();
       try {
-        const { error: updateError } = await supabase
-          .from("fila_espera" as any)
-          .update({ ...dbData, client_operation_id: clientOpId })
-          .eq("id", id);
-        
-        if (updateError) {
-          if (isNetworkError(updateError)) {
-            await enqueueOfflineMutation({
-              clientOperationId: clientOpId,
-              operation: 'UPDATE',
-              table: 'fila_espera',
-              payload: dbData,
-              userId: authUser?.id || '',
-              unitId: authUser?.unidadeId
-            });
-            toast.info("Sem conexão. Alteração na fila salva localmente.");
-          } else {
-            throw updateError;
+        await enqueueOfflineMutation("UPDATE", dbData, {
+          table: "fila_espera",
+          lookupField: "id",
+          lookupValue: id,
+          onSuccess: () => {
+            setFila((prev) => prev.map((f) => (f.id === id ? { ...f, ...data } : f)));
           }
-        }
+        });
 
-        setFila((prev) => prev.map((f) => (f.id === id ? { ...f, ...data } : f)));
         await logAction({
           acao: "editar",
           entidade: "fila_espera",
@@ -1361,6 +1347,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     },
     [logAction, invalidateCache, authUser],
   );
+
 
   const removeFromFila = useCallback(
     async (id: string) => {
@@ -1379,7 +1366,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const addAtendimento = useCallback(
     async (a: Atendimento) => {
-      const clientOpId = uuidv4();
       const payload: any = {
         id: a.id,
         agendamento_id: a.agendamentoId,
@@ -1395,29 +1381,17 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         data: a.data,
         hora_inicio: a.horaInicio,
         hora_fim: a.horaFim || "",
-        status: a.status,
-        client_operation_id: clientOpId
+        status: a.status
       };
 
       try {
-        const { error: insertError } = await supabase.from("atendimentos" as any).insert(payload);
-        if (insertError) {
-          if (isNetworkError(insertError)) {
-            await enqueueOfflineMutation({
-              clientOperationId: clientOpId,
-              operation: 'INSERT',
-              table: 'atendimentos',
-              payload,
-              userId: authUser?.id || '',
-              unitId: authUser?.unidadeId
-            });
-            toast.info("Sem conexão. Atendimento salvo localmente.");
-          } else {
-            throw insertError;
+        await enqueueOfflineMutation("INSERT", payload, {
+          table: "atendimentos",
+          onSuccess: () => {
+             setAtendimentos((prev) => [...prev, a]);
           }
-        }
-
-        setAtendimentos((prev) => [...prev, a]);
+        });
+        
         invalidateCache(queryKeys.atendimentos.all);
       } catch (error) {
         console.error("Error adding atendimento:", error);
@@ -1426,6 +1400,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     },
     [invalidateCache, authUser],
   );
+
 
   const updateAtendimento = useCallback(
     (id: string, data: Partial<Atendimento>) => {
