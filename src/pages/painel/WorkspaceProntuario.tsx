@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { enqueueOfflineMutation } from "@/lib/offline/offlineMutation";
+
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
@@ -551,39 +553,23 @@ const WorkspaceProntuario: React.FC = () => {
         }
       };
 
-      let savedRecord;
       if (finalId) {
-        // Explicit update to prevent duplication
-        const { data, error } = await supabase.from('prontuarios').update(dbPayload).eq('id', finalId).select().single();
-        if (error) throw error;
-        savedRecord = data;
+        await enqueueOfflineMutation("UPDATE", dbPayload, {
+          table: "prontuarios",
+          lookupField: "id",
+          lookupValue: finalId,
+          showToast: false
+        });
+        savedRecord = { ...dbPayload, id: finalId };
       } else {
-        // PREVENÇÃO DE DUPLICIDADE: Verifica se já existe um prontuário para este agendamento antes de inserir
-        if (dbPayload.agendamento_id) {
-          const { data: existing } = await supabase
-            .from('prontuarios')
-            .select('id, status')
-            .eq('agendamento_id', dbPayload.agendamento_id)
-            .order('status', { ascending: false })
-            .limit(1)
-            .maybeSingle();
-
-          if (existing) {
-            console.log("[Workspace handleSave] Prontuário já existe, atualizando:", existing.id);
-            const { data, error } = await supabase.from('prontuarios').update(dbPayload).eq('id', existing.id).select().single();
-            if (error) throw error;
-            savedRecord = data;
-          } else {
-            const { data, error } = await supabase.from('prontuarios').insert(dbPayload).select().single();
-            if (error) throw error;
-            savedRecord = data;
-          }
-        } else {
-          const { data, error } = await supabase.from('prontuarios').insert(dbPayload).select().single();
-          if (error) throw error;
-          savedRecord = data;
-        }
+        const newId = crypto.randomUUID();
+        await enqueueOfflineMutation("INSERT", { ...dbPayload, id: newId }, {
+          table: "prontuarios",
+          showToast: false
+        });
+        savedRecord = { ...dbPayload, id: newId };
       }
+
       
       const data = savedRecord;
       

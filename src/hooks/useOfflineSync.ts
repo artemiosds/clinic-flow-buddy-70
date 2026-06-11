@@ -82,7 +82,7 @@ export const useOfflineSync = () => {
         }
 
         // Network error - stay pending
-        if (error instanceof TypeError && error.message === "Failed to fetch") {
+        if (error instanceof TypeError && (error.message === "Failed to fetch" || error.message?.includes("NetworkError"))) {
           await offlineDb.operations.update(op.id!, { status: "pendente" });
           break;
         }
