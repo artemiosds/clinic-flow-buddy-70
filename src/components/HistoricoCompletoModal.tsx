@@ -517,7 +517,7 @@ const RelatorioAltaDetail: React.FC<{ event: FullEvent; pacienteNome: string }> 
             <div class="signature">
               <div class="signature-line" style="width: 300px;"></div>
               <div class="name">Coordenação / Responsável Técnico</div>
-              <div class="role">CER II — Oriximiná-PA</div>
+              <div class="role">CAPS II — Oriximiná-PA</div>
             </div>
           </div>
         `;
