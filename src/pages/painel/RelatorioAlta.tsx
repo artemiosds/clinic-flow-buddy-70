@@ -670,7 +670,7 @@ const RelatorioAlta: React.FC = () => {
         <div class="signature">
           <div class="signature-line" style="width: 300px;"></div>
           <div class="name">Responsável Técnico / Coordenação</div>
-          <div class="role">CER II — Oriximiná-PA</div>
+          <div class="role">CAPS II — Oriximiná-PA</div>
         </div>
       </div>
     `;
