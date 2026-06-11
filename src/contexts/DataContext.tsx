@@ -34,7 +34,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/hooks/queries/queryKeys";
 import { addToOfflineQueue } from "@/lib/offline-db";
 import { v4 as uuidv4 } from "uuid";
-import { addDaysToDateStr, isoDayOfWeek, localDateStr, nowMinutesInBrazil, todayLocalStr } from "@/lib/utils";
+import { addDaysToDateStr, isoDayOfWeek, localDateStr, nowMinutesInBrazil, todayLocalStr, isNetworkError } from "@/lib/utils";
 
 export interface TurnoInfoResult {
   turnoId: string;
