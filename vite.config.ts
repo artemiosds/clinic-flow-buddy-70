@@ -20,9 +20,9 @@ export default defineConfig(({ mode }) => ({
       registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "apple-touch-icon.png", "mask-icon.svg"],
       manifest: {
-        name: "Sistema CER II",
-        short_name: "CER II",
-        description: "Sistema de Gestão de Reabilitação CER II",
+        name: "SISTEMA CAPS II",
+        short_name: "CAPS II",
+        description: "Sistema de Gestão de Saúde Mental CAPS II",
         theme_color: "#0f172a",
         background_color: "#ffffff",
         display: "standalone",

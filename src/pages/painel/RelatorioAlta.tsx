@@ -670,7 +670,7 @@ const RelatorioAlta: React.FC = () => {
         <div class="signature">
           <div class="signature-line" style="width: 300px;"></div>
           <div class="name">Responsável Técnico / Coordenação</div>
-          <div class="role">CER II — Oriximiná-PA</div>
+          <div class="role">CAPS II — Oriximiná-PA</div>
         </div>
       </div>
     `;
@@ -1078,7 +1078,7 @@ const RelatorioAlta: React.FC = () => {
                 <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">CPF</span>{paciente.cpf || "—"}</div>
                 <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">CNS</span>{paciente.cns || "—"}</div>
                 <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">Responsável</span>{paciente.nomeMae || "—"}</div>
-                <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">Unidade</span>{"CER II — Oriximiná"}</div>
+                <div><span className="text-muted-foreground text-[10px] uppercase font-bold block mb-1">Unidade</span>{"CAPS II — Oriximiná"}</div>
                 <div>
                   <Label className="text-xs font-semibold">Data de Alta</Label>
                   <Input type="date" value={dataAlta} onChange={e => setDataAlta(e.target.value)} className="h-8 text-sm" />
