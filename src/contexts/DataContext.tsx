@@ -1060,19 +1060,21 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
 
       try {
-        if (navigator.onLine) {
-          const { error: insertError } = await supabase.from("agendamentos" as any).insert(payload);
-          if (insertError) throw insertError;
-        } else {
-          await addToOfflineQueue({
-            clientOperationId: clientOpId,
-            operation: 'INSERT',
-            table: 'agendamentos',
-            payload,
-            userId: authUser?.id || '',
-            unitId: authUser?.unidadeId
-          });
-          toast.info("Sem conexão. Agendamento salvo localmente.");
+        const { error: insertError } = await supabase.from("agendamentos" as any).insert(payload);
+        if (insertError) {
+          if (isNetworkError(insertError)) {
+            await addToOfflineQueue({
+              clientOperationId: clientOpId,
+              operation: 'INSERT',
+              table: 'agendamentos',
+              payload,
+              userId: authUser?.id || '',
+              unitId: authUser?.unidadeId
+            });
+            toast.info("Sem conexão. Agendamento salvo localmente.");
+          } else {
+            throw insertError;
+          }
         }
 
         setAgendamentos((prev) => [...prev, { ...ag, status: statusInicial as any }]);
@@ -1111,22 +1113,25 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       const clientOpId = uuidv4();
       try {
-        if (navigator.onLine) {
-          const { error: updateError } = await supabase
-            .from("agendamentos" as any)
-            .update({ ...dbData, client_operation_id: clientOpId })
-            .eq("id", id);
-          if (updateError) throw updateError;
-        } else {
-          await addToOfflineQueue({
-            clientOperationId: clientOpId,
-            operation: 'UPDATE',
-            table: 'agendamentos',
-            payload: dbData,
-            userId: authUser?.id || '',
-            unitId: authUser?.unidadeId
-          });
-          toast.info("Sem conexão. Alteração do agendamento salva localmente.");
+        const { error: updateError } = await supabase
+          .from("agendamentos" as any)
+          .update({ ...dbData, client_operation_id: clientOpId })
+          .eq("id", id);
+        
+        if (updateError) {
+          if (isNetworkError(updateError)) {
+            await addToOfflineQueue({
+              clientOperationId: clientOpId,
+              operation: 'UPDATE',
+              table: 'agendamentos',
+              payload: dbData,
+              userId: authUser?.id || '',
+              unitId: authUser?.unidadeId
+            });
+            toast.info("Sem conexão. Alteração do agendamento salva localmente.");
+          } else {
+            throw updateError;
+          }
         }
 
         setAgendamentos((prev) => prev.map((a) => (a.id === id ? { ...a, ...data } : a)));
@@ -1208,19 +1213,21 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
 
       try {
-        if (navigator.onLine) {
-          const { error: insertError } = await supabase.from("pacientes" as any).insert(payload);
-          if (insertError) throw insertError;
-        } else {
-          await addToOfflineQueue({
-            clientOperationId: clientOpId,
-            operation: 'INSERT',
-            table: 'pacientes',
-            payload,
-            userId: authUser?.id || '',
-            unitId: authUser?.unidadeId
-          });
-          toast.info("Sem conexão. Cadastro de paciente salvo localmente.");
+        const { error: insertError } = await supabase.from("pacientes" as any).insert(payload);
+        if (insertError) {
+          if (isNetworkError(insertError)) {
+            await addToOfflineQueue({
+              clientOperationId: clientOpId,
+              operation: 'INSERT',
+              table: 'pacientes',
+              payload,
+              userId: authUser?.id || '',
+              unitId: authUser?.unidadeId
+            });
+            toast.info("Sem conexão. Cadastro de paciente salvo localmente.");
+          } else {
+            throw insertError;
+          }
         }
 
         setPacientes((prev) => [{ ...p, unidadeId: unidadeIdToUse }, ...prev]);
@@ -1249,22 +1256,25 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const clientOpId = uuidv4();
       try {
-        if (navigator.onLine) {
-          const { error: updateError } = await supabase
-            .from("pacientes" as any)
-            .update({ ...dbData, client_operation_id: clientOpId })
-            .eq("id", id);
-          if (updateError) throw updateError;
-        } else {
-          await addToOfflineQueue({
-            clientOperationId: clientOpId,
-            operation: 'UPDATE',
-            table: 'pacientes',
-            payload: dbData,
-            userId: authUser?.id || '',
-            unitId: authUser?.unidadeId
-          });
-          toast.info("Sem conexão. Alteração do paciente salva localmente.");
+        const { error: updateError } = await supabase
+          .from("pacientes" as any)
+          .update({ ...dbData, client_operation_id: clientOpId })
+          .eq("id", id);
+        
+        if (updateError) {
+          if (isNetworkError(updateError)) {
+            await addToOfflineQueue({
+              clientOperationId: clientOpId,
+              operation: 'UPDATE',
+              table: 'pacientes',
+              payload: dbData,
+              userId: authUser?.id || '',
+              unitId: authUser?.unidadeId
+            });
+            toast.info("Sem conexão. Alteração do paciente salva localmente.");
+          } else {
+            throw updateError;
+          }
         }
 
         setPacientes((prev) => prev.map((p) => (p.id === id ? { ...p, ...data } : p)));
@@ -1305,19 +1315,21 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
 
       try {
-        if (navigator.onLine) {
-          const { error: insertError } = await supabase.from("fila_espera" as any).insert(payload);
-          if (insertError) throw insertError;
-        } else {
-          await addToOfflineQueue({
-            clientOperationId: clientOpId,
-            operation: 'INSERT',
-            table: 'fila_espera',
-            payload,
-            userId: authUser?.id || '',
-            unitId: authUser?.unidadeId
-          });
-          toast.info("Sem conexão. Fila de espera salva localmente.");
+        const { error: insertError } = await supabase.from("fila_espera" as any).insert(payload);
+        if (insertError) {
+          if (isNetworkError(insertError)) {
+            await addToOfflineQueue({
+              clientOperationId: clientOpId,
+              operation: 'INSERT',
+              table: 'fila_espera',
+              payload,
+              userId: authUser?.id || '',
+              unitId: authUser?.unidadeId
+            });
+            toast.info("Sem conexão. Fila de espera salva localmente.");
+          } else {
+            throw insertError;
+          }
         }
 
         setFila((prev) => [...prev, f]);
@@ -1358,22 +1370,25 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       const clientOpId = uuidv4();
       try {
-        if (navigator.onLine) {
-          const { error: updateError } = await supabase
-            .from("fila_espera" as any)
-            .update({ ...dbData, client_operation_id: clientOpId })
-            .eq("id", id);
-          if (updateError) throw updateError;
-        } else {
-          await addToOfflineQueue({
-            clientOperationId: clientOpId,
-            operation: 'UPDATE',
-            table: 'fila_espera',
-            payload: dbData,
-            userId: authUser?.id || '',
-            unitId: authUser?.unidadeId
-          });
-          toast.info("Sem conexão. Alteração na fila salva localmente.");
+        const { error: updateError } = await supabase
+          .from("fila_espera" as any)
+          .update({ ...dbData, client_operation_id: clientOpId })
+          .eq("id", id);
+        
+        if (updateError) {
+          if (isNetworkError(updateError)) {
+            await addToOfflineQueue({
+              clientOperationId: clientOpId,
+              operation: 'UPDATE',
+              table: 'fila_espera',
+              payload: dbData,
+              userId: authUser?.id || '',
+              unitId: authUser?.unidadeId
+            });
+            toast.info("Sem conexão. Alteração na fila salva localmente.");
+          } else {
+            throw updateError;
+          }
         }
 
         setFila((prev) => prev.map((f) => (f.id === id ? { ...f, ...data } : f)));
@@ -1430,19 +1445,21 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
 
       try {
-        if (navigator.onLine) {
-          const { error: insertError } = await supabase.from("atendimentos" as any).insert(payload);
-          if (insertError) throw insertError;
-        } else {
-          await addToOfflineQueue({
-            clientOperationId: clientOpId,
-            operation: 'INSERT',
-            table: 'atendimentos',
-            payload,
-            userId: authUser?.id || '',
-            unitId: authUser?.unidadeId
-          });
-          toast.info("Sem conexão. Atendimento salvo localmente.");
+        const { error: insertError } = await supabase.from("atendimentos" as any).insert(payload);
+        if (insertError) {
+          if (isNetworkError(insertError)) {
+            await addToOfflineQueue({
+              clientOperationId: clientOpId,
+              operation: 'INSERT',
+              table: 'atendimentos',
+              payload,
+              userId: authUser?.id || '',
+              unitId: authUser?.unidadeId
+            });
+            toast.info("Sem conexão. Atendimento salvo localmente.");
+          } else {
+            throw insertError;
+          }
         }
 
         setAtendimentos((prev) => [...prev, a]);
