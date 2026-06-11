@@ -35,14 +35,14 @@ export const useOfflineSync = () => {
         const operation = op.operation.toUpperCase();
         let result;
 
-        // Use a looser type for the table to avoid TS2589
-        const tableQuery = supabase.from(op.table as any);
+        // Use any to avoid "Type instantiation is excessively deep" errors with dynamic tables
+        const supabaseAny = supabase as any;
+        const tableQuery = supabaseAny.from(op.table);
 
         if (operation === "INSERT") {
           result = await tableQuery.insert(payloadWithId);
         } else if (operation === "UPDATE") {
           const query = tableQuery.update(cleanPayload);
-
           
           if (__lookupField && __lookupValue) {
             result = await query.eq(__lookupField, __lookupValue);
@@ -50,7 +50,7 @@ export const useOfflineSync = () => {
             result = await query.eq("client_operation_id", op.clientOperationId);
           }
         } else if (operation === "DELETE") {
-          const query = supabase.from(op.table as any).delete();
+          const query = tableQuery.delete();
           
           if (__lookupField && __lookupValue) {
             result = await query.eq(__lookupField, __lookupValue);
