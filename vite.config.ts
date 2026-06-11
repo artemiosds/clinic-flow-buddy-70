@@ -57,6 +57,8 @@ export default defineConfig(({ mode }) => ({
               url.pathname.includes("/rest/v1/") ||
               url.pathname.includes("/auth/v1/") ||
               url.pathname.includes("/storage/v1/") ||
+              url.pathname.includes("/functions/v1/") ||
+              url.pathname.includes("/realtime/v1/") ||
               url.pathname.startsWith("/api/"),
             handler: "NetworkOnly",
           },

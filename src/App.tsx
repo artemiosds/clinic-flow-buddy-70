@@ -139,22 +139,7 @@ const persister = createAsyncStoragePersister({
     removeItem: (key) => del(key),
   },
   key: "CER_QUERY_CACHE",
-  serialize: (data: any) => {
-    const filtered = {
-      ...data,
-      clientState: {
-        ...data.clientState,
-        queries: data.clientState.queries.filter((q: any) => {
-          const queryKey = Array.isArray(q.queryKey) ? q.queryKey[0] : q.queryKey;
-          return [
-            'unidades', 'salas', 'especialidades', 'cid10_codigos', 
-            'clinica_config', 'system_config', 'permissions'
-          ].includes(queryKey);
-        })
-      }
-    };
-    return JSON.stringify(filtered);
-  },
+  serialize: JSON.stringify,
   deserialize: JSON.parse,
 });
 
@@ -228,7 +213,17 @@ const App = () => {
     persistOptions={{ 
       persister,
       maxAge: 1000 * 60 * 60 * 24, // 24 hours
-      buster: "v1"
+      buster: "v1",
+      dehydrateOptions: {
+        shouldDehydrateQuery: (query: any) => {
+          // Technical validation: Only dehydrate essential non-sensitive data
+          const queryKey = Array.isArray(query.queryKey) ? query.queryKey[0] : query.queryKey;
+          return [
+            'unidades', 'salas', 'especialidades', 'cid10_codigos', 
+            'clinica_config', 'system_config', 'permissions'
+          ].includes(queryKey);
+        }
+      }
     }}
   >
     <OfflineBanner />
