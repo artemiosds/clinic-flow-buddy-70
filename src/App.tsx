@@ -1,8 +1,12 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
+import { get, set, del } from "idb-keyval";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { OfflineBanner } from "@/components/OfflineBanner";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { DataProvider } from "@/contexts/DataContext";
 import { PermissionsProvider, usePermissions, ModuleName } from "@/contexts/PermissionsContext";
@@ -109,17 +113,32 @@ const NotFound                    = lazyRetry(() => import("./pages/NotFound"));
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5,   // 5 minutes — covers majority of reads
-      gcTime: 1000 * 60 * 15,     // 15 minutes garbage collection
+      staleTime: 1000 * 60 * 5,   // 5 minutes
+      gcTime: 1000 * 60 * 60 * 24, // Keep for 24h for persistence
       refetchOnWindowFocus: false,
-      refetchOnMount: false,      // trust cache; explicit invalidations drive refresh
+      refetchOnMount: false,
       refetchOnReconnect: 'always',
       retry: 1,
+      // Persist only specific queries
+      meta: {
+        persist: true
+      }
     },
     mutations: {
       retry: 0,
     },
   },
+});
+
+const persister = createAsyncStoragePersister({
+  storage: {
+    getItem: (key) => get(key),
+    setItem: (key, value) => set(key, value),
+    removeItem: (key) => del(key),
+  },
+  key: "CER_QUERY_CACHE",
+  serialize: JSON.stringify,
+  deserialize: JSON.parse,
 });
 
 // Export for use in hooks/contexts that need to invalidate queries
@@ -185,7 +204,15 @@ const ModuleRoute: React.FC<{
 
 // ─── APP ──────────────────────────────────────────────────────────────────────
 const App = () => (
-  <QueryClientProvider client={queryClient}>
+  <PersistQueryClientProvider 
+    client={queryClient} 
+    persistOptions={{ 
+      persister,
+      maxAge: 1000 * 60 * 60 * 24, // 24 hours
+      buster: "v1"
+    }}
+  >
+    <OfflineBanner />
     <ThemeProvider>
       <TooltipProvider>
         <Toaster />
@@ -266,7 +293,7 @@ const App = () => (
       </BrowserRouter>
     </TooltipProvider>
   </ThemeProvider>
-  </QueryClientProvider>
+  </PersistQueryClientProvider>
 );
 
 export default App;
