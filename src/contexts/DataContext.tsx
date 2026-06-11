@@ -1246,21 +1246,37 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (data.observacoes !== undefined) dbData.observacoes = data.observacoes;
       if (data.descricaoClinica !== undefined) dbData.descricao_clinica = data.descricaoClinica;
       if (data.cid !== undefined) dbData.cid = data.cid;
-      const { error } = await supabase
-        .from("pacientes" as any)
-        .update(dbData)
-        .eq("id", id);
-      if (!error) {
+
+      const clientOpId = uuidv4();
+      try {
+        if (navigator.onLine) {
+          const { error: updateError } = await supabase
+            .from("pacientes" as any)
+            .update({ ...dbData, client_operation_id: clientOpId })
+            .eq("id", id);
+          if (updateError) throw updateError;
+        } else {
+          await addToOfflineQueue({
+            clientOperationId: clientOpId,
+            operation: 'UPDATE',
+            table: 'pacientes',
+            payload: dbData,
+            userId: authUser?.id || '',
+            unitId: authUser?.unidadeId
+          });
+          toast.info("Sem conexão. Alteração do paciente salva localmente.");
+        }
+
         setPacientes((prev) => prev.map((p) => (p.id === id ? { ...p, ...data } : p)));
         invalidateCache(queryKeys.pacientes.all);
         invalidateCache(queryKeys.agendamentos.all);
         invalidateCache(queryKeys.fila.all);
-      } else {
+      } catch (error) {
         console.error("Error updating paciente:", error);
         throw error;
       }
     },
-    [invalidateCache],
+    [invalidateCache, authUser],
   );
 
   const addToFila = useCallback(
@@ -1339,11 +1355,27 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (data.pacienteNome !== undefined) dbData.paciente_nome = data.pacienteNome;
       if (data.pacienteId !== undefined) dbData.paciente_id = data.pacienteId;
       if (data.setor !== undefined) dbData.setor = data.setor;
-      const { error } = await supabase
-        .from("fila_espera" as any)
-        .update(dbData)
-        .eq("id", id);
-      if (!error) {
+      
+      const clientOpId = uuidv4();
+      try {
+        if (navigator.onLine) {
+          const { error: updateError } = await supabase
+            .from("fila_espera" as any)
+            .update({ ...dbData, client_operation_id: clientOpId })
+            .eq("id", id);
+          if (updateError) throw updateError;
+        } else {
+          await addToOfflineQueue({
+            clientOperationId: clientOpId,
+            operation: 'UPDATE',
+            table: 'fila_espera',
+            payload: dbData,
+            userId: authUser?.id || '',
+            unitId: authUser?.unidadeId
+          });
+          toast.info("Sem conexão. Alteração na fila salva localmente.");
+        }
+
         setFila((prev) => prev.map((f) => (f.id === id ? { ...f, ...data } : f)));
         await logAction({
           acao: "editar",
@@ -1352,9 +1384,12 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           detalhes: data as Record<string, unknown>,
         });
         invalidateCache(queryKeys.fila.all);
-      } else console.error("Error updating fila:", error);
+      } catch (error) {
+        console.error("Error updating fila:", error);
+        throw error;
+      }
     },
-    [logAction, invalidateCache],
+    [logAction, invalidateCache, authUser],
   );
 
   const removeFromFila = useCallback(
@@ -1374,32 +1409,50 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const addAtendimento = useCallback(
     async (a: Atendimento) => {
+      const clientOpId = uuidv4();
+      const payload: any = {
+        id: a.id,
+        agendamento_id: a.agendamentoId,
+        paciente_id: a.pacienteId,
+        paciente_nome: a.pacienteNome,
+        profissional_id: a.profissionalId,
+        profissional_nome: a.profissionalNome,
+        unidade_id: a.unidadeId,
+        sala_id: a.salaId || "",
+        setor: a.setor || "",
+        procedimento: a.procedimento,
+        observacoes: a.observacoes || "",
+        data: a.data,
+        hora_inicio: a.horaInicio,
+        hora_fim: a.horaFim || "",
+        status: a.status,
+        client_operation_id: clientOpId
+      };
+
       try {
-        const { error } = await supabase.from("atendimentos" as any).insert({
-          id: a.id,
-          agendamento_id: a.agendamentoId,
-          paciente_id: a.pacienteId,
-          paciente_nome: a.pacienteNome,
-          profissional_id: a.profissionalId,
-          profissional_nome: a.profissionalNome,
-          unidade_id: a.unidadeId,
-          sala_id: a.salaId || "",
-          setor: a.setor || "",
-          procedimento: a.procedimento,
-          observacoes: a.observacoes || "",
-          data: a.data,
-          hora_inicio: a.horaInicio,
-          hora_fim: a.horaFim || "",
-          status: a.status,
-        } as any);
-        if (error) console.error("Error persisting atendimento:", error);
-      } catch (err) {
-        console.error("Error adding atendimento:", err);
+        if (navigator.onLine) {
+          const { error: insertError } = await supabase.from("atendimentos" as any).insert(payload);
+          if (insertError) throw insertError;
+        } else {
+          await addToOfflineQueue({
+            clientOperationId: clientOpId,
+            operation: 'INSERT',
+            table: 'atendimentos',
+            payload,
+            userId: authUser?.id || '',
+            unitId: authUser?.unidadeId
+          });
+          toast.info("Sem conexão. Atendimento salvo localmente.");
+        }
+
+        setAtendimentos((prev) => [...prev, a]);
+        invalidateCache(queryKeys.atendimentos.all);
+      } catch (error) {
+        console.error("Error adding atendimento:", error);
+        throw error;
       }
-      setAtendimentos((prev) => [...prev, a]);
-      invalidateCache(queryKeys.atendimentos.all);
     },
-    [invalidateCache],
+    [invalidateCache, authUser],
   );
 
   const updateAtendimento = useCallback(

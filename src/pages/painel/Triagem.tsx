@@ -400,10 +400,25 @@ const Triagem: React.FC = () => {
         iniciado_em: new Date().toISOString(),
       };
 
-      if (existing?.id) {
-        await supabase.from("triage_records").update(triagePayload).eq("id", existing.id);
+      const clientOpId = uuidv4();
+      if (navigator.onLine) {
+        if (existing?.id) {
+          const { error } = await supabase.from("triage_records").update({ ...triagePayload, client_operation_id: clientOpId }).eq("id", existing.id);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase.from("triage_records").insert({ ...triagePayload, client_operation_id: clientOpId });
+          if (error) throw error;
+        }
       } else {
-        await supabase.from("triage_records").insert(triagePayload);
+        await addToOfflineQueue({
+          clientOperationId: clientOpId,
+          operation: existing?.id ? 'UPDATE' : 'INSERT',
+          table: 'triage_records',
+          payload: triagePayload,
+          userId: user?.id || '',
+          unitId: user?.unidadeId
+        });
+        toast.info("Sem conexão. Rascunho salvo localmente.");
       }
       toast.success("Rascunho da triagem salvo!");
     } catch (error) {
