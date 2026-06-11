@@ -29,6 +29,7 @@ import { v4 as uuidv4 } from "uuid";
 import { differenceInMinutes } from "date-fns";
 import CustomFieldsRenderer from "@/components/CustomFieldsRenderer";
 import { useCustomFields } from "@/hooks/useCustomFields";
+import { isNetworkError } from "@/lib/utils";
 
 interface Agendamento {
   id: string;
@@ -401,24 +402,29 @@ const Triagem: React.FC = () => {
       };
 
       const clientOpId = uuidv4();
-      if (navigator.onLine) {
-        if (existing?.id) {
-          const { error } = await supabase.from("triage_records").update({ ...triagePayload, client_operation_id: clientOpId }).eq("id", existing.id);
-          if (error) throw error;
-        } else {
-          const { error } = await supabase.from("triage_records").insert({ ...triagePayload, client_operation_id: clientOpId });
-          if (error) throw error;
-        }
+      let error;
+      if (existing?.id) {
+        const res = await supabase.from("triage_records").update({ ...triagePayload, client_operation_id: clientOpId }).eq("id", existing.id);
+        error = res.error;
       } else {
-        await addToOfflineQueue({
-          clientOperationId: clientOpId,
-          operation: existing?.id ? 'UPDATE' : 'INSERT',
-          table: 'triage_records',
-          payload: triagePayload,
-          userId: user?.id || '',
-          unitId: user?.unidadeId
-        });
-        toast.info("Sem conexão. Rascunho salvo localmente.");
+        const res = await supabase.from("triage_records").insert({ ...triagePayload, client_operation_id: clientOpId });
+        error = res.error;
+      }
+
+      if (error) {
+        if (isNetworkError(error)) {
+          await addToOfflineQueue({
+            clientOperationId: clientOpId,
+            operation: existing?.id ? 'UPDATE' : 'INSERT',
+            table: 'triage_records',
+            payload: triagePayload,
+            userId: user?.id || '',
+            unitId: user?.unidadeId
+          });
+          toast.info("Sem conexão. Rascunho salvo localmente.");
+        } else {
+          throw error;
+        }
       }
       toast.success("Rascunho da triagem salvo!");
     } catch (error) {
@@ -471,24 +477,29 @@ const Triagem: React.FC = () => {
       const clientOpId = uuidv4();
       const triagePayloadWithOp: any = { ...triagePayload, client_operation_id: clientOpId };
 
-      if (navigator.onLine) {
-        if (existing?.id) {
-          const { error } = await supabase.from("triage_records").update(triagePayloadWithOp).eq("id", existing.id);
-          if (error) throw error;
-        } else {
-          const { error } = await supabase.from("triage_records").insert(triagePayloadWithOp);
-          if (error) throw error;
-        }
+      let error;
+      if (existing?.id) {
+        const res = await supabase.from("triage_records").update(triagePayloadWithOp).eq("id", existing.id);
+        error = res.error;
       } else {
-        await addToOfflineQueue({
-          clientOperationId: clientOpId,
-          operation: existing?.id ? 'UPDATE' : 'INSERT',
-          table: 'triage_records',
-          payload: triagePayload,
-          userId: user?.id || '',
-          unitId: user?.unidadeId
-        });
-        toast.info("Sem conexão. Triagem salva localmente na fila de sincronização.");
+        const res = await supabase.from("triage_records").insert(triagePayloadWithOp);
+        error = res.error;
+      }
+
+      if (error) {
+        if (isNetworkError(error)) {
+          await addToOfflineQueue({
+            clientOperationId: clientOpId,
+            operation: existing?.id ? 'UPDATE' : 'INSERT',
+            table: 'triage_records',
+            payload: triagePayload,
+            userId: user?.id || '',
+            unitId: user?.unidadeId
+          });
+          toast.info("Sem conexão. Triagem salva localmente na fila de sincronização.");
+        } else {
+          throw error;
+        }
       }
 
       await Promise.all([

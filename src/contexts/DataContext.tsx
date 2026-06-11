@@ -34,7 +34,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/hooks/queries/queryKeys";
 import { addToOfflineQueue } from "@/lib/offline-db";
 import { v4 as uuidv4 } from "uuid";
-import { addDaysToDateStr, isoDayOfWeek, localDateStr, nowMinutesInBrazil, todayLocalStr } from "@/lib/utils";
+import { addDaysToDateStr, isoDayOfWeek, localDateStr, nowMinutesInBrazil, todayLocalStr, isNetworkError } from "@/lib/utils";
 
 export interface TurnoInfoResult {
   turnoId: string;
@@ -1060,19 +1060,21 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
 
       try {
-        if (navigator.onLine) {
-          const { error: insertError } = await supabase.from("agendamentos" as any).insert(payload);
-          if (insertError) throw insertError;
-        } else {
-          await addToOfflineQueue({
-            clientOperationId: clientOpId,
-            operation: 'INSERT',
-            table: 'agendamentos',
-            payload,
-            userId: authUser?.id || '',
-            unitId: authUser?.unidadeId
-          });
-          toast.info("Sem conexão. Agendamento salvo localmente.");
+        const { error: insertError } = await supabase.from("agendamentos" as any).insert(payload);
+        if (insertError) {
+          if (isNetworkError(insertError)) {
+            await addToOfflineQueue({
+              clientOperationId: clientOpId,
+              operation: 'INSERT',
+              table: 'agendamentos',
+              payload,
+              userId: authUser?.id || '',
+              unitId: authUser?.unidadeId
+            });
+            toast.info("Sem conexão. Agendamento salvo localmente.");
+          } else {
+            throw insertError;
+          }
         }
 
         setAgendamentos((prev) => [...prev, { ...ag, status: statusInicial as any }]);
@@ -1111,22 +1113,25 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       const clientOpId = uuidv4();
       try {
-        if (navigator.onLine) {
-          const { error: updateError } = await supabase
-            .from("agendamentos" as any)
-            .update({ ...dbData, client_operation_id: clientOpId })
-            .eq("id", id);
-          if (updateError) throw updateError;
-        } else {
-          await addToOfflineQueue({
-            clientOperationId: clientOpId,
-            operation: 'UPDATE',
-            table: 'agendamentos',
-            payload: dbData,
-            userId: authUser?.id || '',
-            unitId: authUser?.unidadeId
-          });
-          toast.info("Sem conexão. Alteração do agendamento salva localmente.");
+        const { error: updateError } = await supabase
+          .from("agendamentos" as any)
+          .update({ ...dbData, client_operation_id: clientOpId })
+          .eq("id", id);
+        
+        if (updateError) {
+          if (isNetworkError(updateError)) {
+            await addToOfflineQueue({
+              clientOperationId: clientOpId,
+              operation: 'UPDATE',
+              table: 'agendamentos',
+              payload: dbData,
+              userId: authUser?.id || '',
+              unitId: authUser?.unidadeId
+            });
+            toast.info("Sem conexão. Alteração do agendamento salva localmente.");
+          } else {
+            throw updateError;
+          }
         }
 
         setAgendamentos((prev) => prev.map((a) => (a.id === id ? { ...a, ...data } : a)));
@@ -1208,19 +1213,21 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
 
       try {
-        if (navigator.onLine) {
-          const { error: insertError } = await supabase.from("pacientes" as any).insert(payload);
-          if (insertError) throw insertError;
-        } else {
-          await addToOfflineQueue({
-            clientOperationId: clientOpId,
-            operation: 'INSERT',
-            table: 'pacientes',
-            payload,
-            userId: authUser?.id || '',
-            unitId: authUser?.unidadeId
-          });
-          toast.info("Sem conexão. Cadastro de paciente salvo localmente.");
+        const { error: insertError } = await supabase.from("pacientes" as any).insert(payload);
+        if (insertError) {
+          if (isNetworkError(insertError)) {
+            await addToOfflineQueue({
+              clientOperationId: clientOpId,
+              operation: 'INSERT',
+              table: 'pacientes',
+              payload,
+              userId: authUser?.id || '',
+              unitId: authUser?.unidadeId
+            });
+            toast.info("Sem conexão. Cadastro de paciente salvo localmente.");
+          } else {
+            throw insertError;
+          }
         }
 
         setPacientes((prev) => [{ ...p, unidadeId: unidadeIdToUse }, ...prev]);
@@ -1249,22 +1256,25 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const clientOpId = uuidv4();
       try {
-        if (navigator.onLine) {
-          const { error: updateError } = await supabase
-            .from("pacientes" as any)
-            .update({ ...dbData, client_operation_id: clientOpId })
-            .eq("id", id);
-          if (updateError) throw updateError;
-        } else {
-          await addToOfflineQueue({
-            clientOperationId: clientOpId,
-            operation: 'UPDATE',
-            table: 'pacientes',
-            payload: dbData,
-            userId: authUser?.id || '',
-            unitId: authUser?.unidadeId
-          });
-          toast.info("Sem conexão. Alteração do paciente salva localmente.");
+        const { error: updateError } = await supabase
+          .from("pacientes" as any)
+          .update({ ...dbData, client_operation_id: clientOpId })
+          .eq("id", id);
+        
+        if (updateError) {
+          if (isNetworkError(updateError)) {
+            await addToOfflineQueue({
+              clientOperationId: clientOpId,
+              operation: 'UPDATE',
+              table: 'pacientes',
+              payload: dbData,
+              userId: authUser?.id || '',
+              unitId: authUser?.unidadeId
+            });
+            toast.info("Sem conexão. Alteração do paciente salva localmente.");
+          } else {
+            throw updateError;
+          }
         }
 
         setPacientes((prev) => prev.map((p) => (p.id === id ? { ...p, ...data } : p)));
@@ -1305,19 +1315,21 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
 
       try {
-        if (navigator.onLine) {
-          const { error: insertError } = await supabase.from("fila_espera" as any).insert(payload);
-          if (insertError) throw insertError;
-        } else {
-          await addToOfflineQueue({
-            clientOperationId: clientOpId,
-            operation: 'INSERT',
-            table: 'fila_espera',
-            payload,
-            userId: authUser?.id || '',
-            unitId: authUser?.unidadeId
-          });
-          toast.info("Sem conexão. Fila de espera salva localmente.");
+        const { error: insertError } = await supabase.from("fila_espera" as any).insert(payload);
+        if (insertError) {
+          if (isNetworkError(insertError)) {
+            await addToOfflineQueue({
+              clientOperationId: clientOpId,
+              operation: 'INSERT',
+              table: 'fila_espera',
+              payload,
+              userId: authUser?.id || '',
+              unitId: authUser?.unidadeId
+            });
+            toast.info("Sem conexão. Fila de espera salva localmente.");
+          } else {
+            throw insertError;
+          }
         }
 
         setFila((prev) => [...prev, f]);
@@ -1358,22 +1370,25 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       const clientOpId = uuidv4();
       try {
-        if (navigator.onLine) {
-          const { error: updateError } = await supabase
-            .from("fila_espera" as any)
-            .update({ ...dbData, client_operation_id: clientOpId })
-            .eq("id", id);
-          if (updateError) throw updateError;
-        } else {
-          await addToOfflineQueue({
-            clientOperationId: clientOpId,
-            operation: 'UPDATE',
-            table: 'fila_espera',
-            payload: dbData,
-            userId: authUser?.id || '',
-            unitId: authUser?.unidadeId
-          });
-          toast.info("Sem conexão. Alteração na fila salva localmente.");
+        const { error: updateError } = await supabase
+          .from("fila_espera" as any)
+          .update({ ...dbData, client_operation_id: clientOpId })
+          .eq("id", id);
+        
+        if (updateError) {
+          if (isNetworkError(updateError)) {
+            await addToOfflineQueue({
+              clientOperationId: clientOpId,
+              operation: 'UPDATE',
+              table: 'fila_espera',
+              payload: dbData,
+              userId: authUser?.id || '',
+              unitId: authUser?.unidadeId
+            });
+            toast.info("Sem conexão. Alteração na fila salva localmente.");
+          } else {
+            throw updateError;
+          }
         }
 
         setFila((prev) => prev.map((f) => (f.id === id ? { ...f, ...data } : f)));
@@ -1430,19 +1445,21 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
 
       try {
-        if (navigator.onLine) {
-          const { error: insertError } = await supabase.from("atendimentos" as any).insert(payload);
-          if (insertError) throw insertError;
-        } else {
-          await addToOfflineQueue({
-            clientOperationId: clientOpId,
-            operation: 'INSERT',
-            table: 'atendimentos',
-            payload,
-            userId: authUser?.id || '',
-            unitId: authUser?.unidadeId
-          });
-          toast.info("Sem conexão. Atendimento salvo localmente.");
+        const { error: insertError } = await supabase.from("atendimentos" as any).insert(payload);
+        if (insertError) {
+          if (isNetworkError(insertError)) {
+            await addToOfflineQueue({
+              clientOperationId: clientOpId,
+              operation: 'INSERT',
+              table: 'atendimentos',
+              payload,
+              userId: authUser?.id || '',
+              unitId: authUser?.unidadeId
+            });
+            toast.info("Sem conexão. Atendimento salvo localmente.");
+          } else {
+            throw insertError;
+          }
         }
 
         setAtendimentos((prev) => [...prev, a]);
@@ -1721,7 +1738,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const addBloqueio = useCallback(
     async (b: Omit<BloqueioAgenda, "id">) => {
-      const { data: inserted, error } = await supabase.from("bloqueios" as any).insert({
+      const clientOpId = uuidv4();
+      const payload: any = {
         titulo: b.titulo,
         tipo: b.tipo,
         data_inicio: b.dataInicio,
@@ -1732,17 +1750,38 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         unidade_id: b.unidadeId || '',
         profissional_id: b.profissionalId || '',
         criado_por: b.criadoPor,
-      } as any).select().single();
-      if (!error && inserted) {
-        const id = (inserted as any).id;
-        invalidateCache(queryKeys.bloqueios.all);
-        setBloqueios((prev) => [{ ...b, id }, ...prev]);
-      } else {
+        client_operation_id: clientOpId
+      };
+
+      try {
+        const { data: inserted, error } = await supabase.from("bloqueios" as any).insert(payload).select().single();
+        if (error) {
+          if (isNetworkError(error)) {
+            await addToOfflineQueue({
+              clientOperationId: clientOpId,
+              operation: 'INSERT',
+              table: 'bloqueios',
+              payload,
+              userId: authUser?.id || '',
+              unitId: authUser?.unidadeId
+            });
+            toast.info("Sem conexão. Bloqueio salvo localmente.");
+            setBloqueios((prev) => [{ ...b, id: clientOpId }, ...prev]);
+            return;
+          }
+          throw error;
+        }
+        if (inserted) {
+          const id = (inserted as any).id;
+          invalidateCache(queryKeys.bloqueios.all);
+          setBloqueios((prev) => [{ ...b, id }, ...prev]);
+        }
+      } catch (error) {
         console.error("Error adding bloqueio:", error);
         throw error;
       }
     },
-    [invalidateCache],
+    [invalidateCache, authUser],
   );
 
   const updateBloqueio = useCallback(
@@ -1757,16 +1796,38 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (data.horaFim !== undefined) dbData.hora_fim = data.horaFim;
       if (data.unidadeId !== undefined) dbData.unidade_id = data.unidadeId;
       if (data.profissionalId !== undefined) dbData.profissional_id = data.profissionalId;
-      const { error } = await supabase
-        .from("bloqueios" as any)
-        .update(dbData)
-        .eq("id", id);
-      if (!error) {
-        invalidateCache(queryKeys.bloqueios.all);
-        setBloqueios((prev) => prev.map((b) => (b.id === id ? { ...b, ...data } : b)));
-      } else console.error("Error updating bloqueio:", error);
+      
+      const clientOpId = uuidv4();
+      try {
+        const { error } = await supabase
+          .from("bloqueios" as any)
+          .update({ ...dbData, client_operation_id: clientOpId })
+          .eq("id", id);
+        
+        if (error) {
+          if (isNetworkError(error)) {
+            await addToOfflineQueue({
+              clientOperationId: clientOpId,
+              operation: 'UPDATE',
+              table: 'bloqueios',
+              payload: dbData,
+              userId: authUser?.id || '',
+              unitId: authUser?.unidadeId
+            });
+            toast.info("Sem conexão. Alteração do bloqueio salva localmente.");
+          } else {
+            throw error;
+          }
+        }
+        if (!error) {
+          invalidateCache(queryKeys.bloqueios.all);
+          setBloqueios((prev) => prev.map((b) => (b.id === id ? { ...b, ...data } : b)));
+        }
+      } catch (error) {
+        console.error("Error updating bloqueio:", error);
+      }
     },
-    [invalidateCache],
+    [invalidateCache, authUser],
   );
 
   const deleteBloqueio = useCallback(

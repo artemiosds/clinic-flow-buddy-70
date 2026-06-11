@@ -54,3 +54,27 @@ export function nowMinutesInBrazil(): number {
 
   return hour * 60 + minute;
 }
+
+/**
+ * Detects if an error is network-related (offline or failed connection).
+ */
+export function isNetworkError(error: any): boolean {
+  if (!error) return false;
+  
+  // Standard network failure in Chrome/Edge/Firefox
+  if (error instanceof TypeError && (error.message === "Failed to fetch" || error.message?.includes("fetch"))) return true;
+  
+  // No status code usually means the request didn't reach the server
+  if (error.status === undefined && error.code === undefined && !navigator.onLine) return true;
+  
+  // Check for AbortError (timeout)
+  if (error.name === "AbortError") return true;
+  
+  // Specific check for Supabase client errors when offline
+  if (error.message?.includes("Failed to fetch") || error.message?.includes("NetworkError")) return true;
+
+  // If navigator says we are offline, it's definitely a network error
+  if (!navigator.onLine) return true;
+
+  return false;
+}

@@ -58,17 +58,19 @@ export const useOfflineSync = () => {
               (error.message?.includes("unique_") && error.message?.includes("_client_op"))
             );
           
+          if (isIdempotencyError) {
+            console.info(`Operação ${op.clientOperationId} já sincronizada (Idempotência).`);
+            await offlineDb.operations.update(op.id!, { status: "sincronizado" });
+            continue;
+          }
+
           await offlineDb.operations.update(op.id!, {
             status: "falha",
             attempts: (op.attempts || 0) + 1,
             lastError: error.message || error.details || "Erro desconhecido",
           });
           
-          if (isIdempotencyError) {
-            console.info(`Operação ${op.clientOperationId} já sincronizada (Idempotência).`);
-            // Already synced or duplicated by idempotency key, mark as synchronized to clear queue
-            await offlineDb.operations.update(op.id!, { status: "sincronizado" });
-          } else if (error.code === "42501") {
+          if (error.code === "42501") {
             toast.error(`Erro de permissão ao sincronizar ${op.table}. Ação manual necessária.`);
           }
         }
