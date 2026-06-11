@@ -1,9 +1,10 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { normalizePhone } from "./phoneUtils";
 import { unmaskCNS } from "./cnsUtils";
 import { auditService } from "@/services/auditService";
 import { isNetworkError } from "./utils";
+import { enqueueOfflineMutation } from "./offline/offlineMutation";
+
 
 /**
  * Função única e centralizada para atualizar o cadastro de um paciente.
@@ -105,51 +106,34 @@ export async function updatePacienteCadastro(
 
   updateData.custom_data = newCD;
 
-  // 5. Execução do Update
+  // 5. Execução do Update Local-First
   const clientOpId = (dados as any).client_operation_id || (dados as any).id_operacao_cliente || null;
-  const { data, error } = await supabase
-    .from("pacientes")
-    .update({ ...updateData, ...(clientOpId ? { client_operation_id: clientOpId } : {}) })
-    .eq("id", pacienteId)
-    .select()
-    .single();
+  
+  return await enqueueOfflineMutation("UPDATE", updateData, {
+    table: "pacientes",
+    lookupField: "id",
+    lookupValue: pacienteId,
+    onSuccess: async (res) => {
+      // Auditoria de sucesso (opcional, pode ser feita no worker ou aqui)
+      await auditService.log({
+        acao: "edicao_paciente",
+        entidade: "paciente",
+        entidadeId: pacienteId,
+        entidadeNome: dados.nome || currentPatient?.nome,
+        modulo: "pacientes",
+        before: currentPatient,
+        after: { ...currentPatient, ...updateData },
+        pacienteId,
+        origem
+      });
 
-  if (error) {
-    if (isNetworkError(error) && clientOpId) {
-       // We can't easily queue from here without userId/unitId context or a centralized queue helper that handles it.
-       // However, the caller in DataContext already handles this.
-       // If called from elsewhere, we throw but the UI is likely using DataContext.
+      // Recalcular status de falta após alteração de exceção
+      if (updateData.is_tfd !== undefined || updateData.possui_ordem_judicial !== undefined) {
+        if (navigator.onLine) {
+          await supabase.rpc('recalcular_status_falta_paciente', { p_paciente_id: pacienteId });
+        }
+      }
     }
-    console.error(`[${origem}] Erro ao atualizar paciente ${pacienteId}:`, error);
-    await auditService.log({
-      acao: "edicao_paciente_erro",
-      entidade: "paciente",
-      entidadeId: pacienteId,
-      modulo: "pacientes",
-      detalhes: { origem, erro: error.message },
-      status: "erro",
-      pacienteId
-    });
-    throw error;
-  }
-
-  // 6. Auditoria de sucesso
-  await auditService.log({
-    acao: "edicao_paciente",
-    entidade: "paciente",
-    entidadeId: pacienteId,
-    entidadeNome: data.nome,
-    modulo: "pacientes",
-    before: currentPatient,
-    after: data,
-    pacienteId,
-    origem
   });
-
-  // Recalcular status de falta após alteração de exceção
-  if (updateData.is_tfd !== undefined || updateData.possui_ordem_judicial !== undefined) {
-    await supabase.rpc('recalcular_status_falta_paciente', { p_paciente_id: pacienteId });
-  }
-
-  return data;
 }
+
