@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { normalizePhone } from "./phoneUtils";
 import { unmaskCNS } from "./cnsUtils";
 import { auditService } from "@/services/auditService";
+import { isNetworkError } from "./utils";
 
 /**
  * Função única e centralizada para atualizar o cadastro de um paciente.
@@ -105,14 +106,20 @@ export async function updatePacienteCadastro(
   updateData.custom_data = newCD;
 
   // 5. Execução do Update
+  const clientOpId = (dados as any).client_operation_id || (dados as any).id_operacao_cliente || null;
   const { data, error } = await supabase
     .from("pacientes")
-    .update(updateData)
+    .update({ ...updateData, ...(clientOpId ? { client_operation_id: clientOpId } : {}) })
     .eq("id", pacienteId)
     .select()
     .single();
 
   if (error) {
+    if (isNetworkError(error) && clientOpId) {
+       // We can't easily queue from here without userId/unitId context or a centralized queue helper that handles it.
+       // However, the caller in DataContext already handles this.
+       // If called from elsewhere, we throw but the UI is likely using DataContext.
+    }
     console.error(`[${origem}] Erro ao atualizar paciente ${pacienteId}:`, error);
     await auditService.log({
       acao: "edicao_paciente_erro",
