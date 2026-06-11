@@ -1,4 +1,8 @@
 import { supabase } from '@/integrations/supabase/client';
+import { enqueueOfflineMutation } from "@/lib/offline/offlineMutation";
+import { toast } from "sonner";
+
+
 
 export interface PTSMeta {
   id?: string;
@@ -85,59 +89,73 @@ export const ptsService = {
   },
 
   async createPTS(ptsData: Partial<PTS>, metas: PTSMeta[], sigtap: any[], cids: any[]) {
+    const ptsId = crypto.randomUUID();
+    
     // Filter out relation fields
     const { metas: _, sigtap: __, cids: ___, id: ____, created_at: _____, updated_at: ______, ...cleanData } = ptsData as any;
     
-    const { data: newPts, error } = await supabase
-      .from('pts')
-      .insert(cleanData)
-      .select('id')
-      .single();
-
-    if (error) throw error;
+    // Queue PTS creation
+    await enqueueOfflineMutation("INSERT", {
+      ...cleanData,
+      id: ptsId,
+    }, {
+      table: 'pts',
+      showToast: false
+    });
 
     if (metas.length > 0) {
-      const { error: metasError } = await supabase
-        .from('pts_metas')
-        .insert(metas.map(m => {
-          const { id, ...cleanMeta } = m as any;
-          return { ...cleanMeta, pts_id: newPts.id };
-        }));
-      if (metasError) throw metasError;
+      for (const m of metas) {
+        const { id, ...cleanMeta } = m as any;
+        await enqueueOfflineMutation("INSERT", {
+          ...cleanMeta,
+          pts_id: ptsId,
+        }, {
+          table: 'pts_metas',
+          showToast: false
+        });
+      }
     }
 
     if (sigtap.length > 0) {
-      const { error: sigtapError } = await supabase
-        .from('pts_sigtap')
-        .insert(sigtap.map(s => {
-          const { id, pts_id, ...cleanSigtap } = s;
-          return { ...cleanSigtap, pts_id: newPts.id };
-        }));
-      if (sigtapError) throw sigtapError;
+      for (const s of sigtap) {
+        const { id, pts_id, ...cleanSigtap } = s;
+        await enqueueOfflineMutation("INSERT", {
+          ...cleanSigtap,
+          pts_id: ptsId,
+        }, {
+          table: 'pts_sigtap',
+          showToast: false
+        });
+      }
     }
 
     if (cids.length > 0) {
-      const { error: cidsError } = await supabase
-        .from('pts_cid')
-        .insert(cids.map(c => {
-          const { id, pts_id, ...cleanCid } = c;
-          return { ...cleanCid, pts_id: newPts.id };
-        }));
-      if (cidsError) throw cidsError;
+      for (const c of cids) {
+        const { id, pts_id, ...cleanCid } = c;
+        await enqueueOfflineMutation("INSERT", {
+          ...cleanCid,
+          pts_id: ptsId,
+        }, {
+          table: 'pts_cid',
+          showToast: false
+        });
+      }
     }
 
-    return newPts.id;
+    toast.success("PTS salvo localmente. Aguardando sincronização.");
+    return ptsId;
   },
 
   async updatePTS(ptsId: string, ptsData: Partial<PTS>) {
     const { metas: _, sigtap: __, cids: ___, id: ____, created_at: _____, updated_at: ______, ...cleanData } = ptsData as any;
-    const { error } = await supabase
-      .from('pts')
-      .update(cleanData)
-      .eq('id', ptsId);
-
-    if (error) throw error;
+    
+    return await enqueueOfflineMutation("UPDATE", cleanData, {
+      table: 'pts',
+      lookupField: 'id',
+      lookupValue: ptsId
+    });
   },
+
 
   async registerRevision(ptsId: string, revisionData: {
     profissional_id: string;

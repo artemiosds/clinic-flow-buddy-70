@@ -1,4 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
+import { enqueueOfflineMutation } from "@/lib/offline/offlineMutation";
+
 
 // Mantém a interface usada por Tratamentos/Regulação/Prontuário
 export interface ProcedimentoDB {

@@ -1,4 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
+import { enqueueOfflineMutation } from "@/lib/offline/offlineMutation";
+
 
 async function fetchAllRows<T>(
   table: string,
@@ -203,87 +205,58 @@ export const treatmentService = {
 
     const appointmentIdForSession = input.appointmentId ?? input.session.appointment_id ?? linkedAppointment?.id ?? null;
 
-    let sessionUpdated = false;
-    let cycleUpdated = false;
+    const clinicalNotesJson = JSON.stringify({
+      tipo: 'soap',
+      subjetivo: soap.subjetivo,
+      objetivo: soap.objetivo,
+      avaliacao: soap.avaliacao,
+      plano: soap.plano,
+      registrado_em: new Date().toISOString(),
+      registrado_por: input.userId || null,
+    });
 
-    try {
-      const clinicalNotesJson = JSON.stringify({
-        tipo: 'soap',
-        subjetivo: soap.subjetivo,
-        objetivo: soap.objetivo,
-        avaliacao: soap.avaliacao,
-        plano: soap.plano,
-        registrado_em: new Date().toISOString(),
-        registrado_por: input.userId || null,
-      });
+    // Queue session update
+    await enqueueOfflineMutation("UPDATE", {
+      status: 'realizada',
+      clinical_notes: clinicalNotesJson,
+      procedure_done: procedureDone,
+      absence_type: null,
+      appointment_id: appointmentIdForSession,
+    }, {
+      table: 'treatment_sessions',
+      lookupField: 'id',
+      lookupValue: input.session.id,
+      showToast: false
+    });
 
-      const { error: sessionError } = await (supabase as any)
-        .from('treatment_sessions')
-        .update({
-          status: 'realizada',
-          clinical_notes: clinicalNotesJson,
-          procedure_done: procedureDone,
-          absence_type: null,
-          appointment_id: appointmentIdForSession,
-        })
-        .eq('id', input.session.id);
+    // Calculate next state (optimistic)
+    const sessionsDone = Math.min(input.cycle.total_sessions, input.cycle.sessions_done + 1);
+    const cycleStatus = sessionsDone >= input.cycle.total_sessions
+      ? 'concluido'
+      : input.cycle.status === 'ativo'
+        ? 'ativo'
+        : 'em_andamento';
 
-      if (sessionError) throw sessionError;
-      sessionUpdated = true;
+    // Queue cycle update
+    await enqueueOfflineMutation("UPDATE", {
+      sessions_done: sessionsDone,
+      status: cycleStatus,
+      updated_at: new Date().toISOString(),
+    }, {
+      table: 'treatment_cycles',
+      lookupField: 'id',
+      lookupValue: input.cycle.id,
+      showToast: true // Only show toast on the last operation
+    });
 
-      const completedSessions = await countCompletedSessions(input.cycle.id);
-      const sessionsDone = Math.min(input.cycle.total_sessions, completedSessions);
-      const cycleStatus = sessionsDone >= input.cycle.total_sessions
-        ? 'concluido'
-        : input.cycle.status === 'ativo'
-          ? 'ativo'
-          : 'em_andamento';
-
-      const { error: cycleError } = await (supabase as any)
-        .from('treatment_cycles')
-        .update({
-          sessions_done: sessionsDone,
-          status: cycleStatus,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', input.cycle.id);
-
-      if (cycleError) throw cycleError;
-      cycleUpdated = true;
-
-      // NOTE: Do NOT mark the appointment as 'concluido' here.
-      // The appointment status should only be changed to 'concluido' via
-      // the explicit "Finalizar Prontuário" action in the Prontuario page.
-      // This prevents premature conclusion and cross-appointment interference.
-
-      return {
-        appointmentId: appointmentIdForSession,
-        cycleStatus,
-        sessionsDone,
-        progressPercent: input.cycle.total_sessions > 0
-          ? Math.round((sessionsDone / input.cycle.total_sessions) * 100)
-          : 0,
-      };
-    } catch (error) {
-      if (cycleUpdated) {
-        await (supabase as any)
-          .from('treatment_cycles')
-          .update({
-            sessions_done: previousCycle.sessions_done,
-            status: previousCycle.status,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', input.cycle.id);
-      }
-
-      if (sessionUpdated) {
-        await (supabase as any)
-          .from('treatment_sessions')
-          .update(previousSession)
-          .eq('id', input.session.id);
-      }
-
-      throw error;
-    }
+    return {
+      appointmentId: appointmentIdForSession,
+      cycleStatus,
+      sessionsDone,
+      progressPercent: input.cycle.total_sessions > 0
+        ? Math.round((sessionsDone / input.cycle.total_sessions) * 100)
+        : 0,
+    };
   },
 };
+
