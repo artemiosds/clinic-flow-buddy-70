@@ -1091,24 +1091,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     },
     [logAction, invalidateCache, authUser],
   );
-      if (!error) {
-        setAgendamentos((prev) => [...prev, { ...ag, status: statusInicial as any }]);
-        await logAction({
-          acao: "criar",
-          entidade: "agendamento",
-          entidadeId: ag.id,
-          unidadeId: ag.unidadeId,
-          detalhes: { data: ag.data, hora: ag.hora, profissionalId: ag.profissionalId },
-        });
-        invalidateCache(queryKeys.agendamentos.all, queryKeys.fila.all);
-      } else {
-        console.error("Error adding agendamento:", error);
-        throw error;
-      }
-    },
-    [logAction, invalidateCache],
-  );
-
   const updateAgendamento = useCallback(
     async (id: string, data: Partial<Agendamento>) => {
       const dbData: any = {};
@@ -1163,10 +1145,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     },
     [logAction, invalidateCache, authUser],
   );
-    },
-    [logAction, invalidateCache],
-  );
-
   const cancelAgendamento = useCallback(
     async (id: string): Promise<FilaEspera[]> => {
       const ag = agendamentosRef.current.find((a) => a.id === id);
@@ -1254,10 +1232,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     },
     [invalidateCache, userUnidadeId, authUser],
   );
-    },
-    [invalidateCache, userUnidadeId],
-  );
-
   const updatePaciente = useCallback(
     async (id: string, data: Partial<Paciente>) => {
       const dbData: any = {};
