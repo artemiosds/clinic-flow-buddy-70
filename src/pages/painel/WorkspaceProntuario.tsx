@@ -553,6 +553,7 @@ const WorkspaceProntuario: React.FC = () => {
         }
       };
 
+      let savedRecord;
       if (finalId) {
         await enqueueOfflineMutation("UPDATE", dbPayload, {
           table: "prontuarios",
@@ -569,6 +570,7 @@ const WorkspaceProntuario: React.FC = () => {
         });
         savedRecord = { ...dbPayload, id: newId };
       }
+
 
       
       const data = savedRecord;
