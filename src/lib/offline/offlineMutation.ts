@@ -9,6 +9,8 @@ export interface EnqueueOptions {
   onSuccess?: (data: any) => void;
   onError?: (error: any) => void;
   showToast?: boolean;
+  lookupField?: string;
+  lookupValue?: any;
 }
 
 export const enqueueOfflineMutation = async (
@@ -19,14 +21,30 @@ export const enqueueOfflineMutation = async (
   const clientOperationId = crypto.randomUUID();
   
   // Get current user session
-  const { data: { session } } = await supabase.auth.getSession();
-  const userId = session?.user?.id || 'anonymous';
+  // We use a fallback if auth is not available
+  let userId = 'anonymous';
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    userId = session?.user?.id || 'anonymous';
+  } catch (e) {
+    console.warn("Auth session not available for offline mutation", e);
+  }
+
+  // Determine the operation type
+  const opType = (operation === 'INSERT' || operation === 'UPDATE' || operation === 'DELETE') 
+    ? operation 
+    : operation.includes('CREATE') ? 'INSERT' : operation.includes('EDIT') || operation.includes('UPDATE') ? 'UPDATE' : 'INSERT';
 
   const op: Omit<OfflineOperation, 'id'> = {
     clientOperationId,
-    operation: operation as any,
+    operation: opType,
     table: options.table,
-    payload,
+    payload: {
+      ...payload,
+      // Store lookup info in payload if it's an update/delete
+      __lookupField: options.lookupField,
+      __lookupValue: options.lookupValue
+    },
     userId,
     createdAt: Date.now(),
     attempts: 0,
@@ -39,31 +57,27 @@ export const enqueueOfflineMutation = async (
     if (options.showToast !== false) {
       toast.success("Salvo localmente. Aguardando sincronização.", {
         description: "Os dados serão enviados automaticamente assim que houver conexão.",
-        duration: 5000,
+        duration: 3000,
       });
     }
 
     // Trigger immediate sync attempt if online
-    const isOnline = navigator.onLine;
-    if (isOnline) {
-      // We don't await this to keep the "immediate" feel
-      // But we can trigger it
-      setTimeout(() => {
-        window.dispatchEvent(new Event('trigger-offline-sync'));
-      }, 0);
+    if (navigator.onLine) {
+      window.dispatchEvent(new Event('trigger-offline-sync'));
     }
 
     if (options.onSuccess) {
-      options.onSuccess({ clientOperationId, status: 'pendente' });
+      options.onSuccess({ clientOperationId, status: 'pendente', id: options.lookupValue });
     }
 
-    return { clientOperationId, status: 'pendente' };
+    return { clientOperationId, status: 'pendente', id: options.lookupValue };
   } catch (error) {
     console.error("Failed to enqueue offline mutation:", error);
     if (options.onError) {
       options.onError(error);
     }
-    toast.error("Erro ao salvar localmente. Tente novamente.");
+    toast.error("Erro ao salvar localmente.");
     throw error;
   }
 };
+
