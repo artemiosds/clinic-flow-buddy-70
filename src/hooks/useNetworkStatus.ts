@@ -18,7 +18,7 @@ export const useNetworkStatus = () => {
         return;
       }
       try {
-        // Use a simple query that shouldn't fail if reachable
+        // Use a simple query to verify backend reachability
         const { error } = await supabase.from("pacientes" as any).select("id").limit(1);
         setIsBackendReachable(true);
       } catch (err) {

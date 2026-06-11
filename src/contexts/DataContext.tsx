@@ -32,6 +32,8 @@ import { getPublicIp, getDeviceInfo } from "@/lib/clientInfo";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/hooks/queries/queryKeys";
+import { addToOfflineQueue } from "@/lib/offline-db";
+import { v4 as uuidv4 } from "uuid";
 import { addDaysToDateStr, isoDayOfWeek, localDateStr, nowMinutesInBrazil, todayLocalStr } from "@/lib/utils";
 
 export interface TurnoInfoResult {
@@ -1029,20 +1031,13 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const addAgendamento = useCallback(
     async (ag: Agendamento) => {
-      // SAFEGUARD: Novos agendamentos NUNCA podem herdar status de atendimentos
-      // anteriores (ex.: "concluido", "em_atendimento", "apto_atendimento").
-      // Apenas status iniciais são permitidos na criação. Qualquer outro valor
-      // é forçado para "confirmado".
       const STATUS_INICIAIS_PERMITIDOS = ["confirmado", "pendente", "agendado"];
       const statusInicial = STATUS_INICIAIS_PERMITIDOS.includes(ag.status as string)
         ? ag.status
         : "confirmado";
-      if (statusInicial !== ag.status) {
-        console.warn(
-          `[addAgendamento] Status "${ag.status}" não permitido na criação. Forçado para "confirmado".`,
-        );
-      }
-      const { error } = await supabase.from("agendamentos" as any).insert({
+      
+      const clientOpId = uuidv4();
+      const payload: any = {
         id: ag.id,
         paciente_id: ag.pacienteId,
         paciente_nome: ag.pacienteNome,
@@ -1061,8 +1056,25 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         sync_status: ag.syncStatus || "pendente",
         criado_por: ag.criadoPor || "",
         prioridade_perfil: "normal",
-      } as any);
-      if (!error) {
+        client_operation_id: clientOpId
+      };
+
+      try {
+        if (navigator.onLine) {
+          const { error: insertError } = await supabase.from("agendamentos" as any).insert(payload);
+          if (insertError) throw insertError;
+        } else {
+          await addToOfflineQueue({
+            clientOperationId: clientOpId,
+            operation: 'INSERT',
+            table: 'agendamentos',
+            payload,
+            userId: authUser?.id || '',
+            unitId: authUser?.unidadeId
+          });
+          toast.info("Sem conexão. Agendamento salvo localmente.");
+        }
+
         setAgendamentos((prev) => [...prev, { ...ag, status: statusInicial as any }]);
         await logAction({
           acao: "criar",
@@ -1072,14 +1084,13 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           detalhes: { data: ag.data, hora: ag.hora, profissionalId: ag.profissionalId },
         });
         invalidateCache(queryKeys.agendamentos.all, queryKeys.fila.all);
-      } else {
+      } catch (error) {
         console.error("Error adding agendamento:", error);
         throw error;
       }
     },
-    [logAction, invalidateCache],
+    [logAction, invalidateCache, authUser],
   );
-
   const updateAgendamento = useCallback(
     async (id: string, data: Partial<Agendamento>) => {
       const dbData: any = {};
@@ -1098,11 +1109,26 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         dbData.lembrete_24h_enviado_em = null;
         dbData.lembrete_proximo_enviado_em = null;
       }
-      const { error } = await supabase
-        .from("agendamentos" as any)
-        .update(dbData)
-        .eq("id", id);
-      if (!error) {
+      const clientOpId = uuidv4();
+      try {
+        if (navigator.onLine) {
+          const { error: updateError } = await supabase
+            .from("agendamentos" as any)
+            .update({ ...dbData, client_operation_id: clientOpId })
+            .eq("id", id);
+          if (updateError) throw updateError;
+        } else {
+          await addToOfflineQueue({
+            clientOperationId: clientOpId,
+            operation: 'UPDATE',
+            table: 'agendamentos',
+            payload: dbData,
+            userId: authUser?.id || '',
+            unitId: authUser?.unidadeId
+          });
+          toast.info("Sem conexão. Alteração do agendamento salva localmente.");
+        }
+
         setAgendamentos((prev) => prev.map((a) => (a.id === id ? { ...a, ...data } : a)));
         await logAction({
           acao: "editar",
@@ -1111,15 +1137,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           detalhes: data as Record<string, unknown>,
         });
         invalidateCache(queryKeys.agendamentos.all);
-      } else {
+      } catch (error) {
         console.error("Error updating agendamento:", error);
         toast.error("Erro ao atualizar agendamento");
         throw error;
       }
     },
-    [logAction, invalidateCache],
+    [logAction, invalidateCache, authUser],
   );
-
   const cancelAgendamento = useCallback(
     async (id: string): Promise<FilaEspera[]> => {
       const ag = agendamentosRef.current.find((a) => a.id === id);
@@ -1163,7 +1188,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     async (p: Paciente) => {
       // Auto-inject unidade_id if not set
       const unidadeIdToUse = p.unidadeId || userUnidadeId || '';
-      const { error } = await supabase.from("pacientes" as any).insert({
+      const clientOpId = uuidv4();
+      const payload: any = {
         id: p.id,
         nome: p.nome,
         cpf: p.cpf,
@@ -1178,18 +1204,34 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         cid: p.cid,
         criado_em: p.criadoEm || new Date().toISOString(),
         unidade_id: unidadeIdToUse,
-      } as any);
-      if (!error) {
+        client_operation_id: clientOpId
+      };
+
+      try {
+        if (navigator.onLine) {
+          const { error: insertError } = await supabase.from("pacientes" as any).insert(payload);
+          if (insertError) throw insertError;
+        } else {
+          await addToOfflineQueue({
+            clientOperationId: clientOpId,
+            operation: 'INSERT',
+            table: 'pacientes',
+            payload,
+            userId: authUser?.id || '',
+            unitId: authUser?.unidadeId
+          });
+          toast.info("Sem conexão. Cadastro de paciente salvo localmente.");
+        }
+
         setPacientes((prev) => [{ ...p, unidadeId: unidadeIdToUse }, ...prev]);
         invalidateCache(queryKeys.pacientes.all);
-      } else {
+      } catch (error) {
         console.error("Error adding paciente:", error);
         throw error;
       }
     },
-    [invalidateCache, userUnidadeId],
+    [invalidateCache, userUnidadeId, authUser],
   );
-
   const updatePaciente = useCallback(
     async (id: string, data: Partial<Paciente>) => {
       const dbData: any = {};
@@ -1223,7 +1265,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const addToFila = useCallback(
     async (f: FilaEspera) => {
-      const { error } = await supabase.from("fila_espera" as any).insert({
+      const clientOpId = uuidv4();
+      const payload: any = {
         id: f.id,
         paciente_id: f.pacienteId,
         paciente_nome: f.pacienteNome,
@@ -1242,8 +1285,25 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         data_solicitacao_original: f.dataSolicitacaoOriginal || "",
         origem_cadastro: f.origemCadastro || "normal",
         especialidade_destino: f.especialidadeDestino || "",
-      } as any);
-      if (!error) {
+        client_operation_id: clientOpId
+      };
+
+      try {
+        if (navigator.onLine) {
+          const { error: insertError } = await supabase.from("fila_espera" as any).insert(payload);
+          if (insertError) throw insertError;
+        } else {
+          await addToOfflineQueue({
+            clientOperationId: clientOpId,
+            operation: 'INSERT',
+            table: 'fila_espera',
+            payload,
+            userId: authUser?.id || '',
+            unitId: authUser?.unidadeId
+          });
+          toast.info("Sem conexão. Fila de espera salva localmente.");
+        }
+
         setFila((prev) => [...prev, f]);
         await logAction({
           acao: "criar",
@@ -1253,9 +1313,12 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           detalhes: { prioridade: f.prioridade, origemCadastro: f.origemCadastro },
         });
         invalidateCache(queryKeys.fila.all);
-      } else console.error("Error adding to fila:", error);
+      } catch (error) {
+        console.error("Error adding to fila:", error);
+        throw error;
+      }
     },
-    [logAction, invalidateCache],
+    [logAction, invalidateCache, authUser],
   );
 
   const updateFila = useCallback(
