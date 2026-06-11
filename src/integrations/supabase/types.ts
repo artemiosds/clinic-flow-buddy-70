@@ -1238,6 +1238,7 @@ export type Database = {
       especialidades: {
         Row: {
           ativo: boolean
+          client_operation_id: string | null
           cor: string
           created_at: string
           id: string
@@ -1246,6 +1247,7 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          client_operation_id?: string | null
           cor?: string
           created_at?: string
           id?: string
@@ -1254,6 +1256,7 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          client_operation_id?: string | null
           cor?: string
           created_at?: string
           id?: string
@@ -1308,6 +1311,7 @@ export type Database = {
         Row: {
           ativo: boolean
           categoria: string
+          client_operation_id: string | null
           codigo_sus: string
           criado_em: string
           id: string
@@ -1325,6 +1329,7 @@ export type Database = {
         Insert: {
           ativo?: boolean
           categoria?: string
+          client_operation_id?: string | null
           codigo_sus?: string
           criado_em?: string
           id?: string
@@ -1342,6 +1347,7 @@ export type Database = {
         Update: {
           ativo?: boolean
           categoria?: string
+          client_operation_id?: string | null
           codigo_sus?: string
           criado_em?: string
           id?: string
@@ -1589,6 +1595,7 @@ export type Database = {
       horarios_funcionamento: {
         Row: {
           ativo: boolean
+          client_operation_id: string | null
           created_at: string
           dia_semana: number
           hora_fim: string
@@ -1599,6 +1606,7 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          client_operation_id?: string | null
           created_at?: string
           dia_semana: number
           hora_fim?: string
@@ -1609,6 +1617,7 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          client_operation_id?: string | null
           created_at?: string
           dia_semana?: number
           hora_fim?: string
@@ -1701,6 +1710,7 @@ export type Database = {
           apresentacao: string
           ativo: boolean
           classe_terapeutica: string
+          client_operation_id: string | null
           codigo_reme: string | null
           codigo_rename: string | null
           concentracao: string
@@ -1727,6 +1737,7 @@ export type Database = {
           apresentacao?: string
           ativo?: boolean
           classe_terapeutica?: string
+          client_operation_id?: string | null
           codigo_reme?: string | null
           codigo_rename?: string | null
           concentracao?: string
@@ -1753,6 +1764,7 @@ export type Database = {
           apresentacao?: string
           ativo?: boolean
           classe_terapeutica?: string
+          client_operation_id?: string | null
           codigo_reme?: string | null
           codigo_rename?: string | null
           concentracao?: string
@@ -1780,6 +1792,7 @@ export type Database = {
       multiprofessional_evaluations: {
         Row: {
           agendamento_id: string | null
+          client_operation_id: string | null
           clinical_evaluation: string
           created_at: string
           custom_data: Json
@@ -1796,6 +1809,7 @@ export type Database = {
         }
         Insert: {
           agendamento_id?: string | null
+          client_operation_id?: string | null
           clinical_evaluation?: string
           created_at?: string
           custom_data?: Json
@@ -1812,6 +1826,7 @@ export type Database = {
         }
         Update: {
           agendamento_id?: string | null
+          client_operation_id?: string | null
           clinical_evaluation?: string
           created_at?: string
           custom_data?: Json
@@ -1875,6 +1890,7 @@ export type Database = {
           agendamento_id: string | null
           anamnese_resumida: string
           avaliacao_risco: string
+          client_operation_id: string | null
           condicao_clinica: string
           created_at: string
           evaluation_date: string
@@ -1892,6 +1908,7 @@ export type Database = {
           agendamento_id?: string | null
           anamnese_resumida?: string
           avaliacao_risco?: string
+          client_operation_id?: string | null
           condicao_clinica?: string
           created_at?: string
           evaluation_date?: string
@@ -1909,6 +1926,7 @@ export type Database = {
           agendamento_id?: string | null
           anamnese_resumida?: string
           avaliacao_risco?: string
+          client_operation_id?: string | null
           condicao_clinica?: string
           created_at?: string
           evaluation_date?: string
@@ -2378,6 +2396,7 @@ export type Database = {
       }
       patient_discharges: {
         Row: {
+          client_operation_id: string | null
           created_at: string
           custom_data: Json
           cycle_id: string
@@ -2389,6 +2408,7 @@ export type Database = {
           reason: string
         }
         Insert: {
+          client_operation_id?: string | null
           created_at?: string
           custom_data?: Json
           cycle_id: string
@@ -2400,6 +2420,7 @@ export type Database = {
           reason?: string
         }
         Update: {
+          client_operation_id?: string | null
           created_at?: string
           custom_data?: Json
           cycle_id?: string
@@ -2422,6 +2443,7 @@ export type Database = {
       }
       patient_evaluations: {
         Row: {
+          client_operation_id: string | null
           clinical_notes: string
           created_at: string
           defined_procedures: string[]
@@ -2438,6 +2460,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          client_operation_id?: string | null
           clinical_notes?: string
           created_at?: string
           defined_procedures?: string[]
@@ -2454,6 +2477,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          client_operation_id?: string | null
           clinical_notes?: string
           created_at?: string
           defined_procedures?: string[]
@@ -2482,6 +2506,7 @@ export type Database = {
       patient_regulation: {
         Row: {
           cid_code: string
+          client_operation_id: string | null
           cns: string
           cpf: string
           created_at: string
@@ -2498,6 +2523,7 @@ export type Database = {
         }
         Insert: {
           cid_code?: string
+          client_operation_id?: string | null
           cns?: string
           cpf?: string
           created_at?: string
@@ -2514,6 +2540,7 @@ export type Database = {
         }
         Update: {
           cid_code?: string
+          client_operation_id?: string | null
           cns?: string
           cpf?: string
           created_at?: string
@@ -2957,6 +2984,7 @@ export type Database = {
           agendamento_id: string | null
           atualizado_por: string | null
           cid: string | null
+          client_operation_id: string | null
           codigo_sigtap: string | null
           criado_em: string
           criado_por: string | null
@@ -2977,6 +3005,7 @@ export type Database = {
           agendamento_id?: string | null
           atualizado_por?: string | null
           cid?: string | null
+          client_operation_id?: string | null
           codigo_sigtap?: string | null
           criado_em?: string
           criado_por?: string | null
@@ -2997,6 +3026,7 @@ export type Database = {
           agendamento_id?: string | null
           atualizado_por?: string | null
           cid?: string | null
+          client_operation_id?: string | null
           codigo_sigtap?: string | null
           criado_em?: string
           criado_por?: string | null
@@ -3118,6 +3148,7 @@ export type Database = {
           agendamento_id: string | null
           anamnese: string | null
           atualizado_em: string | null
+          client_operation_id: string | null
           conduta: string | null
           criado_em: string | null
           custom_data: Json
@@ -3157,6 +3188,7 @@ export type Database = {
           agendamento_id?: string | null
           anamnese?: string | null
           atualizado_em?: string | null
+          client_operation_id?: string | null
           conduta?: string | null
           criado_em?: string | null
           custom_data?: Json
@@ -3196,6 +3228,7 @@ export type Database = {
           agendamento_id?: string | null
           anamnese?: string | null
           atualizado_em?: string | null
+          client_operation_id?: string | null
           conduta?: string | null
           criado_em?: string | null
           custom_data?: Json
@@ -3245,6 +3278,7 @@ export type Database = {
         Row: {
           barreiras: string | null
           ciencia_familia: boolean | null
+          client_operation_id: string | null
           contextos_afetados: string[] | null
           created_at: string
           criterio_alta_atingido: boolean | null
@@ -3283,6 +3317,7 @@ export type Database = {
         Insert: {
           barreiras?: string | null
           ciencia_familia?: boolean | null
+          client_operation_id?: string | null
           contextos_afetados?: string[] | null
           created_at?: string
           criterio_alta_atingido?: boolean | null
@@ -3321,6 +3356,7 @@ export type Database = {
         Update: {
           barreiras?: string | null
           ciencia_familia?: boolean | null
+          client_operation_id?: string | null
           contextos_afetados?: string[] | null
           created_at?: string
           criterio_alta_atingido?: boolean | null
@@ -3362,6 +3398,7 @@ export type Database = {
         Row: {
           cid_codigo: string
           cid_descricao: string
+          client_operation_id: string | null
           created_at: string
           id: string
           pts_id: string
@@ -3369,6 +3406,7 @@ export type Database = {
         Insert: {
           cid_codigo?: string
           cid_descricao?: string
+          client_operation_id?: string | null
           created_at?: string
           id?: string
           pts_id: string
@@ -3376,6 +3414,7 @@ export type Database = {
         Update: {
           cid_codigo?: string
           cid_descricao?: string
+          client_operation_id?: string | null
           created_at?: string
           id?: string
           pts_id?: string
@@ -3426,6 +3465,7 @@ export type Database = {
       pts_metas: {
         Row: {
           categoria: string | null
+          client_operation_id: string | null
           created_at: string
           descricao: string | null
           especialidade: string | null
@@ -3442,6 +3482,7 @@ export type Database = {
         }
         Insert: {
           categoria?: string | null
+          client_operation_id?: string | null
           created_at?: string
           descricao?: string | null
           especialidade?: string | null
@@ -3458,6 +3499,7 @@ export type Database = {
         }
         Update: {
           categoria?: string | null
+          client_operation_id?: string | null
           created_at?: string
           descricao?: string | null
           especialidade?: string | null
@@ -3485,6 +3527,7 @@ export type Database = {
       pts_revisoes: {
         Row: {
           alteracoes_realizadas: string | null
+          client_operation_id: string | null
           created_at: string
           data_revisao: string
           id: string
@@ -3494,6 +3537,7 @@ export type Database = {
         }
         Insert: {
           alteracoes_realizadas?: string | null
+          client_operation_id?: string | null
           created_at?: string
           data_revisao?: string
           id?: string
@@ -3503,6 +3547,7 @@ export type Database = {
         }
         Update: {
           alteracoes_realizadas?: string | null
+          client_operation_id?: string | null
           created_at?: string
           data_revisao?: string
           id?: string
@@ -3522,6 +3567,7 @@ export type Database = {
       }
       pts_sigtap: {
         Row: {
+          client_operation_id: string | null
           created_at: string
           especialidade: string
           id: string
@@ -3530,6 +3576,7 @@ export type Database = {
           pts_id: string
         }
         Insert: {
+          client_operation_id?: string | null
           created_at?: string
           especialidade?: string
           id?: string
@@ -3538,6 +3585,7 @@ export type Database = {
           pts_id: string
         }
         Update: {
+          client_operation_id?: string | null
           created_at?: string
           especialidade?: string
           id?: string
@@ -3980,6 +4028,7 @@ export type Database = {
       }
       treatment_cycles: {
         Row: {
+          client_operation_id: string | null
           clinical_notes: string
           created_at: string
           created_by: string
@@ -4000,6 +4049,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          client_operation_id?: string | null
           clinical_notes?: string
           created_at?: string
           created_by?: string
@@ -4020,6 +4070,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          client_operation_id?: string | null
           clinical_notes?: string
           created_at?: string
           created_by?: string
@@ -4097,6 +4148,7 @@ export type Database = {
         Row: {
           absence_type: string | null
           appointment_id: string | null
+          client_operation_id: string | null
           clinical_notes: string
           created_at: string
           cycle_id: string
@@ -4112,6 +4164,7 @@ export type Database = {
         Insert: {
           absence_type?: string | null
           appointment_id?: string | null
+          client_operation_id?: string | null
           clinical_notes?: string
           created_at?: string
           cycle_id: string
@@ -4127,6 +4180,7 @@ export type Database = {
         Update: {
           absence_type?: string | null
           appointment_id?: string | null
+          client_operation_id?: string | null
           clinical_notes?: string
           created_at?: string
           cycle_id?: string

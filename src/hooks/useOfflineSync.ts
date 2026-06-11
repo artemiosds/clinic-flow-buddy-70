@@ -11,7 +11,7 @@ export const useOfflineSync = () => {
     // Only sync if online
     if (!navigator.onLine) return;
 
-    // Find operations that are pending or failed, but NOT recently attempted to avoid rapid loops on persistent errors
+    // Find operations that are pending or failed
     const pendingOps = await offlineDb.operations
       .where("status")
       .anyOf(["pendente", "falha"])
@@ -26,44 +26,35 @@ export const useOfflineSync = () => {
       try {
         await offlineDb.operations.update(op.id!, { status: "sincronizando" });
 
-        let result;
+        const { __lookupField, __lookupValue, ...cleanPayload } = op.payload;
         const payloadWithId = { 
-          ...op.payload, 
+          ...cleanPayload, 
           client_operation_id: op.clientOperationId 
         };
 
-        // Map generic operation names to Supabase methods if needed
         const operation = op.operation.toUpperCase();
+        let result;
 
-        if (operation === "INSERT" || operation.startsWith("CREATE")) {
+        if (operation === "INSERT") {
           result = await supabase
             .from(op.table as any)
             .insert(payloadWithId);
-        } else if (operation === "UPDATE" || operation.startsWith("UPDATE") || operation.startsWith("EDIT")) {
-          result = await supabase
-            .from(op.table as any)
-            .update(op.payload) // Usually update shouldn't overwrite client_operation_id unless needed
-            .eq("client_operation_id", op.clientOperationId);
-            
-          // If no row was updated by client_operation_id, try by payload.id if exists
-          if (result.status === 204 && op.payload.id) {
-             result = await supabase
-              .from(op.table as any)
-              .update(op.payload)
-              .eq("id", op.payload.id);
+        } else if (operation === "UPDATE") {
+          const query = supabase.from(op.table as any).update(cleanPayload);
+          
+          if (__lookupField && __lookupValue) {
+            result = await query.eq(__lookupField, __lookupValue);
+          } else {
+            result = await query.eq("client_operation_id", op.clientOperationId);
           }
-        } else if (operation === "DELETE" || operation.startsWith("DELETE") || operation.startsWith("REMOVE")) {
-          result = await supabase
-            .from(op.table as any)
-            .delete()
-            .eq("client_operation_id", op.clientOperationId);
-
-          if (result.status === 204 && op.payload.id) {
-            result = await supabase
-             .from(op.table as any)
-             .delete()
-             .eq("id", op.payload.id);
-         }
+        } else if (operation === "DELETE") {
+          const query = supabase.from(op.table as any).delete();
+          
+          if (__lookupField && __lookupValue) {
+            result = await query.eq(__lookupField, __lookupValue);
+          } else {
+            result = await query.eq("client_operation_id", op.clientOperationId);
+          }
         }
 
         if (result?.error) throw result.error;
@@ -88,12 +79,10 @@ export const useOfflineSync = () => {
           continue;
         }
 
-        // If it's a network error, keep it as pending for next attempt
-        const isNetworkError = error instanceof TypeError && error.message === "Failed to fetch";
-        
-        if (isNetworkError) {
+        // Network error - stay pending
+        if (error instanceof TypeError && error.message === "Failed to fetch") {
           await offlineDb.operations.update(op.id!, { status: "pendente" });
-          break; // Stop processing queue if network is failing
+          break;
         }
 
         await offlineDb.operations.update(op.id!, {
@@ -108,10 +97,9 @@ export const useOfflineSync = () => {
   useEffect(() => {
     if (!isOnline) return;
 
-    const interval = setInterval(syncQueue, 30000); // 30s interval
+    const interval = setInterval(syncQueue, 30000); // 30s
     syncQueue();
 
-    // Listen for manual triggers
     window.addEventListener('trigger-offline-sync', syncQueue);
 
     return () => {
@@ -120,4 +108,3 @@ export const useOfflineSync = () => {
     };
   }, [isOnline, syncQueue]);
 };
-
