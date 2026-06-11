@@ -3,7 +3,7 @@ import Dexie, { type Table } from 'dexie';
 export interface OfflineOperation {
   id?: number;
   clientOperationId: string;
-  operation: 'INSERT' | 'UPDATE' | 'DELETE';
+  operation: 'INSERT' | 'UPDATE' | 'DELETE' | string;
   table: string;
   payload: any;
   userId: string;
