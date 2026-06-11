@@ -1,4 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
+import { enqueueOfflineMutation } from "@/lib/offline/offlineMutation";
+
 
 export interface PatientRegulation {
   id: string;
@@ -45,16 +47,18 @@ export const regulationService = {
   },
 
   async create(reg: Omit<PatientRegulation, 'id' | 'created_at' | 'updated_at'>) {
-    const { data, error } = await (supabase as any).from('patient_regulation').insert(reg).select().single();
-    if (error) throw error;
-    return data as PatientRegulation;
+    const id = crypto.randomUUID();
+    return await enqueueOfflineMutation("INSERT", { ...reg, id }, { table: 'patient_regulation' });
   },
 
   async update(id: string, updates: Partial<PatientRegulation>) {
-    const { data, error } = await (supabase as any).from('patient_regulation').update({ ...updates, updated_at: new Date().toISOString() }).eq('id', id).select().single();
-    if (error) throw error;
-    return data as PatientRegulation;
+    return await enqueueOfflineMutation("UPDATE", { ...updates, updated_at: new Date().toISOString() }, {
+      table: 'patient_regulation',
+      lookupField: 'id',
+      lookupValue: id
+    });
   },
+
 
   async getEvaluations(filters?: { patientId?: string; regulationId?: string; status?: string; unitId?: string }) {
     let query = (supabase as any).from('patient_evaluations').select('*').order('created_at', { ascending: false });
@@ -68,16 +72,18 @@ export const regulationService = {
   },
 
   async createEvaluation(ev: Omit<PatientEvaluation, 'id' | 'created_at' | 'updated_at'>) {
-    const { data, error } = await (supabase as any).from('patient_evaluations').insert(ev).select().single();
-    if (error) throw error;
-    return data as PatientEvaluation;
+    const id = crypto.randomUUID();
+    return await enqueueOfflineMutation("INSERT", { ...ev, id }, { table: 'patient_evaluations' });
   },
 
   async updateEvaluation(id: string, updates: Partial<PatientEvaluation>) {
-    const { data, error } = await (supabase as any).from('patient_evaluations').update({ ...updates, updated_at: new Date().toISOString() }).eq('id', id).select().single();
-    if (error) throw error;
-    return data as PatientEvaluation;
+    return await enqueueOfflineMutation("UPDATE", { ...updates, updated_at: new Date().toISOString() }, {
+      table: 'patient_evaluations',
+      lookupField: 'id',
+      lookupValue: id
+    });
   },
+
 
   async checkActiveRegulation(patientId: string): Promise<PatientRegulation | null> {
     const { data } = await (supabase as any).from('patient_regulation').select('*')
