@@ -1033,60 +1033,49 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const addAgendamento = useCallback(
     async (ag: Agendamento) => {
+      const id = ag.id || uuidv4();
       const STATUS_INICIAIS_PERMITIDOS = ["confirmado", "pendente", "agendado"];
       const statusInicial = STATUS_INICIAIS_PERMITIDOS.includes(ag.status as string)
         ? ag.status
         : "confirmado";
       
-      const clientOpId = uuidv4();
-      const payload: any = {
-        id: ag.id,
+      const dbAg: any = {
+        id,
         paciente_id: ag.pacienteId,
         paciente_nome: ag.pacienteNome,
         unidade_id: ag.unidadeId,
-        sala_id: ag.salaId,
-        setor_id: ag.setorId,
+        sala_id: ag.salaId || null,
+        setor_id: ag.setorId || null,
         profissional_id: ag.profissionalId,
         profissional_nome: ag.profissionalNome,
         data: ag.data,
         hora: ag.hora,
         status: statusInicial,
-        tipo: ag.tipo,
-        observacoes: ag.observacoes,
-        origem: ag.origem,
+        tipo: ag.tipo || "consulta",
+        observacoes: ag.observacoes || "",
+        origem: ag.origem || "recepcao",
         google_event_id: ag.googleEventId || "",
         sync_status: ag.syncStatus || "pendente",
-        criado_por: ag.criadoPor || "",
-        prioridade_perfil: "normal",
-        client_operation_id: clientOpId
+        criado_por: authUser?.id || "",
+        criado_em: new Date().toISOString(),
       };
 
       try {
-        const { error: insertError } = await supabase.from("agendamentos" as any).insert(payload);
-        if (insertError) {
-          if (isNetworkError(insertError)) {
-            await enqueueOfflineMutation({
-              clientOperationId: clientOpId,
-              operation: 'INSERT',
-              table: 'agendamentos',
-              payload,
-              userId: authUser?.id || '',
-              unitId: authUser?.unidadeId
-            });
-            toast.info("Sem conexão. Agendamento salvo localmente.");
-          } else {
-            throw insertError;
+        await enqueueOfflineMutation("INSERT", dbAg, {
+          table: "agendamentos",
+          onSuccess: () => {
+             setAgendamentos((prev) => [{ ...ag, id, status: statusInicial as any }, ...prev]);
           }
-        }
+        });
 
-        setAgendamentos((prev) => [...prev, { ...ag, status: statusInicial as any }]);
         await logAction({
           acao: "criar",
           entidade: "agendamento",
-          entidadeId: ag.id,
+          entidadeId: id,
           unidadeId: ag.unidadeId,
           detalhes: { data: ag.data, hora: ag.hora, profissionalId: ag.profissionalId },
         });
+        
         invalidateCache(queryKeys.agendamentos.all, queryKeys.fila.all);
       } catch (error) {
         console.error("Error adding agendamento:", error);
@@ -1095,6 +1084,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     },
     [logAction, invalidateCache, authUser],
   );
+
   const updateAgendamento = useCallback(
     async (id: string, data: Partial<Agendamento>) => {
       const dbData: any = {};
@@ -1183,7 +1173,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     async (p: Paciente) => {
       // Auto-inject unidade_id if not set
       const unidadeIdToUse = p.unidadeId || userUnidadeId || '';
-      const clientOpId = uuidv4();
       const payload: any = {
         id: p.id,
         nome: p.nome,
@@ -1198,29 +1187,17 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         descricao_clinica: p.descricaoClinica,
         cid: p.cid,
         criado_em: p.criadoEm || new Date().toISOString(),
-        unidade_id: unidadeIdToUse,
-        client_operation_id: clientOpId
+        unidade_id: unidadeIdToUse
       };
 
       try {
-        const { error: insertError } = await supabase.from("pacientes" as any).insert(payload);
-        if (insertError) {
-          if (isNetworkError(insertError)) {
-            await enqueueOfflineMutation({
-              clientOperationId: clientOpId,
-              operation: 'INSERT',
-              table: 'pacientes',
-              payload,
-              userId: authUser?.id || '',
-              unitId: authUser?.unidadeId
-            });
-            toast.info("Sem conexão. Cadastro de paciente salvo localmente.");
-          } else {
-            throw insertError;
+        await enqueueOfflineMutation("INSERT", payload, {
+          table: "pacientes",
+          onSuccess: () => {
+             setPacientes((prev) => [{ ...p, unidadeId: unidadeIdToUse }, ...prev]);
           }
-        }
-
-        setPacientes((prev) => [{ ...p, unidadeId: unidadeIdToUse }, ...prev]);
+        });
+        
         invalidateCache(queryKeys.pacientes.all);
       } catch (error) {
         console.error("Error adding paciente:", error);
@@ -1229,6 +1206,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     },
     [invalidateCache, userUnidadeId, authUser],
   );
+
   const updatePaciente = useCallback(
     async (id: string, data: Partial<Paciente>) => {
       const dbData: any = {};
@@ -1244,30 +1222,16 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (data.descricaoClinica !== undefined) dbData.descricao_clinica = data.descricaoClinica;
       if (data.cid !== undefined) dbData.cid = data.cid;
 
-      const clientOpId = uuidv4();
       try {
-        const { error: updateError } = await supabase
-          .from("pacientes" as any)
-          .update({ ...dbData, client_operation_id: clientOpId })
-          .eq("id", id);
-        
-        if (updateError) {
-          if (isNetworkError(updateError)) {
-            await enqueueOfflineMutation({
-              clientOperationId: clientOpId,
-              operation: 'UPDATE',
-              table: 'pacientes',
-              payload: dbData,
-              userId: authUser?.id || '',
-              unitId: authUser?.unidadeId
-            });
-            toast.info("Sem conexão. Alteração do paciente salva localmente.");
-          } else {
-            throw updateError;
+        await enqueueOfflineMutation("UPDATE", dbData, {
+          table: "pacientes",
+          lookupField: "id",
+          lookupValue: id,
+          onSuccess: () => {
+             setPacientes((prev) => prev.map((p) => (p.id === id ? { ...p, ...data } : p)));
           }
-        }
-
-        setPacientes((prev) => prev.map((p) => (p.id === id ? { ...p, ...data } : p)));
+        });
+        
         invalidateCache(queryKeys.pacientes.all);
         invalidateCache(queryKeys.agendamentos.all);
         invalidateCache(queryKeys.fila.all);
@@ -1278,6 +1242,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     },
     [invalidateCache, authUser],
   );
+
 
   const addToFila = useCallback(
     async (f: FilaEspera) => {
