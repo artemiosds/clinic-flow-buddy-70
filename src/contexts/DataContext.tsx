@@ -1065,7 +1065,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { error: insertError } = await supabase.from("agendamentos" as any).insert(payload);
         if (insertError) {
           if (isNetworkError(insertError)) {
-            await addToOfflineQueue({
+            await enqueueOfflineMutation({
               clientOperationId: clientOpId,
               operation: 'INSERT',
               table: 'agendamentos',
@@ -1206,7 +1206,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { error: insertError } = await supabase.from("pacientes" as any).insert(payload);
         if (insertError) {
           if (isNetworkError(insertError)) {
-            await addToOfflineQueue({
+            await enqueueOfflineMutation({
               clientOperationId: clientOpId,
               operation: 'INSERT',
               table: 'pacientes',
@@ -1253,7 +1253,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (updateError) {
           if (isNetworkError(updateError)) {
-            await addToOfflineQueue({
+            await enqueueOfflineMutation({
               clientOperationId: clientOpId,
               operation: 'UPDATE',
               table: 'pacientes',
@@ -1308,7 +1308,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { error: insertError } = await supabase.from("fila_espera" as any).insert(payload);
         if (insertError) {
           if (isNetworkError(insertError)) {
-            await addToOfflineQueue({
+            await enqueueOfflineMutation({
               clientOperationId: clientOpId,
               operation: 'INSERT',
               table: 'fila_espera',
@@ -1367,7 +1367,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (updateError) {
           if (isNetworkError(updateError)) {
-            await addToOfflineQueue({
+            await enqueueOfflineMutation({
               clientOperationId: clientOpId,
               operation: 'UPDATE',
               table: 'fila_espera',
@@ -1438,7 +1438,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { error: insertError } = await supabase.from("atendimentos" as any).insert(payload);
         if (insertError) {
           if (isNetworkError(insertError)) {
-            await addToOfflineQueue({
+            await enqueueOfflineMutation({
               clientOperationId: clientOpId,
               operation: 'INSERT',
               table: 'atendimentos',
@@ -1747,7 +1747,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { data: inserted, error } = await supabase.from("bloqueios" as any).insert(payload).select().single();
         if (error) {
           if (isNetworkError(error)) {
-            await addToOfflineQueue({
+            await enqueueOfflineMutation({
               clientOperationId: clientOpId,
               operation: 'INSERT',
               table: 'bloqueios',
@@ -1796,7 +1796,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (error) {
           if (isNetworkError(error)) {
-            await addToOfflineQueue({
+            await enqueueOfflineMutation({
               clientOperationId: clientOpId,
               operation: 'UPDATE',
               table: 'bloqueios',
