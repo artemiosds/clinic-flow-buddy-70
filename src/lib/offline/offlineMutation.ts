@@ -75,14 +75,20 @@ export const enqueueOfflineMutation = async (
   try {
     await offlineDb.operations.add(op);
     
+    const isOnline = navigator.onLine;
+
     if (options.showToast !== false) {
-      toast.success("Salvo localmente. Aguardando sincronização.", {
-        description: "Os dados serão enviados automaticamente assim que houver conexão.",
-        duration: 3000,
-      });
+      if (isOnline) {
+        toast.success("Salvo com sucesso.", { duration: 2000 });
+      } else {
+        toast.success("Salvo localmente. Aguardando sincronização.", {
+          description: "Os dados serão enviados automaticamente assim que houver conexão.",
+          duration: 3000,
+        });
+      }
     }
 
-    if (navigator.onLine) {
+    if (isOnline) {
       window.dispatchEvent(new Event('trigger-offline-sync'));
     }
 
