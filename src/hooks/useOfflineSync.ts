@@ -16,6 +16,9 @@ export const useOfflineSync = () => {
     if (result.failed > 0) {
       toast.error(`${result.failed} alteração(ões) precisam de intervenção.`, { duration: 5000 });
     }
+    if (result.conflicts > 0) {
+      toast.warning(`${result.conflicts} alteração(ões) com conflito preservaram o dado mais recente do banco.`, { duration: 6000 });
+    }
   }, []);
 
   useEffect(() => {
