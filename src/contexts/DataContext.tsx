@@ -212,6 +212,20 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => { if (authUser) { loadConfiguracoes(); loadUnidades(); loadSalas(); loadFuncionarios(); loadAgendamentos(); loadPacientes(); loadFila(); } }, [authUser, loadConfiguracoes, loadUnidades, loadSalas, loadFuncionarios, loadAgendamentos, loadPacientes, loadFila]);
 
+  useEffect(() => {
+    const handleOfflineSyncComplete = (event: Event) => {
+      const syncedTables = (event as CustomEvent<{ syncedTables?: string[] }>).detail?.syncedTables || [];
+      if (syncedTables.includes("agendamentos")) { loadAgendamentos(); invalidateCache(queryKeys.agendamentos.all); }
+      if (syncedTables.includes("pacientes")) { loadPacientes(); invalidateCache(queryKeys.pacientes.all); }
+      if (syncedTables.includes("fila_espera")) { loadFila(); invalidateCache(queryKeys.fila.all); }
+      if (syncedTables.includes("atendimentos")) invalidateCache(queryKeys.atendimentos.all);
+      if (syncedTables.includes("prontuarios")) invalidateCache(queryKeys.prontuarios.all);
+      if (syncedTables.includes("triage_records")) invalidateCache(queryKeys.triagem.all);
+    };
+    window.addEventListener("offline-sync-complete", handleOfflineSyncComplete);
+    return () => window.removeEventListener("offline-sync-complete", handleOfflineSyncComplete);
+  }, [invalidateCache, loadAgendamentos, loadPacientes, loadFila]);
+
   const value = useMemo(() => ({
     agendamentos, pacientes, fila, atendimentos, unidades, salas, setores, funcionarios, disponibilidades, bloqueios, quotasExternas, configuracoes,
     addAgendamento, updateAgendamento, addPaciente, updatePaciente, addToFila, updateFila, addAtendimento,
