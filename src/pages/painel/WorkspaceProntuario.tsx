@@ -554,8 +554,9 @@ const WorkspaceProntuario: React.FC = () => {
       };
 
       let savedRecord;
+      let saveResult: any;
       if (finalId) {
-        await enqueueOfflineMutation("UPDATE", dbPayload, {
+        saveResult = await enqueueOfflineMutation("UPDATE", dbPayload, {
           table: "prontuarios",
           lookupField: "id",
           lookupValue: finalId,
@@ -564,11 +565,11 @@ const WorkspaceProntuario: React.FC = () => {
         savedRecord = { ...dbPayload, id: finalId };
       } else {
         const newId = crypto.randomUUID();
-        await enqueueOfflineMutation("INSERT", { ...dbPayload, id: newId }, {
+        saveResult = await enqueueOfflineMutation("INSERT", { ...dbPayload, id: newId }, {
           table: "prontuarios",
           showToast: false
         });
-        savedRecord = { ...dbPayload, id: newId };
+        savedRecord = saveResult?.data || { ...dbPayload, id: newId };
       }
 
 
@@ -590,7 +591,12 @@ const WorkspaceProntuario: React.FC = () => {
 
       // Save procedures
       if (selectedProcIds.length > 0) {
-        await supabase.from("prontuario_procedimentos").delete().eq("prontuario_id", data.id);
+        await enqueueOfflineMutation("DELETE", { prontuario_id: data.id }, {
+          table: "prontuario_procedimentos",
+          lookupField: "prontuario_id",
+          lookupValue: data.id,
+          showToast: false,
+        });
         const links = selectedProcIds.map(pid => {
           const proc = procedimentos.find(p => p.id === pid);
           const codigos = selectedCidsByProc[pid] || [];
@@ -611,7 +617,12 @@ const WorkspaceProntuario: React.FC = () => {
             observacao: cidsPayload.length > 0 ? JSON.stringify({ cids: cidsPayload }) : '',
           };
         });
-        await supabase.from("prontuario_procedimentos").insert(links);
+        for (const link of links) {
+          await enqueueOfflineMutation("INSERT", { ...link, id: crypto.randomUUID() }, {
+            table: "prontuario_procedimentos",
+            showToast: false,
+          });
+        }
       }
 
       // Update agendamento status if provided
