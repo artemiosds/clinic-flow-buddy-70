@@ -152,27 +152,51 @@ const ensureNoRemoteConflict = async (op: OfflineOperation) => {
   }
 };
 
+const FK_NULLABLE_FALLBACK: Record<string, string[]> = {
+  pacientes: ["marcado_por"],
+};
+
+const tryRecoverFkViolation = (op: OfflineOperation, payload: Record<string, any>, error: any): Record<string, any> | null => {
+  if (error?.code !== "23503") return null;
+  const constraint = getConstraintName(error);
+  const candidates = FK_NULLABLE_FALLBACK[op.table] || [];
+  const match = candidates.find(col => constraint.includes(col) || (error?.message || "").includes(col));
+  if (!match || !(match in payload)) return null;
+  debugOffline("FK inválida, limpando campo e tentando novamente", { table: op.table, column: match, constraint });
+  return { ...payload, [match]: null };
+};
+
 const executeSupabaseMutation = async (op: OfflineOperation) => {
   const operation = normalizeOperation(op.operation);
-  const cleanPayload = sanitizePayloadForTable(op.table, op.payload, op.clientOperationId, operation);
-  const tableQuery = (supabase as any).from(op.table);
+  let cleanPayload = sanitizePayloadForTable(op.table, op.payload, op.clientOperationId, operation);
+  const tableQuery = () => (supabase as any).from(op.table);
   debugOffline("tentativa online", { table: op.table, operation, clientOperationId: op.clientOperationId });
 
-  let result: any;
-  if (operation === "INSERT") {
-    result = await tableQuery.insert(cleanPayload).select("*");
-  } else if (operation === "UPDATE") {
-    await ensureNoRemoteConflict(op);
-    const { lookupField, lookupValue } = getLookup(op);
-    if (!lookupField || lookupValue === undefined || lookupValue === null || lookupValue === "") throw new Error(`Operação UPDATE sem identificador em ${op.table}.`);
-    result = await tableQuery.update(cleanPayload).eq(toSnakeCase(lookupField), lookupValue).select("*");
-    if (!result?.error && Array.isArray(result?.data) && result.data.length === 0) throw new Error(`Registro não localizado para UPDATE em ${op.table}.`);
-  } else if (operation === "DELETE") {
-    const { lookupField, lookupValue } = getLookup(op);
-    if (!lookupField || lookupValue === undefined || lookupValue === null || lookupValue === "") throw new Error(`Operação DELETE sem identificador em ${op.table}.`);
-    result = await tableQuery.delete().eq(toSnakeCase(lookupField), lookupValue).select("id");
-  }
+  const runOnce = async (payload: Record<string, any>) => {
+    if (operation === "INSERT") {
+      return await tableQuery().insert(payload).select("*");
+    } else if (operation === "UPDATE") {
+      await ensureNoRemoteConflict(op);
+      const { lookupField, lookupValue } = getLookup(op);
+      if (!lookupField || lookupValue === undefined || lookupValue === null || lookupValue === "") throw new Error(`Operação UPDATE sem identificador em ${op.table}.`);
+      const res = await tableQuery().update(payload).eq(toSnakeCase(lookupField), lookupValue).select("*");
+      if (!res?.error && Array.isArray(res?.data) && res.data.length === 0) throw new Error(`Registro não localizado para UPDATE em ${op.table}.`);
+      return res;
+    } else if (operation === "DELETE") {
+      const { lookupField, lookupValue } = getLookup(op);
+      if (!lookupField || lookupValue === undefined || lookupValue === null || lookupValue === "") throw new Error(`Operação DELETE sem identificador em ${op.table}.`);
+      return await tableQuery().delete().eq(toSnakeCase(lookupField), lookupValue).select("id");
+    }
+  };
 
+  let result = await runOnce(cleanPayload);
+  if (result?.error) {
+    const recovered = tryRecoverFkViolation(op, cleanPayload, result.error);
+    if (recovered) {
+      cleanPayload = recovered;
+      result = await runOnce(cleanPayload);
+    }
+  }
   if (result?.error) throw result.error;
   return Array.isArray(result?.data) ? (result.data[0] || null) : result?.data;
 };
