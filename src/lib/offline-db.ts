@@ -11,7 +11,7 @@ export interface OfflineOperation {
   createdAt: number;
   attempts: number;
   lastError?: string;
-  status: 'pendente' | 'sincronizando' | 'sincronizado' | 'falha';
+  status: 'pending' | 'syncing' | 'synced' | 'failed' | 'conflict' | 'pendente' | 'sincronizando' | 'sincronizado' | 'falha';
 }
 
 export class OfflineDatabase extends Dexie {
@@ -32,6 +32,6 @@ export const addToOfflineQueue = async (op: Omit<OfflineOperation, 'id' | 'creat
     ...op,
     createdAt: Date.now(),
     attempts: 0,
-    status: 'pendente'
+    status: 'pending'
   });
 };
