@@ -432,7 +432,7 @@ const Pacientes: React.FC = () => {
       motivo_excecao_bloqueio: form.motivo_excecao_bloqueio || "",
       observacao_tfd_ordem_judicial: form.observacao_tfd_ordem_judicial || "",
       data_marcacao_excecao: form.data_marcacao_excecao || null,
-      marcado_por: user?.id || null,
+      marcado_por: user?.authUserId || null,
 
       
       // Novos campos
