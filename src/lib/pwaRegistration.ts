@@ -34,9 +34,9 @@ export const registerPwa = async () => {
   }
 
   const { registerSW } = await import("virtual:pwa-register");
-  registerSW({
+  const updateSW = registerSW({
     immediate: true,
-    onNeedRefresh(updateSW) {
+    onNeedRefresh() {
       toast.info("Nova versão disponível, atualizar sistema", {
         duration: 10000,
         action: { label: "Atualizar", onClick: () => updateSW(true) },
