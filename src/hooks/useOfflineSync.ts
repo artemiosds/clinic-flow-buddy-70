@@ -1,11 +1,12 @@
 import { useEffect, useCallback } from "react";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import { processOfflineQueue } from "@/lib/offline/offlineMutation";
-import { queryClient } from "@/App";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 export const useOfflineSync = () => {
   const { isOnline } = useNetworkStatus();
+  const queryClient = useQueryClient();
 
   const syncQueue = useCallback(async () => {
     if (!navigator.onLine) return;
@@ -18,7 +19,7 @@ export const useOfflineSync = () => {
     if (result.failed > 0) {
       toast.error(`${result.failed} alteração(ões) precisam de intervenção.`, { duration: 5000 });
     }
-  }, []);
+  }, [queryClient]);
 
   useEffect(() => {
     if (!isOnline) return;
