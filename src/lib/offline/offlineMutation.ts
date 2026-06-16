@@ -4,7 +4,6 @@ import { isNetworkError } from "@/lib/utils";
 import { toast } from "sonner";
 
 export type OfflineOperationType = "INSERT" | "UPDATE" | "DELETE" | string;
-type QueueStatus = "pending" | "syncing" | "synced" | "failed" | "conflict";
 
 export interface EnqueueOptions {
   table: string;
@@ -98,7 +97,6 @@ const UPDATED_AT_COLUMN: Record<string, string> = {
 
 let syncPromise: Promise<OfflineSyncResult> | null = null;
 const toSnakeCase = (key: string) => FIELD_ALIASES[key] || key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
-const normalizeStatus = (status: OfflineOperation["status"]): QueueStatus => ({ pendente: "pending", sincronizando: "syncing", sincronizado: "synced", falha: "failed" } as any)[status] || status as QueueStatus;
 const isPendingStatus = (status: OfflineOperation["status"]) => ["pending", "pendente", "syncing", "sincronizando"].includes(status);
 
 const normalizeOperation = (operation: OfflineOperationType) => {

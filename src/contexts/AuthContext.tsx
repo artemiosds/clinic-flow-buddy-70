@@ -192,10 +192,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     // Technical validation: Only clear cache if queue is empty
     const { offlineDb } = await import("@/lib/offline-db");
-    const pendingCount = await offlineDb.operations
-      .where("status")
-      .anyOf(["pendente", "falha", "sincronizando"])
-      .count();
+    const pendingRows = await offlineDb.operations.toArray();
+    const pendingCount = pendingRows.filter((op) =>
+      ["pending", "syncing", "failed", "conflict", "pendente", "falha", "sincronizando"].includes(op.status)
+    ).length;
 
     if (pendingCount > 0) {
       const confirm = window.confirm(
