@@ -24,12 +24,11 @@ import {
 import { MANCHESTER_LEVELS, type ManchesterLevel } from "@/lib/manchesterProtocol";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { addToOfflineQueue } from "@/lib/offline-db";
+import { enqueueOfflineMutation } from "@/lib/offline/offlineMutation";
 import { v4 as uuidv4 } from "uuid";
 import { differenceInMinutes } from "date-fns";
 import CustomFieldsRenderer from "@/components/CustomFieldsRenderer";
 import { useCustomFields } from "@/hooks/useCustomFields";
-import { isNetworkError } from "@/lib/utils";
 
 interface Agendamento {
   id: string;
@@ -401,30 +400,18 @@ const Triagem: React.FC = () => {
         iniciado_em: new Date().toISOString(),
       };
 
-      const clientOpId = uuidv4();
-      let error;
       if (existing?.id) {
-        const res = await supabase.from("triage_records").update({ ...triagePayload, client_operation_id: clientOpId }).eq("id", existing.id);
-        error = res.error;
+        await enqueueOfflineMutation("UPDATE", triagePayload, {
+          table: "triage_records",
+          lookupField: "id",
+          lookupValue: existing.id,
+          showToast: false,
+        });
       } else {
-        const res = await supabase.from("triage_records").insert({ ...triagePayload, client_operation_id: clientOpId });
-        error = res.error;
-      }
-
-      if (error) {
-        if (isNetworkError(error)) {
-          await addToOfflineQueue({
-            clientOperationId: clientOpId,
-            operation: existing?.id ? 'UPDATE' : 'INSERT',
-            table: 'triage_records',
-            payload: triagePayload,
-            userId: user?.id || '',
-            unitId: user?.unidadeId
-          });
-          toast.info("Sem conexão. Rascunho salvo localmente.");
-        } else {
-          throw error;
-        }
+        await enqueueOfflineMutation("INSERT", triagePayload, {
+          table: "triage_records",
+          showToast: false,
+        });
       }
       toast.success("Rascunho da triagem salvo!");
     } catch (error) {
@@ -474,32 +461,18 @@ const Triagem: React.FC = () => {
         confirmado_em: new Date().toISOString(),
       };
 
-      const clientOpId = uuidv4();
-      const triagePayloadWithOp: any = { ...triagePayload, client_operation_id: clientOpId };
-
-      let error;
       if (existing?.id) {
-        const res = await supabase.from("triage_records").update(triagePayloadWithOp).eq("id", existing.id);
-        error = res.error;
+        await enqueueOfflineMutation("UPDATE", triagePayload, {
+          table: "triage_records",
+          lookupField: "id",
+          lookupValue: existing.id,
+          showToast: false,
+        });
       } else {
-        const res = await supabase.from("triage_records").insert(triagePayloadWithOp);
-        error = res.error;
-      }
-
-      if (error) {
-        if (isNetworkError(error)) {
-          await addToOfflineQueue({
-            clientOperationId: clientOpId,
-            operation: existing?.id ? 'UPDATE' : 'INSERT',
-            table: 'triage_records',
-            payload: triagePayload,
-            userId: user?.id || '',
-            unitId: user?.unidadeId
-          });
-          toast.info("Sem conexão. Triagem salva localmente na fila de sincronização.");
-        } else {
-          throw error;
-        }
+        await enqueueOfflineMutation("INSERT", triagePayload, {
+          table: "triage_records",
+          showToast: false,
+        });
       }
 
       await Promise.all([
