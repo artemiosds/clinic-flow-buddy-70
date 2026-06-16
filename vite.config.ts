@@ -18,6 +18,7 @@ export default defineConfig(({ mode }) => ({
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: "autoUpdate",
+      injectRegister: null,
       includeAssets: ["favicon.ico", "apple-touch-icon.png", "mask-icon.svg"],
       manifest: {
         name: "SISTEMA CAPS II",
@@ -49,6 +50,9 @@ export default defineConfig(({ mode }) => ({
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
         navigateFallback: "index.html",
+        navigateFallbackDenylist: [/^\/~oauth/, /^\/api\//],
+        clientsClaim: true,
+        skipWaiting: true,
         runtimeCaching: [
           {
             // CRITICAL: NEVER cache Supabase API calls or clinical data routes
@@ -64,6 +68,14 @@ export default defineConfig(({ mode }) => ({
             handler: "NetworkOnly",
           },
           {
+            urlPattern: ({ request, url }) => request.mode === "navigate" && !url.pathname.startsWith("/~oauth"),
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "app-navigation",
+              networkTimeoutSeconds: 4,
+            },
+          },
+          {
             // Cache fonts and static images
             urlPattern: /\.(?:png|jpg|jpeg|svg|gif|woff2?)$/,
             handler: "CacheFirst",
@@ -77,6 +89,7 @@ export default defineConfig(({ mode }) => ({
           },
         ],
       },
+      devOptions: { enabled: false },
     }),
   ].filter(Boolean),
   resolve: {

@@ -3,9 +3,11 @@ import App from "./App.tsx";
 import "./index.css";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { runPhoneNormalizationMigration } from "@/lib/phoneNormalizationMigration";
+import { registerPwa } from "@/lib/pwaRegistration";
 
 // Run one-time phone normalization on startup (idempotent)
 runPhoneNormalizationMigration();
+registerPwa();
 
 // Global handler: catches chunk-load failures that escape React's boundary
 // (e.g. unhandled promise rejections from dynamic imports after a fresh deploy)

@@ -11,7 +11,8 @@ export const OfflineBanner: React.FC = () => {
   const { data: pendingCount = 0 } = useQuery({
     queryKey: ['offline-operations-count'],
     queryFn: async () => {
-      return await offlineDb.operations.where('status').equals('pendente').count();
+      const rows = await offlineDb.operations.toArray();
+      return rows.filter((op) => ['pending', 'syncing', 'pendente', 'sincronizando'].includes(op.status)).length;
     },
     refetchInterval: 5000
   });
